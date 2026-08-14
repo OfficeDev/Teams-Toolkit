@@ -225,9 +225,25 @@ describe("CLI read-only commands account", () => {
     });
   });
   describe("accountShowCommand", async () => {
-    it("both signedOut", async () => {
-      vi.spyOn(M365TokenProvider, "getStatus").mockResolvedValue(ok({ status: signedOut }));
-      vi.spyOn(AzureTokenProvider, "getStatus").mockResolvedValue({ status: signedOut });
+    it("AUTH-LIST-AC-04: service argument accepts only m365 and azure", () => {
+      expect(accountShowCommand.arguments).toEqual([
+        expect.objectContaining({
+          name: "service",
+          choices: ["azure", "m365"],
+          required: false,
+        }),
+      ]);
+    });
+    it("AUTH-LIST-AC-08: account status is non-interactive by default", () => {
+      expect(accountShowCommand.defaultInteractiveOption).toBe(false);
+    });
+    it("AUTH-LIST-AC-01: both signedOut", async () => {
+      const m365Status = vi
+        .spyOn(M365TokenProvider, "getStatus")
+        .mockResolvedValue(ok({ status: signedOut }));
+      const azureStatus = vi
+        .spyOn(AzureTokenProvider, "getStatus")
+        .mockResolvedValue({ status: signedOut });
       messages = [];
       const ctx: CLIContext = {
         command: {
@@ -241,6 +257,117 @@ describe("CLI read-only commands account", () => {
       };
       const res = await accountShowCommand.handler!(ctx);
       assert.isTrue(res.isOk());
+      expect(m365Status).toHaveBeenCalledOnce();
+      expect(azureStatus).toHaveBeenCalledOnce();
+      expect(m365Status.mock.invocationCallOrder[0]).toBeLessThan(
+        azureStatus.mock.invocationCallOrder[0]
+      );
+      const cliName = process.env.TEAMSFX_CLI_BIN_NAME ?? "atk";
+      expect(messages).toContain(
+        `Use \`${cliName} auth login azure\` or \`${cliName} auth login m365\` to log in to Azure or Microsoft 365 account.`
+      );
+    });
+    it("AUTH-LIST-AC-02: m365 service does not query Azure", async () => {
+      const m365Status = vi
+        .spyOn(M365TokenProvider, "getStatus")
+        .mockResolvedValue(ok({ status: signedIn }));
+      const azureStatus = vi
+        .spyOn(AzureTokenProvider, "getStatus")
+        .mockResolvedValue({ status: signedIn });
+      vi.spyOn(accountUtils, "checkIsOnline").mockResolvedValue(true);
+      const outputM365Info = vi.spyOn(accountUtils, "outputM365Info").mockResolvedValue(true);
+      const outputAzureInfo = vi.spyOn(accountUtils, "outputAzureInfo").mockResolvedValue(true);
+      const ctx: CLIContext = {
+        command: {
+          ...accountShowCommand,
+          fullName: `${process.env.TEAMSFX_CLI_BIN_NAME} auth list`,
+        },
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: ["m365"],
+        telemetryProperties: {},
+      };
+
+      const res = await accountShowCommand.handler!(ctx);
+
+      assert.isTrue(res.isOk());
+      expect(m365Status).toHaveBeenCalledOnce();
+      expect(outputM365Info).toHaveBeenCalledOnce();
+      expect(azureStatus).not.toHaveBeenCalled();
+      expect(outputAzureInfo).not.toHaveBeenCalled();
+    });
+    it("AUTH-LIST-AC-03: azure service does not query Microsoft 365", async () => {
+      const m365Status = vi
+        .spyOn(M365TokenProvider, "getStatus")
+        .mockResolvedValue(ok({ status: signedIn }));
+      const azureStatus = vi
+        .spyOn(AzureTokenProvider, "getStatus")
+        .mockResolvedValue({ status: signedIn });
+      vi.spyOn(accountUtils, "checkIsOnline").mockResolvedValue(true);
+      const outputM365Info = vi.spyOn(accountUtils, "outputM365Info").mockResolvedValue(true);
+      const outputAzureInfo = vi.spyOn(accountUtils, "outputAzureInfo").mockResolvedValue(true);
+      const ctx: CLIContext = {
+        command: {
+          ...accountShowCommand,
+          fullName: `${process.env.TEAMSFX_CLI_BIN_NAME} auth list`,
+        },
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: ["azure"],
+        telemetryProperties: {},
+      };
+
+      const res = await accountShowCommand.handler!(ctx);
+
+      assert.isTrue(res.isOk());
+      expect(azureStatus).toHaveBeenCalledOnce();
+      expect(outputAzureInfo).toHaveBeenCalledOnce();
+      expect(m365Status).not.toHaveBeenCalled();
+      expect(outputM365Info).not.toHaveBeenCalled();
+    });
+    it("AUTH-LIST-AC-06: signed-out m365 guidance does not mention Azure login", async () => {
+      vi.spyOn(M365TokenProvider, "getStatus").mockResolvedValue(ok({ status: signedOut }));
+      const info = vi.spyOn(logger, "info");
+      const ctx: CLIContext = {
+        command: {
+          ...accountShowCommand,
+          fullName: `${process.env.TEAMSFX_CLI_BIN_NAME} auth list`,
+        },
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: ["m365"],
+        telemetryProperties: {},
+      };
+
+      const res = await accountShowCommand.handler!(ctx);
+
+      assert.isTrue(res.isOk());
+      expect(info).toHaveBeenCalledWith(
+        `Use \`${process.env.TEAMSFX_CLI_BIN_NAME ?? "atk"} auth login m365\` to log in to Microsoft 365 account.`
+      );
+      expect(info.mock.calls.flat().join(" ")).not.toContain("auth login azure");
+    });
+    it("AUTH-LIST-AC-07: signed-out Azure guidance does not mention Microsoft 365 login", async () => {
+      vi.spyOn(AzureTokenProvider, "getStatus").mockResolvedValue({ status: signedOut });
+      const info = vi.spyOn(logger, "info");
+      const ctx: CLIContext = {
+        command: {
+          ...accountShowCommand,
+          fullName: `${process.env.TEAMSFX_CLI_BIN_NAME} auth list`,
+        },
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: ["azure"],
+        telemetryProperties: {},
+      };
+
+      const res = await accountShowCommand.handler!(ctx);
+
+      assert.isTrue(res.isOk());
+      expect(info).toHaveBeenCalledWith(
+        `Use \`${process.env.TEAMSFX_CLI_BIN_NAME ?? "atk"} auth login azure\` to log in to Azure account.`
+      );
+      expect(info.mock.calls.flat().join(" ")).not.toContain("auth login m365");
     });
     it("both signedIn and checkIsOnline = true", async () => {
       vi.spyOn(M365TokenProvider, "getStatus").mockResolvedValue(ok({ status: signedIn }));

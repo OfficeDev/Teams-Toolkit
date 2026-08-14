@@ -7,7 +7,7 @@ import {
   featureFlagManager,
   FeatureFlags,
 } from "@microsoft/teamsfx-core";
-import { TextType, colorize } from "../../colorize";
+import { TextType, colorize, replaceTemplateString } from "../../colorize";
 import AzureTokenProvider, { getAzureProvider } from "../../commonlib/azureLogin";
 import AzureTokenCIProvider from "../../commonlib/azureLoginCI";
 import { checkIsOnline } from "../../commonlib/codeFlowLogin";
@@ -140,38 +140,69 @@ export const accountShowCommand: CLICommand = {
   name: "list",
   aliases: ["show"],
   description: commands["auth.show"].description,
+  arguments: [
+    {
+      type: "string",
+      name: "service",
+      description: commands["auth.show"].arguments.service,
+      choices: ["azure", "m365"],
+      required: false,
+    },
+  ],
   telemetry: {
     event: TelemetryEvent.AccountShow,
   },
+  defaultInteractiveOption: false,
   handler: async (ctx) => {
-    const m365StatusRes = await M365TokenProvider.getStatus({ scopes: AppStudioScopes() });
-    if (m365StatusRes.isErr()) {
-      return err(m365StatusRes.error);
-    }
-    const m365Status = m365StatusRes.value;
-    if (m365Status.status === signedIn) {
-      (await accountUtils.checkIsOnline())
-        ? await accountUtils.outputM365Info("show")
-        : accountUtils.outputAccountInfoOffline(
-            "Microsoft 365",
-            getUsernameFromClaims(m365Status.accountInfo as Record<string, unknown>)
-          );
+    const service = ctx.argumentValues[0];
+    const listM365 = service === undefined || service === "m365";
+    const listAzure = service === undefined || service === "azure";
+    let m365SignedIn = false;
+    let azureSignedIn = false;
+
+    if (typeof service === "string") {
+      ctx.telemetryProperties.service = service;
     }
 
-    const azureStatus = await AzureTokenProvider.getStatus();
-    if (azureStatus.status === signedIn) {
-      (await accountUtils.checkIsOnline())
-        ? await accountUtils.outputAzureInfo("show")
-        : accountUtils.outputAccountInfoOffline(
-            "Azure",
-            getUsernameFromClaims(azureStatus.accountInfo as Record<string, unknown>)
-          );
+    if (listM365) {
+      const m365StatusRes = await M365TokenProvider.getStatus({ scopes: AppStudioScopes() });
+      if (m365StatusRes.isErr()) {
+        return err(m365StatusRes.error);
+      }
+      const m365Status = m365StatusRes.value;
+      m365SignedIn = m365Status.status === signedIn;
+      if (m365SignedIn) {
+        (await accountUtils.checkIsOnline())
+          ? await accountUtils.outputM365Info("show")
+          : accountUtils.outputAccountInfoOffline(
+              "Microsoft 365",
+              getUsernameFromClaims(m365Status.accountInfo as Record<string, unknown>)
+            );
+      }
     }
 
-    if (m365Status.status !== signedIn && azureStatus.status !== signedIn) {
-      logger.info(
-        `Use \`${process.env.TEAMSFX_CLI_BIN_NAME} auth login azure\` or \`${process.env.TEAMSFX_CLI_BIN_NAME} auth login m365\` to log in to Azure or Microsoft 365 account.`
-      );
+    if (listAzure) {
+      const azureStatus = await AzureTokenProvider.getStatus();
+      azureSignedIn = azureStatus.status === signedIn;
+      if (azureSignedIn) {
+        (await accountUtils.checkIsOnline())
+          ? await accountUtils.outputAzureInfo("show")
+          : accountUtils.outputAccountInfoOffline(
+              "Azure",
+              getUsernameFromClaims(azureStatus.accountInfo as Record<string, unknown>)
+            );
+      }
+    }
+
+    if (!m365SignedIn && !azureSignedIn) {
+      const cliName = process.env.TEAMSFX_CLI_BIN_NAME ?? "atk";
+      if (service === "m365") {
+        logger.info(replaceTemplateString(strings["account.show.signin.m365"], cliName));
+      } else if (service === "azure") {
+        logger.info(replaceTemplateString(strings["account.show.signin.azure"], cliName));
+      } else {
+        logger.info(replaceTemplateString(strings["account.show.signin.all"], cliName, cliName));
+      }
     }
     return ok(undefined);
   },
