@@ -12,6 +12,9 @@
   "account.show.m365": "Your Microsoft 365 account is: %s.",
   "account.show.m365.tenant": "Your Microsoft 365 account is: %s(%s).",
   "account.show.info": "Your %s account is: %s.",
+  "account.show.signin.azure": "Use `%s auth login azure` to log in to Azure account.",
+  "account.show.signin.m365": "Use `%s auth login m365` to log in to Microsoft 365 account.",
+  "account.show.signin.all": "Use `%s auth login azure` or `%s auth login m365` to log in to Azure or Microsoft 365 account.",
   "command": {
     "doctor": {
       "account": {
@@ -19,28 +22,28 @@
         "NotSignIn": "You've not signed into your Microsoft 365 account yet. Please use 'atk auth login' command to sign into your Microsoft 365 account.",
         "SignInSuccess": "Microsoft 365 Account (%s) is signed in and custom app upload permission is enabled."
       },
-      "node" : {
+      "node": {
         "NotFound": "Cannot find Node.js, which is used for developing apps with JavaScript or TypeScript using Microsoft 365 Toolkit for Visual Studio Code. Visit https://nodejs.org to install the LTS version.",
         "NotSupported": "Node.js (%s) is not the officially supported version (%s). Your project may continue to work but we recommend to install the supported version.",
         "Success": "Node.js version (%s) is installed."
       },
-      "dotnet" : {
+      "dotnet": {
         "NotFound": "Cannot find .NET Core SDK, which is used for developing app in C# using Microsoft 365 Toolkit for Visual Studio. Visit https://dotnet.microsoft.com/en-us/download to install the LTS version.",
         "NotSupported": ".NET Core SDK (%s) is not the officially supported version (%s).",
         "Success": ".NET Core SDK version (%s) is installed."
       },
-      "func" : {
+      "func": {
         "NotFound": "Cannot find Azure Functions Core Tools.",
         "NotSupported": "Azure Functions Core Tools (%s) is not the officially supported version (%s).",
         "Success": "Azure Functions Core Tools version (%s) is installed."
       },
-      "cert" : {
+      "cert": {
         "NotFound": "Cannot find local Certificate.",
         "FoundNotTrust": "Local Certificate is found but not trusted.",
         "Success": "Local Certificate is found and is trusted."
       }
     },
-    "add":{
+    "add": {
       "auth-config": {
         "notification": "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml) files with added action to support authentication flow. You can proceed to remote provision."
       }
