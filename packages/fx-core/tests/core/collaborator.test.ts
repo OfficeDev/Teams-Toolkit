@@ -276,9 +276,7 @@ describe("Collaborator APIs for V3", () => {
       const expectedTitleId = "test-agent-title";
       const parseShareConfigSpy = vi
         .spyOn(shareUtils, "parseShareAppActionYamlConfig")
-        .mockResolvedValueOnce(
-          ok({ titleId: expectedTitleId, teamsappId: "", appId: "" })
-        );
+        .mockResolvedValueOnce(ok({ titleId: expectedTitleId, teamsappId: "", appId: "" }));
       vi.spyOn(AgentCollaboration.prototype, "listCollaborator").mockResolvedValue(
         ok([
           {
