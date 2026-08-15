@@ -18,9 +18,10 @@ import { Constants } from "../teamsApp/constants";
 
 // Read m365agents.yaml and get the value of shared title id, and shared app id
 export async function parseShareAppActionYamlConfig(
-  projectPath: string
+  projectPath: string,
+  env = "dev"
 ): Promise<Result<{ teamsappId: string; titleId: string; appId: string }, FxError>> {
-  const templatePath = pathUtils.getYmlFilePath(projectPath, "dev") as string;
+  const templatePath = pathUtils.getYmlFilePath(projectPath, env) as string;
   const maybeProjectModel = await metadataUtil.parse(templatePath);
   if (maybeProjectModel.isErr()) {
     return err(maybeProjectModel.error);
@@ -67,7 +68,7 @@ export async function parseShareAppActionYamlConfig(
     );
   }
 
-  const readEnvRes = await envUtil.readEnv(projectPath, "dev");
+  const readEnvRes = await envUtil.readEnv(projectPath, env);
   if (readEnvRes.isErr()) {
     return err(readEnvRes.error);
   }
