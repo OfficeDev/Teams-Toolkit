@@ -68,17 +68,42 @@ async function githubApi(urlPath) {
     "User-Agent": "manifest-schema-monitor",
   };
   if (token) headers.Authorization = `Bearer ${token}`;
-  try {
-    const response = await fetch(`https://api.github.com${urlPath}`, {
-      method: "GET",
-      headers,
-      signal: AbortSignal.timeout(20000),
-    });
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
+
+  // The GitHub API occasionally rate-limits or blips from CI runners. A single
+  // failed request must not collapse a manifest row to "fetch-failed", so retry
+  // a few times with backoff and log why each attempt failed.
+  const maxAttempts = 4;
+  let lastReason = "unknown";
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch(`https://api.github.com${urlPath}`, {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(20000),
+      });
+      if (response.ok) return await response.json();
+
+      lastReason = `HTTP ${response.status}`;
+      // 403/429 with a rate-limit reset: wait until it (or backoff) elapses.
+      const remaining = response.headers.get("x-ratelimit-remaining");
+      const reset = Number(response.headers.get("x-ratelimit-reset")) * 1000;
+      if ((response.status === 403 || response.status === 429) && remaining === "0" && reset) {
+        const waitMs = Math.min(Math.max(reset - Date.now(), 0), 30000);
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+      // 404 is a real "not found" — retrying won't help.
+      if (response.status === 404) break;
+    } catch (error) {
+      lastReason = error.name === "TimeoutError" ? "timeout" : error.message;
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((r) => setTimeout(r, attempt * 1500));
+    }
   }
+  console.warn(`githubApi failed for ${urlPath}: ${lastReason}`);
+  return null;
 }
 
 // Templates carry {{...}} placeholders that break JSON.parse; the version field is
