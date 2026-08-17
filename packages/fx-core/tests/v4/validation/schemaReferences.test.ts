@@ -8,8 +8,8 @@ import { assert } from "vitest";
 
 const REPO_ROOT = path.resolve(__dirname, "../../../../..");
 const TEMPLATES_V4_ROOT = path.join(REPO_ROOT, "templates/v4");
-const TEAMS_MANIFEST_1_29_SCHEMA =
-  "https://developer.microsoft.com/json-schemas/teams/v1.29/MicrosoftTeams.schema.json";
+const TEAMS_MANIFEST_1_30_SCHEMA =
+  "https://developer.microsoft.com/json-schemas/teams/v1.30/MicrosoftTeams.schema.json";
 const TEAMS_MANIFEST_DEV_PREVIEW_SCHEMA =
   "https://developer.microsoft.com/json-schemas/teams/vDevPreview/MicrosoftTeams.schema.json";
 const DEV_PREVIEW_MANIFESTS = new Set([
@@ -95,7 +95,7 @@ describe("v4 schema references", () => {
     }
   });
 
-  it("every stable Teams manifest template uses schema and manifest version 1.29", () => {
+  it("every stable Teams manifest template uses schema and manifest version 1.30", () => {
     const manifestFiles = listFiles(TEMPLATES_V4_ROOT, (name) => name === "manifest.json.tpl");
 
     for (const filePath of manifestFiles) {
@@ -103,16 +103,16 @@ describe("v4 schema references", () => {
       if (DEV_PREVIEW_MANIFESTS.has(relativePath)) {
         continue;
       }
-      assert.strictEqual(requiredField(filePath, "manifestVersion"), "1.29", relativePath);
+      assert.strictEqual(requiredField(filePath, "manifestVersion"), "1.30", relativePath);
       assert.strictEqual(
         requiredField(filePath, "\\$schema"),
-        TEAMS_MANIFEST_1_29_SCHEMA,
+        TEAMS_MANIFEST_1_30_SCHEMA,
         relativePath
       );
     }
   });
 
-  it("every rendered 1.29 bot declares the 1.29 bot defaults", () => {
+  it("every rendered 1.30 bot declares the 1.30 bot defaults", () => {
     const manifestFiles = listFiles(TEMPLATES_V4_ROOT, (name) => name === "manifest.json.tpl");
 
     for (const filePath of manifestFiles) {
