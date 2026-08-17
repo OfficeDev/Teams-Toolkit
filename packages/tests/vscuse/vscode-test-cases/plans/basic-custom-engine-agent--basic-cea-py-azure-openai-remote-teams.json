@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 188,
+    "total_steps": 189,
     "name": "basic-cea-py-azure-openai-remote-teams",
     "description": {
       "owner": "",
@@ -179,21 +179,22 @@
       "step_clickPrimaryAction_assertDialog_c9bd6c5f6_7_4",
       "step_clickPrimaryAction_click_c9bd6c5f6_7_4",
       "step_assertNotificationContains_assert_c9bd6c5f6_7_5",
-      "step_executeCommand_open_c9bd6c5f6_8_1",
-      "step_executeCommand_assertPalette_c9bd6c5f6_8_1",
-      "step_executeCommand_filter_c9bd6c5f6_8_1",
-      "step_executeCommand_assertCommand_c9bd6c5f6_8_1",
-      "step_executeCommand_execute_c9bd6c5f6_8_1",
-      "step_filterOption_filter_c9bd6c5f6_8_2",
-      "step_filterOption_assertOption_c9bd6c5f6_8_2",
-      "step_filterOption_confirm_c9bd6c5f6_8_2",
-      "step_browserM365PasswordSignIn_assertPassword_c9bd6c5f6_8_3",
-      "step_browserM365PasswordSignIn_focusPassword_c9bd6c5f6_8_3",
-      "step_browserM365PasswordSignIn_enterPassword_c9bd6c5f6_8_3",
-      "step_browserM365PasswordSignIn_submitPassword_c9bd6c5f6_8_3",
-      "step_browserM365PasswordSignIn_assertStaySignedIn_c9bd6c5f6_8_3",
-      "step_browserM365PasswordSignIn_confirmStaySignedIn_c9bd6c5f6_8_3",
-      "step_assertReady_assertReady_c9bd6c5f6_8_4",
+      "step_assertDeployedRuntimeReady_c9bd6c5f6_8_1",
+      "step_executeCommand_open_c9bd6c5f6_8_2",
+      "step_executeCommand_assertPalette_c9bd6c5f6_8_2",
+      "step_executeCommand_filter_c9bd6c5f6_8_2",
+      "step_executeCommand_assertCommand_c9bd6c5f6_8_2",
+      "step_executeCommand_execute_c9bd6c5f6_8_2",
+      "step_filterOption_filter_c9bd6c5f6_8_3",
+      "step_filterOption_assertOption_c9bd6c5f6_8_3",
+      "step_filterOption_confirm_c9bd6c5f6_8_3",
+      "step_browserM365PasswordSignIn_assertPassword_c9bd6c5f6_8_4",
+      "step_browserM365PasswordSignIn_focusPassword_c9bd6c5f6_8_4",
+      "step_browserM365PasswordSignIn_enterPassword_c9bd6c5f6_8_4",
+      "step_browserM365PasswordSignIn_submitPassword_c9bd6c5f6_8_4",
+      "step_browserM365PasswordSignIn_assertStaySignedIn_c9bd6c5f6_8_4",
+      "step_browserM365PasswordSignIn_confirmStaySignedIn_c9bd6c5f6_8_4",
+      "step_assertReady_assertReady_c9bd6c5f6_8_5",
       "step_addAndOpenApp_assertAdd_c9bd6c5f6_9_1",
       "step_addAndOpenApp_add_c9bd6c5f6_9_1",
       "step_addAndOpenApp_assertAdded_c9bd6c5f6_9_1",
@@ -3847,7 +3848,30 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c9bd6c5f6_8_1",
+      "step_id": "step_assertDeployedRuntimeReady_c9bd6c5f6_8_1",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\nfrom urllib.error import HTTPError, URLError\nfrom urllib.parse import urlsplit, urlunsplit\nfrom urllib.request import HTTPRedirectHandler, Request, build_opener\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nenvironment = project / \"env\" / \".env.dev\"\nvalues = []\nfor raw_line in environment.read_text(encoding=\"utf-8\").splitlines():\n    line = raw_line.strip()\n    if not line or line.startswith(\"#\"):\n        continue\n    name, separator, value = line.partition(\"=\")\n    if separator and name.strip() == \"BOT_ENDPOINT\":\n        values.append(value.strip())\nif len(values) != 1 or not values[0]:\n    raise AssertionError(\"The deployed bot endpoint is unavailable\")\nendpoint = values[0]\nif len(endpoint) >= 2 and endpoint[0] == endpoint[-1] and endpoint[0] in {\"'\", '\"'}:\n    endpoint = endpoint[1:-1]\ntry:\n    parsed = urlsplit(endpoint)\n    if (\n        parsed.scheme != \"https\"\n        or not parsed.hostname\n        or not parsed.hostname.endswith(\".azurewebsites.net\")\n        or parsed.username is not None\n        or parsed.password is not None\n        or parsed.port is not None\n        or parsed.path not in {\"\", \"/\"}\n        or parsed.query\n        or parsed.fragment\n    ):\n        raise ValueError\nexcept ValueError:\n    raise AssertionError(\"The deployed bot endpoint is invalid\") from None\nurl = urlunsplit((\"https\", parsed.netloc, \"/api/messages\", \"\", \"\"))\nrequest = Request(\n    url,\n    data=b\"\",\n    headers={\"Content-Type\": \"application/json\"},\n    method=\"POST\",\n)\n\nclass NoRedirect(HTTPRedirectHandler):\n    def redirect_request(self, req, fp, code, msg, headers, newurl):\n        return None\n\ntry:\n    with build_opener(NoRedirect).open(request, timeout=15) as response:\n        status = response.status\nexcept HTTPError as error:\n    status = error.code\nexcept (OSError, URLError, ValueError):\n    raise AssertionError(\"The deployed bot runtime is not ready\") from None\nif status not in {400, 401, 403, 415}:\n    raise AssertionError(\"The deployed bot runtime is not ready\")\nPY\n```"
+      },
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify that the deployed bot runtime owns its message route, do not use /workspace, and do not log the endpoint or environment file contents.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertNotificationContains_assert_c9bd6c5f6_7_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "readiness:deployed-runtime",
+        "step_retry_timeout:600"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c9bd6c5f6_8_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3859,7 +3883,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c9bd6c5f6_7_5"
+        "step_assertDeployedRuntimeReady_c9bd6c5f6_8_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3869,7 +3893,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c9bd6c5f6_8_1",
+      "step_id": "step_executeCommand_assertPalette_c9bd6c5f6_8_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3879,7 +3903,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c9bd6c5f6_8_1"
+        "step_executeCommand_open_c9bd6c5f6_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3890,7 +3914,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c9bd6c5f6_8_1",
+      "step_id": "step_executeCommand_filter_c9bd6c5f6_8_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3902,7 +3926,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c9bd6c5f6_8_1"
+        "step_executeCommand_assertPalette_c9bd6c5f6_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3912,7 +3936,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c9bd6c5f6_8_1",
+      "step_id": "step_executeCommand_assertCommand_c9bd6c5f6_8_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3922,7 +3946,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c9bd6c5f6_8_1"
+        "step_executeCommand_filter_c9bd6c5f6_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3933,7 +3957,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c9bd6c5f6_8_1",
+      "step_id": "step_executeCommand_execute_c9bd6c5f6_8_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3945,7 +3969,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c9bd6c5f6_8_1"
+        "step_executeCommand_assertCommand_c9bd6c5f6_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3955,7 +3979,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_c9bd6c5f6_8_2",
+      "step_id": "step_filterOption_filter_c9bd6c5f6_8_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3967,7 +3991,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c9bd6c5f6_8_1"
+        "step_executeCommand_execute_c9bd6c5f6_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3977,7 +4001,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_c9bd6c5f6_8_2",
+      "step_id": "step_filterOption_assertOption_c9bd6c5f6_8_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3987,7 +4011,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_c9bd6c5f6_8_2"
+        "step_filterOption_filter_c9bd6c5f6_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3998,7 +4022,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_c9bd6c5f6_8_2",
+      "step_id": "step_filterOption_confirm_c9bd6c5f6_8_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -4010,7 +4034,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_c9bd6c5f6_8_2"
+        "step_filterOption_assertOption_c9bd6c5f6_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4020,7 +4044,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_assertPassword_c9bd6c5f6_8_3",
+      "step_id": "step_browserM365PasswordSignIn_assertPassword_c9bd6c5f6_8_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4030,7 +4054,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c9bd6c5f6_8_2"
+        "step_filterOption_confirm_c9bd6c5f6_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4041,7 +4065,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_focusPassword_c9bd6c5f6_8_3",
+      "step_id": "step_browserM365PasswordSignIn_focusPassword_c9bd6c5f6_8_4",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -4055,7 +4079,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_assertPassword_c9bd6c5f6_8_3"
+        "step_browserM365PasswordSignIn_assertPassword_c9bd6c5f6_8_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4065,7 +4089,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_enterPassword_c9bd6c5f6_8_3",
+      "step_id": "step_browserM365PasswordSignIn_enterPassword_c9bd6c5f6_8_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -4077,7 +4101,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_focusPassword_c9bd6c5f6_8_3"
+        "step_browserM365PasswordSignIn_focusPassword_c9bd6c5f6_8_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4087,7 +4111,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_submitPassword_c9bd6c5f6_8_3",
+      "step_id": "step_browserM365PasswordSignIn_submitPassword_c9bd6c5f6_8_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -4099,7 +4123,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_enterPassword_c9bd6c5f6_8_3"
+        "step_browserM365PasswordSignIn_enterPassword_c9bd6c5f6_8_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4109,7 +4133,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_c9bd6c5f6_8_3",
+      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_c9bd6c5f6_8_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4119,7 +4143,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_submitPassword_c9bd6c5f6_8_3"
+        "step_browserM365PasswordSignIn_submitPassword_c9bd6c5f6_8_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4130,7 +4154,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_c9bd6c5f6_8_3",
+      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_c9bd6c5f6_8_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -4142,7 +4166,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_assertStaySignedIn_c9bd6c5f6_8_3"
+        "step_browserM365PasswordSignIn_assertStaySignedIn_c9bd6c5f6_8_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4153,7 +4177,7 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_c9bd6c5f6_8_4",
+      "step_id": "step_assertReady_assertReady_c9bd6c5f6_8_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4163,7 +4187,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_confirmStaySignedIn_c9bd6c5f6_8_3"
+        "step_browserM365PasswordSignIn_confirmStaySignedIn_c9bd6c5f6_8_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4184,7 +4208,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_c9bd6c5f6_8_4"
+        "step_assertReady_assertReady_c9bd6c5f6_8_5"
       ],
       "preconditions": [],
       "postconditions": [],

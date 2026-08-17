@@ -476,6 +476,9 @@ const targetAdapters = {
     },
     readySubject: teamsAppDetailsSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
+    runtimeReadiness: {
+      component: "workspace/assert-deployed-runtime-ready.json.tpl",
+    },
   },
   // The v4 TypeScript Bot and Message Extension templates title the same
   // remote Teams launch `View Remote App in Teams (Chrome)`, and so does the Tab
@@ -496,6 +499,10 @@ const targetAdapters = {
     },
     readySubject: teamsAppDetailsSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
+    runtimeReadiness: {
+      component: "workspace/assert-deployed-runtime-ready.json.tpl",
+      templates: ["default-bot", "default-message-extension"],
+    },
   },
   // The Python templates and the Teams Collaborator Agent TypeScript template
   // name the same remote Teams launch `Launch Remote (Chrome)`, without the `in
@@ -517,6 +524,9 @@ const targetAdapters = {
     },
     readySubject: teamsAppDetailsSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
+    runtimeReadiness: {
+      component: "workspace/assert-deployed-runtime-ready.json.tpl",
+    },
   },
   "Preview in Copilot (Chrome)": {
     browserAuthentication: {
@@ -550,6 +560,9 @@ const targetAdapters = {
     },
     readySubject: copilotAgentSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
+    runtimeReadiness: {
+      component: "workspace/assert-deployed-runtime-ready.json.tpl",
+    },
   },
   // General Teams Agent templates expose the same custom-engine Copilot flow
   // without the preview prefix.
@@ -565,6 +578,9 @@ const targetAdapters = {
     },
     readySubject: copilotAgentSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
+    runtimeReadiness: {
+      component: "workspace/assert-deployed-runtime-ready.json.tpl",
+    },
   },
   // The local debug profiles below carry a preLaunchTask chain that validates
   // prerequisites, registers the app, starts the tunnel, and runs the local
@@ -2137,7 +2153,19 @@ function createSemanticStepCompiler() {
     }
 
     const output = [];
-    let error = append(
+    let error;
+    if (
+      profile.runtimeReadiness !== undefined &&
+      (profile.runtimeReadiness.templates === undefined ||
+        profile.runtimeReadiness.templates.includes(state.template))
+    ) {
+      error = append(
+        output,
+        render(state, profile.runtimeReadiness.component, {}),
+      );
+      if (error) return error;
+    }
+    error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
         commandTitle: commandTitles.target,

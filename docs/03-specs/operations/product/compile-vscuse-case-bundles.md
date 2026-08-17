@@ -381,6 +381,14 @@ duplicated as case step references. A profile without lifecycle prelaunch tasks 
 explicit preceding lifecycle definitions, such as `provision` or `deploy`, required by its semantic
 adapter.
 
+A remote target whose adapter declares deployed-runtime readiness waits for the generated project's
+`BOT_ENDPOINT` to accept an unauthenticated HTTPS POST at `/api/messages` before starting its browser
+profile. The probe parses `env/.env.dev` without executing it, requires the generated Azure App
+Service origin, never prints the endpoint, and accepts the bot route's expected `400`, `401`, `403`,
+or `415` response as evidence that the application process owns the route. Other responses and
+connection failures remain retryable readiness failures. Profiles without that explicit adapter,
+including local targets, tabs, and declarative-agent previews, do not receive the probe.
+
 `open` is a separate convergent operation over the current target. `kind` identifies whether the
 surface activates an `app` or an `agent`; `destination` identifies whether success must produce
 `chat-ready` or `page-ready`. A target profile registers one activation adapter per destination it
@@ -1356,6 +1364,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 | VCB-161 | Given the Weather Agent TypeScript and JavaScript OpenAI Playground cases, each endpoint redirect uses a `playgroundEnvironment` operation that adds `OPENAI_BASE_URL` to the `envs` mapping in `m365agents.playground.yml` which writes `.localConfigs.playground`; the generated mutation must not target `m365agents.local.yml`, because the Playground launch does not consume `.localConfigs`.                                                                                                                                                                                                                                                                                                                                                                  |
 | VCB-162 | Given a checked `da/no-action` project, `workflowVersion.with.version: v1.9`, a preceding Microsoft 365 login, and `share` with the specified-users scope and an environment-backed email, compilation replaces and verifies only the top-level `m365agents.yml` version, executes the complete Share question flow without coordinates, and asserts the unsupported-workflow-version notification. The generated manual case authors `projectType`, `daTemplate`, `workspaceFolder`, and `appName` in the prompt order required by `da/no-action`, and replaces `DA_Error_Message_of_Legacy_Projects.json`; it preserves the current VSIX-to-engine compatibility contract but does not install or restart historical extension versions.                           |
 | VCB-163 | Given the invalid-character app-name attempt has returned through Workspace Folder and the overlength attempt begins, its opening visual assertion describes only the currently visible Application Name prompt and readiness for text input; it does not require the current screenshot to prove the preceding invalid-character correction history.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| VCB-164 | Given a remote target whose semantic adapter explicitly declares deployed-runtime readiness, compilation emits a CodeAgent probe before the target command that parses `BOT_ENDPOINT` from `env/.env.dev` without shell evaluation, requires the generated Azure App Service HTTPS origin, sends an empty unauthenticated POST to `/api/messages` without logging the endpoint, retries connection failures and responses other than `400`, `401`, `403`, or `415` for up to 600 seconds, and accepts one of those expected bot-route responses as proof that the application process owns the route. Targets without that explicit adapter receive no probe.                                                                                                        |
 
 ## Boundary
 
@@ -1369,5 +1378,7 @@ coordinates, omit required prompt guards, or silently choose a nearby component.
 - Defining credentials in source control.
 - Installing, activating, or restarting historical extension versions to reproduce their complete
   generated project output.
+- Sending a Bot Framework activity or validating downstream model/service health as part of remote
+  runtime readiness.
 - Proving internal capability or tool invocation through traces, network interception, citations,
   or action-card structure in the V1 `chat` check.

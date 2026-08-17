@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const fsSync = require("node:fs");
 const fs = require("node:fs/promises");
 const os = require("node:os");
@@ -1969,6 +1970,106 @@ test("VCB-71: the Python remote Teams target opens the app through the Teams add
   assert.equal(
     plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
     true,
+  );
+});
+
+test("VCB-164: a remote bot target waits for its deployed runtime before launch", async () => {
+  const result = await compileFixture(
+    "basic-custom-engine-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  const defaultBotResult = await compileFixture(
+    "default-bot.yml",
+    (sourceText) => sourceText,
+  );
+  const tabResult = await compileFixture(
+    "non-sso-tab.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  assert.equal(
+    defaultBotResult.ok,
+    true,
+    defaultBotResult.diagnostics?.[0]?.code,
+  );
+  assert.equal(tabResult.ok, true, tabResult.diagnostics?.[0]?.code);
+  const remotePlan = result.value.find(
+    (generated) =>
+      generated.caseId === "basic-cea-py-azure-openai-remote-teams",
+  ).plan;
+  const localPlan = result.value.find(
+    (generated) => generated.caseId === "basic-cea-py-azure-openai-local-teams",
+  ).plan;
+  const defaultBotPlan = defaultBotResult.value.find(
+    (generated) => generated.caseId === "simple-bot-ts-remote-teams",
+  ).plan;
+  const tabPlan = tabResult.value.find(
+    (generated) => generated.caseId === "tab-ts-remote-teams",
+  ).plan;
+  const probeIndex = remotePlan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_assertDeployedRuntimeReady_"),
+  );
+  const targetIndex = remotePlan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Debug: Select and Start Debugging",
+  );
+
+  assert.notEqual(probeIndex, -1);
+  assert.equal(probeIndex < targetIndex, true);
+  assert.equal(remotePlan.steps[probeIndex].agent, "code");
+  assert.equal(
+    remotePlan.steps[probeIndex].tags.includes("step_retry_timeout:600"),
+    true,
+  );
+  const sample = remotePlan.steps[probeIndex].parameters.sample;
+  assert.match(sample, /parsed\.scheme != \"https\"/);
+  assert.match(sample, /\.azurewebsites\.net/);
+  assert.match(sample, /method=\"POST\"/);
+  assert.match(sample, /status not in \{400, 401, 403, 415\}/);
+  assert.doesNotMatch(sample, /print\(/);
+  const scriptMatch = sample.match(/python3 - <<'PY'\n([\s\S]+)\nPY\n```$/);
+  assert.notEqual(scriptMatch, null);
+  const projectDirectory = await fs.mkdtemp(
+    path.join(os.tmpdir(), "vscuse-runtime-readiness-"),
+  );
+  try {
+    await fs.mkdir(path.join(projectDirectory, "env"));
+    await fs.writeFile(
+      path.join(projectDirectory, "env", ".env.dev"),
+      "BOT_ENDPOINT=https://ready.azurewebsites.net:secret\n",
+      "utf8",
+    );
+    const execution = spawnSync("python3", ["-c", scriptMatch[1]], {
+      encoding: "utf8",
+      env: { ...process.env, PROJECT_DIR: projectDirectory },
+    });
+
+    assert.notEqual(execution.status, 0);
+    assert.match(execution.stderr, /The deployed bot endpoint is invalid/);
+    assert.doesNotMatch(execution.stderr, /secret/);
+  } finally {
+    await fs.rm(projectDirectory, { force: true, recursive: true });
+  }
+  assert.equal(
+    defaultBotPlan.steps.some((step) =>
+      step.step_id.startsWith("step_assertDeployedRuntimeReady_"),
+    ),
+    true,
+  );
+  assert.equal(
+    localPlan.steps.some((step) =>
+      step.step_id.startsWith("step_assertDeployedRuntimeReady_"),
+    ),
+    false,
+  );
+  assert.equal(
+    tabPlan.steps.some((step) =>
+      step.step_id.startsWith("step_assertDeployedRuntimeReady_"),
+    ),
+    false,
   );
 });
 
