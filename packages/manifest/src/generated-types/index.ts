@@ -41,7 +41,9 @@ import * as TeamsManifestV1D25 from "./teams/TeamsManifestV1D25";
 import * as TeamsManifestV1D26 from "./teams/TeamsManifestV1D26";
 import * as TeamsManifestV1D27 from "./teams/TeamsManifestV1D27";
 import * as TeamsManifestV1D28 from "./teams/TeamsManifestV1D28";
+import * as TeamsManifestV1D29 from "./teams/TeamsManifestV1D29";
 import * as TeamsManifestV1D3 from "./teams/TeamsManifestV1D3";
+import * as TeamsManifestV1D30 from "./teams/TeamsManifestV1D30";
 import * as TeamsManifestV1D4 from "./teams/TeamsManifestV1D4";
 import * as TeamsManifestV1D5 from "./teams/TeamsManifestV1D5";
 import * as TeamsManifestV1D6 from "./teams/TeamsManifestV1D6";
@@ -83,7 +85,9 @@ export {
   TeamsManifestV1D26,
   TeamsManifestV1D27,
   TeamsManifestV1D28,
+  TeamsManifestV1D29,
   TeamsManifestV1D3,
+  TeamsManifestV1D30,
   TeamsManifestV1D4,
   TeamsManifestV1D5,
   TeamsManifestV1D6,
@@ -123,9 +127,11 @@ export type TeamsManifest =
   | TeamsManifestV1D26.TeamsManifestV1D26
   | TeamsManifestV1D27.TeamsManifestV1D27
   | TeamsManifestV1D28.TeamsManifestV1D28
+  | TeamsManifestV1D29.TeamsManifestV1D29
+  | TeamsManifestV1D30.TeamsManifestV1D30
   | TeamsManifestVDevPreview.TeamsManifestVDevPreview;
 
-export type TeamsManifestLatest = TeamsManifestV1D28.TeamsManifestV1D28;
+export type TeamsManifestLatest = TeamsManifestV1D30.TeamsManifestV1D30;
 
 export { SensitivityLabel } from "./copilot/declarative-agent/DeclarativeAgentManifestV1D7";
 export { AgentSkill } from "./teams/TeamsManifestVDevPreview";
@@ -276,6 +282,14 @@ const TeamsManifestConverterMap: Converters = {
   "1.28": [
     TeamsManifestV1D28.Convert.toTeamsManifestV1D28,
     TeamsManifestV1D28.Convert.teamsManifestV1D28ToJson,
+  ],
+  "1.29": [
+    TeamsManifestV1D29.Convert.toTeamsManifestV1D29,
+    TeamsManifestV1D29.Convert.teamsManifestV1D29ToJson,
+  ],
+  "1.30": [
+    TeamsManifestV1D30.Convert.toTeamsManifestV1D30,
+    TeamsManifestV1D30.Convert.teamsManifestV1D30ToJson,
   ],
   devPreview: [
     TeamsManifestVDevPreview.Convert.toTeamsManifestVDevPreview,
