@@ -249,51 +249,38 @@ function summarizeWithCopilot(row) {
   }
 }
 
-function buildIssueBody(report) {
-  const tableRows = report.rows
-    .map(
-      (row) =>
-        `| ${row.name} | v${row.templateVersion} | v${row.latestVersion} | ${row.updateType} |`,
-    )
-    .join("\n");
+// Build a self-contained issue for one drifted manifest. Each manifest gets its
+// own issue so it maps to one atomic template-update PR, has an independent
+// open/close lifecycle, and can be assigned separately.
+function buildIssue(row) {
+  const marker = `manifest-schema-drift:${row.id}:${row.latestVersion}:${(row.latestCommitSha || "").slice(0, 10)}`;
 
-  const summarySections = report.rows
-    .filter((row) => row.drift)
-    .map((row) =>
-      [
-        `### ${row.name}`,
-        "",
-        `Template \`v${row.templateVersion}\` → latest \`v${row.latestVersion}\` (${row.updateType})`,
-        `Latest schema commit: [\`${(row.latestCommitSha || "").slice(0, 10)}\`](https://github.com/microsoft/json-schemas/commit/${row.latestCommitSha})`,
-        "",
-        `Copilot summary (source: ${row.summary.source}):`,
-        "",
-        row.summary.text,
-        "",
-      ].join("\n"),
-    )
-    .join("\n");
-
-  return [
-    `<!-- manifest-schema-drift:${report.markerVersion} -->`,
-    "## Manifest Schema Update Detected",
+  const body = [
+    `<!-- ${marker} -->`,
+    `## ${row.name} Schema Update`,
     "",
-    "One or more toolkit manifest templates are behind the canonical schema published in",
-    "`microsoft/json-schemas` — a newer schema version, or new commits to the current version's schema folder.",
+    `The toolkit \`${row.name}\` template is behind the canonical schema published in`,
+    "`microsoft/json-schemas`.",
     "",
-    "## Status Table",
+    "## Status",
     "",
     "| Manifest | Template ver | Latest ver | Update type |",
     "|---|---|---|---|",
-    tableRows,
+    `| ${row.name} | v${row.templateVersion} | v${row.latestVersion} | ${row.updateType} |`,
+    "",
+    `Template file: \`${row.templatePath}\``,
+    `Latest schema version: v${row.latestVersion}`,
+    `Latest schema commit: [\`${(row.latestCommitSha || "").slice(0, 10)}\`](https://github.com/microsoft/json-schemas/commit/${row.latestCommitSha})`,
     "",
     "## Copilot Change Summary",
     "",
-    summarySections || "_No drift detected._",
+    `_Source: ${row.summary.source}_`,
+    "",
+    row.summary.text || "_No summary generated._",
     "",
     "## Recommended Follow-up",
     "",
-    "- Review each summary above and update the affected `*.tpl` manifest to the latest schema version and `$schema` URL.",
+    `- Update \`${row.templatePath}\` to schema version v${row.latestVersion} (bump the \`$schema\` URL and the version field).`,
     "- Pay special attention to any property marked BREAKING.",
     "",
     "## Notes",
@@ -302,6 +289,13 @@ function buildIssueBody(report) {
     "",
     "Please route this for Copilot-driven upgrade work.",
   ].join("\n");
+
+  return {
+    id: row.id,
+    marker,
+    title: `Manifest schema update: ${row.name} (v${row.templateVersion} → v${row.latestVersion})`,
+    body,
+  };
 }
 
 function setOutput(name, value) {
@@ -370,18 +364,10 @@ async function main() {
 
   const driftedRows = rows.filter((row) => row.drift);
   const driftDetected = driftedRows.length > 0;
-  const driftedNames = driftedRows.map((row) => row.name);
 
-  const markerVersion = driftedRows
-    .map((row) => `${row.id}:${row.latestVersion}:${(row.latestCommitSha || "").slice(0, 10)}`)
-    .join(",");
-
-  const report = { markerVersion, rows, driftedNames };
-
-  const issueTitle = driftDetected
-    ? `Manifest schema update: ${driftedNames.join(", ")}`
-    : "Manifest schema update";
-  const issueBody = buildIssueBody(report);
+  // One issue per drifted manifest so each maps to a single atomic PR and has an
+  // independent lifecycle.
+  const issues = driftedRows.map((row) => buildIssue(row));
 
   console.log(
     JSON.stringify(
@@ -402,9 +388,7 @@ async function main() {
   );
 
   setOutput("drift_detected", String(driftDetected));
-  setOutput("drift_marker_version", markerVersion);
-  setOutput("issue_title", issueTitle);
-  setOutput("issue_body", issueBody);
+  setOutput("issues", JSON.stringify(issues));
 }
 
 main().catch((error) => {
