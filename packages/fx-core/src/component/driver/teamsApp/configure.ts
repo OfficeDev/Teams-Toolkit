@@ -126,10 +126,10 @@ export class ConfigureTeamsAppDriver implements StepDriver {
     try {
       let message = getLocalizedString("driver.teamsApp.progressBar.updateTeamsAppStepMessage");
 
-      const appDefinition = await teamsDevPortalClient.importApp(
+      const appDefinition = await teamsDevPortalClient.updateApp(
         appStudioToken,
-        archivedFile,
-        true
+        teamsAppId,
+        archivedFile
       );
       message = getLocalizedString(
         "plugins.appstudio.teamsAppUpdatedLog",

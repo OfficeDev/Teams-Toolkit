@@ -47,10 +47,8 @@ describe("Wrapped Axios Client Test", () => {
     const mockedRequest = {
       method: "POST",
       baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-      url: "/amer/api/appdefinitions/v2/import",
-      params: {
-        overwriteIfAppAlreadyExists: true,
-      },
+      url: "/v1.0/apps/apppackage",
+      params: {},
       status: 200,
       data: {},
     } as any;
@@ -62,7 +60,7 @@ describe("Wrapped Axios Client Test", () => {
       },
       config: {
         baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-        url: "/api/appdefinitions/manifest",
+        url: "/v1.0/apps/fakeId",
         params: {},
       },
       status: 200,
@@ -76,7 +74,7 @@ describe("Wrapped Axios Client Test", () => {
       },
       config: {
         baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-        url: "/api/appdefinitions/fakeId",
+        url: "/v1.0/apps/fakeId",
         data: "Invalid JSON",
       },
       response: {
@@ -95,10 +93,8 @@ describe("Wrapped Axios Client Test", () => {
     const mockedRequest = {
       method: "POST",
       baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-      url: "/amer/api/appdefinitions/v2/import",
-      params: {
-        overwriteIfAppAlreadyExists: true,
-      },
+      url: "/v1.0/apps/apppackage",
+      params: {},
       status: 200,
       data: {},
     } as any;
@@ -110,7 +106,7 @@ describe("Wrapped Axios Client Test", () => {
       },
       config: {
         baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-        url: "/api/appdefinitions/manifest",
+        url: "/v1.0/apps/fakeId",
         params: {},
       },
       status: 200,
@@ -124,7 +120,7 @@ describe("Wrapped Axios Client Test", () => {
       },
       config: {
         baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-        url: "/api/appdefinitions/fakeId",
+        url: "/v1.0/apps/fakeId",
       },
       response: {
         status: 404,
@@ -140,10 +136,8 @@ describe("Wrapped Axios Client Test", () => {
     const mockedRequest = {
       method: "POST",
       baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-      url: "/amer/api/appdefinitions/v2/import",
-      params: {
-        overwriteIfAppAlreadyExists: true,
-      },
+      url: "/v1.0/apps/apppackage",
+      params: {},
       status: 200,
       data: {},
     } as any;
@@ -196,7 +190,7 @@ describe("Wrapped Axios Client Test", () => {
       },
       config: {
         baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-        url: "/api/appdefinitions/manifest",
+        url: "/v1.0/apps/fakeId",
         params: {},
       },
       status: 200,
@@ -257,7 +251,7 @@ describe("Wrapped Axios Client Test", () => {
       },
       config: {
         baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-        url: "/api/appdefinitions/fakeId",
+        url: "/v1.0/apps/fakeId",
       },
       response: {
         status: 404,
@@ -509,7 +503,7 @@ describe("Wrapped Axios Client Test", () => {
       },
       config: {
         baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-        url: "/api/appdefinitions/fakeId",
+        url: "/v1.0/apps/fakeId",
       },
       response: {
         status: 400,
@@ -626,7 +620,7 @@ describe("Wrapped Axios Client Test", () => {
     const mockedRequest = {
       method: "POST",
       baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-      url: "/api/botframework",
+      url: "/v1.0/botregistrations",
       params: {},
       status: 200,
       data: {
@@ -641,9 +635,9 @@ describe("Wrapped Axios Client Test", () => {
 
   it("Update bot API start telemetry", async () => {
     const mockedRequest = {
-      method: "POST",
+      method: "PUT",
       baseURL: getResourceServiceEndpoint(ResourceServiceType.TDP),
-      url: `/api/botframework/${uuid()}`,
+      url: `/v1.0/botregistrations/${uuid()}`,
       params: {},
       status: 200,
       data: {},
@@ -659,32 +653,37 @@ describe("Wrapped Axios Client Test", () => {
 
     let apiName = WrappedAxiosClient.convertUrlToApiName(
       getResourceServiceEndpoint(ResourceServiceType.TDP) +
-        "/api/appdefinitions/partnerCenterAppPackageValidation",
+        "/v1.0/appvalidation/apppackage/validate",
       "POST"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.VALIDATE_APP_PACKAGE);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) +
-        `/api/appdefinitions/${fakeId}/manifest`,
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/apps/${fakeId}/apppackage`,
+      "PUT"
+    );
+    chai.assert.equal(apiName, APP_STUDIO_API_NAMES.UPDATE_APP);
+
+    apiName = WrappedAxiosClient.convertUrlToApiName(
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/apps/${fakeId}/appPackage`,
       "GET"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.GET_APP_PACKAGE);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/api/appdefinitions/${fakeId}/owner`,
-      "POST"
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/apps/${fakeId}/owners`,
+      "PUT"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.UPDATE_OWNER);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/api/appdefinitions/${fakeId}`,
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/apps/${fakeId}`,
       "GET"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.GET_APP);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/api/appdefinitions/${fakeId}`,
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/apps/${fakeId}`,
       "DELETE"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.DELETE_APP);
@@ -759,25 +758,25 @@ describe("Wrapped Axios Client Test", () => {
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.CREATE_API_KEY);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/api/botframework/${fakeId}`,
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/botregistrations/${fakeId}`,
       "GET"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.GET_BOT);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/api/botframework/${fakeId}`,
-      "POST"
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/botregistrations/${fakeId}`,
+      "PUT"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.UPDATE_BOT);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/api/botframework/${fakeId}`,
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/botregistrations/${fakeId}`,
       "DELETE"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.DELETE_BOT);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/api/botframework`,
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/botregistrations`,
       "GET"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.LIST_BOT);
@@ -789,28 +788,27 @@ describe("Wrapped Axios Client Test", () => {
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.CREATE_AAD_APP);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/api/botframework`,
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/botregistrations`,
       "POST"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.CREATE_BOT);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
-      getResourceServiceEndpoint(ResourceServiceType.TDP) +
-        `/api/v1.0/appvalidations/appdefinition/validate`,
+      getResourceServiceEndpoint(ResourceServiceType.TDP) + `/v1.0/appvalidation/validate`,
       "POST"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.SUBMIT_APP_VALIDATION);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
       getResourceServiceEndpoint(ResourceServiceType.TDP) +
-        `/api/v1.0/appvalidations/appdefinitions/efe81961-44bc-49ae-99f8-1476caef994c`,
+        `/v1.0/appValidations/apps/efe81961-44bc-49ae-99f8-1476caef994c`,
       "GET"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.GET_APP_VALIDATION_REQUESTS);
 
     apiName = WrappedAxiosClient.convertUrlToApiName(
       getResourceServiceEndpoint(ResourceServiceType.TDP) +
-        `/api/v1.0/appvalidations/2512d616-8aac-461f-8af0-23e9b09ec650`,
+        `/v1.0/appValidations/2512d616-8aac-461f-8af0-23e9b09ec650`,
       "GET"
     );
     chai.assert.equal(apiName, APP_STUDIO_API_NAMES.GET_APP_VALIDATION_RESULT);

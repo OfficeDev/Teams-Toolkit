@@ -114,7 +114,7 @@ export class WrappedAxiosClient {
         [TelemetryProperty.Success]: TelemetrySuccess.No,
         [TelemetryProperty.ErrorMessage]: error.response
           ? JSON.stringify(error.response.data)
-          : error.message ?? "undefined",
+          : (error.message ?? "undefined"),
         "status-code": error.response?.status.toString() ?? "undefined",
         ...this.generateExtraProperties(fullPath, requestData),
       };
@@ -146,7 +146,7 @@ export class WrappedAxiosClient {
         const responseData = error.response?.data;
         const innerError =
           responseData && typeof responseData === "object"
-            ? (responseData as any).error ?? { code: "", message: "" }
+            ? ((responseData as any).error ?? { code: "", message: "" })
             : { code: "", message: "" };
         const finalMessage = `${originalMessage} (tracingId: ${tracingId}) ${
           (innerError.code as string) ?? ""
@@ -195,28 +195,28 @@ export class WrappedAxiosClient {
       if (fullPath.match(new RegExp("/api/aadapp/v2"))) {
         return APP_STUDIO_API_NAMES.CREATE_AAD_APP;
       }
-      if (fullPath.match(new RegExp("/api/appdefinitions/partnerCenterAppPackageValidation"))) {
+      if (fullPath.match(new RegExp("/v1.0/appvalidation/apppackage/validate", "i"))) {
         return APP_STUDIO_API_NAMES.VALIDATE_APP_PACKAGE;
       }
-      if (fullPath.match(new RegExp("/api/appdefinitions/v2/import"))) {
+      if (
+        upperMethod === HttpMethod.POST &&
+        fullPath.match(new RegExp("/v1.0/apps/apppackage", "i"))
+      ) {
         return APP_STUDIO_API_NAMES.CREATE_APP;
       }
-      if (fullPath.match(new RegExp("/api/appdefinitions/manifest"))) {
-        return APP_STUDIO_API_NAMES.EXISTS_IN_TENANTS;
-      }
-      if (fullPath.match(new RegExp("/api/appdefinitions/.*/manifest"))) {
-        return APP_STUDIO_API_NAMES.GET_APP_PACKAGE;
-      }
-      if (fullPath.match(new RegExp("/api/appdefinitions/.*/owner"))) {
-        return APP_STUDIO_API_NAMES.UPDATE_OWNER;
+      if (upperMethod === "PUT" && fullPath.match(new RegExp("/v1.0/apps/[^/]+/apppackage", "i"))) {
+        return APP_STUDIO_API_NAMES.UPDATE_APP;
       }
       if (
-        fullPath.match(
-          new RegExp(
-            /\/api\/appdefinitions\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/
-          )
-        )
+        upperMethod === HttpMethod.GET &&
+        fullPath.match(new RegExp("/v1.0/apps/[^/]+/appPackage", "i"))
       ) {
+        return APP_STUDIO_API_NAMES.GET_APP_PACKAGE;
+      }
+      if (fullPath.match(new RegExp("/v1.0/apps/[^/]+/owners", "i"))) {
+        return APP_STUDIO_API_NAMES.UPDATE_OWNER;
+      }
+      if (fullPath.match(new RegExp("/v1.0/apps/[^/?]+", "i"))) {
         if (upperMethod === HttpMethod.GET) {
           return APP_STUDIO_API_NAMES.GET_APP;
         }
@@ -224,8 +224,45 @@ export class WrappedAxiosClient {
           return APP_STUDIO_API_NAMES.DELETE_APP;
         }
       }
-      if (fullPath.match(new RegExp("/api/appdefinitions"))) {
+      if (fullPath.match(new RegExp("/v1.0/apps(?:\\?|$)", "i"))) {
         return APP_STUDIO_API_NAMES.LIST_APPS;
+      }
+      if (fullPath.match(new RegExp("/v1.0/botregistrations/[^/?]+", "i"))) {
+        if (upperMethod === HttpMethod.GET) {
+          return APP_STUDIO_API_NAMES.GET_BOT;
+        }
+        if (upperMethod === "PUT") {
+          return APP_STUDIO_API_NAMES.UPDATE_BOT;
+        }
+        if (upperMethod === HttpMethod.DELETE) {
+          return APP_STUDIO_API_NAMES.DELETE_BOT;
+        }
+      }
+      if (fullPath.match(new RegExp("/v1.0/botregistrations(?:\\?|$)", "i"))) {
+        if (upperMethod === HttpMethod.GET) {
+          return APP_STUDIO_API_NAMES.LIST_BOT;
+        }
+        if (upperMethod === HttpMethod.POST) {
+          return APP_STUDIO_API_NAMES.CREATE_BOT;
+        }
+      }
+      if (
+        !fullPath.match(new RegExp("/api/v1.0/", "i")) &&
+        fullPath.match(new RegExp("/v1.0/appvalidation/validate", "i"))
+      ) {
+        return APP_STUDIO_API_NAMES.SUBMIT_APP_VALIDATION;
+      }
+      if (
+        !fullPath.match(new RegExp("/api/v1.0/", "i")) &&
+        fullPath.match(new RegExp("/v1.0/appvalidations/apps/[^/?]+", "i"))
+      ) {
+        return APP_STUDIO_API_NAMES.GET_APP_VALIDATION_REQUESTS;
+      }
+      if (
+        !fullPath.match(new RegExp("/api/v1.0/", "i")) &&
+        fullPath.match(new RegExp("/v1.0/appvalidations/[^/?]+", "i"))
+      ) {
+        return APP_STUDIO_API_NAMES.GET_APP_VALIDATION_RESULT;
       }
       if (fullPath.match(new RegExp("/api/publishing/.*/appdefinitions"))) {
         return APP_STUDIO_API_NAMES.UPDATE_PUBLISHED_APP;
@@ -249,52 +286,6 @@ export class WrappedAxiosClient {
       }
       if (fullPath.match(new RegExp("/api/v1.0/apiSecretRegistrations"))) {
         return APP_STUDIO_API_NAMES.CREATE_API_KEY;
-      }
-      if (
-        fullPath.match(
-          new RegExp(
-            /\/api\/botframework\/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/
-          )
-        )
-      ) {
-        if (upperMethod === HttpMethod.GET) {
-          return APP_STUDIO_API_NAMES.GET_BOT;
-        }
-        if (upperMethod === HttpMethod.POST) {
-          return APP_STUDIO_API_NAMES.UPDATE_BOT;
-        }
-        if (upperMethod === HttpMethod.DELETE) {
-          return APP_STUDIO_API_NAMES.DELETE_BOT;
-        }
-      }
-      if (fullPath.match(new RegExp("/api/botframework"))) {
-        if (upperMethod === HttpMethod.GET) {
-          return APP_STUDIO_API_NAMES.LIST_BOT;
-        }
-        if (upperMethod === HttpMethod.POST) {
-          return APP_STUDIO_API_NAMES.CREATE_BOT;
-        }
-      }
-      if (fullPath.match(new RegExp("/api/v1.0/appvalidations/appdefinition/validate"))) {
-        return APP_STUDIO_API_NAMES.SUBMIT_APP_VALIDATION;
-      }
-      if (
-        fullPath.match(
-          new RegExp(
-            "/api/v1.0/appvalidations/appdefinitions/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-          )
-        )
-      ) {
-        return APP_STUDIO_API_NAMES.GET_APP_VALIDATION_REQUESTS;
-      }
-      if (
-        fullPath.match(
-          new RegExp(
-            "/api/v1.0/appvalidations/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-          )
-        )
-      ) {
-        return APP_STUDIO_API_NAMES.GET_APP_VALIDATION_RESULT;
       }
       if (fullPath.match(new RegExp("/api/v1.0/oAuthConfigurations/.*"))) {
         if (upperMethod === HttpMethod.GET) {
@@ -383,8 +374,8 @@ export class WrappedAxiosClient {
       properties[TelemetryPropertyKey.region] = String(this.extractRegion(fullPath));
 
       // Add bot id property
-      if (fullPath.match(new RegExp("/api/botframework"))) {
-        const regex = new RegExp(/\/api\/botframework\/([0-9a-fA-F-]+)/);
+      if (fullPath.match(new RegExp("/v1.0/botregistrations", "i"))) {
+        const regex = new RegExp(/\/v1\.0\/botregistrations\/([0-9a-fA-F-]+)/i);
         const matches = regex.exec(fullPath);
         if (matches != null && matches.length > 1) {
           properties[TelemetryProperty.BotId] = matches[1];

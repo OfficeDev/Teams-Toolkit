@@ -316,7 +316,7 @@ export async function getAppPackage(
 
     const appPackage: AppPackage = {};
 
-    const buffer = Buffer.from(data, "base64");
+    const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
     const zip = new AdmZip(buffer);
     const zipEntries = zip.getEntries(); // an array of ZipEntry records
 

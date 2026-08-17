@@ -322,6 +322,7 @@ export class ErrorMessages {
 
 export class APP_STUDIO_API_NAMES {
   public static readonly CREATE_APP = "create-app";
+  public static readonly UPDATE_APP = "update-app";
   public static readonly CREATE_AAD_APP = "create-aad-app";
   public static readonly GET_APP = "get-app";
   public static readonly LIST_APPS = "list-app";
