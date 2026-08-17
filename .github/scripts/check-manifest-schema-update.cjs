@@ -90,7 +90,9 @@ function readTemplateVersion(manifest) {
   const match = content.match(
     new RegExp(`"${manifest.versionField}"\\s*:\\s*"([^"]+)"`),
   );
-  return match ? match[1] : null;
+  // Some templates store the version with a leading "v" (e.g. "v1.8"); keep the
+  // internal value bare so display code can add exactly one "v".
+  return match ? match[1].replace(/^v/i, "") : null;
 }
 
 // Walk the version folders under the manifest's json-schemas path (newest first)
@@ -107,10 +109,13 @@ async function fetchLatestSchemaVersion(manifest) {
     .filter(Boolean)
     .sort((a, b) => compareVersionStrings(b, a));
 
+  if (versions.length === 0) return null;
+
   for (const version of versions) {
     try {
       const response = await fetch(manifest.schemaUrl(version), {
         method: "HEAD",
+        headers: { "User-Agent": "manifest-schema-monitor" },
         signal: AbortSignal.timeout(20000),
       });
       if (response.ok) return version;
@@ -118,7 +123,10 @@ async function fetchLatestSchemaVersion(manifest) {
       // try the next-lower version
     }
   }
-  return null;
+  // The published schema URLs can be unreachable from CI (developer.microsoft.com
+  // occasionally blocks/HEAD-rejects runner requests). The folder listing above is
+  // authoritative, so fall back to the highest version rather than reporting N/A.
+  return versions[0];
 }
 
 // Latest commit that touched this version's schema folder — used to detect
