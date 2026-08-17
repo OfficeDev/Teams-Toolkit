@@ -128,7 +128,7 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-EXISTING-API (v4, T3 InMemoryRuntime)", 
     const manifest = readJsonObject(files, "appPackage/manifest.json");
     const copilotAgents = recordProperty(manifest, "copilotAgents");
     const agents = recordArrayProperty(copilotAgents, "declarativeAgents");
-    assert.strictEqual(manifest.manifestVersion, "1.29");
+    assert.strictEqual(manifest.manifestVersion, "1.30");
     assert.strictEqual(manifest.id, "${{TEAMS_APP_ID}}");
     assert.deepStrictEqual(agents[0], {
       id: "declarativeAgent",
