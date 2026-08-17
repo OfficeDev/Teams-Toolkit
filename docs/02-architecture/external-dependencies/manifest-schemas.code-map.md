@@ -15,7 +15,7 @@ in source.
 | §1.2 Schema host path prefixes + §1.3 locale-strip | `packages/manifest/src/generated-types/index.ts` (`AppManifestUtils.getLocalSchemaSuffix`) |
 | §1.3 Schema source of record + snapshot fetcher | `packages/manifest/download.js`, `packages/manifest/src/json-schemas/` |
 | §1.4 Teams manifest platform version set and v4 output target | `templates/v4/**/manifest.json.tpl`; enforced by `packages/fx-core/tests/v4/validation/schemaReferences.test.ts` |
-| §1.4 Teams manifest local converter snapshot (currently through `1.28`) | `packages/manifest/src/generated-types/teams/TeamsManifestV1D*.ts`, `packages/manifest/src/generated-types/teams/TeamsManifestVDevPreview.ts`, `TeamsManifestConverterMap` in `packages/manifest/src/generated-types/index.ts` |
+| §1.4 Teams manifest local converter snapshot (currently through `1.30`) | `packages/manifest/src/generated-types/teams/TeamsManifestV1D*.ts`, `packages/manifest/src/generated-types/teams/TeamsManifestVDevPreview.ts`, `TeamsManifestConverterMap` in `packages/manifest/src/generated-types/index.ts` |
 | §1.4 Declarative Agent version set | `packages/manifest/src/generated-types/copilot/declarative-agent/DeclarativeAgentManifestV1D*.ts`, `DeclarativeAgentConverterMap` in `packages/manifest/src/generated-types/index.ts` |
 | §1.4 API Plugin version set | `packages/manifest/src/generated-types/copilot/plugin/ApiPluginManifestV2D*.ts`, `ApiPluginConverterMap` in `packages/manifest/src/generated-types/index.ts` |
 | §1.4 Latest-version aliases | `TeamsManifestLatest`, `DeclarativeAgentManifestLatest`, `APIPluginManifestLatest` in `packages/manifest/src/generated-types/index.ts` |
@@ -23,3 +23,4 @@ in source.
 | §1.5 Bundled local schema files (draft tag visible in `$schema` of each `.json`) | `packages/manifest/src/json-schemas/teams/**`, `packages/manifest/src/json-schemas/copilot/**`, `packages/manifest/devPreviewSchema.json` |
 | §1.6 Version-discriminator field — Teams | `manifestVersion` literal types on each `TeamsManifestV1D*.TeamsManifestV1D*` union arm in `packages/manifest/src/generated-types/index.ts` |
 | §1.6 Version-discriminator field — DA / Plugin (`schema_version` dispatch) | `DeclarativeAgentManifestConverter.jsonToManifest`, `ApiPluginManifestConverter.jsonToManifest` in `packages/manifest/src/generated-types/index.ts` |
+| §1.7 Vendored-snapshot drift from upstream `live` | `packages/manifest/src/json-schemas/teams/v1.28/MicrosoftTeams.schema.json` (de-duplicated local copy), `packages/manifest/download.js`; parity guarded by `packages/manifest/test/converterMapParity.test.ts` |

@@ -68,9 +68,14 @@ Gaps in the sequence (Teams `1.18` absent, Declarative Agent `v1.1` absent)
 are platform-side — those version numbers were never published.
 
 The v4 scaffold templates target Teams manifest `1.30`. The local
-`packages/manifest` schema and generated-type snapshot currently ends at
-`1.28`; synchronizing that package to `1.30` is a separate dependency update
-and must not be inferred from the v4 template output version alone.
+`packages/manifest` schema and generated-type snapshot covers through `1.30`,
+so `TeamsManifestLatest` is the `1.30` shape. The two still move
+independently: the package snapshot may lead or lag the template output
+version, and neither may be inferred from the other.
+
+Syncing `packages/manifest` to a newly published version is a deliberate
+dependency update — see §1.7 for why the upstream copy cannot be taken
+wholesale.
 
 ### 1.5 JSON Schema draft used
 
@@ -95,6 +100,19 @@ lockstep.
 
 The `$schema` URL on the manifest, when present, is informational for tools
 and editors; the canonical discriminator is the version field above.
+
+### 1.7 Upstream `live` is not always byte-clean
+
+The vendored copies under `packages/manifest/src/json-schemas/` are not a
+verbatim mirror of `microsoft/json-schemas@live`. As of this writing
+`teams/v1.28/MicrosoftTeams.schema.json` upstream contains the same JSON
+document concatenated twice, which is not parseable JSON; the local copy holds
+the de-duplicated single document. `download.js` replaces the `teams/` and
+`copilot/` trees wholesale, so a blanket re-run re-introduces that corruption
+and rewrites unrelated versions.
+
+When adding a version, copy in only the new version folders and validate that
+each file parses before running `npm run convert`.
 
 ## 2. Constraints derived from these facts
 

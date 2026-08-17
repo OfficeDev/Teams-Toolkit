@@ -81,10 +81,8 @@ describe("Converter map parity with json-schemas folders", () => {
       folderName === "vDevPreview" ? "devPreview" : folderName.replace(/^v/, "");
 
     // v1.0 has historically been intentionally absent from TeamsManifestConverterMap.
-    // v1.28 has a local schema (v1.27 + agentSkills) but no dedicated generated types
-    // file yet — the fallback raw-parse path handles it correctly.
     // Add to this list if a future version is deliberately skipped, with a short reason.
-    const knownExemptions = new Set<string>(["1.0", "1.28"]);
+    const knownExemptions = new Set<string>(["1.0"]);
 
     const missing = versions
       .map(toMapKey)
