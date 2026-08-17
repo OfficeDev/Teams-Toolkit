@@ -9,13 +9,14 @@ This is the vertical contract for the native v4 Teams tab create package. The pa
 
 ## Acceptance Criteria
 
-| ID | Tier | Given | When | Then |
-|----|------|-------|------|------|
-| SCN-CREATE-NONSSO-TAB-01 | L1 | empty target and TypeScript language | scaffold completes | the render phase writes the Teams tab project file set (`.tpl` stripped) including `.vscode`, `appPackage`, `src`, `infra`, env, yaml, and package files |
-| SCN-CREATE-NONSSO-TAB-02 | L1 | rendered TypeScript `package.json` and manifest | render | package `name` is the lower-case safe project name; manifest app names use the caller floor `appName` and preserve `${{APP_NAME_SUFFIX}}` |
-| SCN-CREATE-NONSSO-TAB-03 | L1 | the Teams tab descriptor | inspect languages | the descriptor exposes TypeScript only |
-| SCN-CREATE-NONSSO-TAB-04 | L1 | empty target | scaffold | only the `require-empty-target` step runs; no post-render scaffold injection is run |
-| SCN-CREATE-NONSSO-TAB-05 | L1 | non-empty target | scaffold | `require-empty-target` fails first with **`UserError`** and writes nothing |
+| ID                       | Runtime | Purpose       | Gate     | Harness                  | Given                                                                                   | When                                 | Then                                                                                                                                                     |
+| ------------------------ | ------- | ------------- | -------- | ------------------------ | --------------------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SCN-CREATE-NONSSO-TAB-01 | L1      | scenario      | required | InMemoryRuntime          | empty target and TypeScript language                                                    | scaffold completes                   | the render phase writes the Teams tab project file set (`.tpl` stripped) including `.vscode`, `appPackage`, `src`, `infra`, env, yaml, and package files |
+| SCN-CREATE-NONSSO-TAB-02 | L1      | scenario      | required | InMemoryRuntime          | rendered TypeScript `package.json` and manifest                                         | render                               | package `name` is the lower-case safe project name; manifest app names use the caller floor `appName` and preserve `${{APP_NAME_SUFFIX}}`                |
+| SCN-CREATE-NONSSO-TAB-03 | L1      | scenario      | required | InMemoryRuntime          | the Teams tab descriptor                                                                | inspect languages                    | the descriptor exposes TypeScript only                                                                                                                   |
+| SCN-CREATE-NONSSO-TAB-04 | L1      | scenario      | required | InMemoryRuntime          | empty target                                                                            | scaffold                             | only the `require-empty-target` step runs; no post-render scaffold injection is run                                                                      |
+| SCN-CREATE-NONSSO-TAB-05 | L1      | scenario      | required | InMemoryRuntime          | non-empty target                                                                        | scaffold                             | `require-empty-target` fails first with **`UserError`** and writes nothing                                                                               |
+| SCN-CREATE-NONSSO-TAB-06 | L1      | compatibility | required | CompatibilityDiffHarness | the v3 `basic-tab` and rendered v4 `non-sso-tab` TypeScript server build configurations | compare their unbundled tsup entries | v4 preserves the v3 `src/index.ts` entry and additionally declares its imported `src/proxy.ts` module, avoiding an omitted local module                  |
 
 ## Composed operations
 
@@ -40,6 +41,6 @@ flowchart TD
 
 This scenario does **not** assert:
 
-- Running npm, pip, local debug, provision, deploy, or preview lifecycle stages.
+- Running npm, pip, local debug, provision, deploy, or preview lifecycle stages; AC-06 compares the build configurations statically.
 - VS C# templates; VS keeps its own template channel.
 - SSO, bot, message extension, or sandboxed Teams behavior.

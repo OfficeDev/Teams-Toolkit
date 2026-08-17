@@ -321,7 +321,7 @@ export async function listCollaborator(
     inputs[QuestionNames.collaborationAppType] &&
     inputs[QuestionNames.collaborationAppType].indexOf(CollaborationConstants.AgentOptionId) > -1
   ) {
-    const parseRes = await parseShareAppActionYamlConfig(inputs.projectPath);
+    const parseRes = await parseShareAppActionYamlConfig(inputs.projectPath, inputs.env);
     if (parseRes.isErr()) {
       return err(parseRes.error);
     }
@@ -678,7 +678,7 @@ export async function grantPermission(
       inputs[QuestionNames.collaborationAppType] &&
       inputs[QuestionNames.collaborationAppType].indexOf(CollaborationConstants.AgentOptionId) > -1
     ) {
-      const parseRes = await parseShareAppActionYamlConfig(inputs.projectPath);
+      const parseRes = await parseShareAppActionYamlConfig(inputs.projectPath, inputs.env);
       if (parseRes.isErr()) {
         return err(parseRes.error);
       }

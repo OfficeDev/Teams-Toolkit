@@ -5998,6 +5998,22 @@ test("VCB-157: the overlength return assertion describes only the visible folder
   );
 });
 
+test("VCB-163: the overlength entry assertion describes only the visible app-name prompt", async () => {
+  const result = await compileFixture(
+    "feature-basic-tab-local-debug.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const promptAssertion = result.value[0].plan.steps.find((step) =>
+    step.step_id.startsWith("step_rejectedOverlengthAppName_assertPrompt_"),
+  );
+  assert.notEqual(promptAssertion, undefined);
+  assert.equal(
+    promptAssertion.description,
+    "@assertion the Application Name prompt is visible and ready for text input.",
+  );
+});
+
 test("VCB-149: addDaCapability adds the recorded Copilot connector and rejects unsafe input", () => {
   const sourceText = `version: 1
 cases:
