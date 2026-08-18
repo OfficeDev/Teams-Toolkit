@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "title": "Microsoft 365 Agentic User Template Schema",
+  "description": "Schema for Microsoft 365 Agentic User Template configuration - Development Preview version 0.1.0",
+  "required": [
+    "id",
+    "schemaVersion",
+    "agentIdentityBlueprintId"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "The JSON schema reference for this manifest"
+    },
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the agentic user template. Must contain only alphanumeric characters, dots, underscores, and hyphens.",
+      "pattern": "^[a-zA-Z0-9._-]+$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "schemaVersion": {
+      "type": "string",
+      "const": "0.1.0-preview",
+      "description": "Version of the agentic user template schema."
+    },
+    "agentIdentityBlueprintId": {
+      "type": "string",
+      "description": "Agent Identity Blueprint ID registered in Azure AD portal. Must be a valid GUID.",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+      "format": "uuid"
+    },
+    "communicationProtocol": {
+      "type": "string",
+      "description": "Protocol used for communicating with the agentic user.",
+      "enum": [
+        "activityProtocol"
+      ],
+      "default": "activityProtocol"
+    }
+  },
+  "additionalProperties": false
+}

@@ -133,7 +133,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"', '"composeExtensions": [']
+          contains: ['"manifestVersion": "1.30"', '"composeExtensions": [']
 
   scaffold-message-extension-py:
     type: scaffold

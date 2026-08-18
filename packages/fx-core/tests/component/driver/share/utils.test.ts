@@ -43,9 +43,11 @@ describe("parseShareAppActionYamlConfig", () => {
     vi.restoreAllMocks();
   });
 
-  it("should return manifestId, sharedTitleId, and sharedAppId when config is valid", async () => {
+  it("should use the specified environment when config is valid", async () => {
     const mockZipPath = createMockZipFile();
-    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("mockTemplatePath");
+    const getYmlFilePathSpy = vi
+      .spyOn(pathUtils, "getYmlFilePath")
+      .mockReturnValue("mockTemplatePath");
     vi.spyOn(metadataUtil, "parse").mockResolvedValue(
       ok({
         deploy: {
@@ -62,13 +64,15 @@ describe("parseShareAppActionYamlConfig", () => {
         },
       } as any)
     );
-    vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
+    const readEnvSpy = vi.spyOn(envUtil, "readEnv").mockResolvedValue(ok({}));
     vi.spyOn(fs, "existsSync").mockReturnValue(true);
     process.env["parseShareAppActionYamlConfigMockTitleIdName"] = "mockTitleId";
     process.env["parseShareAppActionYamlConfigMockAppIdName"] = "mockAppId";
-    const result = await parseShareAppActionYamlConfig("mockProjectPath");
+    const result = await parseShareAppActionYamlConfig("mockProjectPath", "prod");
 
     chai.assert.isTrue(result.isOk());
+    chai.assert.deepEqual(getYmlFilePathSpy.mock.calls[0], ["mockProjectPath", "prod"]);
+    chai.assert.deepEqual(readEnvSpy.mock.calls[0], ["mockProjectPath", "prod"]);
     if (result.isOk()) {
       chai.assert.deepEqual(result.value, {
         teamsappId: "mockManifestId",
@@ -77,8 +81,8 @@ describe("parseShareAppActionYamlConfig", () => {
       });
     }
 
-    process.env["parseShareAppActionYamlConfigMockTitleIdName"] = undefined;
-    process.env["parseShareAppActionYamlConfigMockAppIdName"] = undefined;
+    delete process.env["parseShareAppActionYamlConfigMockTitleIdName"];
+    delete process.env["parseShareAppActionYamlConfigMockAppIdName"];
   });
 
   it("should return error when yaml config is invalid", async () => {

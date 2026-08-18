@@ -949,7 +949,10 @@ export class FxCore extends FxCoreOpenPluginPart {
     if (!emails || emails.length === 0) {
       return err(new MissingRequiredInputError("emails", "FxCore"));
     }
-    const parseRes = await shareUtils.parseShareAppActionYamlConfig(inputs.projectPath!);
+    const parseRes = await shareUtils.parseShareAppActionYamlConfig(
+      inputs.projectPath!,
+      inputs.env
+    );
     if (parseRes.isErr()) {
       return err(parseRes.error);
     }
@@ -1046,7 +1049,10 @@ export class FxCore extends FxCoreOpenPluginPart {
         return err(new InputValidationError("emails", "Too many emails"));
       }
     }
-    const parseRes = await shareUtils.parseShareAppActionYamlConfig(inputs.projectPath!);
+    const parseRes = await shareUtils.parseShareAppActionYamlConfig(
+      inputs.projectPath!,
+      inputs.env
+    );
     if (parseRes.isErr()) {
       return err(parseRes.error);
     }

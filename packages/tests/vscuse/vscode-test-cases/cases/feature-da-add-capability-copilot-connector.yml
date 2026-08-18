@@ -39,7 +39,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"', '"declarativeAgents"']
+          contains: ['"manifestVersion": "1.30"', '"declarativeAgents"']
 
   add-copilot-connector:
     type: addDaCapability

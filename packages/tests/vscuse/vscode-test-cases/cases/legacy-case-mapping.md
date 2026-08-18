@@ -13,6 +13,9 @@ that no longer exists wherever the status is **Full**.
   until that gap closes.
 - **Not Mapped**: no generated case safely replaces the named legacy-specific behavior; the precise
   blocker is recorded below and the legacy plan is kept.
+- **Retired**: the legacy-specific behavior is intentionally no longer tested because it is not a
+  required product contract or duplicates coverage elsewhere; the legacy plan is removed without a
+  generated replacement.
 
 A generated case is still **Full** when it sends the legacy prompt and asserts an error-free reply
 where the legacy plan asserted reply wording. The wording is the model's, so asserting it would tie
@@ -198,34 +201,36 @@ and VCB-156.
 | `feature-da-no-action-add-action.yml`             | `da-no-action-add-openapi-action`                        | `da-no-action--da-no-action-add-openapi-action.json`                                           | `DA_No_Action_Add_Action.json`                                              | Full    | No-action DA scaffold followed by the recorded repair-service OpenAPI action addition and `ai-plugin.json`, OpenAPI, and `action_1` verification, without the unrelated tenant-policy provision error; see VCB-150 and VCB-154.                                              |
 | `feature-da-regenerate-action.yml`                | `da-regenerate-list-repairs`                             | `da-api-plugin-from-existing-api--da-regenerate-list-repairs.json`                             | `DA_Regenrate_Action.json`                                                  | Full    | Existing-API DA scaffold from a pinned no-auth OpenAPI revision followed by coordinate-free `listRepairs` regeneration and plugin verification; see VCB-151, VCB-154, and VCB-158.                                                                                           |
 | `feature-open-developer-portal-publish.yml`       | `simple-bot-ts-publish-developer-portal`                 | `default-bot--simple-bot-ts-publish-developer-portal.json`                                     | `Featrue_Open_DeveloperPortal_Publish.json`                                 | Full    | TypeScript Simple Bot local Teams launch, local package build, and recorded Developer Portal publish ending in `Status Submitted`; see VCB-152 through VCB-154.                                                                                                              |
-| `teams-collaborator-agent.yml`                    | `collaborator-ts-azure-openai-remote-teams`              | `teams-collaborator-agent--collaborator-ts-azure-openai-remote-teams.json`                     | `Teams_Collaborator_Agent_remote_debug.json`                                | Full    | Teams Collaborator Agent, Azure OpenAI, TypeScript, provision, deploy, and Teams remote launch; the legacy plan also stopped at launch without a chat check.                                                                                                                 |
+| `feature-da-legacy-share-error.yml`               | `da-legacy-share-error`                                  | `da-no-action--da-legacy-share-error.json`                                                     | `DA_Error_Message_of_Legacy_Projects.json`                                  | Full    | No-action DA scaffold, controlled workflow downgrade to v1.9, and coordinate-free Share prompt flow asserting the unsupported-workflow-version error; historical extension installation and restart are intentionally outside this contract; see VCB-162.                    |
 | `teams-collaborator-agent.yml`                    | `collaborator-ts-azure-openai-local-teams`               | `teams-collaborator-agent--collaborator-ts-azure-openai-local-teams.json`                      | `Teams_Collaborator_Agent_local_debug.json`                                 | Full    | Teams Collaborator Agent, Azure OpenAI, TypeScript, local Teams launch, and an action-item chat validation asserting a reply instead of the legacy model-authored wording.                                                                                                   |
 | `teams-collaborator-agent.yml`                    | `collaborator-ts-azure-openai-playground`                | `teams-collaborator-agent--collaborator-ts-azure-openai-playground.json`                       | `Teams_Collaborator_Agent_debug_in_playground.json`                         | Full    | Teams Collaborator Agent, Azure OpenAI, TypeScript, Agents Playground launch, and the legacy collaborator at-mention with a visible reply assertion.                                                                                                                         |
 
-## Legacy Weather Plans Not Mapped
+## Retired Legacy Weather Plans
 
 The legacy weather corpus was the full two LLM services by two languages by five surfaces matrix, so
 it held twenty plans. Azure OpenAI now has one-to-one generated coverage across all retained surfaces.
-The four OpenAI Copilot plans below remain recorded because their runtime contracts are not full
-replacements:
+The four OpenAI Copilot plans below are retired without generated replacements:
 `Weather_Agent_OpenAI_ts_Copilot_Local_Debug.json`, `Weather_Agent_OpenAI_ts_Copilot_Remote_Debug.json`,
 `Weather_Agent_OpenAI_js_Copilot_Local_Debug.json`, and
-`Weather_Agent_OpenAI_js_Copilot_Remote_Debug.json`. They assert one of two legacy error messages,
-which the current semantic checks do not express without adding capability.
+`Weather_Agent_OpenAI_js_Copilot_Remote_Debug.json`. They only asserted one of two generic Copilot
+error messages after configuring an invalid OpenAI key. Generated cases already cover successful
+OpenAI Copilot execution across TypeScript, JavaScript, local, and remote modes, while generated
+Weather Agent cases cover OpenAI on Teams and Playground and Copilot with Azure OpenAI.
 
 ## Retained Legacy Plans Not Mapped
 
-| Legacy plan                                   | Status     | Blocker                                                                                                                                                                                                                          |
-| --------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DA_No_Action_Add_Knowledge_Onedrive.json`    | Not Mapped | The plan is mislabeled and contains no OneDrive steps; its actual no-action DA local happy path is already covered, so duplicating it would not migrate the named OneDrive behavior.                                             |
-| `DA_No_Action_Web_Search.json`                | Not Mapped | The first branch records `https://example.com`, but the ambiguous second branch omits its URL; an `all websites` value must not be fabricated.                                                                                   |
-| `DA_With_EK_Happy_Path.json`                  | Not Mapped | Its external Document.docx fixture is neither vendored nor pinned, so the Embedded Knowledge upload and GPA assertion are not reproducible.                                                                                      |
-| `DA_Typespec_Oauth_With_Reference_Id.json`    | Not Mapped | The source replacement reads a mutable blob/main TypeSpec file; that mutable blob/main source is not pinned, so the OAuth behavior cannot be reproduced safely.                                                                  |
-| `DA_Typespec_Oauth_Without_Reference_Id.json` | Not Mapped | The source replacement reads a mutable blob/main TypeSpec file; that mutable blob/main source is not pinned, so the OAuth behavior cannot be reproduced safely.                                                                  |
-| `DA_Error_Message_of_Legacy_Projects.json`    | Not Mapped | The scenario installs another extension version, restarts extensions, reopens the project, and invokes Share; it requires an extension-version and restart compatibility harness rather than ordinary generated-case components. |
+| Legacy plan                                   | Status     | Blocker                                                                                                                                                         |
+| --------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DA_No_Action_Web_Search.json`                | Not Mapped | The first branch records `https://example.com`, but the ambiguous second branch omits its URL; an `all websites` value must not be fabricated.                  |
+| `DA_With_EK_Happy_Path.json`                  | Not Mapped | Its external Document.docx fixture is neither vendored nor pinned, so the Embedded Knowledge upload and GPA assertion are not reproducible.                     |
+| `DA_Typespec_Oauth_With_Reference_Id.json`    | Not Mapped | The source replacement reads a mutable blob/main TypeSpec file; that mutable blob/main source is not pinned, so the OAuth behavior cannot be reproduced safely. |
+| `DA_Typespec_Oauth_Without_Reference_Id.json` | Not Mapped | The source replacement reads a mutable blob/main TypeSpec file; that mutable blob/main source is not pinned, so the OAuth behavior cannot be reproduced safely. |
 
-## Legacy Plan Not Mapped
+## Retired Legacy DA Plans
 
-`DA_Add_Action_Import_Existing_API.json` is intentionally excluded and kept. It represents a broader obsolete/generic flow and does not match one generated case closely enough for replacement. The four `Basic` authentication variants are the migration sources for the existing-API bundle.
+| Legacy plan                                | Status  | Reason                                                                                                                           |
+| ------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `DA_No_Action_Add_Knowledge_Onedrive.json` | Retired | The plan is mislabeled and contains no OneDrive steps; its actual no-action DA local happy path is already covered.              |
+| `DA_Add_Action_Import_Existing_API.json`   | Retired | The obsolete generic flow is superseded: four authentication variants provide the retained coverage for the existing-API bundle. |
 
 Generated plan filenames remain owned by `plans/.vscuse-generated-plans`; this document does not change setup ownership or generation behavior.

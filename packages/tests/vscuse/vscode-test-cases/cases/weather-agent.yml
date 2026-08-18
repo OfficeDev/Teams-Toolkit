@@ -229,7 +229,7 @@ cases:
       [
         scaffold-weather-ts-openai,
         check-weather-ts,
-        redirect-openai-base-url,
+        redirect-openai-base-url-playground,
         f5-playground,
         open-app,
         check-weather-chat,
@@ -242,7 +242,7 @@ cases:
       [
         scaffold-weather-js-openai,
         check-weather-js,
-        redirect-openai-base-url,
+        redirect-openai-base-url-playground,
         f5-playground,
         open-app,
         check-weather-chat,
@@ -309,7 +309,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"']
+          contains: ['"manifestVersion": "1.30"']
 
   scaffold-weather-ts-openai:
     type: scaffold
@@ -393,6 +393,11 @@ steps:
   # travels through.
   redirect-openai-base-url:
     type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  redirect-openai-base-url-playground:
+    type: playgroundEnvironment
     with:
       OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
