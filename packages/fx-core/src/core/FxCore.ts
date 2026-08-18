@@ -2314,7 +2314,7 @@ export class FxCore extends FxCoreOpenPluginPart {
         return err(new UserCancelError());
       }
       await context.userInteraction.showMessage("warn", result.error.message, true);
-      return err(result.error);
+      return ok(undefined);
     }
 
     this.showAddKnowledgeSuccessMessage(context, inputs, agentManifestPath, knowledgeSource);
