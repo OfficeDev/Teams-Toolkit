@@ -62,11 +62,18 @@ describe("addKnowledge", async () => {
       actions: [{}],
       capabilities: [],
     });
+    await fs.writeJson("test1.json", {
+      actions: [{}],
+      capabilities: [],
+    });
   });
 
   afterEach(async () => {
     if (await fs.pathExists("fakeAgentManifest.json")) {
       await fs.unlink("fakeAgentManifest.json");
+    }
+    if (await fs.pathExists("test1.json")) {
+      await fs.unlink("test1.json");
     }
     vi.restoreAllMocks();
   });
@@ -886,14 +893,12 @@ describe("addKnowledge", async () => {
       ok("fakeAgentManifest.json")
     );
     vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
-    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
-      err(new UserError("test", "test", "test"))
-    );
+    await fs.remove("test1.json");
 
     const core = new FxCore(tools);
     for (const inputs of inputsList) {
       const result = await core.addKnowledge(inputs);
-      assert.isTrue(result.isOk());
+      assert.isTrue(result.isErr());
     }
   });
 
