@@ -65,22 +65,17 @@ jobs:
           export COPILOT_GITHUB_TOKEN=$(python3 -c "import json,os; d=json.load(open(os.path.expanduser('~/.config/github-copilot/apps.json'))); print(list(d.values())[0]['oauth_token'])")
           node ./.github/scripts/check-manifest-schema-update.cjs
 
-      - name: Create or update tracking issue
+      - name: Create or update tracking issues
         if: ${{ steps.schema_check.outputs.drift_detected == 'true' }}
         uses: actions/github-script@v7
         env:
-          ISSUE_TITLE: ${{ steps.schema_check.outputs.issue_title }}
-          ISSUE_BODY: ${{ steps.schema_check.outputs.issue_body }}
-          DRIFT_MARKER_VERSION: ${{ steps.schema_check.outputs.drift_marker_version }}
+          ISSUES_JSON: ${{ steps.schema_check.outputs.issues }}
           COPILOT_ASSIGNEE: ${{ vars.COPILOT_ASSIGNEE }}
         with:
           script: |
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const title = process.env.ISSUE_TITLE;
-            const body = process.env.ISSUE_BODY;
-            const markerVersion = process.env.DRIFT_MARKER_VERSION;
-            const marker = `<!-- manifest-schema-drift:${markerVersion} -->`;
+            const issues = JSON.parse(process.env.ISSUES_JSON || "[]");
 
             const assigneesRaw = (process.env.COPILOT_ASSIGNEE || "").trim();
             const assignees = assigneesRaw
@@ -118,50 +113,59 @@ jobs:
               per_page: 100,
             });
 
-            const existing = openIssues.find((issue) =>
-              !issue.pull_request &&
-              (issue.title === title || (issue.body || "").includes(marker))
-            );
+            for (const issue of issues) {
+              const title = issue.title;
+              const body = issue.body;
+              // Dedup per manifest: the marker prefix is `manifest-schema-drift:<id>:`
+              // so a new version for the same manifest updates its existing issue
+              // rather than opening a duplicate.
+              const markerPrefix = `<!-- manifest-schema-drift:${issue.id}:`;
 
-            if (existing) {
-              await github.rest.issues.update({
-                owner,
-                repo,
-                issue_number: existing.number,
-                title,
-                body,
-                labels: ["manifest-schema-drift", "copilot-upgrade"],
-              });
+              const existing = openIssues.find((candidate) =>
+                !candidate.pull_request &&
+                (candidate.body || "").includes(markerPrefix)
+              );
 
-              core.info(`Updated existing issue #${existing.number}`);
+              if (existing) {
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  title,
+                  body,
+                  labels: ["manifest-schema-drift", "copilot-upgrade"],
+                });
 
-              if (assignees.length > 0) {
-                try {
-                  await github.rest.issues.addAssignees({
-                    owner,
-                    repo,
-                    issue_number: existing.number,
-                    assignees,
-                  });
-                  core.info(`Assigned issue to: ${assignees.join(", ")}`);
-                } catch (error) {
-                  core.warning(`Could not assign issue: ${error.message}`);
+                core.info(`Updated existing issue #${existing.number} for ${issue.id}`);
+
+                if (assignees.length > 0) {
+                  try {
+                    await github.rest.issues.addAssignees({
+                      owner,
+                      repo,
+                      issue_number: existing.number,
+                      assignees,
+                    });
+                    core.info(`Assigned issue to: ${assignees.join(", ")}`);
+                  } catch (error) {
+                    core.warning(`Could not assign issue: ${error.message}`);
+                  }
                 }
-              }
-            } else {
-              const created = await github.rest.issues.create({
-                owner,
-                repo,
-                title,
-                body,
-                labels: ["manifest-schema-drift", "copilot-upgrade"],
-                assignees,
-              });
+              } else {
+                const created = await github.rest.issues.create({
+                  owner,
+                  repo,
+                  title,
+                  body,
+                  labels: ["manifest-schema-drift", "copilot-upgrade"],
+                  assignees,
+                });
 
-              core.info(`Created issue #${created.data.number}`);
+                core.info(`Created issue #${created.data.number} for ${issue.id}`);
 
-              if (assignees.length > 0) {
-                core.info(`Assigned to: ${assignees.join(", ")}`);
+                if (assignees.length > 0) {
+                  core.info(`Assigned to: ${assignees.join(", ")}`);
+                }
               }
             }
 

@@ -193,7 +193,7 @@ steps:
         path: appPackage/manifest.json
         expect:
           contains:
-            - '"manifestVersion": "1.29"'
+            - '"manifestVersion": "1.30"'
             - '"id": "${{TEAMS_APP_ID}}"'
             - '"id": "declarativeAgent"'
             - '"file": "declarativeAgent.json"'

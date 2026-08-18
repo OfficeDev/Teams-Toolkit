@@ -409,7 +409,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"']
+          contains: ['"manifestVersion": "1.30"']
 
   scaffold-general-js-azure-openai:
     type: scaffold

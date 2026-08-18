@@ -68,17 +68,42 @@ async function githubApi(urlPath) {
     "User-Agent": "manifest-schema-monitor",
   };
   if (token) headers.Authorization = `Bearer ${token}`;
-  try {
-    const response = await fetch(`https://api.github.com${urlPath}`, {
-      method: "GET",
-      headers,
-      signal: AbortSignal.timeout(20000),
-    });
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
+
+  // The GitHub API occasionally rate-limits or blips from CI runners. A single
+  // failed request must not collapse a manifest row to "fetch-failed", so retry
+  // a few times with backoff and log why each attempt failed.
+  const maxAttempts = 4;
+  let lastReason = "unknown";
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetch(`https://api.github.com${urlPath}`, {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(20000),
+      });
+      if (response.ok) return await response.json();
+
+      lastReason = `HTTP ${response.status}`;
+      // 403/429 with a rate-limit reset: wait until it (or backoff) elapses.
+      const remaining = response.headers.get("x-ratelimit-remaining");
+      const reset = Number(response.headers.get("x-ratelimit-reset")) * 1000;
+      if ((response.status === 403 || response.status === 429) && remaining === "0" && reset) {
+        const waitMs = Math.min(Math.max(reset - Date.now(), 0), 30000);
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+      // 404 is a real "not found" — retrying won't help.
+      if (response.status === 404) break;
+    } catch (error) {
+      lastReason = error.name === "TimeoutError" ? "timeout" : error.message;
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((r) => setTimeout(r, attempt * 1500));
+    }
   }
+  console.warn(`githubApi failed for ${urlPath}: ${lastReason}`);
+  return null;
 }
 
 // Templates carry {{...}} placeholders that break JSON.parse; the version field is
@@ -90,7 +115,9 @@ function readTemplateVersion(manifest) {
   const match = content.match(
     new RegExp(`"${manifest.versionField}"\\s*:\\s*"([^"]+)"`),
   );
-  return match ? match[1] : null;
+  // Some templates store the version with a leading "v" (e.g. "v1.8"); keep the
+  // internal value bare so display code can add exactly one "v".
+  return match ? match[1].replace(/^v/i, "") : null;
 }
 
 // Walk the version folders under the manifest's json-schemas path (newest first)
@@ -107,10 +134,13 @@ async function fetchLatestSchemaVersion(manifest) {
     .filter(Boolean)
     .sort((a, b) => compareVersionStrings(b, a));
 
+  if (versions.length === 0) return null;
+
   for (const version of versions) {
     try {
       const response = await fetch(manifest.schemaUrl(version), {
         method: "HEAD",
+        headers: { "User-Agent": "manifest-schema-monitor" },
         signal: AbortSignal.timeout(20000),
       });
       if (response.ok) return version;
@@ -118,7 +148,10 @@ async function fetchLatestSchemaVersion(manifest) {
       // try the next-lower version
     }
   }
-  return null;
+  // The published schema URLs can be unreachable from CI (developer.microsoft.com
+  // occasionally blocks/HEAD-rejects runner requests). The folder listing above is
+  // authoritative, so fall back to the highest version rather than reporting N/A.
+  return versions[0];
 }
 
 // Latest commit that touched this version's schema folder — used to detect
@@ -216,51 +249,38 @@ function summarizeWithCopilot(row) {
   }
 }
 
-function buildIssueBody(report) {
-  const tableRows = report.rows
-    .map(
-      (row) =>
-        `| ${row.name} | v${row.templateVersion} | v${row.latestVersion} | ${row.updateType} |`,
-    )
-    .join("\n");
+// Build a self-contained issue for one drifted manifest. Each manifest gets its
+// own issue so it maps to one atomic template-update PR, has an independent
+// open/close lifecycle, and can be assigned separately.
+function buildIssue(row) {
+  const marker = `manifest-schema-drift:${row.id}:${row.latestVersion}:${(row.latestCommitSha || "").slice(0, 10)}`;
 
-  const summarySections = report.rows
-    .filter((row) => row.drift)
-    .map((row) =>
-      [
-        `### ${row.name}`,
-        "",
-        `Template \`v${row.templateVersion}\` → latest \`v${row.latestVersion}\` (${row.updateType})`,
-        `Latest schema commit: [\`${(row.latestCommitSha || "").slice(0, 10)}\`](https://github.com/microsoft/json-schemas/commit/${row.latestCommitSha})`,
-        "",
-        `Copilot summary (source: ${row.summary.source}):`,
-        "",
-        row.summary.text,
-        "",
-      ].join("\n"),
-    )
-    .join("\n");
-
-  return [
-    `<!-- manifest-schema-drift:${report.markerVersion} -->`,
-    "## Manifest Schema Update Detected",
+  const body = [
+    `<!-- ${marker} -->`,
+    `## ${row.name} Schema Update`,
     "",
-    "One or more toolkit manifest templates are behind the canonical schema published in",
-    "`microsoft/json-schemas` — a newer schema version, or new commits to the current version's schema folder.",
+    `The toolkit \`${row.name}\` template is behind the canonical schema published in`,
+    "`microsoft/json-schemas`.",
     "",
-    "## Status Table",
+    "## Status",
     "",
     "| Manifest | Template ver | Latest ver | Update type |",
     "|---|---|---|---|",
-    tableRows,
+    `| ${row.name} | v${row.templateVersion} | v${row.latestVersion} | ${row.updateType} |`,
+    "",
+    `Template file: \`${row.templatePath}\``,
+    `Latest schema version: v${row.latestVersion}`,
+    `Latest schema commit: [\`${(row.latestCommitSha || "").slice(0, 10)}\`](https://github.com/microsoft/json-schemas/commit/${row.latestCommitSha})`,
     "",
     "## Copilot Change Summary",
     "",
-    summarySections || "_No drift detected._",
+    `_Source: ${row.summary.source}_`,
+    "",
+    row.summary.text || "_No summary generated._",
     "",
     "## Recommended Follow-up",
     "",
-    "- Review each summary above and update the affected `*.tpl` manifest to the latest schema version and `$schema` URL.",
+    `- Update \`${row.templatePath}\` to schema version v${row.latestVersion} (bump the \`$schema\` URL and the version field).`,
     "- Pay special attention to any property marked BREAKING.",
     "",
     "## Notes",
@@ -269,6 +289,13 @@ function buildIssueBody(report) {
     "",
     "Please route this for Copilot-driven upgrade work.",
   ].join("\n");
+
+  return {
+    id: row.id,
+    marker,
+    title: `Manifest schema update: ${row.name} (v${row.templateVersion} → v${row.latestVersion})`,
+    body,
+  };
 }
 
 function setOutput(name, value) {
@@ -337,18 +364,10 @@ async function main() {
 
   const driftedRows = rows.filter((row) => row.drift);
   const driftDetected = driftedRows.length > 0;
-  const driftedNames = driftedRows.map((row) => row.name);
 
-  const markerVersion = driftedRows
-    .map((row) => `${row.id}:${row.latestVersion}:${(row.latestCommitSha || "").slice(0, 10)}`)
-    .join(",");
-
-  const report = { markerVersion, rows, driftedNames };
-
-  const issueTitle = driftDetected
-    ? `Manifest schema update: ${driftedNames.join(", ")}`
-    : "Manifest schema update";
-  const issueBody = buildIssueBody(report);
+  // One issue per drifted manifest so each maps to a single atomic PR and has an
+  // independent lifecycle.
+  const issues = driftedRows.map((row) => buildIssue(row));
 
   console.log(
     JSON.stringify(
@@ -369,9 +388,7 @@ async function main() {
   );
 
   setOutput("drift_detected", String(driftDetected));
-  setOutput("drift_marker_version", markerVersion);
-  setOutput("issue_title", issueTitle);
-  setOutput("issue_body", issueBody);
+  setOutput("issues", JSON.stringify(issues));
 }
 
 main().catch((error) => {

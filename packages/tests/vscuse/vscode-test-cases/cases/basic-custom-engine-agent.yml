@@ -434,7 +434,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"']
+          contains: ['"manifestVersion": "1.30"']
 
   scaffold-basic-cea-js-azure-openai:
     type: scaffold
@@ -576,7 +576,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"']
+          contains: ['"manifestVersion": "1.30"']
       # The Python scaffold writes no Node project.
       - type: file
         path: package.json
