@@ -213,23 +213,52 @@ describe("openPlugin.importOpenPlugin", () => {
     chai.expect(res.value.warnings.some((warning) => warning.includes("web"))).to.equal(true);
   });
 
+  it("OPI-AUTH-08 / SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-05: falls back to OAuth for a confirmed challenge without metadata", async () => {
+    vi.mocked(mcpToolFetcher.resolveMCPOAuthMetadata).mockRejectedValue(
+      new Error("No OAuth metadata")
+    );
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+    chai
+      .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization)
+      .to.deep.equal({
+        type: "OAuthPluginVault",
+        referenceId: "demo-plugin-web-auth",
+      });
+    chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).toHaveBeenCalledOnce();
+    chai
+      .expect(
+        res.value.warnings.some(
+          (warning) =>
+            warning.includes("web") &&
+            warning.includes("could not be resolved") &&
+            warning.includes("Verify") &&
+            warning.includes("register")
+        )
+      )
+      .to.equal(true);
+  });
+
   it("OPI-AUTH-06: Auto stops before scaffolding when auth is unresolved", async () => {
     const probe = vi.mocked(mcpToolFetcher.probeMCPServerAuth);
-    const resolveMetadata = vi.mocked(mcpToolFetcher.resolveMCPOAuthMetadata);
     const cases = [
       async () =>
-        probe.mockResolvedValueOnce({ requiresAuth: false, endpointStatus: "undetermined" }),
+        probe.mockResolvedValueOnce({ requiresAuth: true, endpointStatus: "undetermined" }),
       async () =>
         probe.mockResolvedValueOnce({
-          requiresAuth: false,
+          requiresAuth: true,
           endpointStatus: "notEndpoint",
           responseStatus: 404,
         }),
       async () => probe.mockRejectedValueOnce(new Error("network unavailable")),
-      async () => {
-        probe.mockResolvedValueOnce({ requiresAuth: true, endpointStatus: "confirmed" });
-        resolveMetadata.mockRejectedValueOnce(new Error("No OAuth metadata"));
-      },
     ];
 
     for (const arrange of cases) {
@@ -246,6 +275,7 @@ describe("openPlugin.importOpenPlugin", () => {
 
       chai.expect(res.isErr()).to.equal(true);
       if (res.isErr()) chai.expect(res.error.name).to.equal("UnresolvedMcpAuth");
+      chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
       chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
       chai.expect(await fs.pathExists(outDir)).to.equal(false);
     }

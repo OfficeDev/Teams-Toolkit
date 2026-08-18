@@ -18,6 +18,7 @@ operation rather than restating its evidence rules.
 | SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-02 | L2      | CLI-E2E  | deferred | CLI command harness with controlled MCP endpoint          | the same plugin and destination inputs                                                                         | `atk import openplugin` runs non-interactively | the command exit code, generated project, and warning output match the L1 scenario oracle                                                                                                                            |
 | SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-03 | L1      | scenario | per-PR   | TempDirRuntime with network fakes                         | the selected destination is non-empty                                                                          | the fx-core importer runs                      | it returns `OutputDirectoryNotEmpty` before auth discovery and preserves the destination                                                                                                                             |
 | SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-04 | L1      | scenario | per-PR   | TempDirRuntime with network fakes                         | the source declares more than ten URL-based MCP servers                                                        | the fx-core importer runs                      | it rejects the manifest-limit violation before auth discovery or scaffolding                                                                                                                                         |
+| SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-05 | L1      | scenario | per-PR   | TempDirRuntime with MCP/OAuth and template-provider fakes | Auto receives a confirmed auth challenge but OAuth metadata cannot be resolved                                 | the fx-core importer runs                      | the destination is scaffolded with an `OAuthPluginVault` connector and deterministic placeholder reference; the result warns that the fallback type must be verified and registered                                  |
 
 ## Composed operations
 
@@ -31,8 +32,9 @@ operation rather than restating its evidence rules.
 The end-to-end behavior follows the product scenario
 [`import-open-plugin.md`](../../../01-product/scenarios/toolkit/import-open-plugin.md#flow): read and
 locally validate the source/destination, resolve authentication, map the plugin, then scaffold and
-write the project. Any local validation or unresolved authentication error terminates before
-scaffolding.
+write the project. Local validation or an unconfirmed MCP endpoint terminates before scaffolding;
+a confirmed auth challenge with incomplete metadata falls back to OAuth and continues with a
+warning.
 
 ## Executable validation
 
@@ -40,7 +42,7 @@ scaffolding.
   [`importer.test.ts`](../../../../packages/fx-core/tests/component/generator/openPlugin/importer.test.ts)
   uses temporary source/destination directories, the production parser/importer/mapper/writers, a
   static template-provider fake, and fakes only the MCP/OAuth network boundary.
-- **Traceability:** the three required L1 rows map 1:1 to scenario-tier tests in that file.
+- **Traceability:** the four required L1 rows map 1:1 to scenario-tier tests in that file.
 - **Deferred surface:** `SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-02` records the L2 CLI E2E intent and is not a
   current per-PR gate.
 
@@ -63,5 +65,8 @@ This scenario does not assert:
 ## Invariants
 
 - Guaranteed local validation failures make no outbound auth-discovery request and write no project.
-- An unresolved Auto decision writes no project or placeholder connector reference.
+- An Auto decision with an unconfirmed MCP endpoint writes no project or placeholder connector
+  reference.
+- A confirmed auth challenge with unresolved metadata writes an OAuth placeholder and a visible
+  verification warning.
 - Explicit or preserved authentication remains authoritative for each connector.

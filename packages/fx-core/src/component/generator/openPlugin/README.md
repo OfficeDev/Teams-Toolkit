@@ -39,16 +39,16 @@ atk export openplugin --path ./my-project --manifest-kind claude-plugin
 
 ## CLI options — import
 
-| Flag                  | Required    | Description                                                                                                                                                              |
-| --------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--path / -p`         | yes         | Path to the Open Plugin directory.                                                                                                                                       |
-| `--output / -o`       | no          | Destination project folder. Defaults to `./<plugin-name>`.                                                                                                               |
-| `--privacy-url`       | conditional | `developer.privacyUrl`. Required unless plugin.json carries an `x-microsoft-365-agents-toolkit` block.                                                                   |
-| `--terms-url`         | conditional | `developer.termsOfUseUrl`. Required unless plugin.json carries an `x-microsoft-365-agents-toolkit` block.                                                                |
-| `--website-url`       | no          | `developer.websiteUrl`. Falls back to plugin.json `homepage` then `author.url`.                                                                                          |
-| `--app-id`            | no          | Override the deterministic UUIDv5 manifest id.                                                                                                                           |
-| `--default-auth-type` | no          | `Auto` (default), `None`, `OAuthPluginVault`, or `ApiKeyPluginVault`. Auto probes remote HTTPS MCP endpoints and OAuth metadata, and fails when auth remains unresolved. |
-| `--package-name`      | no          | Full reverse-DNS packageName (omitted from manifest when absent).                                                                                                        |
+| Flag                  | Required    | Description                                                                                                                                                                                                              |
+| --------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--path / -p`         | yes         | Path to the Open Plugin directory.                                                                                                                                                                                       |
+| `--output / -o`       | no          | Destination project folder. Defaults to `./<plugin-name>`.                                                                                                                                                               |
+| `--privacy-url`       | conditional | `developer.privacyUrl`. Required unless plugin.json carries an `x-microsoft-365-agents-toolkit` block.                                                                                                                   |
+| `--terms-url`         | conditional | `developer.termsOfUseUrl`. Required unless plugin.json carries an `x-microsoft-365-agents-toolkit` block.                                                                                                                |
+| `--website-url`       | no          | `developer.websiteUrl`. Falls back to plugin.json `homepage` then `author.url`.                                                                                                                                          |
+| `--app-id`            | no          | Override the deterministic UUIDv5 manifest id.                                                                                                                                                                           |
+| `--default-auth-type` | no          | `Auto` (default), `None`, `OAuthPluginVault`, or `ApiKeyPluginVault`. Auto probes remote HTTPS MCP endpoints and OAuth metadata, warns on inferred or fallback choices, and fails when the endpoint cannot be confirmed. |
+| `--package-name`      | no          | Full reverse-DNS packageName (omitted from manifest when absent).                                                                                                                                                        |
 
 ## CLI options — export
 
@@ -83,16 +83,17 @@ reconstructed manifest matches the original byte-for-byte where possible.
 `--default-auth-type Auto` performs network requests for each remote HTTPS MCP URL whose auth is
 not preserved in the ATK extension block. A confirmed endpoint with resolvable OAuth metadata maps
 to `OAuthPluginVault`. A confirmed unauthenticated `initialize` response with no resolved OAuth
-metadata maps to `None`. Both outcomes produce a warning because MCP servers can defer auth to
-individual tool calls or use auth mechanisms that discovery cannot identify.
+metadata maps to `None`. A confirmed auth challenge whose metadata cannot be resolved falls back to
+`OAuthPluginVault`. Every outcome produces a warning; the fallback warning tells the developer to
+verify the authentication type and register the placeholder reference before use.
 
 Auto visits MCP URLs supplied by the source plugin, then follows OAuth metadata URLs and redirects
 returned during discovery. It does not enforce an egress allowlist. For an untrusted plugin, verify
 the URLs first or use an explicit `--default-auth-type` to skip discovery requests.
 
-If the endpoint cannot be confirmed, or it challenges for auth without resolvable OAuth metadata,
-the import stops with `UnresolvedMcpAuth`. Re-run with an explicit `--default-auth-type` after
-verifying the server's requirements. `ApiKeyPluginVault` is never inferred automatically.
+If the endpoint cannot be confirmed, the import stops with `UnresolvedMcpAuth`. Re-run with an
+explicit `--default-auth-type` after verifying the server's requirements. `ApiKeyPluginVault` is
+never inferred automatically.
 
 ## Module structure
 

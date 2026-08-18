@@ -38,6 +38,8 @@ export do not trigger discovery.
 - Authentication unresolved: Auto cannot establish an MCP endpoint/authentication result, so the
   import stops and asks the developer to verify the server and choose an explicit authentication
   type.
+- Authentication challenge without metadata: Auto falls back to OAuth, creates the project, and
+  warns the developer to verify the authentication type and register the placeholder reference.
 - Untrusted source: the developer can select an explicit authentication type to skip outbound Auto
   discovery.
 
@@ -47,8 +49,8 @@ export do not trigger discovery.
 - Creates `appPackage/manifest.json` with imported `agentSkills` and URL-based `agentConnectors`.
 - Copies imported skill and command files and creates package icons.
 - Reports warnings for skipped stdio servers, unsupported source fields, sanitized skill metadata,
-  and every authentication choice inferred by Auto.
-- Creates no project files when local validation or Auto authentication resolution fails.
+  every authentication choice inferred by Auto, and an OAuth fallback that lacks metadata.
+- Creates no project files when local validation fails or Auto cannot confirm the MCP endpoint.
 
 ## Flow
 
@@ -60,9 +62,15 @@ flowchart TD
   Validate -- Yes --> Auth{Authentication explicit or preserved?}
   Auth -- Yes --> Map[Map plugin to Toolkit project]
   Auth -- No --> Discover[Probe remote MCP and OAuth metadata]
-  Discover --> Resolved{Authentication resolved?}
-  Resolved -- No --> AuthError[Return UnresolvedMcpAuth; write nothing]
-  Resolved -- Yes --> Map
+  Discover --> Endpoint{MCP endpoint confirmed?}
+  Endpoint -- No --> AuthError[Return UnresolvedMcpAuth; write nothing]
+  Endpoint -- Yes --> Challenge{Auth challenge confirmed?}
+  Challenge -- Yes --> OAuth[Use metadata-resolved or fallback OAuth; warn]
+  Challenge -- No --> Metadata{OAuth metadata resolved?}
+  Metadata -- Yes --> OAuth
+  Metadata -- No --> None[Infer None; warn]
+  OAuth --> Map
+  None --> Map
   Map --> Scaffold[Scaffold and write project]
   Scaffold --> Done([Toolkit project ready with warnings])
 ```

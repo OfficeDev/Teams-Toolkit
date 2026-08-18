@@ -99,9 +99,11 @@ export async function resolveOpenPluginMcpAuth(
       await mcpToolFetcher.resolveMCPOAuthMetadata(probe.authMetadataUrl, undefined, serverUrl);
       authTypes[serverName] = "OAuthPluginVault";
       warnings.push(getLocalizedString("core.openPluginImport.autoAuthOAuth", serverName));
-    } catch (error) {
+    } catch {
       if (probe.requiresAuth) {
-        return err(unresolvedAuth(serverName, error));
+        authTypes[serverName] = "OAuthPluginVault";
+        warnings.push(getLocalizedString("core.openPluginImport.authFallback", serverName));
+        continue;
       }
       authTypes[serverName] = "None";
       warnings.push(getLocalizedString("core.openPluginImport.autoAuthNone", serverName));

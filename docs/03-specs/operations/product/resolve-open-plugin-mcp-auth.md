@@ -27,7 +27,8 @@ connector metadata and explicit CLI defaults remain authoritative.
 The operation returns either:
 
 - one authorization type per URL-based server plus ordered inference warnings; or
-- an unresolved-auth `UserError`, before project scaffolding or connector reference generation.
+- an unresolved-auth `UserError` when the MCP endpoint itself cannot be confirmed, before project
+  scaffolding or connector reference generation.
 
 ## Acceptance Criteria
 
@@ -38,8 +39,9 @@ The operation returns either:
 | OPI-AUTH-03 | L1      | operation-integration | per-PR | importer dependency fake + temporary plugin tree | Given Auto, a remote MCP endpoint whose `initialize` response confirms the endpoint without an auth challenge, and no resolvable OAuth metadata, when importing, then the connector uses `None`, has no `referenceId`, and the result warns that Auto inferred the choice.     |
 | OPI-AUTH-04 | L1      | operation-integration | per-PR | importer dependency fake + temporary plugin tree | Given Auto and a confirmed auth challenge with resolvable OAuth metadata, when importing, then the connector uses `OAuthPluginVault`, receives the deterministic placeholder `referenceId`, and the result warns that the reference still requires registration.               |
 | OPI-AUTH-05 | L1      | operation-integration | per-PR | importer dependency fake + temporary plugin tree | Given Auto, a successful unauthenticated `initialize`, and resolvable OAuth metadata for a server that defers auth to tool calls, when importing, then the connector uses `OAuthPluginVault` and reports the inferred placeholder warning.                                     |
-| OPI-AUTH-06 | L1      | operation-integration | per-PR | importer dependency fake + temporary plugin tree | Given Auto and a probe that is `undetermined`, reports `notEndpoint`, throws, or requires auth whose OAuth metadata cannot be resolved, when importing, then the operation returns `UnresolvedMcpAuth` before scaffolding and does not synthesize a connector reference.       |
+| OPI-AUTH-06 | L1      | operation-integration | per-PR | importer dependency fake + temporary plugin tree | Given Auto and an invalid URL or a probe that is `undetermined`, reports `notEndpoint`, or throws, when importing, then the operation returns `UnresolvedMcpAuth` before scaffolding and does not synthesize a connector reference.                                            |
 | OPI-AUTH-07 | L1      | compatibility         | per-PR | mapper unit + importer dependency fake           | Given multiple connectors, explicit ATK overrides continue to win per connector, Auto resolutions are applied by server name in deterministic order, stdio entries remain skipped, and localhost/non-HTTPS entries retain the existing `None` behavior without network access. |
+| OPI-AUTH-08 | L1      | operation-integration | per-PR | importer dependency fake + temporary plugin tree | Given Auto and a confirmed auth challenge whose OAuth metadata cannot be resolved, when importing, then the connector falls back to `OAuthPluginVault`, receives the deterministic placeholder `referenceId`, and warns that the type must be verified and registered.         |
 
 ## Flow
 
@@ -58,7 +60,7 @@ flowchart TD
   Discover --> OAuth{Metadata resolved?}
   OAuth -- Yes --> InferOAuth[Infer OAuthPluginVault and warn]
   OAuth -- No --> Challenge{Probe required auth?}
-  Challenge -- Yes --> Unresolved
+  Challenge -- Yes --> FallbackOAuth[Fallback to OAuthPluginVault and warn to verify]
   Challenge -- No --> InferNone
 ```
 
@@ -82,5 +84,7 @@ flowchart TD
 - An unresolved Auto decision never generates a project or placeholder `referenceId`.
 - A connector with `None` never has a `referenceId`.
 - Every inferred Auto decision is visible in the returned warnings.
+- A confirmed auth challenge may fall back only to `OAuthPluginVault`, with a warning that the
+  authentication type was not metadata-verified and the placeholder must be registered.
 - A failed or inconclusive `initialize` probe never becomes evidence for `None` or `OAuthPluginVault`.
 - Output and warning order are deterministic for equal resolved inputs.
