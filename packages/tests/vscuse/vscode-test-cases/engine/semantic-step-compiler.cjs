@@ -564,6 +564,9 @@ const targetAdapters = {
       first: { component: "quick-input/filter-option.json.tpl" },
       replaceFirst: {
         component: "quick-input/filter-replace-option.json.tpl",
+        optionLabel: "Launch Remote (Chrome)",
+        browserAuthenticationComponent:
+          "authentication/browser/m365-committed-sign-in.json.tpl",
       },
     },
     readySubject: copilotAgentSubject,
@@ -2179,7 +2182,11 @@ function createSemanticStepCompiler() {
       );
     }
     const profileSelection = profile.profileSelections[profileSelectionId];
-    const { component, ...profileSelectionValues } = profileSelection;
+    const {
+      browserAuthenticationComponent,
+      component,
+      ...profileSelectionValues
+    } = profileSelection;
     error = append(
       output,
       render(state, component, {
@@ -2200,7 +2207,12 @@ function createSemanticStepCompiler() {
       }
       error = append(
         output,
-        render(state, profile.browserAuthentication.component, credentials),
+        render(
+          state,
+          browserAuthenticationComponent ??
+            profile.browserAuthentication.component,
+          credentials,
+        ),
       );
       if (error) return error;
     }

@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 194,
+    "total_steps": 195,
     "name": "rag-customize-py-azure-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -196,6 +196,7 @@
       "step_browserM365SignIn_assertAccount_c38c3c3c8_9_4",
       "step_browserM365SignIn_focusAccount_c38c3c3c8_9_4",
       "step_browserM365SignIn_enterAccount_c38c3c3c8_9_4",
+      "step_browserM365SignIn_commitAccount_c38c3c3c8_9_4",
       "step_browserM365SignIn_submitAccount_c38c3c3c8_9_4",
       "step_browserM365SignIn_assertPassword_c38c3c3c8_9_4",
       "step_browserM365SignIn_enterPassword_c38c3c3c8_9_4",
@@ -4094,7 +4095,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Launch Remote in Copilot (Chrome)"
+        "text": "Launch Remote (Chrome)"
       },
       "description": "Replace the active option picker's filter with the resolved option label.",
       "content_refs": [],
@@ -4116,7 +4117,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Launch Remote in Copilot (Chrome) is visible and selectable in the filtered option picker.",
+      "description": "@assertion the option Launch Remote (Chrome) is visible and selectable in the filtered option picker.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -4223,19 +4224,41 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitAccount_c38c3c3c8_9_4",
+      "step_id": "step_browserM365SignIn_commitAccount_c38c3c3c8_9_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "tab"
       },
-      "description": "Press Enter in the focused email input to continue to password entry.",
+      "description": "Press Tab to commit the entered email and move focus to the Next button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
         "step_browserM365SignIn_enterAccount_c38c3c3c8_9_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365SignIn_submitAccount_c38c3c3c8_9_4",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter on the focused Next button to continue to password entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_commitAccount_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
