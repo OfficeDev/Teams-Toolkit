@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 115,
+    "total_steps": 118,
     "name": "rag-custom-api-py-azure-openai-playground",
     "description": {
       "owner": "",
@@ -99,9 +99,11 @@
       "step_executeCommand_filter_c6714bfb2_3_1",
       "step_executeCommand_assertCommand_c6714bfb2_3_1",
       "step_executeCommand_execute_c6714bfb2_3_1",
+      "step_filterOption_selectExistingQuery_c6714bfb2_3_2",
       "step_filterOption_filter_c6714bfb2_3_2",
       "step_filterOption_assertOption_c6714bfb2_3_2",
       "step_filterOption_confirm_c6714bfb2_3_2",
+      "step_filterOption_selectExistingQuery_c6714bfb2_3_3",
       "step_filterOption_filter_c6714bfb2_3_3",
       "step_filterOption_assertOption_c6714bfb2_3_3",
       "step_filterOption_confirm_c6714bfb2_3_3",
@@ -122,6 +124,7 @@
       "step_executeCommand_filter_c6714bfb2_4_1",
       "step_executeCommand_assertCommand_c6714bfb2_4_1",
       "step_executeCommand_execute_c6714bfb2_4_1",
+      "step_filterOption_selectExistingQuery_c6714bfb2_4_2",
       "step_filterOption_filter_c6714bfb2_4_2",
       "step_filterOption_assertOption_c6714bfb2_4_2",
       "step_filterOption_confirm_c6714bfb2_4_2",
@@ -1947,6 +1950,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_c6714bfb2_3_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c6714bfb2_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_c6714bfb2_3_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -1959,7 +1984,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c6714bfb2_3_1"
+        "step_filterOption_selectExistingQuery_c6714bfb2_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2012,6 +2037,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_c6714bfb2_3_3",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_confirm_c6714bfb2_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_c6714bfb2_3_3",
       "agent": "interaction",
       "tool": "type_text",
@@ -2024,7 +2071,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c6714bfb2_3_2"
+        "step_filterOption_selectExistingQuery_c6714bfb2_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2444,6 +2491,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_c6714bfb2_4_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c6714bfb2_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_c6714bfb2_4_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -2456,7 +2525,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c6714bfb2_4_1"
+        "step_filterOption_selectExistingQuery_c6714bfb2_4_2"
       ],
       "preconditions": [],
       "postconditions": [],

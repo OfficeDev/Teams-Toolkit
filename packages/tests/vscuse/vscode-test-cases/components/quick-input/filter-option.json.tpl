@@ -7,6 +7,23 @@
   },
   "steps": [
     {
+      "step_id": "step_filterOption_selectExistingQuery_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:quick-input", "answer_type:singleSelect"]
+    },
+    {
       "step_id": "step_filterOption_filter_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "type_text",
@@ -18,7 +35,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": [],
+      "depends_on": ["step_filterOption_selectExistingQuery_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:singleSelect"]

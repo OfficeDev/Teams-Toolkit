@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 111,
+    "total_steps": 112,
     "name": "rag-custom-api-js-openai-local-teams",
     "description": {
       "owner": "",
@@ -106,6 +106,7 @@
       "step_executeCommand_filter_c4d820bbf_6_1",
       "step_executeCommand_assertCommand_c4d820bbf_6_1",
       "step_executeCommand_execute_c4d820bbf_6_1",
+      "step_filterOption_selectExistingQuery_c4d820bbf_6_2",
       "step_filterOption_filter_c4d820bbf_6_2",
       "step_filterOption_assertOption_c4d820bbf_6_2",
       "step_filterOption_confirm_c4d820bbf_6_2",
@@ -2137,6 +2138,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_c4d820bbf_6_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c4d820bbf_6_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_c4d820bbf_6_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -2149,7 +2172,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c4d820bbf_6_1"
+        "step_filterOption_selectExistingQuery_c4d820bbf_6_2"
       ],
       "preconditions": [],
       "postconditions": [],

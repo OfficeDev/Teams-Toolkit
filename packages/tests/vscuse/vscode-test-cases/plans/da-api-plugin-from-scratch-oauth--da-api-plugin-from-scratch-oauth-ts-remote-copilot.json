@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 166,
+    "total_steps": 168,
     "name": "da-api-plugin-from-scratch-oauth-ts-remote-copilot",
     "description": {
       "owner": "",
@@ -160,12 +160,14 @@
       "step_executeCommand_filter_ca55f3144_7_1",
       "step_executeCommand_assertCommand_ca55f3144_7_1",
       "step_executeCommand_execute_ca55f3144_7_1",
+      "step_filterOption_selectExistingQuery_ca55f3144_7_2",
       "step_filterOption_filter_ca55f3144_7_2",
       "step_filterOption_assertOption_ca55f3144_7_2",
       "step_filterOption_confirm_ca55f3144_7_2",
       "step_browserM365SignIn_assertAccount_ca55f3144_7_3",
       "step_browserM365SignIn_focusAccount_ca55f3144_7_3",
       "step_browserM365SignIn_enterAccount_ca55f3144_7_3",
+      "step_browserM365SignIn_commitAccount_ca55f3144_7_3",
       "step_browserM365SignIn_submitAccount_ca55f3144_7_3",
       "step_browserM365SignIn_assertPassword_ca55f3144_7_3",
       "step_browserM365SignIn_enterPassword_ca55f3144_7_3",
@@ -3427,6 +3429,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_ca55f3144_7_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_ca55f3144_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_ca55f3144_7_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -3439,7 +3463,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_ca55f3144_7_1"
+        "step_filterOption_selectExistingQuery_ca55f3144_7_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3559,19 +3583,41 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitAccount_ca55f3144_7_3",
+      "step_id": "step_browserM365SignIn_commitAccount_ca55f3144_7_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "tab"
       },
-      "description": "Press Enter to continue to password entry.",
+      "description": "Press Tab to commit the entered account and focus the Next button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
         "step_browserM365SignIn_enterAccount_ca55f3144_7_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365SignIn_submitAccount_ca55f3144_7_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter on the focused Next button to continue to password entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_commitAccount_ca55f3144_7_3"
       ],
       "preconditions": [],
       "postconditions": [],

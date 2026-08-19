@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 110,
+    "total_steps": 111,
     "name": "rag-azure-ai-search-ts-azure-openai-playground",
     "description": {
       "owner": "",
@@ -112,6 +112,7 @@
       "step_executeCommand_filter_ca987269d_4_1",
       "step_executeCommand_assertCommand_ca987269d_4_1",
       "step_executeCommand_execute_ca987269d_4_1",
+      "step_filterOption_selectExistingQuery_ca987269d_4_2",
       "step_filterOption_filter_ca987269d_4_2",
       "step_filterOption_assertOption_ca987269d_4_2",
       "step_filterOption_confirm_ca987269d_4_2",
@@ -2225,6 +2226,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_ca987269d_4_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_ca987269d_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_ca987269d_4_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -2237,7 +2260,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_ca987269d_4_1"
+        "step_filterOption_selectExistingQuery_ca987269d_4_2"
       ],
       "preconditions": [],
       "postconditions": [],

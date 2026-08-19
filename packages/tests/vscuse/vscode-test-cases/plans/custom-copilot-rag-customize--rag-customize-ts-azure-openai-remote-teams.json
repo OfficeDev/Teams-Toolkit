@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 170,
+    "total_steps": 171,
     "name": "rag-customize-ts-azure-openai-remote-teams",
     "description": {
       "owner": "",
@@ -165,6 +165,7 @@
       "step_executeCommand_filter_c45a484e7_7_1",
       "step_executeCommand_assertCommand_c45a484e7_7_1",
       "step_executeCommand_execute_c45a484e7_7_1",
+      "step_filterOption_selectExistingQuery_c45a484e7_7_2",
       "step_filterOption_filter_c45a484e7_7_2",
       "step_filterOption_assertOption_c45a484e7_7_2",
       "step_filterOption_confirm_c45a484e7_7_2",
@@ -3524,6 +3525,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_c45a484e7_7_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c45a484e7_7_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_c45a484e7_7_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -3536,7 +3559,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c45a484e7_7_1"
+        "step_filterOption_selectExistingQuery_c45a484e7_7_2"
       ],
       "preconditions": [],
       "postconditions": [],

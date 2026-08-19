@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 185,
+    "total_steps": 189,
     "name": "general-teams-py-azure-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -79,9 +79,11 @@
       "step_executeCommand_filter_c3b344879_3_1",
       "step_executeCommand_assertCommand_c3b344879_3_1",
       "step_executeCommand_execute_c3b344879_3_1",
+      "step_filterOption_selectExistingQuery_c3b344879_3_2",
       "step_filterOption_filter_c3b344879_3_2",
       "step_filterOption_assertOption_c3b344879_3_2",
       "step_filterOption_confirm_c3b344879_3_2",
+      "step_filterOption_selectExistingQuery_c3b344879_3_3",
       "step_filterOption_filter_c3b344879_3_3",
       "step_filterOption_assertOption_c3b344879_3_3",
       "step_filterOption_confirm_c3b344879_3_3",
@@ -182,12 +184,14 @@
       "step_executeCommand_filter_c3b344879_8_1",
       "step_executeCommand_assertCommand_c3b344879_8_1",
       "step_executeCommand_execute_c3b344879_8_1",
+      "step_filterOption_selectExistingQuery_c3b344879_8_2",
       "step_filterOption_filter_c3b344879_8_2",
       "step_filterOption_assertOption_c3b344879_8_2",
       "step_filterOption_confirm_c3b344879_8_2",
       "step_browserM365SignIn_assertAccount_c3b344879_8_3",
       "step_browserM365SignIn_focusAccount_c3b344879_8_3",
       "step_browserM365SignIn_enterAccount_c3b344879_8_3",
+      "step_browserM365SignIn_commitAccount_c3b344879_8_3",
       "step_browserM365SignIn_submitAccount_c3b344879_8_3",
       "step_browserM365SignIn_assertPassword_c3b344879_8_3",
       "step_browserM365SignIn_enterPassword_c3b344879_8_3",
@@ -1586,6 +1590,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_c3b344879_3_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c3b344879_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_c3b344879_3_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -1598,7 +1624,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c3b344879_3_1"
+        "step_filterOption_selectExistingQuery_c3b344879_3_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1651,6 +1677,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_c3b344879_3_3",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_confirm_c3b344879_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_c3b344879_3_3",
       "agent": "interaction",
       "tool": "type_text",
@@ -1663,7 +1711,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c3b344879_3_2"
+        "step_filterOption_selectExistingQuery_c3b344879_3_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3907,6 +3955,28 @@
       ]
     },
     {
+      "step_id": "step_filterOption_selectExistingQuery_c3b344879_8_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select the option picker's existing query so the resolved option label replaces it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c3b344879_8_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
       "step_id": "step_filterOption_filter_c3b344879_8_2",
       "agent": "interaction",
       "tool": "type_text",
@@ -3919,7 +3989,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c3b344879_8_1"
+        "step_filterOption_selectExistingQuery_c3b344879_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4039,19 +4109,41 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitAccount_c3b344879_8_3",
+      "step_id": "step_browserM365SignIn_commitAccount_c3b344879_8_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "tab"
       },
-      "description": "Press Enter to continue to password entry.",
+      "description": "Press Tab to commit the entered account and focus the Next button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
         "step_browserM365SignIn_enterAccount_c3b344879_8_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365SignIn_submitAccount_c3b344879_8_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter on the focused Next button to continue to password entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_commitAccount_c3b344879_8_3"
       ],
       "preconditions": [],
       "postconditions": [],

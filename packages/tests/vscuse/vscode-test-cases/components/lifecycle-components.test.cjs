@@ -14,6 +14,7 @@ const substitutions = {
   dialogTitle: "Confirm provisioning\nfor dev",
   dependencyLabel: "src/requirements.txt",
   inputValue: "test value",
+  initialOptionLabel: "Preview Local in Copilot (Chrome)",
   instanceSuffix: "lifecycle_1",
   notificationText: 'stage completed "successfully"\nwith details',
   optionLabel: "Deploy",
@@ -354,9 +355,10 @@ test("target primitives expose F1, profile selection, and browser readiness beha
   assert.equal(profile.component.id, "filterOption");
   assert.deepEqual(
     profile.steps.map((step) => step.tool),
-    ["type_text", "", "key_press"],
+    ["keyboard_shortcut", "type_text", "", "key_press"],
   );
-  assert.equal(profile.steps[0].parameters.text, launchProfile);
+  assert.equal(profile.steps[0].parameters.keys, "ctrl+a");
+  assert.equal(profile.steps[1].parameters.text, launchProfile);
   assert.doesNotMatch(
     profile.steps.map((step) => step.description).join("\n"),
     /prompt titled/,
@@ -366,6 +368,33 @@ test("target primitives expose F1, profile selection, and browser readiness beha
   assert.equal(readiness.steps.length, 1);
   assert.equal(readiness.steps[0].agent, "assertion");
   assert.match(readiness.steps[0].description, /selected target is visible/);
+});
+
+test("VCB-164: target filters replace the option picker's retained query", () => {
+  for (const relativePath of [
+    "quick-input/filter-option.json.tpl",
+    "quick-input/filter-second-option.json.tpl",
+  ]) {
+    const profile = render(relativePath);
+
+    assert.equal(profile.steps[0].tool, "keyboard_shortcut");
+    assert.equal(profile.steps[0].parameters.keys, "ctrl+a");
+    assert.equal(profile.steps[1].tool, "type_text");
+  }
+});
+
+test("VCB-165: browser sign-in commits the account before submitting it", () => {
+  const signIn = render("authentication/browser/m365-sign-in.json.tpl");
+  const enterAccountIndex = signIn.steps.findIndex((step) =>
+    step.step_id.includes("_enterAccount_"),
+  );
+  const commitAccount = signIn.steps[enterAccountIndex + 1];
+  const submitAccount = signIn.steps[enterAccountIndex + 2];
+
+  assert.equal(commitAccount.tool, "key_press");
+  assert.equal(commitAccount.parameters.key, "tab");
+  assert.equal(submitAccount.tool, "key_press");
+  assert.equal(submitAccount.parameters.key, "enter");
 });
 
 test("VCB-82: the Teams app details assertions name no button caption", () => {
