@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { featureFlagManager, FeatureFlags } from "@microsoft/teamsfx-core";
-import { TelemetryClient } from "applicationinsights";
+import { Configuration, TelemetryClient } from "applicationinsights";
 import log4js from "log4js";
 import os from "os";
 import { vi } from "vitest";
@@ -64,6 +64,13 @@ describe("Telemetry Reporter", function () {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("disables ApplicationInsights internal console logging", () => {
+    const setInternalLoggingSpy = vi.spyOn(Configuration, "setInternalLogging");
+    new Reporter("real", "real", "real", "real");
+    expect(setInternalLoggingSpy.mock.calls.length > 0).to.be.true;
+    expect(setInternalLoggingSpy.mock.lastCall).deep.equals([false, false]);
   });
 
   it("getCommonProperties", () => {
