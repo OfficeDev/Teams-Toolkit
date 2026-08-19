@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 170,
+    "total_steps": 171,
     "name": "rag-customize-ts-azure-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -172,6 +172,7 @@
       "step_browserM365SignIn_assertAccount_cdfe67c35_8_3",
       "step_browserM365SignIn_focusAccount_cdfe67c35_8_3",
       "step_browserM365SignIn_enterAccount_cdfe67c35_8_3",
+      "step_browserM365SignIn_commitAccount_cdfe67c35_8_3",
       "step_browserM365SignIn_submitAccount_cdfe67c35_8_3",
       "step_browserM365SignIn_assertPassword_cdfe67c35_8_3",
       "step_browserM365SignIn_enterPassword_cdfe67c35_8_3",
@@ -3681,19 +3682,41 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitAccount_cdfe67c35_8_3",
+      "step_id": "step_browserM365SignIn_commitAccount_cdfe67c35_8_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "tab"
       },
-      "description": "Press Enter to continue to password entry.",
+      "description": "Press Tab to commit the entered email address and focus the Next button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
         "step_browserM365SignIn_enterAccount_cdfe67c35_8_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365SignIn_submitAccount_cdfe67c35_8_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter on the focused Next button to continue to password entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_commitAccount_cdfe67c35_8_3"
       ],
       "preconditions": [],
       "postconditions": [],

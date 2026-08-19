@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 193,
+    "total_steps": 195,
     "name": "rag-customize-py-azure-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -183,26 +183,28 @@
       "step_clickPrimaryAction_assertDialog_c38c3c3c8_8_4",
       "step_clickPrimaryAction_click_c38c3c3c8_8_4",
       "step_assertNotificationContains_assert_c38c3c3c8_8_5",
-      "step_executeCommand_open_c38c3c3c8_9_1",
-      "step_executeCommand_assertPalette_c38c3c3c8_9_1",
-      "step_executeCommand_filter_c38c3c3c8_9_1",
-      "step_executeCommand_assertCommand_c38c3c3c8_9_1",
-      "step_executeCommand_execute_c38c3c3c8_9_1",
-      "step_filterReplaceOption_selectAll_c38c3c3c8_9_2",
-      "step_filterReplaceOption_filter_c38c3c3c8_9_2",
-      "step_filterReplaceOption_assertOption_c38c3c3c8_9_2",
-      "step_filterReplaceOption_confirm_c38c3c3c8_9_2",
-      "step_browserM365SignIn_assertAccount_c38c3c3c8_9_3",
-      "step_browserM365SignIn_focusAccount_c38c3c3c8_9_3",
-      "step_browserM365SignIn_enterAccount_c38c3c3c8_9_3",
-      "step_browserM365SignIn_submitAccount_c38c3c3c8_9_3",
-      "step_browserM365SignIn_assertPassword_c38c3c3c8_9_3",
-      "step_browserM365SignIn_enterPassword_c38c3c3c8_9_3",
-      "step_browserM365SignIn_submitPassword_c38c3c3c8_9_3",
-      "step_browserM365SignIn_assertStaySignedIn_c38c3c3c8_9_3",
-      "step_browserM365SignIn_confirmStaySignedIn_c38c3c3c8_9_3",
-      "step_assertReady_assertReady_c38c3c3c8_9_4",
-      "step_zoomOut_zoomOut_c38c3c3c8_9_5",
+      "step_assertDeploySettled_assert_c38c3c3c8_9_1",
+      "step_executeCommand_open_c38c3c3c8_9_2",
+      "step_executeCommand_assertPalette_c38c3c3c8_9_2",
+      "step_executeCommand_filter_c38c3c3c8_9_2",
+      "step_executeCommand_assertCommand_c38c3c3c8_9_2",
+      "step_executeCommand_execute_c38c3c3c8_9_2",
+      "step_filterReplaceOption_selectAll_c38c3c3c8_9_3",
+      "step_filterReplaceOption_filter_c38c3c3c8_9_3",
+      "step_filterReplaceOption_assertOption_c38c3c3c8_9_3",
+      "step_filterReplaceOption_confirm_c38c3c3c8_9_3",
+      "step_browserM365SignIn_assertAccount_c38c3c3c8_9_4",
+      "step_browserM365SignIn_focusAccount_c38c3c3c8_9_4",
+      "step_browserM365SignIn_enterAccount_c38c3c3c8_9_4",
+      "step_browserM365SignIn_commitAccount_c38c3c3c8_9_4",
+      "step_browserM365SignIn_submitAccount_c38c3c3c8_9_4",
+      "step_browserM365SignIn_assertPassword_c38c3c3c8_9_4",
+      "step_browserM365SignIn_enterPassword_c38c3c3c8_9_4",
+      "step_browserM365SignIn_submitPassword_c38c3c3c8_9_4",
+      "step_browserM365SignIn_assertStaySignedIn_c38c3c3c8_9_4",
+      "step_browserM365SignIn_confirmStaySignedIn_c38c3c3c8_9_4",
+      "step_assertReady_assertReady_c38c3c3c8_9_5",
+      "step_zoomOut_zoomOut_c38c3c3c8_9_6",
       "step_sendCopilotMessage_assertInput_c38c3c3c8_11_1",
       "step_sendCopilotMessage_focusInput_c38c3c3c8_11_1",
       "step_sendCopilotMessage_type_c38c3c3c8_11_1",
@@ -3937,7 +3939,28 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c38c3c3c8_9_1",
+      "step_id": "step_assertDeploySettled_assert_c38c3c3c8_9_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the LIFECYCLE section no longer shows Deploying to the cloud... and the Deploy action is available.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertNotificationContains_assert_c38c3c3c8_8_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:lifecycle",
+        "action:assert-deploy-settled",
+        "step_retry_timeout: 300"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c38c3c3c8_9_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3949,7 +3972,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_c38c3c3c8_8_5"
+        "step_assertDeploySettled_assert_c38c3c3c8_9_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3959,7 +3982,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c38c3c3c8_9_1",
+      "step_id": "step_executeCommand_assertPalette_c38c3c3c8_9_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3969,7 +3992,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c38c3c3c8_9_1"
+        "step_executeCommand_open_c38c3c3c8_9_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3980,7 +4003,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c38c3c3c8_9_1",
+      "step_id": "step_executeCommand_filter_c38c3c3c8_9_2",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3992,7 +4015,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c38c3c3c8_9_1"
+        "step_executeCommand_assertPalette_c38c3c3c8_9_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4002,7 +4025,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c38c3c3c8_9_1",
+      "step_id": "step_executeCommand_assertCommand_c38c3c3c8_9_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4012,7 +4035,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c38c3c3c8_9_1"
+        "step_executeCommand_filter_c38c3c3c8_9_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4023,7 +4046,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c38c3c3c8_9_1",
+      "step_id": "step_executeCommand_execute_c38c3c3c8_9_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -4035,7 +4058,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c38c3c3c8_9_1"
+        "step_executeCommand_assertCommand_c38c3c3c8_9_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4045,7 +4068,7 @@
       ]
     },
     {
-      "step_id": "step_filterReplaceOption_selectAll_c38c3c3c8_9_2",
+      "step_id": "step_filterReplaceOption_selectAll_c38c3c3c8_9_3",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -4057,7 +4080,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c38c3c3c8_9_1"
+        "step_executeCommand_execute_c38c3c3c8_9_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4067,7 +4090,7 @@
       ]
     },
     {
-      "step_id": "step_filterReplaceOption_filter_c38c3c3c8_9_2",
+      "step_id": "step_filterReplaceOption_filter_c38c3c3c8_9_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -4079,7 +4102,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterReplaceOption_selectAll_c38c3c3c8_9_2"
+        "step_filterReplaceOption_selectAll_c38c3c3c8_9_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4089,7 +4112,7 @@
       ]
     },
     {
-      "step_id": "step_filterReplaceOption_assertOption_c38c3c3c8_9_2",
+      "step_id": "step_filterReplaceOption_assertOption_c38c3c3c8_9_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4099,7 +4122,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterReplaceOption_filter_c38c3c3c8_9_2"
+        "step_filterReplaceOption_filter_c38c3c3c8_9_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4110,7 +4133,7 @@
       ]
     },
     {
-      "step_id": "step_filterReplaceOption_confirm_c38c3c3c8_9_2",
+      "step_id": "step_filterReplaceOption_confirm_c38c3c3c8_9_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -4122,7 +4145,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterReplaceOption_assertOption_c38c3c3c8_9_2"
+        "step_filterReplaceOption_assertOption_c38c3c3c8_9_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4132,7 +4155,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_assertAccount_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_assertAccount_c38c3c3c8_9_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4142,7 +4165,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterReplaceOption_confirm_c38c3c3c8_9_2"
+        "step_filterReplaceOption_confirm_c38c3c3c8_9_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4153,7 +4176,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_focusAccount_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_focusAccount_c38c3c3c8_9_4",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -4167,7 +4190,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertAccount_c38c3c3c8_9_3"
+        "step_browserM365SignIn_assertAccount_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4177,7 +4200,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_enterAccount_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_enterAccount_c38c3c3c8_9_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -4189,7 +4212,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_focusAccount_c38c3c3c8_9_3"
+        "step_browserM365SignIn_focusAccount_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4200,19 +4223,19 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitAccount_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_commitAccount_c38c3c3c8_9_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "tab"
       },
-      "description": "Press Enter to continue to password entry.",
+      "description": "Press Tab to commit the entered email address and focus the Next button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_enterAccount_c38c3c3c8_9_3"
+        "step_browserM365SignIn_enterAccount_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4222,7 +4245,29 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_assertPassword_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_submitAccount_c38c3c3c8_9_4",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter on the focused Next button to continue to password entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_commitAccount_c38c3c3c8_9_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365SignIn_assertPassword_c38c3c3c8_9_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4232,7 +4277,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_submitAccount_c38c3c3c8_9_3"
+        "step_browserM365SignIn_submitAccount_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4243,7 +4288,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_enterPassword_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_enterPassword_c38c3c3c8_9_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -4255,7 +4300,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertPassword_c38c3c3c8_9_3"
+        "step_browserM365SignIn_assertPassword_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4265,7 +4310,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitPassword_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_submitPassword_c38c3c3c8_9_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -4277,7 +4322,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_enterPassword_c38c3c3c8_9_3"
+        "step_browserM365SignIn_enterPassword_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4287,7 +4332,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_assertStaySignedIn_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_assertStaySignedIn_c38c3c3c8_9_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4297,7 +4342,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_submitPassword_c38c3c3c8_9_3"
+        "step_browserM365SignIn_submitPassword_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4308,7 +4353,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_confirmStaySignedIn_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_confirmStaySignedIn_c38c3c3c8_9_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -4320,7 +4365,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertStaySignedIn_c38c3c3c8_9_3"
+        "step_browserM365SignIn_assertStaySignedIn_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4331,7 +4376,7 @@
       ]
     },
     {
-      "step_id": "step_assertReady_assertReady_c38c3c3c8_9_4",
+      "step_id": "step_assertReady_assertReady_c38c3c3c8_9_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -4341,7 +4386,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_c38c3c3c8_9_3"
+        "step_browserM365SignIn_confirmStaySignedIn_c38c3c3c8_9_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4352,7 +4397,7 @@
       ]
     },
     {
-      "step_id": "step_zoomOut_zoomOut_c38c3c3c8_9_5",
+      "step_id": "step_zoomOut_zoomOut_c38c3c3c8_9_6",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -4364,7 +4409,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_c38c3c3c8_9_4"
+        "step_assertReady_assertReady_c38c3c3c8_9_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4384,7 +4429,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_zoomOut_zoomOut_c38c3c3c8_9_5"
+        "step_zoomOut_zoomOut_c38c3c3c8_9_6"
       ],
       "preconditions": [],
       "postconditions": [],

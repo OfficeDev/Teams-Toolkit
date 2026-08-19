@@ -2140,7 +2140,25 @@ function createSemanticStepCompiler() {
     }
 
     const output = [];
-    let error = append(
+    const waitForDeploySettled = definition.with?.waitForDeploySettled;
+    if (
+      waitForDeploySettled !== undefined &&
+      waitForDeploySettled !== true
+    ) {
+      return failure(
+        "VCB_TARGET_DEPLOY_SETTLEMENT_INVALID",
+        "The target deploy-settlement guard must be true when declared.",
+      );
+    }
+    let error;
+    if (waitForDeploySettled) {
+      error = append(
+        output,
+        render(state, "lifecycle/assert-deploy-settled.json.tpl", {}),
+      );
+      if (error) return error;
+    }
+    error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
         commandTitle: commandTitles.target,
