@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 192,
+    "total_steps": 193,
     "name": "rag-customize-py-azure-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -192,6 +192,7 @@
       "step_filterOption_assertOption_c38c3c3c8_9_2",
       "step_filterOption_confirm_c38c3c3c8_9_2",
       "step_browserM365SignIn_assertAccount_c38c3c3c8_9_3",
+      "step_browserM365SignIn_activateBrowser_c38c3c3c8_9_3",
       "step_browserM365SignIn_focusAccount_c38c3c3c8_9_3",
       "step_browserM365SignIn_enterAccount_c38c3c3c8_9_3",
       "step_browserM365SignIn_submitAccount_c38c3c3c8_9_3",
@@ -4130,7 +4131,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_focusAccount_c38c3c3c8_9_3",
+      "step_id": "step_browserM365SignIn_activateBrowser_c38c3c3c8_9_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -4138,7 +4139,7 @@
         "x": 455,
         "y": 351
       },
-      "description": "Click the email or username input on the Microsoft sign-in page and wait for it to retain focus.",
+      "description": "Click the email or username input once to activate Chrome, then wait for the Microsoft sign-in page to settle.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -4152,6 +4153,30 @@
         "component:authentication",
         "surface:browser",
         "delay: 30"
+      ]
+    },
+    {
+      "step_id": "step_browserM365SignIn_focusAccount_c38c3c3c8_9_3",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 455,
+        "y": 351
+      },
+      "description": "Click the email or username input again after Chrome settles so it retains focus for account entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_activateBrowser_c38c3c3c8_9_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
       ]
     },
     {
