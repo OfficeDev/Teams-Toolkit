@@ -2945,7 +2945,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Copilot action-consent Allow button is visible again after the first click.",
+      "description": "@assertion the Copilot action-consent Allow button is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
