@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 106,
+    "total_steps": 105,
     "name": "rag-customize-ts-azure-openai-local-copilot",
     "description": {
       "owner": "",
@@ -107,7 +107,6 @@
       "step_browserM365SignIn_assertAccount_cadc2c30b_5_3",
       "step_browserM365SignIn_focusAccount_cadc2c30b_5_3",
       "step_browserM365SignIn_enterAccount_cadc2c30b_5_3",
-      "step_browserM365SignIn_commitAccount_cadc2c30b_5_3",
       "step_browserM365SignIn_submitAccount_cadc2c30b_5_3",
       "step_browserM365SignIn_assertPassword_cadc2c30b_5_3",
       "step_browserM365SignIn_enterPassword_cadc2c30b_5_3",
@@ -2136,7 +2135,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "delay: 30"
       ]
     },
     {
@@ -2158,18 +2158,17 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser",
-        "delay: 30"
+        "surface:browser"
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_commitAccount_cadc2c30b_5_3",
+      "step_id": "step_browserM365SignIn_submitAccount_cadc2c30b_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "tab"
+        "key": "enter"
       },
-      "description": "Press Tab to commit the entered email address and focus the Next button.",
+      "description": "Press Enter in the focused email input to continue to password entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2181,29 +2180,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
-      ]
-    },
-    {
-      "step_id": "step_browserM365SignIn_submitAccount_cadc2c30b_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter on the focused Next button to continue to password entry.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_commitAccount_cadc2c30b_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "delay: 3"
       ]
     },
     {

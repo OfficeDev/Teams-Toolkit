@@ -21,7 +21,8 @@
       "tags": [
         "component:lifecycle",
         "action:assert-deploy-settled",
-        "step_retry_timeout: 300"
+        "step_retry_timeout: 300",
+        "delay: 30"
       ]
     }
   ]

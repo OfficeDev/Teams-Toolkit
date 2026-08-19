@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 98,
+    "total_steps": 97,
     "name": "da-no-action-remote-preview",
     "description": {
       "owner": "",
@@ -99,7 +99,6 @@
       "step_browserM365SignIn_assertAccount_c60abcc38_5_3",
       "step_browserM365SignIn_focusAccount_c60abcc38_5_3",
       "step_browserM365SignIn_enterAccount_c60abcc38_5_3",
-      "step_browserM365SignIn_commitAccount_c60abcc38_5_3",
       "step_browserM365SignIn_submitAccount_c60abcc38_5_3",
       "step_browserM365SignIn_assertPassword_c60abcc38_5_3",
       "step_browserM365SignIn_enterPassword_c60abcc38_5_3",
@@ -1958,7 +1957,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "delay: 30"
       ]
     },
     {
@@ -1980,18 +1980,17 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser",
-        "delay: 30"
+        "surface:browser"
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_commitAccount_c60abcc38_5_3",
+      "step_id": "step_browserM365SignIn_submitAccount_c60abcc38_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "tab"
+        "key": "enter"
       },
-      "description": "Press Tab to commit the entered email address and focus the Next button.",
+      "description": "Press Enter in the focused email input to continue to password entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2003,29 +2002,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
-      ]
-    },
-    {
-      "step_id": "step_browserM365SignIn_submitAccount_c60abcc38_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter on the focused Next button to continue to password entry.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_commitAccount_c60abcc38_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "delay: 3"
       ]
     },
     {

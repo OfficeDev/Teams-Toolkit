@@ -2141,10 +2141,7 @@ function createSemanticStepCompiler() {
 
     const output = [];
     const waitForDeploySettled = definition.with?.waitForDeploySettled;
-    if (
-      waitForDeploySettled !== undefined &&
-      waitForDeploySettled !== true
-    ) {
+    if (waitForDeploySettled !== undefined && waitForDeploySettled !== true) {
       return failure(
         "VCB_TARGET_DEPLOY_SETTLEMENT_INVALID",
         "The target deploy-settlement guard must be true when declared.",

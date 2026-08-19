@@ -34,7 +34,7 @@
       "depends_on": ["step_browserM365SignIn_assertAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser"]
+      "tags": ["component:authentication", "surface:browser", "delay: 30"]
     },
     {
       "step_id": "step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}",
@@ -49,21 +49,6 @@
       "depends_on": ["step_browserM365SignIn_focusAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser", "delay: 30"]
-    },
-    {
-      "step_id": "step_browserM365SignIn_commitAccount_{{text:instanceSuffix}}",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": { "key": "tab" },
-      "description": "Press Tab to commit the entered email address and focus the Next button.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": ["step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}"],
-      "preconditions": [],
-      "postconditions": [],
       "tags": ["component:authentication", "surface:browser"]
     },
     {
@@ -71,15 +56,15 @@
       "agent": "interaction",
       "tool": "key_press",
       "parameters": { "key": "enter" },
-      "description": "Press Enter on the focused Next button to continue to password entry.",
+      "description": "Press Enter in the focused email input to continue to password entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_browserM365SignIn_commitAccount_{{text:instanceSuffix}}"],
+      "depends_on": ["step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser"]
+      "tags": ["component:authentication", "surface:browser", "delay: 3"]
     },
     {
       "step_id": "step_browserM365SignIn_assertPassword_{{text:instanceSuffix}}",
