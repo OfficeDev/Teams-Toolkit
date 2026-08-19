@@ -1936,7 +1936,7 @@
       "parameters": {
         "button": "left",
         "x": 429,
-        "y": 347
+        "y": 286
       },
       "description": "Click the email or username input on the Microsoft sign-in page.",
       "content_refs": [],

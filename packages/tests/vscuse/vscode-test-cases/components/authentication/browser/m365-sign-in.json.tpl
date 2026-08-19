@@ -25,7 +25,7 @@
       "step_id": "step_browserM365SignIn_focusAccount_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "click",
-      "parameters": { "button": "left", "x": 429, "y": 347 },
+      "parameters": { "button": "left", "x": 429, "y": 286 },
       "description": "Click the email or username input on the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
