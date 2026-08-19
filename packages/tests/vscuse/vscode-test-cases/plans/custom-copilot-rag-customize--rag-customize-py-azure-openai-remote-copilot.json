@@ -189,10 +189,10 @@
       "step_executeCommand_filter_c38c3c3c8_9_2",
       "step_executeCommand_assertCommand_c38c3c3c8_9_2",
       "step_executeCommand_execute_c38c3c3c8_9_2",
-      "step_filterReplaceOption_selectAll_c38c3c3c8_9_3",
-      "step_filterReplaceOption_filter_c38c3c3c8_9_3",
-      "step_filterReplaceOption_assertOption_c38c3c3c8_9_3",
-      "step_filterReplaceOption_confirm_c38c3c3c8_9_3",
+      "step_refreshFilterOption_refresh_c38c3c3c8_9_3",
+      "step_refreshFilterOption_filter_c38c3c3c8_9_3",
+      "step_refreshFilterOption_assertOption_c38c3c3c8_9_3",
+      "step_refreshFilterOption_confirm_c38c3c3c8_9_3",
       "step_browserM365SignIn_assertAccount_c38c3c3c8_9_4",
       "step_browserM365SignIn_focusAccount_c38c3c3c8_9_4",
       "step_browserM365SignIn_enterAccount_c38c3c3c8_9_4",
@@ -4069,13 +4069,13 @@
       ]
     },
     {
-      "step_id": "step_filterReplaceOption_selectAll_c38c3c3c8_9_3",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
+      "step_id": "step_refreshFilterOption_refresh_c38c3c3c8_9_3",
+      "agent": "code",
+      "tool": "",
       "parameters": {
-        "keys": "ctrl+a"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" python3 - <<'PY'\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nlaunch = (project / \".vscode\" / \"launch.json\").resolve()\ntry:\n    launch.relative_to(project)\nexcept ValueError as error:\n    raise AssertionError(\"Launch configuration escaped the project directory\") from error\ncontent = launch.read_text(encoding=\"utf-8\")\njson.loads(content)\nlaunch.write_text(content, encoding=\"utf-8\")\nPY\n```"
       },
-      "description": "Select all existing text in the active option picker.",
+      "description": "@code execute the supplied generated bash script exactly as authored to validate and rewrite the current project's .vscode/launch.json without changing its content, so Visual Studio Code refreshes the active launch-configuration picker; do not log file contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -4087,23 +4087,25 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:singleSelect"
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120",
+        "delay: 5"
       ]
     },
     {
-      "step_id": "step_filterReplaceOption_filter_c38c3c3c8_9_3",
+      "step_id": "step_refreshFilterOption_filter_c38c3c3c8_9_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Launch Remote (Chrome)"
+        "text": "Launch Remote in Copilot (Chrome)"
       },
-      "description": "Replace the active option picker's filter with the resolved option label.",
+      "description": "Type the resolved option label into the refreshed launch-configuration picker.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterReplaceOption_selectAll_c38c3c3c8_9_3"
+        "step_refreshFilterOption_refresh_c38c3c3c8_9_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4113,17 +4115,17 @@
       ]
     },
     {
-      "step_id": "step_filterReplaceOption_assertOption_c38c3c3c8_9_3",
+      "step_id": "step_refreshFilterOption_assertOption_c38c3c3c8_9_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Launch Remote (Chrome) is visible and selectable in the filtered option picker.",
+      "description": "@assertion the option Launch Remote in Copilot (Chrome) is visible and selectable in the refreshed launch-configuration picker.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterReplaceOption_filter_c38c3c3c8_9_3"
+        "step_refreshFilterOption_filter_c38c3c3c8_9_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4134,19 +4136,19 @@
       ]
     },
     {
-      "step_id": "step_filterReplaceOption_confirm_c38c3c3c8_9_3",
+      "step_id": "step_refreshFilterOption_confirm_c38c3c3c8_9_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to confirm the filtered option.",
+      "description": "Press Enter to confirm the filtered launch configuration.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterReplaceOption_assertOption_c38c3c3c8_9_3"
+        "step_refreshFilterOption_assertOption_c38c3c3c8_9_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -4166,7 +4168,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterReplaceOption_confirm_c38c3c3c8_9_3"
+        "step_refreshFilterOption_confirm_c38c3c3c8_9_3"
       ],
       "preconditions": [],
       "postconditions": [],

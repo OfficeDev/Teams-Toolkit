@@ -909,7 +909,7 @@ steps:
     type: target
     with:
       profile: "Launch Remote in Copilot (Chrome)"
-      profileSelection: replaceFirst
+      profileSelection: refreshFirst
       waitForDeploySettled: true
 
   f5-teams-remote:

@@ -562,9 +562,8 @@ const targetAdapters = {
     open: { chat: { adapter: "ready", kind: "agent" } },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
-      replaceFirst: {
-        component: "quick-input/filter-replace-option.json.tpl",
-        optionLabel: "Launch Remote (Chrome)",
+      refreshFirst: {
+        component: "quick-input/refresh-filter-option.json.tpl",
         browserAuthenticationComponent:
           "authentication/browser/m365-committed-sign-in.json.tpl",
       },
