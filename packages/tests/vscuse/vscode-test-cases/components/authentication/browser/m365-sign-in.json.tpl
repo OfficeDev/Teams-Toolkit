@@ -25,8 +25,8 @@
       "step_id": "step_browserM365SignIn_focusAccount_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "click",
-      "parameters": { "button": "left", "x": 512, "y": 292 },
-      "description": "Click the blank center of the email or username input on the Microsoft sign-in page.",
+      "parameters": { "button": "left", "x": 455, "y": 351 },
+      "description": "Click the email or username input on the Microsoft sign-in page and wait for it to retain focus.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -34,7 +34,7 @@
       "depends_on": ["step_browserM365SignIn_assertAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser"]
+      "tags": ["component:authentication", "surface:browser", "delay: 30"]
     },
     {
       "step_id": "step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}",

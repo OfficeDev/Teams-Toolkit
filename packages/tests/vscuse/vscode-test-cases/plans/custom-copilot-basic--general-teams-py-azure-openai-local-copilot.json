@@ -2479,10 +2479,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 512,
-        "y": 292
+        "x": 455,
+        "y": 351
       },
-      "description": "Click the blank center of the email or username input on the Microsoft sign-in page.",
+      "description": "Click the email or username input on the Microsoft sign-in page and wait for it to retain focus.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2494,7 +2494,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "delay: 30"
       ]
     },
     {
