@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 125,
+    "total_steps": 123,
     "name": "da-api-plugin-from-existing-api-bearer-remote-preview",
     "description": {
       "owner": "",
@@ -138,8 +138,6 @@
       "step_sendCopilotMessage_send_cccb76852_7_1",
       "step_allowCopilotAction_assert_cccb76852_7_2",
       "step_allowCopilotAction_click_cccb76852_7_2",
-      "step_allowCopilotAction_assertRepeated_cccb76852_7_2",
-      "step_allowCopilotAction_retry_cccb76852_7_2",
       "step_allowCopilotAction_assertDismissed_cccb76852_7_2"
     ],
     "tags": [
@@ -2872,55 +2870,6 @@
       ]
     },
     {
-      "step_id": "step_allowCopilotAction_assertRepeated_cccb76852_7_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Copilot action-consent Allow button is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_allowCopilotAction_click_cccb76852_7_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:copilot",
-        "entry_state:action-consent",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_allowCopilotAction_retry_cccb76852_7_2",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 333,
-        "y": 327
-      },
-      "description": "Click the \"Allow\" button again in the Microsoft 365 Copilot chat interface to accept a repeated action-consent prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_allowCopilotAction_assertRepeated_cccb76852_7_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:browser",
-        "host_surface:copilot",
-        "entry_state:action-consent",
-        "action:allow-retry",
-        "ocr:true"
-      ]
-    },
-    {
       "step_id": "step_allowCopilotAction_assertDismissed_cccb76852_7_2",
       "agent": "assertion",
       "tool": "",
@@ -2931,7 +2880,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_allowCopilotAction_retry_cccb76852_7_2"
+        "step_allowCopilotAction_click_cccb76852_7_2"
       ],
       "preconditions": [],
       "postconditions": [],
