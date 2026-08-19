@@ -2239,8 +2239,7 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser",
-        "delay: 30"
+        "surface:browser"
       ]
     },
     {
@@ -2262,7 +2261,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "delay: 30"
       ]
     },
     {
