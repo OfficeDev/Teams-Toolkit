@@ -7,18 +7,86 @@
   },
   "steps": [
     {
-      "step_id": "step_filterPrefilledOption_selectFilter_{{text:instanceSuffix}}",
+      "step_id": "step_filterPrefilledOption_clearFilter1_{{text:instanceSuffix}}",
       "agent": "interaction",
-      "tool": "keyboard_shortcut",
+      "tool": "key_press",
       "parameters": {
-        "keys": "ctrl+a"
+        "key": "backspace"
       },
-      "description": "Select the existing option-picker filter text so the resolved option label replaces it.",
+      "description": "Press Backspace to remove the final character from the existing debug filter.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:quick-input", "answer_type:singleSelect"]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_clearFilter2_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "backspace"
+      },
+      "description": "Press Backspace to remove the next character from the existing debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_filterPrefilledOption_clearFilter1_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:quick-input", "answer_type:singleSelect"]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_clearFilter3_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "backspace"
+      },
+      "description": "Press Backspace to remove the next character from the existing debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_filterPrefilledOption_clearFilter2_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:quick-input", "answer_type:singleSelect"]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_clearFilter4_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "backspace"
+      },
+      "description": "Press Backspace to remove the next character from the existing debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_filterPrefilledOption_clearFilter3_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:quick-input", "answer_type:singleSelect"]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_clearFilter5_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "backspace"
+      },
+      "description": "Press Backspace to clear the existing debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_filterPrefilledOption_clearFilter4_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:singleSelect"]
@@ -35,7 +103,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_filterPrefilledOption_selectFilter_{{text:instanceSuffix}}"],
+      "depends_on": ["step_filterPrefilledOption_clearFilter5_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:singleSelect"]

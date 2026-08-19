@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 163,
+    "total_steps": 167,
     "name": "rag-customize-js-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -158,7 +158,11 @@
       "step_executeCommand_filter_c6a4d2a52_10_1",
       "step_executeCommand_assertCommand_c6a4d2a52_10_1",
       "step_executeCommand_execute_c6a4d2a52_10_1",
-      "step_filterPrefilledOption_selectFilter_c6a4d2a52_10_2",
+      "step_filterPrefilledOption_clearFilter1_c6a4d2a52_10_2",
+      "step_filterPrefilledOption_clearFilter2_c6a4d2a52_10_2",
+      "step_filterPrefilledOption_clearFilter3_c6a4d2a52_10_2",
+      "step_filterPrefilledOption_clearFilter4_c6a4d2a52_10_2",
+      "step_filterPrefilledOption_clearFilter5_c6a4d2a52_10_2",
       "step_filterPrefilledOption_filter_c6a4d2a52_10_2",
       "step_filterPrefilledOption_assertOption_c6a4d2a52_10_2",
       "step_filterPrefilledOption_confirm_c6a4d2a52_10_2",
@@ -3365,19 +3369,107 @@
       ]
     },
     {
-      "step_id": "step_filterPrefilledOption_selectFilter_c6a4d2a52_10_2",
+      "step_id": "step_filterPrefilledOption_clearFilter1_c6a4d2a52_10_2",
       "agent": "interaction",
-      "tool": "keyboard_shortcut",
+      "tool": "key_press",
       "parameters": {
-        "keys": "ctrl+a"
+        "key": "backspace"
       },
-      "description": "Select the existing option-picker filter text so the resolved option label replaces it.",
+      "description": "Press Backspace to remove the final character from the existing debug filter.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
         "step_executeCommand_execute_c6a4d2a52_10_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_clearFilter2_c6a4d2a52_10_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "backspace"
+      },
+      "description": "Press Backspace to remove the next character from the existing debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterPrefilledOption_clearFilter1_c6a4d2a52_10_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_clearFilter3_c6a4d2a52_10_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "backspace"
+      },
+      "description": "Press Backspace to remove the next character from the existing debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterPrefilledOption_clearFilter2_c6a4d2a52_10_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_clearFilter4_c6a4d2a52_10_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "backspace"
+      },
+      "description": "Press Backspace to remove the next character from the existing debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterPrefilledOption_clearFilter3_c6a4d2a52_10_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_clearFilter5_c6a4d2a52_10_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "backspace"
+      },
+      "description": "Press Backspace to clear the existing debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterPrefilledOption_clearFilter4_c6a4d2a52_10_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3399,7 +3491,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterPrefilledOption_selectFilter_c6a4d2a52_10_2"
+        "step_filterPrefilledOption_clearFilter5_c6a4d2a52_10_2"
       ],
       "preconditions": [],
       "postconditions": [],
