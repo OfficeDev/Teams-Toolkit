@@ -395,3 +395,12 @@ test("VCB-83: the Teams app details clicks resolve their target with OCR", () =>
   assert.match(clicks[0].description, /"Add" or "Open"/);
   assert.match(clicks[1].description, /"Added successfully!" or "Let's go"/);
 });
+
+test("VCB-164: browser account entry resolves its input with OCR", () => {
+  const component = render("authentication/browser/m365-sign-in.json.tpl");
+  const focusAccount = component.steps.find((step) => step.tool === "click");
+
+  assert.match(focusAccount.description, /email or username input/);
+  assert.equal(focusAccount.tags.includes("ocr:true"), true);
+  assert.deepEqual(focusAccount.preconditions, []);
+});

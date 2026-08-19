@@ -34,7 +34,7 @@
       "depends_on": ["step_browserM365SignIn_assertAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser"]
+      "tags": ["component:authentication", "surface:browser", "ocr:true"]
     },
     {
       "step_id": "step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}",

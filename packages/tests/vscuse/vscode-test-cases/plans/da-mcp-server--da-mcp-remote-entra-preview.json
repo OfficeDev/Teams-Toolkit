@@ -2239,7 +2239,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "ocr:true"
       ]
     },
     {
