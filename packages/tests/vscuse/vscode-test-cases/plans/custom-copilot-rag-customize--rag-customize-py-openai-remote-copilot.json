@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 186,
+    "total_steps": 185,
     "name": "rag-customize-py-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -181,10 +181,9 @@
       "step_executeCommand_filter_cd633d59b_11_1",
       "step_executeCommand_assertCommand_cd633d59b_11_1",
       "step_executeCommand_execute_cd633d59b_11_1",
-      "step_filterPrefilledOption_clearFilter_cd633d59b_11_2",
-      "step_filterPrefilledOption_filter_cd633d59b_11_2",
-      "step_filterPrefilledOption_assertOption_cd633d59b_11_2",
-      "step_filterPrefilledOption_confirm_cd633d59b_11_2",
+      "step_filterOption_filter_cd633d59b_11_2",
+      "step_filterOption_assertOption_cd633d59b_11_2",
+      "step_filterOption_confirm_cd633d59b_11_2",
       "step_browserM365SignIn_assertAccount_cd633d59b_11_3",
       "step_browserM365SignIn_enterAccount_cd633d59b_11_3",
       "step_browserM365SignIn_commitAccount_cd633d59b_11_3",
@@ -3885,13 +3884,13 @@
       ]
     },
     {
-      "step_id": "step_filterPrefilledOption_clearFilter_cd633d59b_11_2",
+      "step_id": "step_filterOption_filter_cd633d59b_11_2",
       "agent": "interaction",
-      "tool": "keyboard_shortcut",
+      "tool": "type_text",
       "parameters": {
-        "keys": "ctrl+backspace"
+        "text": "Launch Remote in Copilot (Chrome)"
       },
-      "description": "Press Ctrl+Backspace to remove the existing debug filter as one word.",
+      "description": "Type the resolved option label into the active option picker.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3907,29 +3906,7 @@
       ]
     },
     {
-      "step_id": "step_filterPrefilledOption_filter_cd633d59b_11_2",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Launch Remote in Copilot (Chrome)"
-      },
-      "description": "Replace the existing filter with the resolved option label in the active option picker.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_filterPrefilledOption_clearFilter_cd633d59b_11_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_filterPrefilledOption_assertOption_cd633d59b_11_2",
+      "step_id": "step_filterOption_assertOption_cd633d59b_11_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3939,7 +3916,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterPrefilledOption_filter_cd633d59b_11_2"
+        "step_filterOption_filter_cd633d59b_11_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3950,7 +3927,7 @@
       ]
     },
     {
-      "step_id": "step_filterPrefilledOption_confirm_cd633d59b_11_2",
+      "step_id": "step_filterOption_confirm_cd633d59b_11_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3962,7 +3939,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterPrefilledOption_assertOption_cd633d59b_11_2"
+        "step_filterOption_assertOption_cd633d59b_11_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3982,7 +3959,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterPrefilledOption_confirm_cd633d59b_11_2"
+        "step_filterOption_confirm_cd633d59b_11_2"
       ],
       "preconditions": [],
       "postconditions": [],
