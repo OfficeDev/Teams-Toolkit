@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 185,
+    "total_steps": 186,
     "name": "general-teams-py-azure-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -182,9 +182,10 @@
       "step_executeCommand_filter_c3b344879_8_1",
       "step_executeCommand_assertCommand_c3b344879_8_1",
       "step_executeCommand_execute_c3b344879_8_1",
-      "step_filterOption_filter_c3b344879_8_2",
-      "step_filterOption_assertOption_c3b344879_8_2",
-      "step_filterOption_confirm_c3b344879_8_2",
+      "step_filterPrefilledOption_selectFilter_c3b344879_8_2",
+      "step_filterPrefilledOption_filter_c3b344879_8_2",
+      "step_filterPrefilledOption_assertOption_c3b344879_8_2",
+      "step_filterPrefilledOption_confirm_c3b344879_8_2",
       "step_browserM365SignIn_assertAccount_c3b344879_8_3",
       "step_browserM365SignIn_focusAccount_c3b344879_8_3",
       "step_browserM365SignIn_enterAccount_c3b344879_8_3",
@@ -3907,13 +3908,13 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_c3b344879_8_2",
+      "step_id": "step_filterPrefilledOption_selectFilter_c3b344879_8_2",
       "agent": "interaction",
-      "tool": "type_text",
+      "tool": "keyboard_shortcut",
       "parameters": {
-        "text": "Launch Remote in Copilot (Chrome)"
+        "keys": "ctrl+a"
       },
-      "description": "Type the resolved option label into the active option picker.",
+      "description": "Select the existing option-picker filter text so the resolved option label replaces it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3929,7 +3930,29 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_c3b344879_8_2",
+      "step_id": "step_filterPrefilledOption_filter_c3b344879_8_2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Launch Remote in Copilot (Chrome)"
+      },
+      "description": "Replace the existing filter with the resolved option label in the active option picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterPrefilledOption_selectFilter_c3b344879_8_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_assertOption_c3b344879_8_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3939,7 +3962,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_c3b344879_8_2"
+        "step_filterPrefilledOption_filter_c3b344879_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3950,7 +3973,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_c3b344879_8_2",
+      "step_id": "step_filterPrefilledOption_confirm_c3b344879_8_2",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3962,7 +3985,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_c3b344879_8_2"
+        "step_filterPrefilledOption_assertOption_c3b344879_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3982,7 +4005,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c3b344879_8_2"
+        "step_filterPrefilledOption_confirm_c3b344879_8_2"
       ],
       "preconditions": [],
       "postconditions": [],
