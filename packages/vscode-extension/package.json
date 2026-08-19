@@ -532,6 +532,10 @@
           "when": "false"
         },
         {
+          "command": "fx-extension.share",
+          "when": "fx-extension.isDeclarativeCopilotApp"
+        },
+        {
           "command": "fx-extension.selectAndDebug",
           "when": "false"
         },
@@ -701,6 +705,12 @@
         "command": "fx-extension.publish",
         "title": "%teamstoolkit.commands.publish.title%",
         "enablement": "fx-extension.isTeamsFx && isWorkspaceTrusted && !fx-extension.commandLocked",
+        "category": "Microsoft 365 Agents"
+      },
+      {
+        "command": "fx-extension.share",
+        "title": "%teamstoolkit.commands.share.title%",
+        "enablement": "fx-extension.isTeamsFx && fx-extension.isDeclarativeCopilotApp && isWorkspaceTrusted && !fx-extension.commandLocked",
         "category": "Microsoft 365 Agents"
       },
       {
