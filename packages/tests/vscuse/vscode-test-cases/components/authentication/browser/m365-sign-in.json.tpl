@@ -25,8 +25,8 @@
       "step_id": "step_browserM365SignIn_activateBrowser_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "click",
-      "parameters": { "button": "left", "x": 455, "y": 351 },
-      "description": "Click the email or username input once to activate Chrome, then wait for the Microsoft sign-in page to settle.",
+      "parameters": { "button": "left", "x": 634, "y": 418 },
+      "description": "Click Next once to activate Chrome, then wait for the Microsoft sign-in page to settle.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -45,8 +45,8 @@
       "step_id": "step_browserM365SignIn_focusAccount_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "click",
-      "parameters": { "button": "left", "x": 455, "y": 351 },
-      "description": "Click the email or username input again after Chrome settles so it retains focus for account entry.",
+      "parameters": { "button": "left", "x": 634, "y": 418 },
+      "description": "Click Next with the account field empty so Microsoft validation focuses the email or username input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -74,9 +74,9 @@
     {
       "step_id": "step_browserM365SignIn_submitAccount_{{text:instanceSuffix}}",
       "agent": "interaction",
-      "tool": "click",
-      "parameters": { "button": "left", "x": 634, "y": 418 },
-      "description": "Click Next to submit the Microsoft 365 account and continue to password entry.",
+      "tool": "key_press",
+      "parameters": { "key": "enter" },
+      "description": "Press Enter to submit the Microsoft 365 account and continue to password entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -84,7 +84,7 @@
       "depends_on": ["step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser", "ocr:true"]
+      "tags": ["component:authentication", "surface:browser"]
     },
     {
       "step_id": "step_browserM365SignIn_assertPassword_{{text:instanceSuffix}}",

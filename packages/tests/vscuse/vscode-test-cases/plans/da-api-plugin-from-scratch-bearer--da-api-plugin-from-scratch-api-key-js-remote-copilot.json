@@ -3748,10 +3748,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 455,
-        "y": 351
+        "x": 634,
+        "y": 418
       },
-      "description": "Click the email or username input once to activate Chrome, then wait for the Microsoft sign-in page to settle.",
+      "description": "Click Next once to activate Chrome, then wait for the Microsoft sign-in page to settle.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3774,10 +3774,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 455,
-        "y": 351
+        "x": 634,
+        "y": 418
       },
-      "description": "Click the email or username input again after Chrome settles so it retains focus for account entry.",
+      "description": "Click Next with the account field empty so Microsoft validation focuses the email or username input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3818,13 +3818,11 @@
     {
       "step_id": "step_browserM365SignIn_submitAccount_cc27f3e28_8_3",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 634,
-        "y": 418
+        "key": "enter"
       },
-      "description": "Click Next to submit the Microsoft 365 account and continue to password entry.",
+      "description": "Press Enter to submit the Microsoft 365 account and continue to password entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3836,8 +3834,7 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser",
-        "ocr:true"
+        "surface:browser"
       ]
     },
     {
