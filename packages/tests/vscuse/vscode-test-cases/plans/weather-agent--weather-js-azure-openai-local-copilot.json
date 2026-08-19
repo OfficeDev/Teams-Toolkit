@@ -1950,7 +1950,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "delay: 30"
       ]
     },
     {
