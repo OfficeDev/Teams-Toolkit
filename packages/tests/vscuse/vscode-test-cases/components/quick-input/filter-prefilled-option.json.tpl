@@ -7,18 +7,35 @@
   },
   "steps": [
     {
-      "step_id": "step_filterPrefilledOption_clearFilter_{{text:instanceSuffix}}",
+      "step_id": "step_filterPrefilledOption_moveToStart_{{text:instanceSuffix}}",
       "agent": "interaction",
-      "tool": "keyboard_shortcut",
+      "tool": "key_press",
       "parameters": {
-        "keys": "ctrl+backspace"
+        "key": "home"
       },
-      "description": "Press Ctrl+Backspace to remove the existing debug filter as one word.",
+      "description": "Press Home to move to the start of the retained debug filter.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:quick-input", "answer_type:singleSelect"]
+    },
+    {
+      "step_id": "step_filterPrefilledOption_selectFilter_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "shift+end"
+      },
+      "description": "Press Shift+End to select the complete retained debug filter.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_filterPrefilledOption_moveToStart_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:singleSelect"]
@@ -35,7 +52,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_filterPrefilledOption_clearFilter_{{text:instanceSuffix}}"],
+      "depends_on": ["step_filterPrefilledOption_selectFilter_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:quick-input", "answer_type:singleSelect"]

@@ -2162,9 +2162,14 @@ function createSemanticStepCompiler() {
     }
     const profileSelection = profile.profileSelections[profileSelectionId];
     const { component, ...profileSelectionValues } = profileSelection;
+    const profileSelectionComponent =
+      state.template === "custom-copilot-basic" &&
+      profileTitle === "Launch Remote in Copilot (Chrome)"
+        ? "quick-input/filter-prefilled-option.json.tpl"
+        : component;
     error = append(
       output,
-      render(state, component, {
+      render(state, profileSelectionComponent, {
         optionLabel: profileTitle,
         ...profileSelectionValues,
       }),
