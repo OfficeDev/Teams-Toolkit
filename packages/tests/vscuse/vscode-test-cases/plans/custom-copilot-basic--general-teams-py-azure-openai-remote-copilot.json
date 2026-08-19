@@ -4021,10 +4021,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 429,
-        "y": 347
+        "x": 512,
+        "y": 384
       },
-      "description": "Click the email or username input on the Microsoft sign-in page.",
+      "description": "Click the \"Email, phone, or Skype\" input on the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

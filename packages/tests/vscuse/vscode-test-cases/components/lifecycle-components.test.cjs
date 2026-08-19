@@ -400,7 +400,12 @@ test("VCB-164: browser account entry resolves its input with OCR", () => {
   const component = render("authentication/browser/m365-sign-in.json.tpl");
   const focusAccount = component.steps.find((step) => step.tool === "click");
 
-  assert.match(focusAccount.description, /email or username input/);
+  assert.match(focusAccount.description, /"Email, phone, or Skype" input/);
+  assert.deepEqual(focusAccount.parameters, {
+    button: "left",
+    x: 512,
+    y: 384,
+  });
   assert.equal(focusAccount.tags.includes("ocr:true"), true);
   assert.deepEqual(focusAccount.preconditions, []);
 });
