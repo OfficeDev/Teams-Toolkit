@@ -128,7 +128,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Visual Studio Code has reloaded the project window and the Preview README.md editor is visible.",
+      "description": "@assertion the project window is ready after reload and the Preview README.md editor is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
