@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 102,
+    "total_steps": 101,
     "name": "da-api-plugin-from-scratch-js-local-copilot",
     "description": {
       "owner": "",
@@ -99,7 +99,6 @@
       "step_filterOption_confirm_c1b9969b6_4_2",
       "step_browserM365SignIn_assertAccount_c1b9969b6_4_3",
       "step_browserM365SignIn_focusAccount_c1b9969b6_4_3",
-      "step_browserM365SignIn_selectAccountInput_c1b9969b6_4_3",
       "step_browserM365SignIn_enterAccount_c1b9969b6_4_3",
       "step_browserM365SignIn_submitAccount_c1b9969b6_4_3",
       "step_browserM365SignIn_assertPassword_c1b9969b6_4_3",
@@ -1964,39 +1963,19 @@
     {
       "step_id": "step_browserM365SignIn_focusAccount_c1b9969b6_4_3",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "key": "f6"
+        "button": "left",
+        "x": 512,
+        "y": 292
       },
-      "description": "Press F6 to move focus from the Chrome address bar into the Microsoft sign-in page.",
+      "description": "Click the blank center of the email or username input on the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
         "step_browserM365SignIn_assertAccount_c1b9969b6_4_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser"
-      ]
-    },
-    {
-      "step_id": "step_browserM365SignIn_selectAccountInput_c1b9969b6_4_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "tab"
-      },
-      "description": "Press Tab to focus the email or username input on the Microsoft sign-in page.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_focusAccount_c1b9969b6_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2018,7 +1997,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_selectAccountInput_c1b9969b6_4_3"
+        "step_browserM365SignIn_focusAccount_c1b9969b6_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2030,11 +2009,13 @@
     {
       "step_id": "step_browserM365SignIn_submitAccount_c1b9969b6_4_3",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "key": "enter"
+        "button": "left",
+        "x": 634,
+        "y": 418
       },
-      "description": "Press Enter to continue to password entry.",
+      "description": "Click Next to submit the Microsoft 365 account and continue to password entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
