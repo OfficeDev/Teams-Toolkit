@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 170,
+    "total_steps": 169,
     "name": "rag-customize-js-azure-openai-remote-copilot",
     "description": {
       "owner": "",
@@ -78,7 +78,7 @@
       "step_checkWorkspaceFiles_verify_cf0c4f904_2_3",
       "step_checkWorkspaceFiles_verify_cf0c4f904_2_4",
       "step_checkWorkspaceFiles_verify_cf0c4f904_2_5",
-      "step_checkWorkspaceFiles_verify_cf0c4f904_3_1",
+      "step_ensureCopilotLaunchProfile_ensure_cf0c4f904_3_1",
       "step_executeCommand_open_cf0c4f904_4_1",
       "step_executeCommand_assertPalette_cf0c4f904_4_1",
       "step_executeCommand_filter_cf0c4f904_4_1",
@@ -168,16 +168,15 @@
       "step_filterOption_filter_cf0c4f904_8_2",
       "step_filterOption_assertOption_cf0c4f904_8_2",
       "step_filterOption_confirm_cf0c4f904_8_2",
-      "step_browserM365SignIn_assertAccount_cf0c4f904_8_3",
-      "step_browserM365SignIn_focusAccount_cf0c4f904_8_3",
-      "step_browserM365SignIn_enterAccount_cf0c4f904_8_3",
-      "step_browserM365SignIn_commitAccount_cf0c4f904_8_3",
-      "step_browserM365SignIn_submitAccount_cf0c4f904_8_3",
-      "step_browserM365SignIn_assertPassword_cf0c4f904_8_3",
-      "step_browserM365SignIn_enterPassword_cf0c4f904_8_3",
-      "step_browserM365SignIn_submitPassword_cf0c4f904_8_3",
-      "step_browserM365SignIn_assertStaySignedIn_cf0c4f904_8_3",
-      "step_browserM365SignIn_confirmStaySignedIn_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_assertAccount_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_focusAccount_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_enterAccount_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_submitAccount_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_assertPassword_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_enterPassword_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_submitPassword_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_assertStaySignedIn_cf0c4f904_8_3",
+      "step_browserM365DirectSignIn_confirmStaySignedIn_cf0c4f904_8_3",
       "step_assertReady_assertReady_cf0c4f904_8_4",
       "step_zoomOut_zoomOut_cf0c4f904_8_5",
       "step_sendCopilotMessage_assertInput_cf0c4f904_10_1",
@@ -1547,13 +1546,13 @@
       ]
     },
     {
-      "step_id": "step_checkWorkspaceFiles_verify_cf0c4f904_3_1",
+      "step_id": "step_ensureCopilotLaunchProfile_ensure_cf0c4f904_3_1",
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6Ii52c2NvZGUvbGF1bmNoLmpzb24iLCJleGlzdHMiOnRydWUsImNvbnRhaW5zIjpbIkxhdW5jaCBSZW1vdGUgaW4gQ29waWxvdCAoQ2hyb21lKSJdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" python3 - <<'PY'\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\npath = project / \".vscode\" / \"launch.json\"\ndocument = json.loads(path.read_text(encoding=\"utf-8\"))\nconfigurations = document.get(\"configurations\")\nif not isinstance(configurations, list):\n    raise AssertionError(\".vscode/launch.json must contain a configurations array\")\nname = \"Launch Remote in Copilot (Chrome)\"\nprofile = {\n    \"name\": name,\n    \"type\": \"chrome\",\n    \"request\": \"launch\",\n    \"url\": \"https://m365.cloud.microsoft/chat/entity1-d870f6cd-4aa5-4d42-9626-ab690c041429/${agent-hint}?auth=2&${account-hint}&developerMode=Basic\",\n    \"cascadeTerminateToConfigurations\": [\"Attach to Local Service\"],\n    \"presentation\": {\"group\": \"3-M365\", \"order\": 4},\n    \"internalConsoleOptions\": \"neverOpen\",\n    \"runtimeArgs\": [\"--remote-debugging-port=9223\", \"--no-first-run\"],\n}\nconfigurations[:] = [item for item in configurations if item.get(\"name\") != name]\nconfigurations.append(profile)\npath.write_text(json.dumps(document, indent=4) + \"\\n\", encoding=\"utf-8\")\nwritten = json.loads(path.read_text(encoding=\"utf-8\"))[\"configurations\"]\nif [item for item in written if item.get(\"name\") == name] != [profile]:\n    raise AssertionError(\"The canonical Copilot launch profile was not written exactly once\")\nPY\n```"
       },
-      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; write and verify exactly one canonical Launch Remote in Copilot (Chrome) profile in .vscode/launch.json, do not reinterpret or regenerate the script, and do not use /workspace.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1564,9 +1563,9 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:checks",
-        "assertion:file",
-        "step_retry_timeout:120"
+        "component:workspace",
+        "operation:ensure-copilot-launch-profile",
+        "step_retry_timeout: 120"
       ]
     },
     {
@@ -1582,7 +1581,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_cf0c4f904_3_1"
+        "step_ensureCopilotLaunchProfile_ensure_cf0c4f904_3_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3589,7 +3588,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_assertAccount_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_assertAccount_cf0c4f904_8_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3610,13 +3609,13 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_focusAccount_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_focusAccount_cf0c4f904_8_3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
         "x": 429,
-        "y": 286
+        "y": 347
       },
       "description": "Click the email or username input on the Microsoft sign-in page.",
       "content_refs": [],
@@ -3624,7 +3623,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertAccount_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_assertAccount_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3634,7 +3633,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_enterAccount_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_enterAccount_cf0c4f904_8_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3646,7 +3645,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_focusAccount_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_focusAccount_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3656,41 +3655,19 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_commitAccount_cf0c4f904_8_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "tab"
-      },
-      "description": "Press Tab to commit the entered account and focus the Next button.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365SignIn_enterAccount_cf0c4f904_8_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser"
-      ]
-    },
-    {
-      "step_id": "step_browserM365SignIn_submitAccount_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_submitAccount_cf0c4f904_8_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter on the focused Next button to continue to password entry.",
+      "description": "Press Enter from the email input to submit the account and continue to password entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_commitAccount_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_enterAccount_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3700,7 +3677,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_assertPassword_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_assertPassword_cf0c4f904_8_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3710,7 +3687,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_submitAccount_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_submitAccount_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3721,7 +3698,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_enterPassword_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_enterPassword_cf0c4f904_8_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -3733,7 +3710,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertPassword_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_assertPassword_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3743,7 +3720,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_submitPassword_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_submitPassword_cf0c4f904_8_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3755,7 +3732,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_enterPassword_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_enterPassword_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3765,7 +3742,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_assertStaySignedIn_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_assertStaySignedIn_cf0c4f904_8_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -3775,7 +3752,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_submitPassword_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_submitPassword_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3786,7 +3763,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_confirmStaySignedIn_cf0c4f904_8_3",
+      "step_id": "step_browserM365DirectSignIn_confirmStaySignedIn_cf0c4f904_8_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -3798,7 +3775,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_assertStaySignedIn_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_assertStaySignedIn_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -3819,7 +3796,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_confirmStaySignedIn_cf0c4f904_8_3"
+        "step_browserM365DirectSignIn_confirmStaySignedIn_cf0c4f904_8_3"
       ],
       "preconditions": [],
       "postconditions": [],

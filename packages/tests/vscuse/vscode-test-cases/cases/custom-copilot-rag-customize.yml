@@ -289,12 +289,12 @@ cases:
       [
         scaffold-rag-customize-js-azure-openai,
         check-rag-customize-js-azure-openai,
-        check-rag-customize-copilot-remote-launch,
+        ensure-copilot-launch-profile,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
-        f5-copilot-remote,
+        f5-copilot-remote-direct-sign-in,
         open-agent,
         check-rag-customize-copilot-chat,
       ]
@@ -824,6 +824,9 @@ steps:
         expect:
           contains: ["Launch Remote in Copilot (Chrome)"]
 
+  ensure-copilot-launch-profile:
+    type: copilotLaunchProfile
+
   create-python-environment:
     type: pythonEnvironment
     with:
@@ -904,6 +907,13 @@ steps:
     with:
       profile: "Launch Remote in Copilot (Chrome)"
       profileSelection: first
+
+  f5-copilot-remote-direct-sign-in:
+    type: target
+    with:
+      profile: "Launch Remote in Copilot (Chrome)"
+      profileSelection: first
+      browserAuthentication: directAccountSubmit
 
   f5-teams-remote:
     type: target

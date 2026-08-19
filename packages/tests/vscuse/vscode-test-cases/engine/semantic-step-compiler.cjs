@@ -558,6 +558,10 @@ const targetAdapters = {
       component: "authentication/browser/m365-sign-in.json.tpl",
       credentials: "m365",
     },
+    directBrowserAuthentication: {
+      component: "authentication/browser/m365-direct-sign-in.json.tpl",
+      credentials: "m365",
+    },
     host: "copilot",
     open: { chat: { adapter: "ready", kind: "agent" } },
     profileSelections: {
@@ -1519,6 +1523,24 @@ function createSemanticStepCompiler() {
     });
   }
 
+  function compileCopilotLaunchProfile(state, definition) {
+    if (
+      state.template !== "custom-copilot-rag-customize" ||
+      definition.with !== undefined ||
+      !state.featureFlags.has(copilotLaunchFeatureFlag)
+    ) {
+      return failure(
+        "VCB_COPILOT_LAUNCH_PROFILE_INPUT_INVALID",
+        "The Copilot launch profile operation requires a flagged RAG Customize project and no inputs.",
+      );
+    }
+    return render(
+      state,
+      "workspace/ensure-copilot-launch-profile.json.tpl",
+      {},
+    );
+  }
+
   function compileWorkflowVersion(state, definition) {
     const inputs = definition.with ?? {};
     if (
@@ -2170,9 +2192,22 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
-    if (profile.browserAuthentication !== undefined) {
+    let browserAuthentication = profile.browserAuthentication;
+    if (definition.with?.browserAuthentication !== undefined) {
+      if (
+        definition.with.browserAuthentication !== "directAccountSubmit" ||
+        profile.directBrowserAuthentication === undefined
+      ) {
+        return failure(
+          "VCB_TARGET_BROWSER_AUTHENTICATION_UNKNOWN",
+          "The target browser authentication flow is not supported by the semantic adapter.",
+        );
+      }
+      browserAuthentication = profile.directBrowserAuthentication;
+    }
+    if (browserAuthentication !== undefined) {
       const credentials = state.credentials.get(
-        profile.browserAuthentication.credentials,
+        browserAuthentication.credentials,
       );
       if (credentials === undefined) {
         return failure(
@@ -2182,7 +2217,7 @@ function createSemanticStepCompiler() {
       }
       error = append(
         output,
-        render(state, profile.browserAuthentication.component, credentials),
+        render(state, browserAuthentication.component, credentials),
       );
       if (error) return error;
     }
@@ -2636,6 +2671,8 @@ function createSemanticStepCompiler() {
         return compileUserEnvironment(state, definition);
       case "removeWorkspaceFile":
         return compileRemoveWorkspaceFile(state, definition);
+      case "copilotLaunchProfile":
+        return compileCopilotLaunchProfile(state, definition);
       case "workflowVersion":
         return compileWorkflowVersion(state, definition);
       case "configureTypeSpecAction":
