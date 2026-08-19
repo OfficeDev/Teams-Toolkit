@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 92,
+    "total_steps": 93,
     "name": "da-typespec-no-action-remote-preview",
     "description": {
       "owner": "",
@@ -94,6 +94,7 @@
       "step_filterSecondOption_confirm_c8ff802d1_5_2",
       "step_browserM365SignIn_assertAccount_c8ff802d1_5_3",
       "step_browserM365SignIn_focusAccount_c8ff802d1_5_3",
+      "step_browserM365SignIn_selectAccountInput_c8ff802d1_5_3",
       "step_browserM365SignIn_enterAccount_c8ff802d1_5_3",
       "step_browserM365SignIn_submitAccount_c8ff802d1_5_3",
       "step_browserM365SignIn_assertPassword_c8ff802d1_5_3",
@@ -1841,13 +1842,35 @@
       "parameters": {
         "key": "f6"
       },
-      "description": "Press F6 to move focus from the Chrome address bar to the email or username input on the Microsoft sign-in page.",
+      "description": "Press F6 to move focus from the Chrome address bar into the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
         "step_browserM365SignIn_assertAccount_c8ff802d1_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
+      "step_id": "step_browserM365SignIn_selectAccountInput_c8ff802d1_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "tab"
+      },
+      "description": "Press Tab to focus the email or username input on the Microsoft sign-in page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_browserM365SignIn_focusAccount_c8ff802d1_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1869,7 +1892,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_focusAccount_c8ff802d1_5_3"
+        "step_browserM365SignIn_selectAccountInput_c8ff802d1_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
