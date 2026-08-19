@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 109,
+    "total_steps": 110,
     "name": "da-typespec-with-action-remote-preview",
     "description": {
       "owner": "",
@@ -105,6 +105,7 @@
       "step_filterSecondOption_next_c00dfe362_7_2",
       "step_filterSecondOption_assertOption_c00dfe362_7_2",
       "step_filterSecondOption_confirm_c00dfe362_7_2",
+      "step_browserM365SignIn_refreshPage_c00dfe362_7_3",
       "step_browserM365SignIn_assertAccount_c00dfe362_7_3",
       "step_browserM365SignIn_focusAccount_c00dfe362_7_3",
       "step_browserM365SignIn_enterAccount_c00dfe362_7_3",
@@ -2113,6 +2114,28 @@
       ]
     },
     {
+      "step_id": "step_browserM365SignIn_refreshPage_c00dfe362_7_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f5"
+      },
+      "description": "Refresh the Microsoft sign-in page before checking for account entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterSecondOption_confirm_c00dfe362_7_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
       "step_id": "step_browserM365SignIn_assertAccount_c00dfe362_7_3",
       "agent": "assertion",
       "tool": "",
@@ -2123,7 +2146,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterSecondOption_confirm_c00dfe362_7_2"
+        "step_browserM365SignIn_refreshPage_c00dfe362_7_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2139,10 +2162,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 429,
-        "y": 347
+        "x": 512,
+        "y": 384
       },
-      "description": "Click the email or username input on the Microsoft sign-in page.",
+      "description": "Click the \"Email, phone, or Skype\" input on the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2154,7 +2177,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "ocr:true"
       ]
     },
     {
