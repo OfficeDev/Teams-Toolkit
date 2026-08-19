@@ -314,7 +314,7 @@ cases:
         login-m365,
         provision-arm,
         deploy,
-        f5-copilot-remote,
+        f5-copilot-remote-replace-filter,
         open-agent,
         check-rag-customize-copilot-chat,
       ]
@@ -904,6 +904,12 @@ steps:
     with:
       profile: "Launch Remote in Copilot (Chrome)"
       profileSelection: first
+
+  f5-copilot-remote-replace-filter:
+    type: target
+    with:
+      profile: "Launch Remote in Copilot (Chrome)"
+      profileSelection: replaceFirst
 
   f5-teams-remote:
     type: target

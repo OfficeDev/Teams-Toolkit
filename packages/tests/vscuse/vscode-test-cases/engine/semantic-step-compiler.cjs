@@ -562,6 +562,9 @@ const targetAdapters = {
     open: { chat: { adapter: "ready", kind: "agent" } },
     profileSelections: {
       first: { component: "quick-input/filter-option.json.tpl" },
+      replaceFirst: {
+        component: "quick-input/filter-replace-option.json.tpl",
+      },
     },
     readySubject: copilotAgentSubject,
     requires: ["login:azure", "login:m365", "provision", "deploy"],
