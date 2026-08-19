@@ -3495,6 +3495,7 @@
       "tags": [
         "component:authentication",
         "surface:browser",
+        "ocr:true",
         "delay: 30"
       ]
     },
@@ -3519,7 +3520,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "ocr:true"
       ]
     },
     {
@@ -3565,7 +3567,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "ocr:true"
       ]
     },
     {

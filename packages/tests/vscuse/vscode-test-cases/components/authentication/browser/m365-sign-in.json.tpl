@@ -34,7 +34,12 @@
       "depends_on": ["step_browserM365SignIn_assertAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser", "delay: 30"]
+      "tags": [
+        "component:authentication",
+        "surface:browser",
+        "ocr:true",
+        "delay: 30"
+      ]
     },
     {
       "step_id": "step_browserM365SignIn_focusAccount_{{text:instanceSuffix}}",
@@ -49,7 +54,7 @@
       "depends_on": ["step_browserM365SignIn_activateBrowser_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser"]
+      "tags": ["component:authentication", "surface:browser", "ocr:true"]
     },
     {
       "step_id": "step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}",
@@ -79,7 +84,7 @@
       "depends_on": ["step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser"]
+      "tags": ["component:authentication", "surface:browser", "ocr:true"]
     },
     {
       "step_id": "step_browserM365SignIn_assertPassword_{{text:instanceSuffix}}",
