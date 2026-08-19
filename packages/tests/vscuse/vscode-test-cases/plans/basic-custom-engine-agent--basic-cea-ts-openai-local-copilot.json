@@ -95,8 +95,8 @@
       "step_filterOption_assertOption_ccc000d07_6_2",
       "step_filterOption_confirm_ccc000d07_6_2",
       "step_browserM365SignIn_assertAccount_ccc000d07_6_3",
-      "step_browserM365SignIn_focusAccount_ccc000d07_6_3",
       "step_browserM365SignIn_enterAccount_ccc000d07_6_3",
+      "step_browserM365SignIn_commitAccount_ccc000d07_6_3",
       "step_browserM365SignIn_submitAccount_ccc000d07_6_3",
       "step_browserM365SignIn_assertPassword_ccc000d07_6_3",
       "step_browserM365SignIn_enterPassword_ccc000d07_6_3",
@@ -1872,7 +1872,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Microsoft sign-in page is visible in Chrome with an email or username input.",
+      "description": "@assertion the Microsoft sign-in page is visible in Chrome with the email or username input focused.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1889,15 +1889,13 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_focusAccount_ccc000d07_6_3",
+      "step_id": "step_browserM365SignIn_enterAccount_ccc000d07_6_3",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "type_text",
       "parameters": {
-        "button": "left",
-        "x": 429,
-        "y": 286
+        "text": "${{env:M365_ACCOUNT_NAME}}"
       },
-      "description": "Click the email or username input on the Microsoft sign-in page.",
+      "description": "Enter the registered Microsoft 365 account in the browser sign-in form.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1913,19 +1911,19 @@
       ]
     },
     {
-      "step_id": "step_browserM365SignIn_enterAccount_ccc000d07_6_3",
+      "step_id": "step_browserM365SignIn_commitAccount_ccc000d07_6_3",
       "agent": "interaction",
-      "tool": "type_text",
+      "tool": "key_press",
       "parameters": {
-        "text": "${{env:M365_ACCOUNT_NAME}}"
+        "key": "tab"
       },
-      "description": "Enter the registered Microsoft 365 account in the browser sign-in form.",
+      "description": "Press Tab to commit the entered account and focus the Next button.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_focusAccount_ccc000d07_6_3"
+        "step_browserM365SignIn_enterAccount_ccc000d07_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1941,13 +1939,13 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press Enter to continue to password entry.",
+      "description": "Press Enter on the focused Next button to continue to password entry.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365SignIn_enterAccount_ccc000d07_6_3"
+        "step_browserM365SignIn_commitAccount_ccc000d07_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
