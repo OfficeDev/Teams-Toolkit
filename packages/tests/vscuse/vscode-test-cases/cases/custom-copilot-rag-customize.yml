@@ -289,12 +289,12 @@ cases:
       [
         scaffold-rag-customize-js-azure-openai,
         check-rag-customize-js-azure-openai,
+        ensure-copilot-launch-profile,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
-        ensure-copilot-launch-profile,
-        f5-copilot-remote-direct-sign-in,
+        f5-copilot-remote,
         open-agent,
         check-rag-customize-copilot-chat,
       ]
