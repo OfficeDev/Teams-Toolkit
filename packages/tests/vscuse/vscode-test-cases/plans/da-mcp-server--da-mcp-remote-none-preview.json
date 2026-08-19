@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 107,
+    "total_steps": 108,
     "name": "da-mcp-remote-none-preview",
     "description": {
       "owner": "",
@@ -106,6 +106,7 @@
       "step_filterOption_filter_cbe46eee0_5_2",
       "step_filterOption_assertOption_cbe46eee0_5_2",
       "step_filterOption_confirm_cbe46eee0_5_2",
+      "step_browserM365SignIn_refreshPage_cbe46eee0_5_3",
       "step_browserM365SignIn_assertAccount_cbe46eee0_5_3",
       "step_browserM365SignIn_focusAccount_cbe46eee0_5_3",
       "step_browserM365SignIn_enterAccount_cbe46eee0_5_3",
@@ -2136,6 +2137,28 @@
       ]
     },
     {
+      "step_id": "step_browserM365SignIn_refreshPage_cbe46eee0_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f5"
+      },
+      "description": "Refresh the Microsoft sign-in page before checking for account entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_confirm_cbe46eee0_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
       "step_id": "step_browserM365SignIn_assertAccount_cbe46eee0_5_3",
       "agent": "assertion",
       "tool": "",
@@ -2146,7 +2169,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_cbe46eee0_5_2"
+        "step_browserM365SignIn_refreshPage_cbe46eee0_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
