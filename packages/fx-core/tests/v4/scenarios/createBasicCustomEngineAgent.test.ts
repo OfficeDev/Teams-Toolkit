@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import * as fs from "fs";
+import * as path from "path";
 import { UserError } from "@microsoft/teamsfx-api";
 import { assert } from "vitest";
 import { REQUIRE_EMPTY_TARGET } from "../../../src/v4/pipeline/runScaffoldPipeline";
@@ -11,6 +13,7 @@ import {
   readJsonObject,
   recordProperty,
   runV4Package,
+  text,
 } from "./helpers/scenarioHarness";
 
 /**
@@ -18,7 +21,7 @@ import {
  * `InMemoryRuntime`.
  *
  * Spec: docs/03-specs/scenarios/teams/create-basic-custom-engine-agent.md
- * (SCN-CREATE-BASIC-CEA-01..06)
+ * (SCN-CREATE-BASIC-CEA-01..07)
  */
 
 const templatePackage = loadV4Package("create", "basic-custom-engine-agent");
@@ -26,6 +29,12 @@ const appName = "My Agent App";
 
 async function run(language: "typescript" | "javascript" | "python" = "typescript") {
   return runV4Package(templatePackage, { callerFloor: { appName, language } });
+}
+
+function agentApplicationArguments(source: string): string {
+  const match = source.match(/AgentApplication\[TurnState\]\(\s*([\s\S]*?)\n\)/);
+  assert.isNotNull(match, "Python agent must construct AgentApplication[TurnState]");
+  return (match?.[1] ?? "").replace(/\s+/g, " ").trim();
 }
 
 describe("SCN-TEAMS-CREATE-BASIC-CUSTOM-ENGINE-AGENT (v4, T3 InMemoryRuntime)", () => {
@@ -89,5 +98,17 @@ describe("SCN-TEAMS-CREATE-BASIC-CUSTOM-ENGINE-AGENT (v4, T3 InMemoryRuntime)", 
     assert.instanceOf(error, UserError);
     assert.strictEqual(error.name, REQUIRE_EMPTY_TARGET);
     assert.strictEqual(runtime.files.size, 0);
+  });
+
+  it("SCN-CREATE-BASIC-CEA-07: Python preserves v3 AgentApplication authorization wiring", async () => {
+    const v3AgentPath = path.resolve(
+      templatePackage.packageDir,
+      "../../../vsc/python/basic-custom-engine-agent/src/agent.py.tpl"
+    );
+    const v3Arguments = agentApplicationArguments(fs.readFileSync(v3AgentPath, "utf8"));
+    const { files } = await run("python");
+
+    assert.include(v3Arguments, "connection_manager=connection_manager");
+    assert.strictEqual(agentApplicationArguments(text(files, "src/agent.py")), v3Arguments);
   });
 });
