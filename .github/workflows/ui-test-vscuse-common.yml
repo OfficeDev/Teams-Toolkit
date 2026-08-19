@@ -1,15 +1,17 @@
 name: uitest-vscuse-common
 #
-# Reusable workflow that contains the shared pipeline for the two vscuse UI test workflows:
-#   - ui-test-vscuse-others.yml    (Feature_* + Sample_* plans)
-#   - ui-test-vscuse-template.yml  (all other top-level plans)
+# Reusable workflow that contains the shared pipeline for the vscuse UI test workflows:
+#   - ui-test-vscuse-template.yml  (non-prefixed top-level plans)
+#   - ui-test-vscuse-features.yml  (Feature_* plans)
+#   - ui-test-vscuse-samples.yml   (Sample_* plans)
+#   - ui-test-vscuse-regular.yml   (Regular_* plans)
 #
-# Callers pass in the small set of values that differ between the two pipelines:
+# Callers pass in the small set of values that differ between pipelines:
 #   - plan_find_args                : the `find` predicate(s) used to discover default plans
 #   - main_timeout_minutes          : timeout for the per-plan job
 #   - no_failed_step_text           : text written into error.txt when no failed step id is found
 #   - filter_no_errors_found        : also treat literal "No errors found" as empty error info
-#   - email_subject_suffix          : e.g. "[Samples + Features]" or "[Templates]"
+#   - email_subject_suffix          : e.g. "[Regular]" or "[Templates]"
 #
 # All workflow_dispatch inputs from the caller are passed through as inputs here.
 on:

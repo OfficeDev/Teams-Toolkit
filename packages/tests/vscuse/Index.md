@@ -22,6 +22,7 @@ This document indexes all available VscUse (VS Code UI automation) test plans un
 | Tab, React, SPFx, frontend                                | [Tab](#tab)                                             |
 | Sample gallery, CoffeeAgent, Data Analyst, ProxyAgent     | [Sample](#sample)                                       |
 | VS Code UI, treeview, command palette, publish, provision | [Feature](#feature)                                     |
+| Weekly VS Code regression coverage                        | [Regular](#regular)                                     |
 | Template README                                           | [Template Verification](#template-verification)         |
 
 ---
@@ -262,49 +263,51 @@ Compiled from the YAML cases under [`vscode-test-cases/cases/`](vscode-test-case
 
 **Keywords:** VS Code UI, treeview, command palette, publish, provision, deploy, AAD, TDP, manifest, codelens, sign in
 
-### DA Features (23 plans)
+### DA Features (16 plans)
 
-All plans starting with `Feature_DA_` or `Feature__DA_` or `Feature_Check_DA_`.
+All plans starting with `Feature_DA_` or `Feature__DA_`.
 
 ### Bot / Debug Features
 
-`Feature_Simple_Bot_*`, `Feature_LocalDebug_*`, `Feature_Bot_Collaboration_*`, `Feature__Debug_*`
+`Feature_Simple_Bot_*`, `Feature_LocalDebug_*`, `Feature_Bot_Collaboration_*`
 
 ### AI Key Features
 
-`Feature_AI_Key_Verification`, `Feature_LocalDebug_AI_Search_*`, `Feature_LocalDebug_Custom_API_*`
+`Feature_LocalDebug_AI_Search_*`, `Feature_LocalDebug_Custom_API_*`
 
 ### Provision / Deploy Features
 
-`Feature_Provision_*`, `Feature_Deploy_*`, `Feature_Arm_*`, `Feature_Del_Resource_Group_*`, `Feature_Set_Sub_Id_*`, `Feature_Prompt_Use_*`
+`Feature_Provision_*`, `Feature_Deploy_*`, `Feature_Arm_*`, `Feature_Del_Resource_Group_*`, `Feature_Prompt_Use_*`
 
 ### Publish Features
 
-`Feature_Publish_*`, `Feature_Open_DeveloperPortal_*`, `Featrue_Open_DeveloperPortal_*`
+`Feature_Open_DeveloperPortal_*`
 
 ### Manifest / Validation Features
 
-`Feature_Validate_*`, `Feature_Zip_*`, `Feature_AppYmlFile_*`, `Feature_intelli_sense_*`
+`Feature_Validate_*`, `Feature_Zip_*`, `Feature_intelli_sense_*`
 
 ### Account / Sign-in Features
 
 `Feature_Sign_*`, `Feature_Check_copilot_*`, `Feature__Test_*AAD`
 
-### TDP Features
-
-`Feature_Add_*_From_TDP`
-
 ### UI / UX Features
 
-`Feature_UI_*`, `Feature_Command_Palette_*`, `Feature_ATK_*`, `Feature_Adapt_*`, `Feature_Document_*`, `Feature_Redirect_*`, `Feature__Recommend_*`, `Feature__Show_*`, `Feature_Report_*`, `Feature_Sample_UI`, `Feature_Newproject_*`
-
-### Tab Features
-
-`Feature_Tab_Collaboration_*`, `Feature_Basic_Tab_Instant_Tab_*`
+`Feature_UI_*`, `Feature_Adapt_*`
 
 ### Message Extension Features
 
-`Feature_Message_Extension_*`, `Feature_Modify_Playground_*`
+`Feature_Modify_Playground_*`
+
+---
+
+## Regular
+
+The 48 regression plans classified as
+[RegularRun](https://github.com/OfficeDev/microsoft-365-agents-toolkit-test/issues/26359)
+start with `Regular_`. They run every Monday at 10:00 UTC+8 through
+[`uitest-vscuse-regular`](../../.github/workflows/ui-test-vscuse-regular.yml)
+and can also be dispatched manually.
 
 ---
 
@@ -330,13 +333,18 @@ Minimal set used as fallback when AI selection fails (`smoking-test-cases.json`)
 
 ## Running Tests Manually
 
-Trigger [`uitest-vscuse-template`](../../.github/workflows/ui-test-vscuse-template.yml) via `workflow_dispatch`:
+Trigger the workflow for the plan category via `workflow_dispatch`:
 
-| Input            | Description                   | Default              |
-| ---------------- | ----------------------------- | -------------------- |
-| `test_plan`      | Comma-separated plan names    | _(all DA/bot plans)_ |
-| `image_tag`      | Docker image tag              | `latest`             |
-| `vscuse_version` | VSCUSE Python package version | `latest`             |
-| `max_retries`    | Retry attempts (1-20)         | `7`                  |
+- [`uitest-vscuse-template`](../../.github/workflows/ui-test-vscuse-template.yml)
+- [`uitest-vscuse-features`](../../.github/workflows/ui-test-vscuse-features.yml)
+- [`uitest-vscuse-samples`](../../.github/workflows/ui-test-vscuse-samples.yml)
+- [`uitest-vscuse-regular`](../../.github/workflows/ui-test-vscuse-regular.yml)
+
+| Input            | Description                   | Default                       |
+| ---------------- | ----------------------------- | ----------------------------- |
+| `test_plan`      | Comma-separated plan names    | _(all plans in the category)_ |
+| `image_tag`      | Docker image tag              | `latest`                      |
+| `vscuse_version` | VSCUSE Python package version | `latest`                      |
+| `max_retries`    | Retry attempts (1-20)         | `7`                           |
 
 **Docker image:** `ghcr.io/officedev/vscuse-atk-vscodejobs:<tag>`
