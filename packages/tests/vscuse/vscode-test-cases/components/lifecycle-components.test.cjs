@@ -159,6 +159,20 @@ test("VCB-63: Copilot conversation clicks resolve their target by OCR", () => {
   }
 });
 
+test("VCB-166: Copilot action consent retries an ignored or repeated Allow prompt", () => {
+  const steps = render("browser/copilot/allow-action.json.tpl").steps;
+  const clicks = steps.filter((step) => step.tool === "click");
+  const dismissed = steps.at(-1);
+
+  assert.equal(clicks.length, 2);
+  assert.equal(
+    clicks.every((step) => step.tags.includes("ocr:true")),
+    true,
+  );
+  assert.deepEqual(clicks[1].depends_on, [clicks[0].step_id]);
+  assert.deepEqual(dismissed.depends_on, [clicks[1].step_id]);
+});
+
 test("VCB-49: Ctrl+W is gated on the Welcome tab being the active editor", () => {
   const close = render("initialization/close-get-started-editor.json.tpl");
   const [assertActive, closeEditor, assertClosed] = close.steps;

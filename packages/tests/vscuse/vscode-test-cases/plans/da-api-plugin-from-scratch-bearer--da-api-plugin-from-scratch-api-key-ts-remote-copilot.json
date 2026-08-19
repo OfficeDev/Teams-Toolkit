@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 178,
+    "total_steps": 179,
     "name": "da-api-plugin-from-scratch-api-key-ts-remote-copilot",
     "description": {
       "owner": "",
@@ -191,6 +191,7 @@
       "step_sendCopilotMessage_send_c3434934a_10_1",
       "step_allowCopilotAction_assert_c3434934a_10_2",
       "step_allowCopilotAction_click_c3434934a_10_2",
+      "step_allowCopilotAction_retry_c3434934a_10_2",
       "step_allowCopilotAction_assertDismissed_c3434934a_10_2",
       "step_assertChatReplied_assert_c3434934a_10_3",
       "step_assertChatContains_assert_c3434934a_10_4"
@@ -4133,6 +4134,33 @@
       ]
     },
     {
+      "step_id": "step_allowCopilotAction_retry_c3434934a_10_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 333,
+        "y": 327
+      },
+      "description": "Click the \"Allow\" button again in the Microsoft 365 Copilot chat interface to accept a repeated action-consent prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_allowCopilotAction_click_c3434934a_10_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:action-consent",
+        "action:allow-retry",
+        "ocr:true"
+      ]
+    },
+    {
       "step_id": "step_allowCopilotAction_assertDismissed_c3434934a_10_2",
       "agent": "assertion",
       "tool": "",
@@ -4143,7 +4171,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_allowCopilotAction_click_c3434934a_10_2"
+        "step_allowCopilotAction_retry_c3434934a_10_2"
       ],
       "preconditions": [],
       "postconditions": [],
