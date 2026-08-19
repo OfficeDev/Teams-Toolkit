@@ -24,9 +24,9 @@
     {
       "step_id": "step_browserM365SignIn_focusAccount_{{text:instanceSuffix}}",
       "agent": "interaction",
-      "tool": "click",
-      "parameters": { "button": "left", "x": 429, "y": 285 },
-      "description": "Click the email or username input on the Microsoft sign-in page.",
+      "tool": "key_press",
+      "parameters": { "key": "f6" },
+      "description": "Press F6 to move focus from the Chrome address bar to the email or username input on the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
