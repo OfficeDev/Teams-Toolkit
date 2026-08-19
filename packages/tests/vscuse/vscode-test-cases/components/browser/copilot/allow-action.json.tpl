@@ -53,6 +53,26 @@
       ]
     },
     {
+      "step_id": "step_allowCopilotAction_assertRepeated_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Copilot action-consent Allow button is visible again after the first click.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_allowCopilotAction_click_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:action-consent",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_allowCopilotAction_retry_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "click",
@@ -66,7 +86,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_allowCopilotAction_click_{{text:instanceSuffix}}"],
+      "depends_on": ["step_allowCopilotAction_assertRepeated_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": [

@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 103,
+    "total_steps": 104,
     "name": "da-api-plugin-from-scratch-ts-local-copilot",
     "description": {
       "owner": "",
@@ -115,6 +115,7 @@
       "step_sendCopilotMessage_send_c05b814fe_6_1",
       "step_allowCopilotAction_assert_c05b814fe_6_2",
       "step_allowCopilotAction_click_c05b814fe_6_2",
+      "step_allowCopilotAction_assertRepeated_c05b814fe_6_2",
       "step_allowCopilotAction_retry_c05b814fe_6_2",
       "step_allowCopilotAction_assertDismissed_c05b814fe_6_2",
       "step_assertChatReplied_assert_c05b814fe_6_3",
@@ -2353,6 +2354,28 @@
       ]
     },
     {
+      "step_id": "step_allowCopilotAction_assertRepeated_c05b814fe_6_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Copilot action-consent Allow button is visible again after the first click.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_allowCopilotAction_click_c05b814fe_6_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:browser",
+        "host_surface:copilot",
+        "entry_state:action-consent",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
       "step_id": "step_allowCopilotAction_retry_c05b814fe_6_2",
       "agent": "interaction",
       "tool": "click",
@@ -2367,7 +2390,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_allowCopilotAction_click_c05b814fe_6_2"
+        "step_allowCopilotAction_assertRepeated_c05b814fe_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
