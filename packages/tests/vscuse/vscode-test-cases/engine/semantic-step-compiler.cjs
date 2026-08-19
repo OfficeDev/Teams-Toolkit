@@ -564,6 +564,7 @@ const targetAdapters = {
       first: { component: "quick-input/filter-option.json.tpl" },
       refreshFirst: {
         component: "quick-input/refresh-filter-option.json.tpl",
+        commandTitle: commandTitles.target,
         browserAuthenticationComponent:
           "authentication/browser/m365-committed-sign-in.json.tpl",
       },
