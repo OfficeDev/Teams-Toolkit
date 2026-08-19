@@ -25,6 +25,122 @@
         "operation:ensure-copilot-launch-profile",
         "step_retry_timeout: 120"
       ]
+    },
+    {
+      "step_id": "step_ensureCopilotLaunchProfile_openReload_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press F1 to open the Command Palette after normalizing the Copilot launch profile.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_ensureCopilotLaunchProfile_ensure_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:workspace", "operation:ensure-copilot-launch-profile"]
+    },
+    {
+      "step_id": "step_ensureCopilotLaunchProfile_assertReloadPalette_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible and ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_ensureCopilotLaunchProfile_openReload_{{text:instanceSuffix}}"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:ensure-copilot-launch-profile",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_ensureCopilotLaunchProfile_filterReload_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Developer: Reload Window"
+      },
+      "description": "Type Developer: Reload Window into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_ensureCopilotLaunchProfile_assertReloadPalette_{{text:instanceSuffix}}"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:workspace", "operation:ensure-copilot-launch-profile"]
+    },
+    {
+      "step_id": "step_ensureCopilotLaunchProfile_assertReloadCommand_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input reads >Developer: Reload Window and the highlighted command is Developer: Reload Window.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_ensureCopilotLaunchProfile_filterReload_{{text:instanceSuffix}}"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:ensure-copilot-launch-profile",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_ensureCopilotLaunchProfile_reload_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to reload the Visual Studio Code window and refresh launch configurations.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_ensureCopilotLaunchProfile_assertReloadCommand_{{text:instanceSuffix}}"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:workspace", "operation:ensure-copilot-launch-profile"]
+    },
+    {
+      "step_id": "step_ensureCopilotLaunchProfile_assertReloaded_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion Visual Studio Code has reloaded the project window and the Preview README.md editor is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_ensureCopilotLaunchProfile_reload_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:ensure-copilot-launch-profile",
+        "step_retry_timeout: 180"
+      ]
     }
   ]
 }
