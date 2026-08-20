@@ -604,7 +604,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:480:513:16:5:2ad54c4545d59562",
+        "dhash:480:513:96:5:000100b783000000",
+        "dhash:480:513:0:10:1360a0e8d89ec4c1"
+      ],
       "postconditions": [],
       "tags": [
         "ocr:true",
