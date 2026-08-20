@@ -155,17 +155,15 @@
    "parameters": {
     "button": "left",
     "x": 455,
-    "y": 351
+    "y": 286
    },
-   "description": "Click the red plus icon next to the \"Email or phone\" field in the Microsoft login form.",
+   "description": "Click inside the \"Email, phone, or Skype\" input field on the Microsoft sign-in page to focus it for credential entry.",
    "content_refs": [],
    "timeout": 30,
    "retry_count": 0,
    "continue_on_error": "false",
    "depends_on": [],
-   "preconditions": [
-    "dhash:455:351:0:10:0b28d0d9e7e6dae4"
-   ],
+   "preconditions": [],
    "postconditions": [],
    "tags": [
     "precondition_wait_timeout: 60"
@@ -199,23 +197,17 @@
   {
    "step_id": "step_ceb13b5f",
    "agent": "interaction",
-   "tool": "click",
+   "tool": "key_press",
    "parameters": {
-    "button": "left",
-    "x": 638,
-    "y": 486
+    "key": "enter"
    },
-   "description": "Click the \"Next\" button on the Microsoft login screen after entering the email address, within the Chrome browser during the authentication workflow.",
+   "description": "Press Enter to submit the email address in the Microsoft sign-in form and proceed to the password step.",
    "content_refs": [],
    "timeout": 30,
    "retry_count": 0,
    "continue_on_error": "false",
    "depends_on": [],
-   "preconditions": [
-    "dhash:638:486:16:5:d799299d942bd400",
-    "dhash:638:486:96:5:00000c62720c0000",
-    "dhash:638:486:0:10:1b28f0cbc6f6dae4"
-   ],
+   "preconditions": [],
    "postconditions": [],
    "tags": [],
    "screenshot": "step_ceb13b5f",
