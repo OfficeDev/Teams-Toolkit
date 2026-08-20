@@ -7,6 +7,21 @@
   },
   "steps": [
     {
+      "step_id": "step_browserM365SignIn_refreshPage_{{text:instanceSuffix}}",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": { "key": "f5" },
+      "description": "Refresh the Microsoft sign-in page before checking for account entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": ["component:authentication", "surface:browser"]
+    },
+    {
       "step_id": "step_browserM365SignIn_assertAccount_{{text:instanceSuffix}}",
       "agent": "assertion",
       "tool": "",
@@ -16,7 +31,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": [],
+      "depends_on": ["step_browserM365SignIn_refreshPage_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
       "tags": ["component:authentication", "surface:browser", "step_retry_timeout: 180"]
@@ -25,8 +40,8 @@
       "step_id": "step_browserM365SignIn_focusAccount_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "click",
-      "parameters": { "button": "left", "x": 429, "y": 347 },
-      "description": "Click the email or username input on the Microsoft sign-in page.",
+      "parameters": { "button": "left", "x": 512, "y": 384 },
+      "description": "Click the \"Email, phone, or Skype\" input on the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -34,7 +49,7 @@
       "depends_on": ["step_browserM365SignIn_assertAccount_{{text:instanceSuffix}}"],
       "preconditions": [],
       "postconditions": [],
-      "tags": ["component:authentication", "surface:browser"]
+      "tags": ["component:authentication", "surface:browser", "ocr:true"]
     },
     {
       "step_id": "step_browserM365SignIn_enterAccount_{{text:instanceSuffix}}",
