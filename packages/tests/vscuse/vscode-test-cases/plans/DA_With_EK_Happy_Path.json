@@ -574,7 +574,7 @@
       "parameters": {
         "button": "left",
         "x": 110,
-        "y": 385
+        "y": 355
       },
       "description": "Select the provisioned ${{var:app_name}}dev agent from the Copilot sidebar.",
       "content_refs": [],
