@@ -474,7 +474,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:433:513:16:5:9451aed650524606",
+        "dhash:433:513:96:5:000000a86e000000",
+        "dhash:433:513:0:10:0360a0d898d8c4e5"
+      ],
       "postconditions": [],
       "tags": [
         "delay: 30"
