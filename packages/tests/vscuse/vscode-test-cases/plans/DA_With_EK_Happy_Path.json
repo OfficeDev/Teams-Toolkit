@@ -153,7 +153,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/bin/bash\n\nTARGET_DIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_XfRJT\"\nFILE_URL=\"https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\"\nFILE_NAME=\"Document.docx\"\n\n# Create target directory if it doesn't exist\nmkdir -p \"$TARGET_DIR\"\n\n# Download file with timeout\ncurl -L --max-time 120 \"$FILE_URL\" -o \"$TARGET_DIR/$FILE_NAME\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDERR ===\n% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:--     0\n 11  695k   11 81911    0     0   138k      0  0:00:05 --:--:--  0:00:05  137k\n100  695k  100  695k    0     0   612k      0  0:00:01  0:00:01 --:--:--  612k\n\n\u2713 Script executed successfully"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/bin/bash\n\nTARGET_DIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_XfRJT\"\nFILE_URL=\"https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\"\nFILE_NAME=\"Document.docx\"\n\nmkdir -p \"$TARGET_DIR\"\ncurl -L --max-time 120 \"$FILE_URL\" -o \"$TARGET_DIR/$FILE_NAME\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n\u2713 Script executed successfully"
       },
       "description": "@code download file: https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\nsave to the path: /home/vscode/AgentsToolkitProjects/${{var:app_name}}",
       "content_refs": [],
@@ -269,7 +269,7 @@
         "x": 419,
         "y": 79
       },
-      "description": "Click the \u201cmanifest.json\u201d file entry in the \u201cSelect Teams manifest.json File\u201d dialog within Visual Studio Code, selecting the file located at /home/vscode/AgentsToolkitProjects/vscuse_app_6PgeC/appPackage.",
+      "description": "Click the \u201cmanifest.json\u201d file entry in the \u201cSelect Teams manifest.json File\u201d dialog within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -295,7 +295,7 @@
         "x": 398,
         "y": 75
       },
-      "description": "Click the \"Browse...\" button in the \"Add embedded knowledge files\" dialog within Visual Studio Code, located under the file selection input.",
+      "description": "Click the \"Browse...\" button in the \"Add embedded knowledge files\" dialog within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -321,7 +321,7 @@
         "x": 294,
         "y": 81
       },
-      "description": "Click the \"Document.docx\" file in the file selection dialog under the \"vscode/AgentsToolkitProjects/vscuse_app_KAhFT\" directory to select it for opening.",
+      "description": "Click the \"Document.docx\" file in the file selection dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -347,7 +347,7 @@
         "x": 954,
         "y": 739
       },
-      "description": "Click the \"Open\" button in the bottom-right corner of the file selection dialog to confirm and open the selected file \"Document.docx\".",
+      "description": "Click the \"Open\" button to confirm and open \"Document.docx\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -373,7 +373,7 @@
         "x": 473,
         "y": 111
       },
-      "description": "Click the \"Add\" button in the Microsoft 365 Agents Toolkit confirmation dialog at the top of the Visual Studio Code interface.",
+      "description": "Click the \"Add\" button in the Microsoft 365 Agents Toolkit confirmation dialog.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -404,7 +404,7 @@
         "x": 134,
         "y": 529
       },
-      "description": "Click the \"Provision\" option under the \"LIFECYCLE\" section in the left sidebar of the Microsoft 365 Agents Toolkit extension within Visual Studio Code.",
+      "description": "Click the \"Provision\" option under the \"LIFECYCLE\" section.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -435,7 +435,7 @@
         "x": null,
         "y": null
       },
-      "description": "Press the F1 key to open the command palette in Visual Studio Code \u2013 Insiders, shown while viewing the \"Overview of the Declarative Agent template\" README with the \"Provision\" step selected in the Microsoft 365 Agents Toolkit sidebar.",
+      "description": "Press F1 to open the command palette.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -466,7 +466,7 @@
         "x": null,
         "y": null
       },
-      "description": "Type 'notifications: Show Notifications' into the VS Code command palette input at the top of the window.",
+      "description": "Type 'notifications: Show Notifications' into the command palette.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -497,7 +497,7 @@
         "x": null,
         "y": null
       },
-      "description": "Press Enter to select the \"Notifications: Show Notifications\" command in the Visual Studio Code command palette.",
+      "description": "Press Enter to select \"Notifications: Show Notifications\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -558,11 +558,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:351:376:16:5:b2b3e96402408080",
-        "dhash:351:376:96:5:00108593120080a0",
-        "dhash:351:376:0:10:1b95c3f0f0c0e0e0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
@@ -578,7 +574,7 @@
       "parameters": {
         "text": "hi"
       },
-      "description": "Enter text 'hi' into the main chat input box below the prompt \"Hi, what can I help you with?\" in the M365 Copilot web interface.",
+      "description": "Enter text 'hi' into the main chat input box.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -600,7 +596,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press the Enter key in the M365 Copilot chat input box after typing \"hi\" to submit the message.",
+      "description": "Press Enter to submit \"hi\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -622,7 +618,7 @@
       "parameters": {
         "text": "what's GPA of Sarah Miller"
       },
-      "description": "Type the text \"what's GPA of Sarah Miller\" into the message input box at the bottom of the M365 Copilot chat interface, within the \"Simple Greeting Exchange\" conversation.",
+      "description": "Type \"what's GPA of Sarah Miller\" into the message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -646,7 +642,7 @@
       "parameters": {
         "key": "enter"
       },
-      "description": "Press the Enter key in the text input box at the bottom of the M365 Copilot chat interface to submit the question \"what's GPA of Sarah Miller\".",
+      "description": "Press Enter to submit the GPA question.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -670,7 +666,7 @@
         "x": 1002,
         "y": 604
       },
-      "description": "Click the \"Message Copilot\" input box at the bottom of the Microsoft 365 Copilot chat interface to focus for entering a new message.",
+      "description": "Click the \"Message Copilot\" input box.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

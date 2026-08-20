@@ -9,7 +9,7 @@
    "precondition_retry_interval": 2,
    "step_retry_count": 0
   },
-  "total_steps": 12,
+  "total_steps": 15,
   "created_at": "2026-05-20T03:43:01.198447",
   "name": "group  debug in copilot remote DA no action Copilot License",
   "description": {
@@ -27,6 +27,9 @@
    "step_a5893dc9",
    "step_41fdae73",
    "step_ceb13b5f",
+   "step_f77ad912",
+   "step_72d90a1b",
+   "step_5ec3d4f1",
    "step_5d691940",
    "step_063b5973",
    "step_8b35830c",
@@ -213,6 +216,70 @@
    "tags": [],
    "screenshot": "step_ceb13b5f",
    "created_at": "2026-05-20T05:32:31.010460",
+   "plan_id": "plan_df4aaebb"
+  },
+  {
+   "step_id": "step_f77ad912",
+   "agent": "interaction",
+   "tool": "click",
+   "parameters": {
+    "button": "left",
+    "x": 455,
+    "y": 286
+   },
+   "description": "Refocus the Microsoft sign-in email field after the initial authorization page reset.",
+   "content_refs": [],
+   "timeout": 30,
+   "retry_count": 0,
+   "continue_on_error": "false",
+   "depends_on": [],
+   "preconditions": [],
+   "postconditions": [],
+   "tags": [],
+   "screenshot": "step_f77ad912",
+   "created_at": "2026-08-20T02:23:00.500000",
+   "plan_id": "plan_df4aaebb"
+  },
+  {
+   "step_id": "step_72d90a1b",
+   "agent": "interaction",
+   "tool": "type_text",
+   "parameters": {
+    "text": "${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}}"
+   },
+   "description": "Re-enter ${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}} after the Microsoft sign-in email form resets.",
+   "content_refs": [],
+   "timeout": 30,
+   "retry_count": 0,
+   "continue_on_error": "false",
+   "depends_on": [],
+   "preconditions": [],
+   "postconditions": [],
+   "tags": [],
+   "screenshot": "step_72d90a1b",
+   "created_at": "2026-08-20T02:23:00.600000",
+   "plan_id": "plan_df4aaebb"
+  },
+  {
+   "step_id": "step_5ec3d4f1",
+   "agent": "interaction",
+   "tool": "click",
+   "parameters": {
+    "button": "left",
+    "x": 634,
+    "y": 418
+   },
+   "description": "Click the visible Next button immediately after re-entering the email address on the stabilized Microsoft sign-in form.",
+   "content_refs": [],
+   "timeout": 30,
+   "retry_count": 0,
+   "continue_on_error": "false",
+   "depends_on": [],
+   "preconditions": [],
+   "postconditions": [],
+   "tags": [],
+   "screenshot": "step_5ec3d4f1",
+   "created_at": "2026-08-20T02:23:00.700000",
    "plan_id": "plan_df4aaebb"
   },
   {
