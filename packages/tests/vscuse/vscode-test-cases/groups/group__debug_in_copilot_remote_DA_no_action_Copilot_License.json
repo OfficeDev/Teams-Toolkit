@@ -227,7 +227,7 @@
     "x": 455,
     "y": 286
    },
-   "description": "Refocus the Microsoft sign-in email field after the initial authorization page reset.",
+   "description": "Wait for the initial authorization page reset to finish, then refocus the Microsoft sign-in email field.",
    "content_refs": [],
    "timeout": 30,
    "retry_count": 0,
@@ -235,7 +235,9 @@
    "depends_on": [],
    "preconditions": [],
    "postconditions": [],
-   "tags": [],
+   "tags": [
+    "delay: 5"
+   ],
    "screenshot": "step_f77ad912",
    "created_at": "2026-08-20T02:23:00.500000",
    "plan_id": "plan_df4aaebb"
