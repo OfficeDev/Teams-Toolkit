@@ -73,13 +73,13 @@ jobs:
         working-directory: ./packages/fx-core
         if: runner.os == 'Linux'
         run: |
-          xvfb-run -a npm run test:func-checker
+          xvfb-run -a npm run test:env-checker
 
       - name: Integration Test
         working-directory: ./packages/fx-core
         if: runner.os != 'Linux'
         run: |
-          npm run test:func-checker
+          npm run test:env-checker
 
   node:
     name: Build and Test OS "${{ matrix.os }}", Node.js "${{ matrix.node-version }}"
@@ -130,13 +130,13 @@ jobs:
         working-directory: ./packages/fx-core
         if: runner.os == 'Linux'
         run: |
-          xvfb-run -a npm run test:node-checker
+          xvfb-run -a npm run test:env-checker
 
       - name: Integration Test
         working-directory: ./packages/fx-core
         if: runner.os != 'Linux'
         run: |
-          npm run test:node-checker
+          npm run test:env-checker
 
 
   dotnet:
@@ -204,11 +204,11 @@ jobs:
         working-directory: ./packages/fx-core
         if: runner.os == 'Linux'
         run: |
-          xvfb-run -a npm run test:dotnet-checker
+          xvfb-run -a npm run test:env-checker
 
       - name: Integration Test
         working-directory: ./packages/fx-core
         if: runner.os != 'Linux'
         run: |
-          npm run test:dotnet-checker
+          npm run test:env-checker
 
