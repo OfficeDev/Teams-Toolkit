@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 25,
+    "total_steps": 27,
     "created_at": "2026-06-17T00:08:47.447852",
     "name": "DA With EK Happy Path",
     "description": {
@@ -43,6 +43,8 @@
       "step_8dbb76fc",
       "plan_r_0929_040401",
       "plan_df4aaebb",
+      "step_4bd4e391",
+      "step_77a0c2bd",
       "step_c6ca43c3",
       "step_6a3082e5",
       "step_18feb473",
@@ -544,13 +546,57 @@
       "plan_id": "plan_13457846"
     },
     {
+      "step_id": "step_4bd4e391",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 716,
+        "y": 461
+      },
+      "description": "Close the \"This agent is not installed\" dialog shown for the stale deep link.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_4bd4e391",
+      "created_at": "2026-08-20T02:58:13.738000",
+      "plan_id": "plan_13457846"
+    },
+    {
+      "step_id": "step_77a0c2bd",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 110,
+        "y": 385
+      },
+      "description": "Select the provisioned ${{var:app_name}}dev agent from the Copilot sidebar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_77a0c2bd",
+      "created_at": "2026-08-20T02:58:13.738000",
+      "plan_id": "plan_13457846"
+    },
+    {
       "step_id": "step_c6ca43c3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 351,
-        "y": 376
+        "x": 480,
+        "y": 513
       },
       "description": "Click on the \"Message Copilot\" input text box in the M365 Copilot web chat interface.",
       "content_refs": [],
@@ -561,7 +607,8 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "ocr:true"
+        "ocr:true",
+        "delay: 10"
       ],
       "screenshot": "step_c6ca43c3",
       "created_at": "2026-06-17T00:08:47.613889",
