@@ -61,7 +61,7 @@ describe("SCN-DA-CREATE-TYPESPEC (v4, T3 InMemoryRuntime)", () => {
     const { files } = await run();
     const manifest = readJsonObject(files, "appPackage/manifest.json");
     const name = recordProperty(manifest, "name");
-    assert.strictEqual(manifest.manifestVersion, "1.29");
+    assert.strictEqual(manifest.manifestVersion, "1.30");
     assert.strictEqual(manifest.id, "${{TEAMS_APP_ID}}");
     assert.strictEqual(name.short, "TypeSpec Agent${{APP_NAME_SUFFIX}}");
     assert.notProperty(manifest, "copilotAgents");

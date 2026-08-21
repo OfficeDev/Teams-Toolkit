@@ -45,7 +45,10 @@
     }
   },
   "auth.show": {
-    "description": "Display all connected Microsoft 365 and Azure accounts."
+    "description": "Display connected Microsoft 365 and Azure accounts.",
+    "arguments": {
+      "service": "Azure or Microsoft 365."
+    }
   },
   "add": {
     "description": "Add feature to your app."

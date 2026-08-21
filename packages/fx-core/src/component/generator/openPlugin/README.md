@@ -29,13 +29,13 @@ components nor declare them inline:
 Import is tolerant; export is strict. Pre-1.0.0 directories still import, with a
 deprecation warning:
 
-| Pre-1.0.0 | Agent Plugins 1.0.0 |
-|---|---|
-| `.plugin/plugin.json`, `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json` | `plugin.json` in the plugin root |
-| `.mcp.json` | `mcp.json` |
-| top-level `x-microsoft-365-agents-toolkit` | `extensions["com.microsoft.agents-toolkit"]` |
-| `"type": "http"` | `"type": "streamable-http"` |
-| manifest component-path overrides (`skills`, `commands`, …) | not permitted; fixed locations only |
+| Pre-1.0.0                                                                         | Agent Plugins 1.0.0                          |
+| --------------------------------------------------------------------------------- | -------------------------------------------- |
+| `.plugin/plugin.json`, `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json` | `plugin.json` in the plugin root             |
+| `.mcp.json`                                                                       | `mcp.json`                                   |
+| top-level `x-microsoft-365-agents-toolkit`                                        | `extensions["com.microsoft.agents-toolkit"]` |
+| `"type": "http"`                                                                  | `"type": "streamable-http"`                  |
+| manifest component-path overrides (`skills`, `commands`, …)                       | not permitted; fixed locations only          |
 
 `atk export` only ever emits the 1.0.0 column.
 
@@ -65,34 +65,34 @@ atk export agentplugin --path ./my-project --output ./my-plugin
 
 ## CLI options — import
 
-| Flag | Required | Description |
-|---|---|---|
-| `--path / -p` | yes | Path to the plugin directory. |
-| `--output / -o` | no | Destination project folder. Defaults to `./<plugin-name>`. |
-| `--privacy-url` | conditional | `developer.privacyUrl`. Required unless plugin.json carries a `com.microsoft.agents-toolkit` extension block. |
-| `--terms-url` | conditional | `developer.termsOfUseUrl`. Required unless plugin.json carries a `com.microsoft.agents-toolkit` extension block. |
-| `--website-url` | no | `developer.websiteUrl`. Falls back to plugin.json `homepage` then `author.url`. |
-| `--app-id` | no | Override the deterministic UUIDv5 manifest id. |
-| `--default-auth-type` | no | `Auto` (default), `None`, `OAuthPluginVault`, or `ApiKeyPluginVault`. |
-| `--package-name` | no | Full reverse-DNS packageName (omitted from manifest when absent). |
+| Flag                  | Required    | Description                                                                                                                                                                                                              |
+| --------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--path / -p`         | yes         | Path to the plugin directory.                                                                                                                                                                                            |
+| `--output / -o`       | no          | Destination project folder. Defaults to `./<plugin-name>`.                                                                                                                                                               |
+| `--privacy-url`       | conditional | `developer.privacyUrl`. Required unless plugin.json carries a `com.microsoft.agents-toolkit` extension block.                                                                                                            |
+| `--terms-url`         | conditional | `developer.termsOfUseUrl`. Required unless plugin.json carries a `com.microsoft.agents-toolkit` extension block.                                                                                                         |
+| `--website-url`       | no          | `developer.websiteUrl`. Falls back to plugin.json `homepage` then `author.url`.                                                                                                                                          |
+| `--app-id`            | no          | Override the deterministic UUIDv5 manifest id.                                                                                                                                                                           |
+| `--default-auth-type` | no          | `Auto` (default), `None`, `OAuthPluginVault`, or `ApiKeyPluginVault`. Auto probes remote HTTPS MCP endpoints and OAuth metadata, warns on inferred or fallback choices, and fails when the endpoint cannot be confirmed. |
+| `--package-name`      | no          | Full reverse-DNS packageName (omitted from manifest when absent).                                                                                                                                                        |
 
 ## CLI options — export
 
-| Flag | Required | Description |
-|---|---|---|
-| `--path / -p` | yes | ATK project folder (must contain `appPackage/manifest.json`). |
-| `--output / -o` | no | Destination plugin folder. Defaults to `./<plugin-name>-agentplugin`. |
-| `--manifest-kind` | no | **Deprecated and ignored.** 1.0.0 mandates `plugin.json` in the plugin root. Passing a value emits a warning. |
+| Flag              | Required | Description                                                                                                   |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------------- |
+| `--path / -p`     | yes      | ATK project folder (must contain `appPackage/manifest.json`).                                                 |
+| `--output / -o`   | no       | Destination plugin folder. Defaults to `./<plugin-name>-agentplugin`.                                         |
+| `--manifest-kind` | no       | **Deprecated and ignored.** 1.0.0 mandates `plugin.json` in the plugin root. Passing a value emits a warning. |
 
 ## What gets mapped
 
-| Agent Plugins component | Manifest field | Notes |
-|---|---|---|
-| `skills/<name>/SKILL.md` | `agentSkills[].folder` | Copied verbatim; sorted alphabetically. |
-| `mcp.json` `streamable-http` / `sse` servers | `agentConnectors[].toolSource.remoteMcpServer` | Auth auto-detected: HTTPS non-localhost → `OAuthPluginVault`, else `None`. |
-| `mcp.json` `stdio` servers | *(skipped)* | Warning emitted; requires manual `localMcpServer` setup. |
-| `commands/*.md` | *(copied alongside, inert)* | Not an Agent Plugins component; kept so pre-1.0.0 directories round-trip. |
-| `hooks/`, `agents/`, `rules/`, `lspServers/`, `outputStyles/` | *(dropped)* | Warning emitted per field. Not representable in MOS3 today. |
+| Agent Plugins component                                       | Manifest field                                 | Notes                                                                                                                                                                  |
+| ------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skills/<name>/SKILL.md`                                      | `agentSkills[].folder`                         | Copied verbatim; sorted alphabetically.                                                                                                                                |
+| `mcp.json` `streamable-http` / `sse` servers                  | `agentConnectors[].toolSource.remoteMcpServer` | Preserved auth metadata or an explicit default wins. Auto uses an MCP `initialize` probe plus OAuth metadata discovery; localhost and non-HTTPS entries remain `None`. |
+| `mcp.json` `stdio` servers                                    | _(skipped)_                                    | Warning emitted; requires manual `localMcpServer` setup.                                                                                                               |
+| `commands/*.md`                                               | _(copied alongside, inert)_                    | Not an Agent Plugins component; kept so pre-1.0.0 directories round-trip.                                                                                              |
+| `hooks/`, `agents/`, `rules/`, `lspServers/`, `outputStyles/` | _(dropped)_                                    | Warning emitted per field. Not representable in MOS3 today.                                                                                                            |
 
 ## Spec conformance notes
 
@@ -123,6 +123,23 @@ per-connector displayName/description/authorization overrides). On the next
 `atk import agentplugin` the block is read back so the reconstructed manifest
 matches the original byte-for-byte where possible.
 
+## Auto authentication discovery
+
+`--default-auth-type Auto` performs network requests for each remote HTTPS MCP URL whose auth is
+not preserved in the ATK extension block. A confirmed endpoint with resolvable OAuth metadata maps
+to `OAuthPluginVault`. A confirmed unauthenticated `initialize` response with no resolved OAuth
+metadata maps to `None`. A confirmed auth challenge whose metadata cannot be resolved falls back to
+`OAuthPluginVault`. Every outcome produces a warning; the fallback warning tells the developer to
+verify the authentication type and register the placeholder reference before use.
+
+Auto visits MCP URLs supplied by the source plugin, then follows OAuth metadata URLs and redirects
+returned during discovery. It does not enforce an egress allowlist. For an untrusted plugin, verify
+the URLs first or use an explicit `--default-auth-type` to skip discovery requests.
+
+If the endpoint cannot be confirmed, the import stops with `UnresolvedMcpAuth`. Re-run with an
+explicit `--default-auth-type` after verifying the server's requirements. `ApiKeyPluginVault` is
+never inferred automatically.
+
 ## Module structure
 
 ```
@@ -142,7 +159,7 @@ openPlugin/
 
 ## Feature flags
 
-| Flag | Default | Purpose |
-|---|---|---|
-| `TEAMSFX_OPENPLUGIN_IMPORT_EXPORT` | `true` | Gates registration of the import/export commands (both spellings). |
-| `TEAMSFX_AGENT_SKILLS` | `false` | Gates `createAppPackage` folder walk for the DA-level `agent_skills` property. Top-level Teams manifest `agentSkills` is packaged unconditionally. |
+| Flag                               | Default | Purpose                                                                                                                                            |
+| ---------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TEAMSFX_OPENPLUGIN_IMPORT_EXPORT` | `true`  | Gates registration of the import/export commands (both spellings).                                                                                 |
+| `TEAMSFX_AGENT_SKILLS`             | `false` | Gates `createAppPackage` folder walk for the DA-level `agent_skills` property. Top-level Teams manifest `agentSkills` is packaged unconditionally. |

@@ -247,9 +247,7 @@ describe("openPlugin.readOpenPluginDir", () => {
     });
     const parsed = await readOpenPluginDir(tempDir);
     chai.expect(parsed.skills).to.deep.equal([]);
-    chai
-      .expect(parsed.warnings.some((w) => w.includes("outside the plugin root")))
-      .to.equal(true);
+    chai.expect(parsed.warnings.some((w) => w.includes("outside the plugin root"))).to.equal(true);
   });
 
   it("reads wrapped form of mcp.json", async () => {

@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 171 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 170 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 171 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 171);
+  assert.equal(first.value.files.length, 170);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 171);
+  assert.equal(generatedFiles.length, 170);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -4845,7 +4845,7 @@ test("VCB-121: the Teams Collaborator Agent scaffold skips the LLM service and l
   }
 });
 
-test("VCB-122: the Teams Collaborator Agent bundle chats locally but stops after the remote launch", async () => {
+test("VCB-122: the Teams Collaborator Agent bundle chats locally", async () => {
   const result = await compileFixture(
     "teams-collaborator-agent.yml",
     (sourceText) => sourceText,
@@ -4855,50 +4855,36 @@ test("VCB-122: the Teams Collaborator Agent bundle chats locally but stops after
   assert.deepEqual(
     result.value.map((generated) => generated.caseId),
     [
-      "collaborator-ts-azure-openai-remote-teams",
       "collaborator-ts-azure-openai-local-teams",
       "collaborator-ts-azure-openai-playground",
     ],
   );
 
-  for (const { caseId, expectedProfile, expectsChat } of [
-    {
-      caseId: "collaborator-ts-azure-openai-remote-teams",
-      expectedProfile: "Launch Remote (Chrome)",
-      expectsChat: false,
-    },
-    {
-      caseId: "collaborator-ts-azure-openai-local-teams",
-      expectedProfile: "Debug in Teams (Chrome)",
-      expectsChat: true,
-    },
-  ]) {
-    const plan = result.value.find(
-      (generated) => generated.caseId === caseId,
-    ).plan;
-    const typedValues = plan.steps
-      .filter((step) => step.tool === "type_text")
-      .map((step) => step.parameters.text);
+  const generated = result.value.find(
+    (entry) => entry.caseId === "collaborator-ts-azure-openai-local-teams",
+  );
+  assert.notEqual(generated, undefined);
+  const typedValues = generated.plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
 
-    assert.equal(typedValues.includes(expectedProfile), true, caseId);
-    assert.equal(
-      plan.steps.some((step) => step.step_id.startsWith("step_addAndOpenApp_")),
-      true,
-      caseId,
-    );
-    assert.equal(
-      plan.steps.some((step) =>
-        step.step_id.startsWith("step_sendTeamsMessage_"),
-      ),
-      expectsChat,
-      caseId,
-    );
-    assert.equal(
-      typedValues.includes("Create a task to review the proposal by Friday"),
-      expectsChat,
-      caseId,
-    );
-  }
+  assert.equal(typedValues.includes("Debug in Teams (Chrome)"), true);
+  assert.equal(
+    generated.plan.steps.some((step) =>
+      step.step_id.startsWith("step_addAndOpenApp_"),
+    ),
+    true,
+  );
+  assert.equal(
+    generated.plan.steps.some((step) =>
+      step.step_id.startsWith("step_sendTeamsMessage_"),
+    ),
+    true,
+  );
+  assert.equal(
+    typedValues.includes("Create a task to review the proposal by Friday"),
+    true,
+  );
 });
 
 test("VCB-130: the Teams Collaborator Agent Playground case preserves its recorded chat path", async () => {
@@ -6012,6 +5998,22 @@ test("VCB-157: the overlength return assertion describes only the visible folder
   );
 });
 
+test("VCB-163: the overlength entry assertion describes only the visible app-name prompt", async () => {
+  const result = await compileFixture(
+    "feature-basic-tab-local-debug.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const promptAssertion = result.value[0].plan.steps.find((step) =>
+    step.step_id.startsWith("step_rejectedOverlengthAppName_assertPrompt_"),
+  );
+  assert.notEqual(promptAssertion, undefined);
+  assert.equal(
+    promptAssertion.description,
+    "@assertion the Application Name prompt is visible and ready for text input.",
+  );
+});
+
 test("VCB-149: addDaCapability adds the recorded Copilot connector and rejects unsafe input", () => {
   const sourceText = `version: 1
 cases:
@@ -7022,7 +7024,7 @@ steps:
   }
 });
 
-test("VCB-154: exactly seven legacy plans are replaced while one Partial and five Not Mapped plans remain", async () => {
+test("VCB-154: seven legacy plans are replaced, two are retired, and five remain", async () => {
   const migrations = [
     {
       source: "feature-basic-tab-local-debug.yml",
@@ -7125,10 +7127,6 @@ test("VCB-154: exactly seven legacy plans are replaced while one Partial and fiv
     "legacy provision-before-login flow is not covered",
   ];
   const notMapped = [
-    [
-      "DA_No_Action_Add_Knowledge_Onedrive.json",
-      "mislabeled and contains no OneDrive steps",
-    ],
     ["DA_No_Action_Web_Search.json", "ambiguous second branch omits its URL"],
     [
       "DA_With_EK_Happy_Path.json",
@@ -7143,10 +7141,36 @@ test("VCB-154: exactly seven legacy plans are replaced while one Partial and fiv
       "mutable blob/main source is not pinned",
     ],
   ];
+  const retired = [
+    [
+      "DA_No_Action_Add_Knowledge_Onedrive.json",
+      "mislabeled and contains no OneDrive steps",
+    ],
+    [
+      "DA_Add_Action_Import_Existing_API.json",
+      "four authentication variants provide the retained coverage",
+    ],
+  ];
   const mapping = await fs.readFile(
     path.join(casesDirectory, "legacy-case-mapping.md"),
     "utf8",
   );
+  const index = await fs.readFile(
+    path.join(casesDirectory, "..", "..", "Index.md"),
+    "utf8",
+  );
+  for (const [status, expectedCount] of [
+    ["Partial", 1],
+    ["Not Mapped", 4],
+    ["Retired", 2],
+  ]) {
+    assert.equal(
+      mapping.match(new RegExp(`^\\|[^\\n]*\\|\\s*${status}\\s*\\|`, "gmu"))
+        ?.length ?? 0,
+      expectedCount,
+      `${status} row count`,
+    );
+  }
   assert.equal(fsSync.existsSync(path.join(plansDirectory, partial[0])), true);
   assert.match(
     mapping,
@@ -7170,6 +7194,22 @@ test("VCB-154: exactly seven legacy plans are replaced while one Partial and fiv
       mapping,
       new RegExp(
         `\\| \\\`${legacy.replaceAll(".", "\\.")}\\\`\\s+\\| Not Mapped\\s+\\|[^\\n]*${blocker}`,
+        "i",
+      ),
+      legacy,
+    );
+  }
+  for (const [legacy, reason] of retired) {
+    assert.equal(fsSync.existsSync(path.join(plansDirectory, legacy)), false);
+    assert.equal(
+      index.includes(`\`${path.parse(legacy).name}\``),
+      false,
+      `${legacy} is not indexed`,
+    );
+    assert.match(
+      mapping,
+      new RegExp(
+        `\\| \\\`${legacy.replaceAll(".", "\\.")}\\\`\\s+\\| Retired\\s+\\|[^\\n]*${reason}`,
         "i",
       ),
       legacy,

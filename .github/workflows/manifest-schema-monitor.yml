@@ -1,0 +1,174 @@
+name: Manifest Schema Monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      ignore_baseline:
+        description: "Ignore version comparison and treat every manifest as drifted (forces the Copilot summary + issue path for testing)"
+        type: boolean
+        default: false
+  # schedule:
+  #   - cron: "17 23 * * *"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  detect-and-report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_GITHUB_APP_ID }}
+          private-key: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Copilot CLI
+        run: npm install -g @github/copilot
+
+      - name: Set up Copilot credentials
+        env:
+          GH_USER:         ${{ vars.COPILOT_CLI_RUNNER_USER }}
+          TEST_USER_TOKEN: ${{ secrets.COPILOT_CLI_RUNNER_TOKEN }}
+          GH_APP_ID:       ${{ vars.COPILOT_CLI_RUNNER_APP_ID }}
+        run: |
+          mkdir -p ~/.config/github-copilot
+          echo '{
+            "'"github.com:${GH_APP_ID}"'":{
+              "user": "'"$GH_USER"'",
+              "oauth_token":"'"$TEST_USER_TOKEN"'",
+              "githubAppId":"'"$GH_APP_ID"'"
+            }
+          }' > ~/.config/github-copilot/apps.json
+          chmod 600 ~/.config/github-copilot/apps.json
+
+      - name: Check manifest schema versions against microsoft/json-schemas
+        id: schema_check
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_RUNNER_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IGNORE_BASELINE: ${{ inputs.ignore_baseline }}
+        run: |
+          export COPILOT_GITHUB_TOKEN=$(python3 -c "import json,os; d=json.load(open(os.path.expanduser('~/.config/github-copilot/apps.json'))); print(list(d.values())[0]['oauth_token'])")
+          node ./.github/scripts/check-manifest-schema-update.cjs
+
+      - name: Create or update tracking issues
+        if: ${{ steps.schema_check.outputs.drift_detected == 'true' }}
+        uses: actions/github-script@v7
+        env:
+          ISSUES_JSON: ${{ steps.schema_check.outputs.issues }}
+          COPILOT_ASSIGNEE: ${{ vars.COPILOT_ASSIGNEE }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issues = JSON.parse(process.env.ISSUES_JSON || "[]");
+
+            const assigneesRaw = (process.env.COPILOT_ASSIGNEE || "").trim();
+            const assignees = assigneesRaw
+              ? assigneesRaw.split(",").map((item) => item.trim()).filter(Boolean)
+              : [];
+
+            const labels = [
+              { name: "manifest-schema-drift", color: "fbca04", description: "Tracks toolkit manifest templates falling behind microsoft/json-schemas" },
+              { name: "copilot-upgrade", color: "0e8a16", description: "Issue is routed for Copilot-assisted upgrade work" }
+            ];
+
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: label.name });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({
+                    owner,
+                    repo,
+                    name: label.name,
+                    color: label.color,
+                    description: label.description,
+                  });
+                } else {
+                  throw error;
+                }
+              }
+            }
+
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: "open",
+              labels: "manifest-schema-drift",
+              per_page: 100,
+            });
+
+            for (const issue of issues) {
+              const title = issue.title;
+              const body = issue.body;
+              // Dedup per manifest: the marker prefix is `manifest-schema-drift:<id>:`
+              // so a new version for the same manifest updates its existing issue
+              // rather than opening a duplicate.
+              const markerPrefix = `<!-- manifest-schema-drift:${issue.id}:`;
+
+              const existing = openIssues.find((candidate) =>
+                !candidate.pull_request &&
+                (candidate.body || "").includes(markerPrefix)
+              );
+
+              if (existing) {
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  title,
+                  body,
+                  labels: ["manifest-schema-drift", "copilot-upgrade"],
+                });
+
+                core.info(`Updated existing issue #${existing.number} for ${issue.id}`);
+
+                if (assignees.length > 0) {
+                  try {
+                    await github.rest.issues.addAssignees({
+                      owner,
+                      repo,
+                      issue_number: existing.number,
+                      assignees,
+                    });
+                    core.info(`Assigned issue to: ${assignees.join(", ")}`);
+                  } catch (error) {
+                    core.warning(`Could not assign issue: ${error.message}`);
+                  }
+                }
+              } else {
+                const created = await github.rest.issues.create({
+                  owner,
+                  repo,
+                  title,
+                  body,
+                  labels: ["manifest-schema-drift", "copilot-upgrade"],
+                  assignees,
+                });
+
+                core.info(`Created issue #${created.data.number} for ${issue.id}`);
+
+                if (assignees.length > 0) {
+                  core.info(`Assigned to: ${assignees.join(", ")}`);
+                }
+              }
+            }
+
+      - name: Log no-drift result
+        if: ${{ steps.schema_check.outputs.drift_detected != 'true' }}
+        run: echo "All manifest templates are up to date with microsoft/json-schemas."

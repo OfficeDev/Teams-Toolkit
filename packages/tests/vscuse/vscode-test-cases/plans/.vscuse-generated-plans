@@ -155,7 +155,6 @@
     "non-sso-tab--tab-ts-remote-teams.json",
     "teams-collaborator-agent--collaborator-ts-azure-openai-local-teams.json",
     "teams-collaborator-agent--collaborator-ts-azure-openai-playground.json",
-    "teams-collaborator-agent--collaborator-ts-azure-openai-remote-teams.json",
     "weather-agent--weather-js-azure-openai-local-copilot.json",
     "weather-agent--weather-js-azure-openai-local-teams.json",
     "weather-agent--weather-js-azure-openai-playground.json",

@@ -132,7 +132,7 @@ describe("SCN-DA-CREATE-API-PLUGIN-FROM-SCRATCH-BEARER (v4, T3 InMemoryRuntime)"
     const name = recordProperty(manifest, "name");
     const copilotAgents = recordProperty(manifest, "copilotAgents");
     const agents = recordArrayProperty(copilotAgents, "declarativeAgents");
-    assert.strictEqual(manifest.manifestVersion, "1.29");
+    assert.strictEqual(manifest.manifestVersion, "1.30");
     assert.strictEqual(manifest.id, "${{TEAMS_APP_ID}}");
     assert.strictEqual(name.short, "MyAgent${{APP_NAME_SUFFIX}}");
     assert.lengthOf(agents, 1);
