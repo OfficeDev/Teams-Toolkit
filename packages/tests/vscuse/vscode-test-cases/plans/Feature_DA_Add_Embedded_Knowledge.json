@@ -683,7 +683,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:954:739:16:5:0000051a24151505",
+        "dhash:954:739:96:5:0000009a252323dc",
+        "dhash:954:739:0:10:30a1c0c0c0c0c0c0"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_08dc097f",
@@ -1083,7 +1087,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:954:739:16:5:0000051a24151505",
+        "dhash:954:739:96:5:0000009a252323dc",
+        "dhash:954:739:0:10:300080c0c0c0c0c0"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_ec67a74c",
