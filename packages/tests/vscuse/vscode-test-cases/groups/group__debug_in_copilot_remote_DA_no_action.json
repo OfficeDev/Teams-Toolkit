@@ -168,7 +168,9 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:0:20:1b28f0d9e7e6dae4"
+      ],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60"
@@ -216,7 +218,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay: 3"
+      ],
       "screenshot": "step_bfcb687a",
       "created_at": "2026-05-25T01:16:24.906834",
       "plan_id": "plan_r_1021_031941"
