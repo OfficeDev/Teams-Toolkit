@@ -239,7 +239,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:762:97:16:5:24b1a72ba9aba343",
+        "dhash:762:97:96:5:0008304b0f344900",
+        "dhash:762:97:0:10:9c68332223232421"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "",
