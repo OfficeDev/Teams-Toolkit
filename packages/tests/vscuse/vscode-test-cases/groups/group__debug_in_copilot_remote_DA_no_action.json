@@ -206,9 +206,9 @@
       "parameters": {
         "button": "left",
         "x": 638,
-        "y": 418
+        "y": 486
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address, as indicated by the red crosshair at (638, 418) on the login.microsoftonline.com interface.",
+      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -280,11 +280,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:642:522:16:5:0012104d12a2b25a",
-        "dhash:642:522:96:5:0000106266628900",
-        "dhash:642:522:0:10:1808f0d9d9e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_88c03f8a",
