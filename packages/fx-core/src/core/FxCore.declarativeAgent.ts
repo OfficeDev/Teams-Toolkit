@@ -817,8 +817,7 @@ export class FxCoreDeclarativeAgentPart {
           try {
             const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
             if (ymlPath) {
-              const injectResult = await injectMCPAuthActionToYml({
-                ymlPath,
+              const injectArgs = {
                 authType,
                 authName: namespace,
                 registrationId,
@@ -827,7 +826,12 @@ export class FxCoreDeclarativeAgentPart {
                 persistCredentialEnvRefs: true,
                 serverName,
                 scopes: inputs[QuestionNames.MCPForDAScopes],
-              });
+              };
+              const injectResult = await injectMCPAuthActionToYml({ ...injectArgs, ymlPath });
+              const localYmlPath = pathUtils.getYmlFilePath(inputs.projectPath, "local", true);
+              if (localYmlPath && localYmlPath !== ymlPath && (await fs.pathExists(localYmlPath))) {
+                await injectMCPAuthActionToYml({ ...injectArgs, ymlPath: localYmlPath });
+              }
               if (injectResult.wellKnownUrlPlaceholderUsed) {
                 mcpWarnings.push({
                   type: "mcpAuthDcrWellKnownUrlPlaceholder",
@@ -1063,14 +1067,22 @@ export class FxCoreDeclarativeAgentPart {
               const endpoints = await resolveMCPAuthEndpoints(authType, inputs);
               const ymlPath = pathUtils.getYmlFilePath(inputs.projectPath);
               if (ymlPath) {
-                const injectResult = await injectMCPAuthActionToYml({
-                  ymlPath,
+                const injectArgs = {
                   authType,
                   authName: actionId,
                   registrationId,
                   mcpServerUrl,
                   endpoints,
-                });
+                };
+                const injectResult = await injectMCPAuthActionToYml({ ...injectArgs, ymlPath });
+                const localYmlPath = pathUtils.getYmlFilePath(inputs.projectPath, "local", true);
+                if (
+                  localYmlPath &&
+                  localYmlPath !== ymlPath &&
+                  (await fs.pathExists(localYmlPath))
+                ) {
+                  await injectMCPAuthActionToYml({ ...injectArgs, ymlPath: localYmlPath });
+                }
                 if (injectResult.wellKnownUrlPlaceholderUsed) {
                   mcpWarnings.push({
                     type: "mcpAuthDcrWellKnownUrlPlaceholder",
