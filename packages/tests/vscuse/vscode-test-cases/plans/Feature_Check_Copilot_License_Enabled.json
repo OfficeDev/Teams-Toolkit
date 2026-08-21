@@ -225,7 +225,7 @@
       "parameters": {
         "button": "left",
         "x": 461,
-        "y": 70
+        "y": 80
       },
       "description": "Click the exact 'Microsoft 365 Agents: Accounts' command below the similarly named Accounts View command.",
       "content_refs": [],
