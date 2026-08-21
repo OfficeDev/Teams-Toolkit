@@ -194,7 +194,9 @@
         "dhash:512:384:0:20:1b28f0d9e7e6dae4"
       ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay: 3"
+      ],
       "screenshot": "step_0967fa8d",
       "created_at": "2026-05-25T01:16:24.898833",
       "plan_id": "plan_r_1021_031941"
@@ -205,8 +207,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 638,
-        "y": 418
+        "x": 629,
+        "y": 484
       },
       "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address.",
       "content_refs": [],
@@ -214,9 +216,16 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:629:484:16:5:23248c4b6c24d32c",
+        "dhash:629:484:96:5:00004eb131860000",
+        "dhash:629:484:0:10:1b28f0d9e7e6dae4"
+      ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay:3",
+        "ocr:true"
+      ],
       "screenshot": "step_bfcb687a",
       "created_at": "2026-05-25T01:16:24.906834",
       "plan_id": "plan_r_1021_031941"
