@@ -20,7 +20,8 @@ jobs:
       # macos-latest is 10.15. We need to test 11 as well.
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        node-version: [16, 18, 20]
+        # The workspace requires Node.js >=22; older versions fail before tests start.
+        node-version: [22]
         func-version: [none, "3", "4", "4.0.4670", "^4.0.5174"]
       max-parallel: 30
 
@@ -87,7 +88,8 @@ jobs:
     strategy:
       matrix: # TODO: add more versions and cases where Node.js do not exist
         os: [windows-latest, macos-latest, macos-11, ubuntu-latest]
-        node-version: [16, 18]
+        # The workspace requires Node.js >=22; older versions fail before tests start.
+        node-version: [22]
       max-parallel: 30
 
     runs-on: ${{ matrix.os }}
@@ -147,6 +149,16 @@ jobs:
         os: [windows-latest, macos-latest, macos-13, macos-12, ubuntu-latest]
         dotnet-version: [none, 3.1.x, 5.0.x, 6.0.x]
         exclude:
+          # The dotnet checker’s private-install cases use the EOL .NET 3.1 channel.
+          # Keep the absent-SDK case on Linux, where those tests return before install.
+          - os: windows-latest
+            dotnet-version: none
+          - os: macos-latest
+            dotnet-version: none
+          - os: macos-13
+            dotnet-version: none
+          - os: macos-12
+            dotnet-version: none
           - os: macos-latest
             dotnet-version: 3.1.x
           - os: macos-latest
