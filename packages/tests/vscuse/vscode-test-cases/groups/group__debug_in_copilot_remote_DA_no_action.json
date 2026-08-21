@@ -206,7 +206,7 @@
       "parameters": {
         "button": "left",
         "x": 638,
-        "y": 486
+        "y": 418
       },
       "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address.",
       "content_refs": [],
