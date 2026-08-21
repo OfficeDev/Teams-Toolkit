@@ -82,6 +82,12 @@ interface PagedResponse<T> {
   continuationToken?: string;
 }
 
+const newDeveloperPortalEndpoints: Record<string, string> = {
+  apac: "https://dev.teams.microsoft.com/cosmicprodapac",
+  amer: "https://dev.teams.microsoft.com/cosmicprodamer",
+  emea: "https://dev.teams.microsoft.com/cosmicprodemea",
+};
+
 export class TeamsDevPortalClient {
   regionEndpoint?: string;
   private readonly appEtags = new Map<string, string>();
@@ -103,7 +109,23 @@ export class TeamsDevPortalClient {
     requester.defaults.headers.common["Authorization"] = `Bearer ${authSvcToken}`;
     requester.defaults.headers.common["Client-Source"] = "teamstoolkit";
     const response = await RetryHandler.Retry(() => requester.post("/v1.0/users/region"));
-    this.regionEndpoint = response?.data?.regionGtms?.teamsDevPortal as string;
+    const regionGtms = response?.data?.regionGtms;
+    this.regionEndpoint = this.resolveRegionEndpoint(
+      regionGtms?.teamsDeveloperPortal,
+      regionGtms?.teamsDevPortal
+    );
+  }
+
+  private resolveRegionEndpoint(teamsDeveloperPortal?: string, teamsDevPortal?: string): string {
+    if (teamsDeveloperPortal?.startsWith("https://")) {
+      return teamsDeveloperPortal;
+    }
+
+    // Remove this fallback once AuthSvc returns teamsDeveloperPortal for every region.
+    const oldEndpointRegion = Object.keys(newDeveloperPortalEndpoints).find((region) =>
+      teamsDevPortal?.match(new RegExp(`/${region}(?:/api)?/?$`, "i"))
+    );
+    return newDeveloperPortalEndpoints[oldEndpointRegion ?? "amer"];
   }
 
   getEndpoint(): string {
@@ -134,17 +156,13 @@ export class TeamsDevPortalClient {
   async importApp(token: string, file: Buffer): Promise<AppDefinition> {
     try {
       const requester = this.createRequesterWithToken(token);
-      const content = new FormData();
-      content.append("AppPackageZip", file, {
-        filename: "appPackage.zip",
-        contentType: "application/zip",
-      });
       TOOLS.logProvider.debug(`Sent API Request: ${this.getEndpoint()}/v1.0/apps/apppackage`);
-      const response = await RetryHandler.Retry(() =>
-        requester.post(`/v1.0/apps/apppackage`, content, {
+      const response = await RetryHandler.Retry(() => {
+        const content = this.createAppPackageForm(file);
+        return requester.post(`/v1.0/apps/apppackage`, content, {
           headers: content.getHeaders(),
-        })
-      );
+        });
+      });
 
       if (response && response.data) {
         const app = this.toAppDefinition(response.data as AppResponse);
@@ -211,16 +229,12 @@ export class TeamsDevPortalClient {
   async updateApp(token: string, teamsAppId: string, file: Buffer): Promise<AppDefinition> {
     try {
       const requester = this.createRequesterWithToken(token);
-      const content = new FormData();
-      content.append("AppPackageZip", file, {
-        filename: "appPackage.zip",
-        contentType: "application/zip",
-      });
-      const response = await RetryHandler.Retry(() =>
-        requester.put(`/v1.0/apps/${teamsAppId}/apppackage`, content, {
+      const response = await RetryHandler.Retry(() => {
+        const content = this.createAppPackageForm(file);
+        return requester.put(`/v1.0/apps/${teamsAppId}/apppackage`, content, {
           headers: content.getHeaders(),
-        })
-      );
+        });
+      });
 
       if (!response?.data) {
         throw new Error(`Cannot update the app with app ID ${teamsAppId}`);
@@ -229,6 +243,15 @@ export class TeamsDevPortalClient {
     } catch (e) {
       throw this.wrapException(e, APP_STUDIO_API_NAMES.UPDATE_APP);
     }
+  }
+
+  private createAppPackageForm(file: Buffer): FormData {
+    const content = new FormData();
+    content.append("AppPackageZip", file, {
+      filename: "appPackage.zip",
+      contentType: "application/zip",
+    });
+    return content;
   }
 
   @hooks([ErrorContextMW({ source: "Teams", component: "TeamsDevPortalClient" })])

@@ -128,13 +128,49 @@ describe("TeamsDevPortalClient Test", () => {
         status: 200,
         data: {
           regionGtms: {
-            teamsDevPortal: "https://xxx.xxx.xxx",
+            teamsDevPortal: "https://legacy.example.com",
+            teamsDeveloperPortal: "https://new.example.com",
           },
         },
       });
       await teamsDevPortalClient.setRegionEndpointByToken("https://xxx.xxx.xxx");
-      chai.assert.equal(teamsDevPortalClient.regionEndpoint, "https://xxx.xxx.xxx");
+      chai.assert.equal(teamsDevPortalClient.regionEndpoint, "https://new.example.com");
     });
+
+    it.each([
+      ["apac", "https://dev.teams.microsoft.com/cosmicprodapac"],
+      ["amer", "https://dev.teams.microsoft.com/cosmicprodamer"],
+      ["emea", "https://dev.teams.microsoft.com/cosmicprodemea"],
+    ])("derives the new %s endpoint when AuthSvc returns NA", async (region, expectedEndpoint) => {
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue({
+        status: 200,
+        data: {
+          regionGtms: {
+            teamsDevPortal: `https://dev.teams.microsoft.com/${region}`,
+            teamsDeveloperPortal: "NA",
+          },
+        },
+      });
+
+      await teamsDevPortalClient.setRegionEndpointByToken("https://xxx.xxx.xxx");
+
+      chai.assert.equal(teamsDevPortalClient.regionEndpoint, expectedEndpoint);
+    });
+
+    it("uses the amer endpoint when AuthSvc does not return a usable region", async () => {
+      vi.spyOn(RetryHandler, "Retry").mockResolvedValue({
+        status: 200,
+        data: { regionGtms: { teamsDeveloperPortal: "NA" } },
+      });
+
+      await teamsDevPortalClient.setRegionEndpointByToken("https://xxx.xxx.xxx");
+
+      chai.assert.equal(
+        teamsDevPortalClient.regionEndpoint,
+        "https://dev.teams.microsoft.com/cosmicprodamer"
+      );
+    });
+
     it("Not set region for int endpoint", async () => {
       teamsDevPortalClient.regionEndpoint = undefined;
       const restore = mockedEnv({
@@ -369,6 +405,29 @@ describe("TeamsDevPortalClient Test", () => {
 
       const res = await teamsDevPortalClient.importApp(token, Buffer.from(""));
       chai.assert.equal(res, appDef);
+    });
+
+    it("creates a fresh multipart body for each retry", async () => {
+      const fakeAxiosInstance = axios.create();
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      const postStub = vi.spyOn(fakeAxiosInstance, "post").mockResolvedValue({ data: appDef });
+      vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn) => {
+        await fn();
+        return await fn();
+      });
+
+      await teamsDevPortalClient.importApp(token, Buffer.from("app package"));
+
+      chai.assert.equal(postStub.mock.calls.length, 2);
+      chai.assert.notEqual(postStub.mock.calls[0][1], postStub.mock.calls[1][1]);
+      chai.assert.match(
+        postStub.mock.calls[0][2]?.headers?.["content-type"] as string,
+        /^multipart\/form-data; boundary=/
+      );
+      chai.assert.match(
+        postStub.mock.calls[1][2]?.headers?.["content-type"] as string,
+        /^multipart\/form-data; boundary=/
+      );
     });
 
     it("Happy path - with wrong region", async () => {
