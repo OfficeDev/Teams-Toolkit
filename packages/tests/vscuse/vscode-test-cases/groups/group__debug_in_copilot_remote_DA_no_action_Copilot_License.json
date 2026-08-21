@@ -9,7 +9,7 @@
    "precondition_retry_interval": 2,
    "step_retry_count": 0
   },
-  "total_steps": 12,
+  "total_steps": 13,
   "created_at": "2026-05-20T03:43:01.198447",
   "name": "group  debug in copilot remote DA no action Copilot License",
   "description": {
@@ -27,6 +27,7 @@
    "step_a5893dc9",
    "step_41fdae73",
    "step_ceb13b5f",
+   "step_6df0c12a",
    "step_5d691940",
    "step_063b5973",
    "step_8b35830c",
@@ -179,11 +180,13 @@
   {
    "step_id": "step_41fdae73",
    "agent": "interaction",
-   "tool": "type_text",
+   "tool": "click",
    "parameters": {
-    "text": "${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}}"
+    "button": "left",
+    "x": 455,
+    "y": 285
    },
-   "description": "Enter ${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}} into the \"Email or phone\" field on the Microsoft sign-in page in a Chrome browser.",
+   "description": "Re-focus the \"Email, phone, or Skype\" field after the Microsoft sign-in page finishes loading so email entry does not go to Chrome's address bar.",
    "content_refs": [],
    "timeout": 30,
    "retry_count": 0,
@@ -192,20 +195,18 @@
    "preconditions": [],
    "postconditions": [],
    "tags": [],
-   "screenshot": "step_41fdae73",
+   "screenshot": "",
    "created_at": "2026-05-20T03:43:01.248641",
    "plan_id": "plan_df4aaebb"
   },
   {
    "step_id": "step_ceb13b5f",
    "agent": "interaction",
-   "tool": "click",
+   "tool": "type_text",
    "parameters": {
-    "button": "left",
-    "x": 638,
-    "y": 418
+    "text": "${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}}"
    },
-   "description": "Click the \"Next\" button on the Microsoft login screen after entering the email address, within the Chrome browser during the authentication workflow.",
+   "description": "Enter ${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}} into the re-focused \"Email or phone\" field on the Microsoft sign-in page.",
    "content_refs": [],
    "timeout": 30,
    "retry_count": 0,
@@ -214,8 +215,28 @@
    "preconditions": [],
    "postconditions": [],
    "tags": [],
-   "screenshot": "step_ceb13b5f",
+   "screenshot": "",
    "created_at": "2026-05-20T05:32:31.010460",
+   "plan_id": "plan_df4aaebb"
+  },
+  {
+   "step_id": "step_6df0c12a",
+   "agent": "interaction",
+   "tool": "key_press",
+   "parameters": {
+    "key": "enter"
+   },
+   "description": "Press Enter immediately after entering the email address to submit the Microsoft sign-in form without another mouse-focus transition.",
+   "content_refs": [],
+   "timeout": 30,
+   "retry_count": 0,
+   "continue_on_error": "false",
+   "depends_on": [],
+   "preconditions": [],
+   "postconditions": [],
+   "tags": [],
+   "screenshot": "",
+   "created_at": "2026-08-21T03:52:49.652000",
    "plan_id": "plan_df4aaebb"
   },
   {
