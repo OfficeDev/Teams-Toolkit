@@ -161,7 +161,7 @@
       "parameters": {
         "button": "left",
         "x": 455,
-        "y": 309
+        "y": 286
       },
       "description": "Click the account identifier input field in the Microsoft sign-in form to focus it for credential entry.",
       "content_refs": [],
@@ -227,11 +227,13 @@
     {
       "step_id": "step_bfcb687a",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "key": "enter"
+        "button": "left",
+        "x": 638,
+        "y": 418
       },
-      "description": "Press Enter to submit the account identifier and continue from the Microsoft sign-in page.",
+      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
