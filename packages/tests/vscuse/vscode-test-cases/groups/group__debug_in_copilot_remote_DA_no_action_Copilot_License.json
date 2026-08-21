@@ -133,7 +133,7 @@
    "parameters": {
     "button": "left",
     "x": 437,
-    "y": 120
+    "y": 76
    },
    "description": "Click the \"Preview in Copilot (Chrome)\" option from the dropdown menu in the debug configuration toolbar of the Visual Studio Code interface.",
    "content_refs": [],
