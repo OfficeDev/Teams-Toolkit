@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 15,
+    "total_steps": 13,
     "created_at": "2026-05-25T01:16:24.841621",
     "name": "group: debug_in_copilot_remote_DA_no_action",
     "description": {
@@ -26,9 +26,7 @@
       "step_3d026f03",
       "step_d7fafaa1",
       "step_6f0c1e2b",
-      "step_focus_validated_account",
       "step_0967fa8d",
-      "step_assert_account_retained",
       "step_bfcb687a",
       "step_4c68873a",
       "step_7cfe3868",
@@ -186,34 +184,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 634,
-        "y": 418
-      },
-      "description": "Click Next with the empty account identifier after Chrome is active so Microsoft validates and focuses the sign-in form.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "delay: 2"
-      ],
-      "screenshot": null,
-      "created_at": "2026-08-22T02:39:36.685000",
-      "plan_id": "plan_r_1021_031941"
-    },
-    {
-      "step_id": "step_focus_validated_account",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
         "x": 455,
         "y": 285
       },
-      "description": "Click the validated Microsoft account identifier field after the empty submission has completed.",
+      "description": "Click the account identifier input field again after Chrome is active so it receives keyboard focus.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -223,7 +197,7 @@
       "postconditions": [],
       "tags": [],
       "screenshot": null,
-      "created_at": "2026-08-22T03:42:47.637000",
+      "created_at": "2026-08-22T02:39:36.685000",
       "plan_id": "plan_r_1021_031941"
     },
     {
@@ -248,24 +222,6 @@
       ],
       "screenshot": "step_0967fa8d",
       "created_at": "2026-05-25T01:16:24.898833",
-      "plan_id": "plan_r_1021_031941"
-    },
-    {
-      "step_id": "step_assert_account_retained",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion ${{env:M365_ACCOUNT_NAME}} is visible in the Microsoft account identifier field.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-08-22T03:42:47.637000",
       "plan_id": "plan_r_1021_031941"
     },
     {
