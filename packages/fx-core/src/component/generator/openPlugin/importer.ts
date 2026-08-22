@@ -8,8 +8,9 @@ import * as path from "path";
 import { createContext } from "../../../common/globalVars";
 import { Generator } from "../generator";
 import { TemplateNames } from "../templates/templateNames";
+import { resolveOpenPluginMcpAuth } from "./authResolver";
 import { applyIcons } from "./iconStrategy";
-import { mapToTtkProject } from "./mapper";
+import { mapToTtkProject, validateMcpServerCount } from "./mapper";
 import { readOpenPluginDir } from "./parser";
 import { ImportInputs } from "./types";
 
@@ -42,8 +43,6 @@ export async function importOpenPlugin(
       );
     }
     const parsed = await readOpenPluginDir(inputs.path);
-    const { manifest, copyOps, warnings } = mapToTtkProject(parsed, inputs);
-
     const defaultOutput = path.join(process.cwd(), parsed.manifest.name);
     const projectPath = path.resolve(inputs.output ?? defaultOutput);
 
@@ -59,6 +58,18 @@ export async function importOpenPlugin(
         );
       }
     }
+    validateMcpServerCount(parsed.mcpServers);
+
+    const authResolution = await resolveOpenPluginMcpAuth(parsed, inputs.defaultAuthType ?? "Auto");
+    if (authResolution.isErr()) {
+      return err(authResolution.error);
+    }
+    const { manifest, copyOps, warnings } = mapToTtkProject(
+      parsed,
+      inputs,
+      authResolution.value.authTypes
+    );
+    warnings.push(...authResolution.value.warnings);
 
     // 1. Scaffold the static baseline from the open-plugin-import template.
     const ctx = createContext();

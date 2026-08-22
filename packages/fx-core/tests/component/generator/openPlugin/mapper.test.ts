@@ -78,14 +78,15 @@ describe("openPlugin.mapToTtkProject", () => {
       .to.deep.equal([{ folder: "./skills/alpha" }, { folder: "./skills/beta" }]);
   });
 
-  it("emits agentConnectors for http servers with OAuthPluginVault under Auto", () => {
+  it("uses a resolved OAuthPluginVault type under Auto", () => {
     const { manifest } = mapToTtkProject(
       baseParsed({
         mcpServers: {
           alpha: { url: "https://alpha.example.com/api", description: "alpha tools" },
         },
       }),
-      baseInputs()
+      baseInputs(),
+      { alpha: "OAuthPluginVault" }
     );
     chai.expect(manifest.agentConnectors).to.deep.equal([
       {
@@ -105,12 +106,13 @@ describe("openPlugin.mapToTtkProject", () => {
     ]);
   });
 
-  it("maps localhost http servers to None under Auto", () => {
+  it("uses a resolved None type under Auto", () => {
     const { manifest } = mapToTtkProject(
       baseParsed({
         mcpServers: { local: { url: "http://localhost:5050/sse" } },
       }),
-      baseInputs()
+      baseInputs(),
+      { local: "None" }
     );
     const connectors = manifest.agentConnectors as any[];
     chai.expect(connectors[0].toolSource.remoteMcpServer.authorization).to.deep.equal({
@@ -140,7 +142,8 @@ describe("openPlugin.mapToTtkProject", () => {
           http: { url: "https://http.example.com" },
         },
       }),
-      baseInputs()
+      baseInputs(),
+      { http: "OAuthPluginVault" }
     );
     const connectors = manifest.agentConnectors as any[];
     chai.expect(connectors.map((c) => c.id)).to.deep.equal(["http"]);
@@ -149,12 +152,25 @@ describe("openPlugin.mapToTtkProject", () => {
 
   it("throws when more than 10 MCP servers would be emitted", () => {
     const mcpServers: Record<string, { url: string }> = {};
+    const authTypes: Record<string, "OAuthPluginVault"> = {};
     for (let i = 0; i < 11; i++) {
       mcpServers[`svc-${i}`] = { url: `https://svc-${i}.example.com` };
+      authTypes[`svc-${i}`] = "OAuthPluginVault";
     }
     chai
-      .expect(() => mapToTtkProject(baseParsed({ mcpServers }), baseInputs()))
+      .expect(() => mapToTtkProject(baseParsed({ mcpServers }), baseInputs(), authTypes))
       .to.throw(/caps agentConnectors at 10/);
+  });
+
+  it("OPI-AUTH-07: does not guess when an Auto resolution is missing", () => {
+    chai
+      .expect(() =>
+        mapToTtkProject(
+          baseParsed({ mcpServers: { svc: { url: "https://svc.example.com" } } }),
+          baseInputs()
+        )
+      )
+      .to.throw(/Missing resolved auth type/);
   });
 
   it("does not emit contactInfo (not in devPreview schema)", () => {
@@ -212,7 +228,8 @@ describe("openPlugin.mapToTtkProject", () => {
       baseParsed({
         mcpServers: { svc: { url: "https://svc.example.com" } },
       }),
-      baseInputs()
+      baseInputs(),
+      { svc: "OAuthPluginVault" }
     );
     const connectors = manifest.agentConnectors as any[];
     chai.expect(connectors[0].description).to.include("Remote MCP server");
