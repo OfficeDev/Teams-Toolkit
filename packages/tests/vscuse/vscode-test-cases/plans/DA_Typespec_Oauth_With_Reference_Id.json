@@ -661,11 +661,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:342:355:16:5:0092452ad1d65659",
-        "dhash:342:355:96:5:010f1813330f4403",
-        "dhash:342:355:0:10:199cd096d2e2f0e6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
