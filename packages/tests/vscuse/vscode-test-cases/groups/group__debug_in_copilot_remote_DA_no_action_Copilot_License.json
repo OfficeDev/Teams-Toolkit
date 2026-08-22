@@ -165,12 +165,11 @@
    "retry_count": 0,
    "continue_on_error": "false",
    "depends_on": [],
-   "preconditions": [
-    "dhash:512:384:0:20:1b28f0cbc6f6dae4"
-   ],
+   "preconditions": [],
    "postconditions": [],
    "tags": [
-    "precondition_wait_timeout: 60"
+    "delay: 15",
+    "force_run:true"
    ],
    "screenshot": "step_a5893dc9",
    "created_at": "2026-05-20T03:43:01.246637",
