@@ -186,7 +186,7 @@
       "parameters": {
         "button": "left",
         "x": 455,
-        "y": 285
+        "y": 351
       },
       "description": "Click the account identifier input field in the Microsoft sign-in form to focus it for credential entry.",
       "content_refs": [],
