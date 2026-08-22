@@ -604,7 +604,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:351:514:16:5:5b22ccc55554cc20",
+        "dhash:351:514:96:5:0000006525800400",
+        "dhash:351:514:0:10:03e0a0e8d8ded4e1"
+      ],
       "postconditions": [],
       "tags": [
         "ocr:true",
@@ -628,7 +632,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:16:5:0000000000000000",
+        "dhash:512:384:96:5:000000002802c6ee",
+        "dhash:512:384:0:10:03e080c8d89ec6e0"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_6a3082e5",
@@ -648,7 +656,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:16:5:0000000000000000",
+        "dhash:512:384:96:5:000000002802c6ee",
+        "dhash:512:384:0:10:03e080d8d8c4c6e0"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_18feb473",
@@ -668,7 +680,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:16:5:0000000000000000",
+        "dhash:512:384:96:5:8a4d4c0000000000",
+        "dhash:512:384:0:10:13e09acbd1c1d0d6"
+      ],
       "postconditions": [],
       "tags": [
         "delay: 60"
@@ -690,7 +706,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:512:384:16:5:0000000000000000",
+        "dhash:512:384:96:5:8a4d4c0000000000",
+        "dhash:512:384:0:10:13e09acbd1c1d0d6"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_92da00ba",
@@ -712,7 +732,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:1002:604:16:5:0000000000000000",
+        "dhash:1002:604:96:5:0505050505050505",
+        "dhash:1002:604:0:10:17e199dedcd8d8d6"
+      ],
       "postconditions": [],
       "tags": [
         "delay: 15",
