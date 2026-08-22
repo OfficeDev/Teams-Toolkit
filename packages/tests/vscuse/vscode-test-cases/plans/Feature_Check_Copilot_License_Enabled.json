@@ -234,20 +234,16 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 703,
-        "y": 100
+        "x": 975,
+        "y": 710
       },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the top of the Visual Studio Code interface to access a Microsoft 365 account.",
+      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the bottom right of the Visual Studio Code interface to access a Microsoft 365 account.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:703:100:16:5:0000000000000000",
-        "dhash:703:100:96:5:00000042b2474971",
-        "dhash:703:100:0:10:9cb89590b0717d7f"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_47935ca7",
