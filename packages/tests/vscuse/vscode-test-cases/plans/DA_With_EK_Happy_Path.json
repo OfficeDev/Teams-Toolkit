@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 25,
+    "total_steps": 27,
     "created_at": "2026-06-17T00:08:47.447852",
     "name": "DA With EK Happy Path",
     "description": {
@@ -43,6 +43,8 @@
       "step_8dbb76fc",
       "plan_r_0929_040401",
       "plan_df4aaebb",
+      "step_4e0c78a1",
+      "step_70dfeb42",
       "step_c6ca43c3",
       "step_6a3082e5",
       "step_18feb473",
@@ -52,7 +54,7 @@
       "step_6057659d"
     ],
     "tags": [],
-    "updated_at": "2026-06-17T00:37:39.212857"
+    "updated_at": "2026-08-22T03:35:00.149+00:00"
   },
   "steps": [
     {
@@ -544,28 +546,70 @@
       "plan_id": "plan_13457846"
     },
     {
+      "step_id": "step_4e0c78a1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 716,
+        "y": 461
+      },
+      "description": "Close the \"This agent is not installed\" dialog shown when the Copilot deep link targets an unavailable agent installation.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-22T03:35:00.149+00:00",
+      "plan_id": "plan_13457846"
+    },
+    {
+      "step_id": "step_70dfeb42",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 106,
+        "y": 356
+      },
+      "description": "Select the provisioned ${{var:app_name}}dev agent from the Agents list in Microsoft 365 Copilot after closing the unavailable deep-link dialog.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-22T03:35:00.149+00:00",
+      "plan_id": "plan_13457846"
+    },
+    {
       "step_id": "step_c6ca43c3",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
         "x": 351,
-        "y": 376
+        "y": 514
       },
-      "description": "Click on the \"Message Copilot\" input text box in the M365 Copilot web chat interface.",
+      "description": "Click the \"Message Copilot\" input for the selected provisioned agent in the current Microsoft 365 Copilot layout.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:351:376:16:5:b2b3e96402408080",
-        "dhash:351:376:96:5:00108593120080a0",
-        "dhash:351:376:0:10:1b95c3f0f0c0e0e0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
-        "ocr:true"
+        "ocr:true",
+        "delay: 10",
+        "force_run:true"
       ],
       "screenshot": "step_c6ca43c3",
       "created_at": "2026-06-17T00:08:47.613889",
@@ -584,9 +628,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:15d0c3f0e0c1e0e0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_6a3082e5",
@@ -606,9 +648,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:05f5cbe2d6d7dec8"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_18feb473",
@@ -628,9 +668,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1ddcd2dedcc1f1e6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay: 60"
@@ -652,9 +690,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1ddcd2dedce1d8d6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_92da00ba",
@@ -676,11 +712,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:1002:604:16:5:d0d0d0d0d0d0d0d0",
-        "dhash:1002:604:96:5:0c0c0c0c12120602",
-        "dhash:1002:604:0:10:1ddcd2ded4d9dae6"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay: 15",
