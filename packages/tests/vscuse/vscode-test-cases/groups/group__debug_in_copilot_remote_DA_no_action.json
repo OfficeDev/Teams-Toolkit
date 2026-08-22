@@ -244,8 +244,7 @@
       "depends_on": [],
       "preconditions": [
         "dhash:629:484:16:5:23248c4b6c24d32c",
-        "dhash:629:484:96:5:00004eb131860000",
-        "dhash:629:484:0:10:1b28f0d9e7e6dae4"
+        "dhash:629:484:96:5:00004eb131860000"
       ],
       "postconditions": [],
       "tags": [
