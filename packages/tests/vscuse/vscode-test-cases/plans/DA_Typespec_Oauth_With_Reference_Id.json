@@ -573,7 +573,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:372:513:16:5:aa8c69b3b3f97c0a",
+        "dhash:372:513:96:5:0080009192000000",
+        "dhash:372:513:0:10:13f0e0e2c394c6e8"
+      ],
       "postconditions": [],
       "tags": [
         "ocr:true"
@@ -661,7 +665,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:342:355:16:5:8954720d04408800",
+        "dhash:342:355:96:5:0505484c05000104",
+        "dhash:342:355:0:10:13e09593d0c0d0d6"
+      ],
       "postconditions": [],
       "tags": [
         "ocr:true"
