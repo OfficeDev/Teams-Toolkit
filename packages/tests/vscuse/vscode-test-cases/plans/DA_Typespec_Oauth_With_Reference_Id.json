@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 26,
+    "total_steps": 28,
     "created_at": "2026-06-09T08:58:52.466213",
     "name": "DA Typespec Oauth With Reference Id",
     "description": {
@@ -43,6 +43,8 @@
       "step_ff187b65",
       "step_7e25c226",
       "plan_r_1021_031941",
+      "step_close_uninstalled_agent",
+      "step_select_installed_agent",
       "step_f63089e7",
       "step_2027f471",
       "step_b425d1e2",
@@ -508,13 +510,62 @@
       "plan_id": "plan_4acfdf08"
     },
     {
+      "step_id": "step_close_uninstalled_agent",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 716,
+        "y": 460
+      },
+      "description": "Dismiss the \"This agent is not installed\" dialog in Microsoft 365 Copilot by clicking \"Close\".",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-22T02:57:30.423000",
+      "plan_id": "plan_4acfdf08"
+    },
+    {
+      "step_id": "step_select_installed_agent",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 102,
+        "y": 355
+      },
+      "description": "Select the installed \"github-agent0507\" entry in the Agents section of the Microsoft 365 Copilot sidebar.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "ocr:true",
+        "delay: 10"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-22T02:57:30.423000",
+      "plan_id": "plan_4acfdf08"
+    },
+    {
       "step_id": "step_f63089e7",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
         "x": 372,
-        "y": 404
+        "y": 513
       },
       "description": "Click the message input box labeled \"Message Copilot\" within the github-agent0507 chat interface of the M365 Copilot web application.",
       "content_refs": [],
@@ -522,11 +573,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:372:404:16:5:4120c64a2a4ace19",
-        "dhash:372:404:96:5:000200574f004200",
-        "dhash:372:404:0:10:11fce6e6f8e4ece0"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "ocr:true"
