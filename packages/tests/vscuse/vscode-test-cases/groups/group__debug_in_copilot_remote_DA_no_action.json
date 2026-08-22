@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 12,
+    "total_steps": 13,
     "created_at": "2026-05-25T01:16:24.841621",
     "name": "group: debug_in_copilot_remote_DA_no_action",
     "description": {
@@ -25,6 +25,7 @@
       "step_eafcbe26",
       "step_3d026f03",
       "step_d7fafaa1",
+      "step_6f0c1e2b",
       "step_0967fa8d",
       "step_bfcb687a",
       "step_4c68873a",
@@ -162,7 +163,7 @@
         "x": 455,
         "y": 285
       },
-      "description": "Click the account identifier input field in the Microsoft sign-in form to focus it for credential entry.",
+      "description": "Activate the Chrome window by clicking the account identifier input area in the Microsoft sign-in form.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -175,6 +176,28 @@
       ],
       "screenshot": "step_d7fafaa1",
       "created_at": "2026-05-25T01:16:24.890833",
+      "plan_id": "plan_r_1021_031941"
+    },
+    {
+      "step_id": "step_6f0c1e2b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 455,
+        "y": 285
+      },
+      "description": "Click the account identifier input field again after Chrome is active so it receives keyboard focus.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-22T02:39:36.685000",
       "plan_id": "plan_r_1021_031941"
     },
     {
@@ -204,23 +227,17 @@
     {
       "step_id": "step_bfcb687a",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 638,
-        "y": 487
+        "key": "enter"
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address, as indicated by the red crosshair at (638, 487) on the login.microsoftonline.com interface.",
+      "description": "Press Enter from the focused account identifier field to submit the retained email address on the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:638:487:16:5:93490994d6298400",
-        "dhash:638:487:96:5:40004c62700c0000",
-        "dhash:638:487:0:10:1b28f0d9e7e6dae4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_bfcb687a",
