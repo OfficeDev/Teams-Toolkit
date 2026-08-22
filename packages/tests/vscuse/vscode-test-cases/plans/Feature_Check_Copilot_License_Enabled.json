@@ -234,10 +234,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 975,
-        "y": 710
+        "x": 762,
+        "y": 97
       },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the bottom right of the Visual Studio Code interface to access a Microsoft 365 account.",
+      "description": "Click the \"Sign in\" button within the Microsoft 365 developer sandbox modal.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
