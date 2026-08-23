@@ -1544,15 +1544,19 @@ function createSemanticStepCompiler() {
     if (
       state.template !== "da/no-action" ||
       !isRecord(inputs) ||
-      !hasOnlyFields(inputs, new Set(["scope", "email", "expectError"])) ||
+      !hasOnlyFields(
+        inputs,
+        new Set(["scope", "environment", "email", "expectError"]),
+      ) ||
       inputs.scope !== "users" ||
+      inputs.environment !== "dev" ||
       typeof inputs.email !== "string" ||
       !environmentExpressionPattern.test(inputs.email) ||
       inputs.expectError !== "unsupportedWorkflowVersion"
     ) {
       return failure(
         "VCB_SHARE_INPUT_INVALID",
-        "The Share operation requires the supported scope, environment-backed email, and error expectation.",
+        "The Share operation requires the supported scope, dev environment, environment-backed email, and error expectation.",
       );
     }
     if (
@@ -1598,6 +1602,13 @@ function createSemanticStepCompiler() {
         values: {
           questionTitle: "Email addresses of users or groups for agent sharing",
           inputValue: inputs.email,
+        },
+      },
+      {
+        component: "quick-input/single-select.json.tpl",
+        values: {
+          questionTitle: "Select an environment",
+          optionLabel: inputs.environment,
         },
       },
     ]) {
