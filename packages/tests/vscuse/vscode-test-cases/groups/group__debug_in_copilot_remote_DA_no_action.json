@@ -163,7 +163,7 @@
       "parameters": {
         "button": "left",
         "x": 455,
-        "y": 351
+        "y": 286
       },
       "description": "Click the account identifier input field in the Microsoft sign-in form to focus it for credential entry.",
       "content_refs": [],
@@ -171,9 +171,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:455:351:0:10:0b28d0d9e7e6dae4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "precondition_wait_timeout: 60"
@@ -211,7 +209,7 @@
       "parameters": {
         "button": "left",
         "x": 455,
-        "y": 351
+        "y": 286
       },
       "description": "After the Microsoft sign-in page finishes redirecting, click the account identifier input field again because the redirect may clear the previously entered email address.",
       "content_refs": [],
@@ -276,9 +274,9 @@
       "parameters": {
         "button": "left",
         "x": 638,
-        "y": 487
+        "y": 418
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address, as indicated by the red crosshair at (638, 487) on the login.microsoftonline.com interface.",
+      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
