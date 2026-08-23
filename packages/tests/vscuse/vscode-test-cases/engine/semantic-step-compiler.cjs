@@ -1566,18 +1566,13 @@ function createSemanticStepCompiler() {
     }
 
     const output = [];
-    for (const commandTitle of [
-      commandTitles.clearNotifications,
-      commandTitles.notifications,
-    ]) {
-      const error = append(
-        output,
-        render(state, "command-palette/execute-command.json.tpl", {
-          commandTitle,
-        }),
-      );
-      if (error) return error;
-    }
+    const clearNotificationsError = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.clearNotifications,
+      }),
+    );
+    if (clearNotificationsError) return clearNotificationsError;
     const shareCommandError = append(
       output,
       render(state, "tree-view/share.json.tpl", {}),
@@ -1612,6 +1607,13 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
+    const showNotificationsError = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.notifications,
+      }),
+    );
+    if (showNotificationsError) return showNotificationsError;
     const error = append(
       output,
       render(state, "notifications/assert-contains.json.tpl", {
