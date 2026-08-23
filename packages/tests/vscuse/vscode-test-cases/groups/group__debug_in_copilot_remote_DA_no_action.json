@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 13,
+    "total_steps": 14,
     "created_at": "2026-05-25T01:16:24.841621",
     "name": "group: debug_in_copilot_remote_DA_no_action",
     "description": {
@@ -26,6 +26,7 @@
       "step_3d026f03",
       "step_d7fafaa1",
       "step_0967fa8d",
+      "step_4f3a9c21",
       "step_bfcb687a",
       "step_6f4973d2",
       "step_4c68873a",
@@ -199,6 +200,28 @@
       "tags": [],
       "screenshot": "step_0967fa8d",
       "created_at": "2026-05-25T01:16:24.898833",
+      "plan_id": "plan_r_1021_031941"
+    },
+    {
+      "step_id": "step_4f3a9c21",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "After the Microsoft OAuth email field finishes initializing, select any existing email text so the next entry replaces it instead of appending to it.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 3"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-23T03:47:08.553000",
       "plan_id": "plan_r_1021_031941"
     },
     {
