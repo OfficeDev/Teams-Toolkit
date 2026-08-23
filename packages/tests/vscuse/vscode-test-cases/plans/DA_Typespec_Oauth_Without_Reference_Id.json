@@ -3,7 +3,7 @@
     "version": "1.0",
     "plan_id": "plan_1951448c",
     "execution_context": {
-      "delay_between_steps": 0.5,
+      "delay_between_steps": 0.0,
       "stop_on_error": true,
       "precondition_wait_timeout": 60.0,
       "precondition_retry_interval": 2.0,
