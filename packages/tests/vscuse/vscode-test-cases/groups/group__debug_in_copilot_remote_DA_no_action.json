@@ -161,8 +161,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 455,
-        "y": 286
+        "x": 512,
+        "y": 294
       },
       "description": "Click the account identifier input field in the Microsoft sign-in form to focus it for credential entry.",
       "content_refs": [],
@@ -207,8 +207,8 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 455,
-        "y": 286
+        "x": 512,
+        "y": 294
       },
       "description": "After the Microsoft sign-in page finishes redirecting, click the account identifier input field again because the redirect may clear the previously entered email address.",
       "content_refs": [],
@@ -249,11 +249,13 @@
     {
       "step_id": "step_bfcb687a",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "key": "enter"
+        "button": "left",
+        "x": 634,
+        "y": 418
       },
-      "description": "Press Enter immediately after re-entering the Microsoft 365 account email to submit the sign-in form before the field can be cleared.",
+      "description": "Click the blue \"Next\" button immediately after re-entering the Microsoft 365 account email to submit the sign-in form before the field can be cleared.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
