@@ -132,7 +132,6 @@ const commandTitles = {
     "Microsoft 365 Agents: Publish to Store in Developer Portal",
   provision: "Microsoft 365 Agents: Provision",
   regenerateDaAction: "Microsoft 365 Agents: Regenerate Action",
-  share: "Microsoft 365 Agents: Share",
   // VS Code generates one show command per view container, so this title exists
   // in both windows, and the container renders every view the current
   // `fx-extension.isTeamsFx` value allows, ACCOUNTS first.
@@ -1581,9 +1580,7 @@ function createSemanticStepCompiler() {
     }
     const shareCommandError = append(
       output,
-      render(state, "command-palette/execute-second-command.json.tpl", {
-        commandTitle: commandTitles.share,
-      }),
+      render(state, "tree-view/share.json.tpl", {}),
     );
     if (shareCommandError) return shareCommandError;
     for (const answer of [
