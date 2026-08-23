@@ -205,11 +205,13 @@
     {
       "step_id": "step_4f3a9c21",
       "agent": "interaction",
-      "tool": "keyboard_shortcut",
+      "tool": "click",
       "parameters": {
-        "keys": "ctrl+a"
+        "button": "left",
+        "x": 455,
+        "y": 286
       },
-      "description": "After the Microsoft OAuth email field finishes initializing, select any existing email text so the next entry replaces it instead of appending to it.",
+      "description": "Click the cleared \"Email or phone\" field on the second Microsoft OAuth login page to restore focus before re-entering the account name.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
