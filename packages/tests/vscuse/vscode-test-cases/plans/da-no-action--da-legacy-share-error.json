@@ -1784,7 +1784,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains the literal text Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text [ConfigManager.InvalidYamlSchemaError]: Unable to parse yaml file. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

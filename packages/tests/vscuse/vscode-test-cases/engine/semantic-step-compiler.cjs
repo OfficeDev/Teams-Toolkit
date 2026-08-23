@@ -25,8 +25,8 @@ const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
 const regenerateDaActionApiSpecLocation =
   "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml";
-const unsupportedWorkflowVersionShareError =
-  "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
+const invalidYamlSchemaShareError =
+  "[ConfigManager.InvalidYamlSchemaError]: Unable to parse yaml file";
 const localUserEnvironmentMutationScript = String.raw`import os
 from pathlib import Path
 
@@ -1552,7 +1552,7 @@ function createSemanticStepCompiler() {
       inputs.environment !== "dev" ||
       typeof inputs.email !== "string" ||
       !environmentExpressionPattern.test(inputs.email) ||
-      inputs.expectError !== "unsupportedWorkflowVersion"
+      inputs.expectError !== "invalidYamlSchema"
     ) {
       return failure(
         "VCB_SHARE_INPUT_INVALID",
@@ -1621,7 +1621,7 @@ function createSemanticStepCompiler() {
     const error = append(
       output,
       render(state, "notifications/assert-contains.json.tpl", {
-        notificationText: unsupportedWorkflowVersionShareError,
+        notificationText: invalidYamlSchemaShareError,
         retryTimeout: "60",
       }),
     );
