@@ -1607,13 +1607,6 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
-    const showNotificationsError = append(
-      output,
-      render(state, "command-palette/execute-command.json.tpl", {
-        commandTitle: commandTitles.notifications,
-      }),
-    );
-    if (showNotificationsError) return showNotificationsError;
     const error = append(
       output,
       render(state, "notifications/assert-contains.json.tpl", {
