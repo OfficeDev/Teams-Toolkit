@@ -1570,7 +1570,6 @@ function createSemanticStepCompiler() {
     for (const commandTitle of [
       commandTitles.clearNotifications,
       commandTitles.notifications,
-      commandTitles.share,
     ]) {
       const error = append(
         output,
@@ -1580,6 +1579,13 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
+    const shareCommandError = append(
+      output,
+      render(state, "command-palette/execute-second-command.json.tpl", {
+        commandTitle: commandTitles.share,
+      }),
+    );
+    if (shareCommandError) return shareCommandError;
     for (const answer of [
       {
         component: "quick-input/single-select.json.tpl",

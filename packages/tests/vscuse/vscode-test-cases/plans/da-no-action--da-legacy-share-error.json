@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 79,
+    "total_steps": 80,
     "name": "da-legacy-share-error",
     "description": {
       "owner": "",
@@ -76,11 +76,12 @@
       "step_executeCommand_filter_cec39ad66_5_2",
       "step_executeCommand_assertCommand_cec39ad66_5_2",
       "step_executeCommand_execute_cec39ad66_5_2",
-      "step_executeCommand_open_cec39ad66_5_3",
-      "step_executeCommand_assertPalette_cec39ad66_5_3",
-      "step_executeCommand_filter_cec39ad66_5_3",
-      "step_executeCommand_assertCommand_cec39ad66_5_3",
-      "step_executeCommand_execute_cec39ad66_5_3",
+      "step_executeSecondCommand_open_cec39ad66_5_3",
+      "step_executeSecondCommand_assertPalette_cec39ad66_5_3",
+      "step_executeSecondCommand_filter_cec39ad66_5_3",
+      "step_executeSecondCommand_next_cec39ad66_5_3",
+      "step_executeSecondCommand_assertCommand_cec39ad66_5_3",
+      "step_executeSecondCommand_execute_cec39ad66_5_3",
       "step_singleSelect_assertQuestion_cec39ad66_5_4",
       "step_singleSelect_assertOptionsLoaded_cec39ad66_5_4",
       "step_singleSelect_filter_cec39ad66_5_4",
@@ -1456,7 +1457,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_open_cec39ad66_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1478,7 +1479,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_assertPalette_cec39ad66_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1488,7 +1489,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cec39ad66_5_3"
+        "step_executeSecondCommand_open_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1499,7 +1500,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_filter_cec39ad66_5_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1511,7 +1512,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cec39ad66_5_3"
+        "step_executeSecondCommand_assertPalette_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1521,17 +1522,39 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cec39ad66_5_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Share and the highlighted command listed under it is titled Microsoft 365 Agents: Share.",
+      "step_id": "step_executeSecondCommand_next_cec39ad66_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "down"
+      },
+      "description": "Press Down to highlight the second filtered Command Palette result.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cec39ad66_5_3"
+        "step_executeSecondCommand_filter_cec39ad66_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeSecondCommand_assertCommand_cec39ad66_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Share and the command titled Microsoft 365 Agents: Share is highlighted.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeSecondCommand_next_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1542,7 +1565,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_execute_cec39ad66_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1554,7 +1577,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cec39ad66_5_3"
+        "step_executeSecondCommand_assertCommand_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1574,7 +1597,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cec39ad66_5_3"
+        "step_executeSecondCommand_execute_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
