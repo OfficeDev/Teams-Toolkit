@@ -232,11 +232,7 @@
    "retry_count": 0,
    "continue_on_error": "false",
    "depends_on": [],
-   "preconditions": [
-    "dhash:638:486:16:5:d799299d942bd400",
-    "dhash:638:486:96:5:00000c62720c0000",
-    "dhash:638:486:0:10:1b28f0cbc6f6dae4"
-   ],
+   "preconditions": [],
    "postconditions": [],
    "tags": [],
    "screenshot": "step_ceb13b5f",
