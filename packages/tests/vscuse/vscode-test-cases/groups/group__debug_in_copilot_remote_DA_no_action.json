@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 15,
+    "total_steps": 14,
     "created_at": "2026-05-25T01:16:24.841621",
     "name": "group: debug_in_copilot_remote_DA_no_action",
     "description": {
@@ -27,7 +27,6 @@
       "step_d7fafaa1",
       "step_0967fa8d",
       "step_61c7df92",
-      "step_ae45b603",
       "step_f48ad215",
       "step_bfcb687a",
       "step_4c68873a",
@@ -228,26 +227,6 @@
       "plan_id": "plan_r_1021_031941"
     },
     {
-      "step_id": "step_ae45b603",
-      "agent": "interaction",
-      "tool": "keyboard_shortcut",
-      "parameters": {
-        "keys": "ctrl+a"
-      },
-      "description": "Select any text remaining in the Microsoft sign-in account identifier field before re-entering the email address.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": null,
-      "created_at": "2026-08-23T02:28:53.353000",
-      "plan_id": "plan_r_1021_031941"
-    },
-    {
       "step_id": "step_f48ad215",
       "agent": "interaction",
       "tool": "type_text",
@@ -270,13 +249,11 @@
     {
       "step_id": "step_bfcb687a",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 638,
-        "y": 418
+        "key": "enter"
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page after entering the email address.",
+      "description": "Press Enter immediately after re-entering the Microsoft 365 account email to submit the sign-in form before the field can be cleared.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

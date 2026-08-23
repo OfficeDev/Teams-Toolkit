@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 22,
+    "total_steps": 16,
     "created_at": "2026-04-22T01:52:17.417913",
     "name": "DA Typespec Oauth Without Reference Id",
     "description": {
@@ -28,12 +28,6 @@
       "plan_r_1021_081410",
       "plan_r_0929_040401",
       "step_d7c966c3",
-      "step_d2b7bea4",
-      "step_f730edf4",
-      "step_bea0c64a",
-      "step_c87d473d",
-      "step_1bbbc317",
-      "step_a9f6c01c",
       "step_c1f18334",
       "step_1b6b4024",
       "step_d9bd9fd6",
@@ -140,9 +134,9 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/usr/bin/env bash\nset -e\nTARGET_FILE=\"/home/vscode/AgentsToolkitProjects/vscuse_app_hm6tg/src/agent/main.tsp\"\nURL=\"https://raw.githubusercontent.com/KennethBWSong/typeSpecSchema/main/github-agent.tsp\"\n\n# Ensure the destination file exists\nif [ ! -f \"$TARGET_FILE\" ]; then\n  echo \"Error: Target file '$TARGET_FILE' does not exist.\" >&2\n  exit 1\nfi\n\n# Download the file and overwrite the target\ncurl --fail --silent --show-error --max-time 60 \"$URL\" -o \"$TARGET_FILE\"\necho \"File replaced successfully.\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nFile replaced successfully.\n\n\u2713 Script executed successfully"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/usr/bin/env bash\nset -e\nTARGET_FILE=\"/home/vscode/AgentsToolkitProjects/vscuse_app_hm6tg/src/agent/main.tsp\"\nURL=\"https://raw.githubusercontent.com/KennethBWSong/typeSpecSchema/e20150c80f47dfc9b068a282a9a8e429daa0b557/github-agent.tsp\"\n\n# Ensure the destination file exists\nif [ ! -f \"$TARGET_FILE\" ]; then\n  echo \"Error: Target file '$TARGET_FILE' does not exist.\" >&2\n  exit 1\nfi\n\n# Download the file and overwrite the target\ncurl --fail --silent --show-error --max-time 60 \"$URL\" -o \"$TARGET_FILE\"\necho \"File replaced successfully.\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nFile replaced successfully.\n\n\u2713 Script executed successfully"
       },
-      "description": "@code replace all the content in file: \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/src/agent/main.tsp\" with online code: \"https://github.com/KennethBWSong/typeSpecSchema/blob/main/github-agent.tsp\"",
+      "description": "@code replace all the content in file: \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}/src/agent/main.tsp\" with online code: \"https://raw.githubusercontent.com/KennethBWSong/typeSpecSchema/e20150c80f47dfc9b068a282a9a8e429daa0b557/github-agent.tsp\"",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -181,148 +175,6 @@
       ],
       "screenshot": "step_d7c966c3",
       "created_at": "2026-04-22T01:52:17.453339",
-      "plan_id": "plan_1951448c"
-    },
-    {
-      "step_id": "step_d2b7bea4",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 289,
-        "y": 49
-      },
-      "description": "Click the \"Input client ID for OAuth registration in OpenAPI Description Document\" text field in the popup dialog at the top of the Visual Studio Code window.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:289:49:16:5:94c72bb59525255a",
-        "dhash:289:49:96:5:00000a2525547588",
-        "dhash:289:49:0:10:d0832328bc96662c"
-      ],
-      "postconditions": [],
-      "tags": [
-        "precondition_wait_timeout:180"
-      ],
-      "screenshot": "step_d2b7bea4",
-      "created_at": "2026-04-22T01:52:17.459318",
-      "plan_id": "plan_1951448c"
-    },
-    {
-      "step_id": "step_f730edf4",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Iv23li8d6YQEDuBpF9Jj"
-      },
-      "description": "Type 'fakeid1234' into the input field labeled \"Input client ID for OAuth registration in OpenAPI Description Document\" at the top of the Visual Studio Code interface.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0932323b8b0702c"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_f730edf4",
-      "created_at": "2026-04-22T01:52:17.466317",
-      "plan_id": "plan_1951448c"
-    },
-    {
-      "step_id": "step_bea0c64a",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press 'Enter' to confirm the inputted client ID in the \"Input client ID for OAuth registration in OpenAPI Description Document\" prompt within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:d0832323b8b0702c"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_bea0c64a",
-      "created_at": "2026-04-22T01:52:17.472386",
-      "plan_id": "plan_1951448c"
-    },
-    {
-      "step_id": "step_c87d473d",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "59a5f2729582821c137a3ad229621f432b968353"
-      },
-      "description": "Type text 'fakevaluefakevaluefakevaluefakevalue1234' into the \"Input client secret for OAuth registration in OpenAPI Description Document\" prompt at the top of the Visual Studio Code workspace.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0832323b8b0702c"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_c87d473d",
-      "created_at": "2026-04-22T01:52:17.478546",
-      "plan_id": "plan_1951448c"
-    },
-    {
-      "step_id": "step_1bbbc317",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press 'Enter' to submit the client secret in the OAuth registration input dialog within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:f0832323b8b0702c"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_1bbbc317",
-      "created_at": "2026-04-22T01:52:17.485550",
-      "plan_id": "plan_1951448c"
-    },
-    {
-      "step_id": "step_a9f6c01c",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 477,
-        "y": 117
-      },
-      "description": "Click the \"Confirm\" button in the Microsoft 365 Agents Toolkit OAuth registration dialog within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:477:117:16:5:b6b5b5b5b5250800",
-        "dhash:477:117:96:5:0002e80e36c80000",
-        "dhash:477:117:0:10:52b22f23b8b0702c"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_a9f6c01c",
-      "created_at": "2026-04-22T01:52:17.492132",
       "plan_id": "plan_1951448c"
     },
     {
