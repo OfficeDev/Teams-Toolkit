@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_count": 0
     },
-    "total_steps": 12,
+    "total_steps": 15,
     "created_at": "2026-05-25T01:16:24.841621",
     "name": "group: debug_in_copilot_remote_DA_no_action",
     "description": {
@@ -26,6 +26,9 @@
       "step_3d026f03",
       "step_d7fafaa1",
       "step_0967fa8d",
+      "step_61c7df92",
+      "step_ae45b603",
+      "step_f48ad215",
       "step_bfcb687a",
       "step_4c68873a",
       "step_7cfe3868",
@@ -196,11 +199,74 @@
         "dhash:512:384:0:20:1b28f0d9e7e6dae4"
       ],
       "postconditions": [],
-      "tags": [
-        "delay: 3"
-      ],
+      "tags": [],
       "screenshot": "step_0967fa8d",
       "created_at": "2026-05-25T01:16:24.898833",
+      "plan_id": "plan_r_1021_031941"
+    },
+    {
+      "step_id": "step_61c7df92",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 455,
+        "y": 351
+      },
+      "description": "After the Microsoft sign-in page finishes redirecting, click the account identifier input field again because the redirect may clear the previously entered email address.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay: 5",
+        "force_run:true"
+      ],
+      "screenshot": null,
+      "created_at": "2026-08-23T02:28:53.353000",
+      "plan_id": "plan_r_1021_031941"
+    },
+    {
+      "step_id": "step_ae45b603",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+a"
+      },
+      "description": "Select any text remaining in the Microsoft sign-in account identifier field before re-entering the email address.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-23T02:28:53.353000",
+      "plan_id": "plan_r_1021_031941"
+    },
+    {
+      "step_id": "step_f48ad215",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{env:M365_ACCOUNT_NAME}}"
+      },
+      "description": "Re-enter ${{env:M365_ACCOUNT_NAME}} into the Microsoft sign-in account identifier field after the page redirect has stabilized.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": null,
+      "created_at": "2026-08-23T02:28:53.353000",
       "plan_id": "plan_r_1021_031941"
     },
     {
@@ -218,11 +284,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:638:487:16:5:93490994d6298400",
-        "dhash:638:487:96:5:40004c62700c0000",
-        "dhash:638:487:0:10:1b28f0d9e7e6dae4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_bfcb687a",
