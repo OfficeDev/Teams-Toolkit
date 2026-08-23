@@ -9,7 +9,7 @@
    "precondition_retry_interval": 2,
    "step_retry_count": 0
   },
-  "total_steps": 12,
+  "total_steps": 13,
   "created_at": "2026-05-20T03:43:01.198447",
   "name": "group  debug in copilot remote DA no action Copilot License",
   "description": {
@@ -25,6 +25,7 @@
    "step_969dc7e1",
    "step_5211ced2",
    "step_a5893dc9",
+   "step_4f6e6c2a",
    "step_41fdae73",
    "step_ceb13b5f",
    "step_5d691940",
@@ -157,7 +158,7 @@
     "x": 455,
     "y": 351
    },
-   "description": "Click the red plus icon next to the \"Email or phone\" field in the Microsoft login form.",
+   "description": "Click inside the \"Email or phone\" field in the Microsoft login form to focus it for credential entry.",
    "content_refs": [],
    "timeout": 30,
    "retry_count": 0,
@@ -172,6 +173,26 @@
    ],
    "screenshot": "step_a5893dc9",
    "created_at": "2026-05-20T03:43:01.246637",
+   "plan_id": "plan_df4aaebb"
+  },
+  {
+   "step_id": "step_4f6e6c2a",
+   "agent": "interaction",
+   "tool": "key_press",
+   "parameters": {
+    "key": "esc"
+   },
+   "description": "Press Esc to dismiss the passkey suggestion popup while keeping the Microsoft login email field ready for credential entry.",
+   "content_refs": [],
+   "timeout": 30,
+   "retry_count": 0,
+   "continue_on_error": "false",
+   "depends_on": [],
+   "preconditions": [],
+   "postconditions": [],
+   "tags": [],
+   "screenshot": "",
+   "created_at": "2026-08-23T02:13:53.262000",
    "plan_id": "plan_df4aaebb"
   },
   {
