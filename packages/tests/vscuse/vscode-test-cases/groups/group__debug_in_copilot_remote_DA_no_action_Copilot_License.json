@@ -155,7 +155,7 @@
    "parameters": {
     "button": "left",
     "x": 455,
-    "y": 351
+    "y": 286
    },
    "description": "Click inside the \"Email or phone\" field in the Microsoft login form to focus it for credential entry.",
    "content_refs": [],
