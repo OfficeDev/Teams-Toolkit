@@ -177,6 +177,28 @@ describe("openPlugin.exportOpenPlugin", () => {
     chai.expect(await fs.pathExists(outDir)).to.equal(false);
   });
 
+  it("AP-PATH-22: reserves the exported skills root when no skills exist", async () => {
+    const appPackage = path.join(projectDir, "appPackage");
+    const manifestPath = path.join(appPackage, "manifest.json");
+    const manifest = await fs.readJSON(manifestPath);
+    delete manifest.agentSkills;
+    manifest.agentConnectors[0].toolSource.remoteMcpServer.mcpToolDescription = {
+      file: "skills",
+    };
+    await fs.remove(path.join(appPackage, "skills"));
+    await fs.writeFile(path.join(appPackage, "skills"), "{}");
+    await fs.writeJSON(manifestPath, manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    chai.expect(res.isErr()).to.equal(true);
+    if (res.isErr()) {
+      chai.expect(res.error.name).to.equal("InvalidManifest");
+      chai.expect(res.error.message).to.match(/MCP tool-description path.*collides/i);
+    }
+    chai.expect(await fs.pathExists(outDir)).to.equal(false);
+  });
+
   it("writes mcp.json with remote MCP servers and skips stdio connectors with a warning", async () => {
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
     if (res.isErr()) throw new Error(res.error.message);

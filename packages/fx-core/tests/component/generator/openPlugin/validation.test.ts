@@ -277,6 +277,70 @@ describe("openPlugin validation", () => {
       .to.equal(true);
   });
 
+  it("AP-EXT-04: drops connector metadata that exceeds Teams manifest limits", () => {
+    const warnings: string[] = [];
+    const extension = parseAtkExtension(
+      {
+        agentConnectors: {
+          web: {
+            displayName: "d".repeat(129),
+            description: "d".repeat(4001),
+            authorization: {
+              type: "OAuthPluginVault",
+              referenceId: "r".repeat(129),
+            },
+          },
+        },
+      },
+      warnings
+    );
+
+    chai.expect(extension).to.deep.equal({
+      agentConnectors: {
+        web: { authorization: { type: "OAuthPluginVault" } },
+      },
+    });
+    for (const field of ["displayName", "description", "referenceId"]) {
+      chai
+        .expect(
+          warnings.some((warning) => warning.includes(field)),
+          field
+        )
+        .to.equal(true);
+    }
+  });
+
+  it("AP-EXT-05: counts Unicode code points for connector metadata limits", () => {
+    const displayName = "😀".repeat(128);
+    const description = "😀".repeat(4000);
+    const referenceId = "😀".repeat(128);
+    const warnings: string[] = [];
+
+    const extension = parseAtkExtension(
+      {
+        agentConnectors: {
+          web: {
+            displayName,
+            description,
+            authorization: { type: "OAuthPluginVault", referenceId },
+          },
+        },
+      },
+      warnings
+    );
+
+    chai.expect(warnings).to.deep.equal([]);
+    chai.expect(extension).to.deep.equal({
+      agentConnectors: {
+        web: {
+          displayName,
+          description,
+          authorization: { type: "OAuthPluginVault", referenceId },
+        },
+      },
+    });
+  });
+
   it.each([
     [null, "JSON object"],
     [{ $schema: MCP_SCHEMA_URL, mcpServers: {}, futureField: true }, "unsupported top-level"],

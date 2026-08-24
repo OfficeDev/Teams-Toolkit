@@ -7,7 +7,7 @@ import { isValidHttpUrl } from "../../../common/stringUtils";
 import { parseAuthor } from "./authorParser";
 import { deterministicAppId } from "./deterministicId";
 import { OpenPluginInputError } from "./errors";
-import { normalizePortableRelativePath, portablePathsConflict } from "./spec";
+import { normalizePortableRelativePath, portablePathsConflict, setRecordValue } from "./spec";
 import { toTitleCaseFromKebab, truncateAtWordBoundary } from "./textUtils";
 import {
   AuthorizationType,
@@ -31,8 +31,12 @@ const NAME_FULL_MAX = 100;
 const DESC_SHORT_MAX = 80;
 const DESC_FULL_MAX = 4000;
 const MAX_AGENT_CONNECTORS = 10;
+const MAX_AGENT_CONNECTOR_ID_LENGTH = 64;
+const MAX_CONNECTOR_DISPLAY_NAME_LENGTH = 128;
+const MAX_CONNECTOR_DESCRIPTION_LENGTH = 4000;
 const MAX_AUTHORIZATION_REFERENCE_ID_LENGTH = 128;
 const AUTHORIZATION_REFERENCE_HASH_LENGTH = 12;
+const CONNECTOR_ID_HASH_LENGTH = 12;
 
 export function validateMcpServerCount(mcpServers: Record<string, OpenPluginMcpServerEntry>): void {
   const connectorCount = Object.values(mcpServers).filter(
@@ -147,6 +151,7 @@ function buildMcpToolDescriptionCopyOps(
     "manifest.json",
     "color.png",
     "outline.png",
+    "skills",
     ...parsed.skills.map((skill) => path.posix.join("skills", skill)),
     ...parsed.commands.map((command) => path.posix.join("commands", command)),
   ];
@@ -252,6 +257,7 @@ function buildAgentConnectors(
 ): Record<string, unknown>[] {
   const out: Record<string, unknown>[] = [];
   const serverNames = Object.keys(mcpServers).sort();
+  const connectorIds = createConnectorIds(serverNames);
   for (const name of serverNames) {
     const server = mcpServers[name];
     const url = typeof server.url === "string" ? server.url.trim() : "";
@@ -291,9 +297,12 @@ function buildAgentConnectors(
           : { file: override.mcpToolDescription.file };
     }
     const mappedConnector: Record<string, unknown> = {
-      id: name,
-      displayName: override?.displayName ?? `${name} MCP Server`,
-      description,
+      id: connectorIds[name],
+      displayName: truncateConnectorText(
+        override?.displayName ?? `${name} MCP Server`,
+        MAX_CONNECTOR_DISPLAY_NAME_LENGTH
+      ),
+      description: truncateConnectorText(description, MAX_CONNECTOR_DESCRIPTION_LENGTH),
       toolSource: {
         remoteMcpServer,
       },
@@ -304,16 +313,61 @@ function buildAgentConnectors(
   return out;
 }
 
+function createConnectorIds(serverNames: readonly string[]): Record<string, string> {
+  const connectorIds: Record<string, string> = {};
+  const usedIds = new Set<string>();
+  for (const serverName of serverNames) {
+    if (codePointLength(serverName) > MAX_AGENT_CONNECTOR_ID_LENGTH) continue;
+    setRecordValue(connectorIds, serverName, serverName);
+    usedIds.add(serverName);
+  }
+  for (const serverName of serverNames) {
+    if (codePointLength(serverName) <= MAX_AGENT_CONNECTOR_ID_LENGTH) continue;
+    let attempt = 0;
+    let connectorId: string;
+    do {
+      connectorId = createBoundedConnectorId(serverName, attempt++);
+    } while (usedIds.has(connectorId));
+    setRecordValue(connectorIds, serverName, connectorId);
+    usedIds.add(connectorId);
+  }
+  return connectorIds;
+}
+
+function createBoundedConnectorId(serverName: string, attempt: number): string {
+  const hashInput = attempt === 0 ? serverName : `${serverName}:${attempt}`;
+  const hash = createHash("sha256")
+    .update(hashInput)
+    .digest("hex")
+    .slice(0, CONNECTOR_ID_HASH_LENGTH);
+  const suffix = `-${hash}`;
+  return `${sliceCodePoints(serverName, MAX_AGENT_CONNECTOR_ID_LENGTH - suffix.length)}${suffix}`;
+}
+
 function createAuthorizationReferenceId(pluginName: string, serverName: string): string {
   const referenceId = `${pluginName}-${serverName}-auth`;
-  if (referenceId.length <= MAX_AUTHORIZATION_REFERENCE_ID_LENGTH) return referenceId;
+  if (codePointLength(referenceId) <= MAX_AUTHORIZATION_REFERENCE_ID_LENGTH) return referenceId;
 
   const hash = createHash("sha256")
     .update(referenceId)
     .digest("hex")
     .slice(0, AUTHORIZATION_REFERENCE_HASH_LENGTH);
   const suffix = `-${hash}-auth`;
-  return `${referenceId.slice(0, MAX_AUTHORIZATION_REFERENCE_ID_LENGTH - suffix.length)}${suffix}`;
+  return `${sliceCodePoints(referenceId, MAX_AUTHORIZATION_REFERENCE_ID_LENGTH - suffix.length)}${suffix}`;
+}
+
+function codePointLength(value: string): number {
+  return [...value].length;
+}
+
+function sliceCodePoints(value: string, end: number): string {
+  return [...value].slice(0, end).join("");
+}
+
+function truncateConnectorText(value: string, maxLength: number): string {
+  const codePoints = [...value];
+  if (codePoints.length <= maxLength) return value;
+  return codePoints.slice(0, maxLength).join("").trimEnd();
 }
 
 function isSecureHttpUrl(value: string): boolean {

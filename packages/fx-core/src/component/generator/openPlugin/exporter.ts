@@ -628,6 +628,7 @@ function validateExportDestinationKeys(
     "manifest.json",
     "color.png",
     "outline.png",
+    "skills",
     ...[...skillNames].map((name) => path.posix.join("skills", name)),
     ...commandNames.map((name) => path.posix.join("commands", name)),
   ];

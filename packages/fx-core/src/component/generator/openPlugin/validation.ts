@@ -57,6 +57,9 @@ const REMOTE_FIELDS = new Set(["type", "url", "headers"]);
 const HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACCENT_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
+const CONNECTOR_DISPLAY_NAME_MAX_LENGTH = 128;
+const CONNECTOR_DESCRIPTION_MAX_LENGTH = 4000;
+const AUTHORIZATION_REFERENCE_ID_MAX_LENGTH = 128;
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -327,14 +330,14 @@ function parseExtensionConnectors(
       "displayName",
       `agentConnectors.${serverName}.displayName`,
       warnings,
-      isNonEmptyString
+      (item) => hasLength(item, CONNECTOR_DISPLAY_NAME_MAX_LENGTH)
     );
     const description = readExtensionString(
       rawConnector,
       "description",
       `agentConnectors.${serverName}.description`,
       warnings,
-      isNonEmptyString
+      (item) => hasLength(item, CONNECTOR_DESCRIPTION_MAX_LENGTH)
     );
     if (displayName !== undefined) connector.displayName = displayName;
     if (description !== undefined) connector.description = description;
@@ -387,7 +390,7 @@ function parseExtensionConnectors(
           "referenceId",
           `${fieldPath}.referenceId`,
           warnings,
-          isNonEmptyString
+          (item) => hasLength(item, AUTHORIZATION_REFERENCE_ID_MAX_LENGTH)
         );
         if (referenceId !== undefined) connector.authorization.referenceId = referenceId;
       }
@@ -426,7 +429,8 @@ function isNonEmptyString(value: string): boolean {
 }
 
 function hasLength(value: string, maxLength: number): boolean {
-  return value.length > 0 && value.length <= maxLength;
+  const length = [...value].length;
+  return length > 0 && length <= maxLength;
 }
 
 function isHttpUrl(value: string): boolean {

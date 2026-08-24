@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { createHash } from "crypto";
 import { chai } from "vitest";
 import {
   ACCENT_COLOR,
@@ -230,6 +231,110 @@ describe("openPlugin.mapToTtkProject", () => {
     chai
       .expect(() => mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" })))
       .to.throw(/MCP tool-description paths.*collide/i);
+  });
+
+  it("AP-MAP-05: reserves the generated skills directory when no skills exist", () => {
+    const parsed = baseParsed({
+      mcpServers: { svc: { url: "https://svc.example.com" } },
+      atkExtension: {
+        agentConnectors: {
+          svc: {
+            mcpToolDescription: {
+              file: "skills",
+              source: "source.json",
+              contents: Buffer.from("{}"),
+            },
+          },
+        },
+      },
+    });
+
+    chai
+      .expect(() => mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" })))
+      .to.throw(/MCP tool-description path.*collides/i);
+  });
+
+  it("AP-MAP-06: bounds connector fields for long Agent Plugin server names", () => {
+    const sharedServerPrefix = "s".repeat(150);
+    const firstServerName = `${sharedServerPrefix}a`;
+    const firstDerivedId = `${firstServerName.slice(0, 51)}-${createHash("sha256")
+      .update(firstServerName)
+      .digest("hex")
+      .slice(0, 12)}`;
+    const parsed = baseParsed({
+      mcpServers: {
+        [firstServerName]: {
+          url: "https://a.example.com",
+          description: "d".repeat(4001),
+        },
+        [`${sharedServerPrefix}b`]: {
+          url: "https://b.example.com",
+          description: "d".repeat(4001),
+        },
+        [firstDerivedId]: { url: "https://short.example.com" },
+      },
+    });
+
+    const first = mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" }));
+    const second = mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" }));
+    const firstConnectors = first.manifest.agentConnectors as any[];
+    const secondConnectors = second.manifest.agentConnectors as any[];
+
+    chai.expect(firstConnectors.every((connector) => connector.id.length <= 64)).to.equal(true);
+    chai
+      .expect(firstConnectors.every((connector) => /-[0-9a-f]{12}$/.test(connector.id)))
+      .to.equal(true);
+    chai.expect(new Set(firstConnectors.map((connector) => connector.id)).size).to.equal(3);
+    chai
+      .expect(firstConnectors.some((connector) => connector.id === firstDerivedId))
+      .to.equal(true);
+    chai
+      .expect(firstConnectors.every((connector) => connector.displayName.length <= 128))
+      .to.equal(true);
+    chai
+      .expect(firstConnectors.every((connector) => connector.description.length <= 4000))
+      .to.equal(true);
+    chai
+      .expect(secondConnectors.map((connector) => connector.id))
+      .to.deep.equal(firstConnectors.map((connector) => connector.id));
+  });
+
+  it("AP-MAP-07: slices bounded connector fields at Unicode code-point boundaries", () => {
+    const serverName = "😀".repeat(70);
+    const hash = createHash("sha256").update(serverName).digest("hex").slice(0, 12);
+    const expectedId = `${[...serverName].slice(0, 51).join("")}-${hash}`;
+
+    const mapped = mapToTtkProject(
+      baseParsed({ mcpServers: { [serverName]: { url: "https://unicode.example.com" } } }),
+      baseInputs({ defaultAuthType: "ApiKeyPluginVault" })
+    );
+    const connector = (mapped.manifest.agentConnectors as any[])[0];
+
+    chai.expect(connector.id).to.equal(expectedId);
+    chai.expect(Buffer.from(connector.id, "utf8").toString("utf8")).to.equal(connector.id);
+    chai.expect(connector.displayName).to.equal(`${serverName} MCP Server`);
+    chai
+      .expect(connector.toolSource.remoteMcpServer.authorization.referenceId)
+      .to.equal(`demo-plugin-${serverName}-auth`);
+  });
+
+  it("AP-MAP-08: truncates manifest descriptions by Unicode code points", () => {
+    const exactLimit = "😀".repeat(80);
+    const splitBoundary = `${"a".repeat(79)}😀z`;
+
+    const exactMapped = mapToTtkProject(
+      baseParsed({ manifest: { ...baseParsed().manifest, description: exactLimit } }),
+      baseInputs()
+    );
+    const splitMapped = mapToTtkProject(
+      baseParsed({ manifest: { ...baseParsed().manifest, description: splitBoundary } }),
+      baseInputs()
+    );
+
+    chai.expect((exactMapped.manifest.description as { short: string }).short).to.equal(exactLimit);
+    chai
+      .expect((splitMapped.manifest.description as { short: string }).short)
+      .to.equal(`${"a".repeat(79)}😀`);
   });
 
   it("skips stdio MCP servers (no url) with a warning", () => {
