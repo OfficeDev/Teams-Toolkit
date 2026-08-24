@@ -4,8 +4,11 @@
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
-import { inspectPathWithinRoot } from "../../../../src/component/generator/openPlugin/fileSystem";
-import { chai } from "vitest";
+import {
+  inspectPathWithinRoot,
+  readFileWithinRoot,
+} from "../../../../src/component/generator/openPlugin/fileSystem";
+import { chai, vi } from "vitest";
 
 async function tmp(prefix: string): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -48,6 +51,30 @@ describe("openPlugin.fileSystem", () => {
     } finally {
       await fs.remove(root);
       await fs.remove(replacement);
+    }
+  });
+
+  it("rejects a file whose metadata changes during snapshot validation", async () => {
+    const root = await tmp("op-fs-changed-");
+    const file = path.join(root, "description.json");
+    const originalLstat = fs.lstat.bind(fs);
+    let fileLstatCount = 0;
+    try {
+      await fs.writeFile(file, "{}");
+      vi.spyOn(fs, "lstat").mockImplementation(async (candidate) => {
+        const stat = await originalLstat(candidate);
+        if (path.resolve(candidate.toString()) === file && ++fileLstatCount === 3) {
+          Object.defineProperty(stat, "mtimeMs", { value: stat.mtimeMs + 1 });
+        }
+        return stat;
+      });
+
+      const result = await readFileWithinRoot(root, "description.json");
+
+      chai.expect(result.status).to.equal("changed");
+    } finally {
+      vi.restoreAllMocks();
+      await fs.remove(root);
     }
   });
 });

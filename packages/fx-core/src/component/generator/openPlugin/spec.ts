@@ -59,6 +59,9 @@ export const LEGACY_MANIFEST_LOCATIONS: ReadonlyArray<{
 export const PLUGIN_NAME_MAX_LENGTH = 64;
 export const PLUGIN_NAME_PATTERN = /^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
 const WINDOWS_RESERVED_DEVICE_NAME_PATTERN = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$/;
+const WINDOWS_RESERVED_PATH_SEGMENT_PATTERN =
+  /^(?:con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\..*)?$/i;
+const PORTABLE_INVALID_PATH_CHARACTER_PATTERN = /[<>:"|?*\u0000-\u001f]/;
 
 /** Transport types permitted by mcp.schema.json. `sse` is legacy HTTP+SSE. */
 export type AgentPluginMcpServerType = "stdio" | "streamable-http" | "sse";
@@ -82,6 +85,53 @@ export function isValidPluginName(name: string): boolean {
 
 export function isSupportedMcpServerType(value: unknown): value is AgentPluginMcpServerType {
   return value === "stdio" || value === "streamable-http" || value === "sse";
+}
+
+/** Add an own enumerable entry without invoking Object.prototype.__proto__. */
+export function setRecordValue<T>(record: Record<string, T>, key: string, value: T): void {
+  Object.defineProperty(record, key, {
+    value,
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
+}
+
+/** Reject absolute and drive-relative paths under both POSIX and Windows semantics. */
+export function isPortableRelativePath(value: string): boolean {
+  return (
+    value.length > 0 &&
+    !path.posix.isAbsolute(value) &&
+    !path.win32.isAbsolute(value) &&
+    !/^[a-zA-Z]:/.test(value)
+  );
+}
+
+export function normalizePortableRelativePath(value: string): string | undefined {
+  if (!isPortableRelativePath(value) || /[\\/]$/.test(value)) return undefined;
+  const normalized = path.posix.normalize(value.replace(/\\/g, "/"));
+  if (normalized === "." || normalized === ".." || normalized.startsWith("../")) {
+    return undefined;
+  }
+  const hasNonPortableSegment = normalized
+    .split("/")
+    .some(
+      (segment) =>
+        segment.length === 0 ||
+        /[ .]$/.test(segment) ||
+        PORTABLE_INVALID_PATH_CHARACTER_PATTERN.test(segment) ||
+        WINDOWS_RESERVED_PATH_SEGMENT_PATTERN.test(segment)
+    );
+  if (hasNonPortableSegment) return undefined;
+  return normalized;
+}
+
+export function portablePathsConflict(left: string, right: string): boolean {
+  const leftKey = left.toLowerCase();
+  const rightKey = right.toLowerCase();
+  return (
+    leftKey === rightKey || leftKey.startsWith(`${rightKey}/`) || rightKey.startsWith(`${leftKey}/`)
+  );
 }
 
 /**

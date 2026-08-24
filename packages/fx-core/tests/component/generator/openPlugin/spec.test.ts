@@ -4,8 +4,10 @@
 import * as path from "path";
 import { chai } from "vitest";
 import {
+  isPortableRelativePath,
   isSupportedMcpServerType,
   isValidPluginName,
+  normalizePortableRelativePath,
   normalizePluginName,
   PLUGIN_NAME_MAX_LENGTH,
   PLUGIN_NAME_PATTERN,
@@ -39,6 +41,50 @@ describe("openPlugin.spec", () => {
         chai.expect(isValidPluginName(name)).to.equal(false);
       });
     }
+  });
+
+  describe("portable relative paths", () => {
+    it("rejects POSIX, Windows, UNC, and drive-relative paths on every platform", () => {
+      for (const value of [
+        "/etc/passwd",
+        "C:\\temp\\file.json",
+        "C:file.json",
+        "\\\\server\\share",
+      ]) {
+        chai.expect(isPortableRelativePath(value)).to.equal(false);
+        chai.expect(normalizePortableRelativePath(value)).to.equal(undefined);
+      }
+    });
+
+    it("rejects paths that normalize to the root or escape it", () => {
+      for (const value of [".", "child/..", "child\\..", "../outside", "a/../../outside"]) {
+        chai.expect(normalizePortableRelativePath(value)).to.equal(undefined);
+      }
+    });
+
+    it("rejects Windows-equivalent and non-portable file names on every platform", () => {
+      for (const value of [
+        "tool.json.",
+        "tool.json ",
+        "folder./tool.json",
+        "folder /tool.json",
+        "CON",
+        "nested/prn.json",
+        "COM1.txt",
+        "tools.json:stream",
+        "bad?.json",
+        "folder/",
+        "folder\\",
+      ]) {
+        chai.expect(normalizePortableRelativePath(value)).to.equal(undefined);
+      }
+    });
+
+    it("normalizes relative paths to portable separators", () => {
+      chai
+        .expect(normalizePortableRelativePath("./descriptions\\nested/../file.json"))
+        .to.equal("descriptions/file.json");
+    });
   });
 
   describe("normalizePluginName", () => {

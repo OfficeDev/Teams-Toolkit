@@ -113,6 +113,124 @@ describe("openPlugin.roundtrip (import → export → import)", () => {
     }
   });
 
+  it("AP-ROUNDTRIP-01: preserves an MCP server named __proto__", async () => {
+    const sourceDir = await tmp("op-reserved-source-");
+    const firstProject = await tmp("op-reserved-first-");
+    const exportedPlugin = await tmp("op-reserved-export-");
+    const secondProject = await tmp("op-reserved-second-");
+    try {
+      await seedSamplePlugin(sourceDir);
+      const firstImport = await importOpenPlugin({
+        path: sourceDir,
+        output: firstProject,
+        privacyUrl: "https://example.com/privacy",
+        termsUrl: "https://example.com/terms",
+        defaultAuthType: "None",
+      });
+      if (firstImport.isErr()) throw new Error(firstImport.error.message);
+
+      const firstManifestPath = path.join(firstProject, "appPackage", "manifest.json");
+      const firstManifest = await fs.readJSON(firstManifestPath);
+      firstManifest.agentConnectors[0].id = "__proto__";
+      await fs.writeJSON(firstManifestPath, firstManifest, { spaces: 4 });
+
+      const exported = await exportOpenPlugin({ path: firstProject, output: exportedPlugin });
+      if (exported.isErr()) throw new Error(exported.error.message);
+      chai.expect(await fs.pathExists(path.join(exportedPlugin, "mcp.json"))).to.equal(true);
+      const exportedMcp = await fs.readJSON(path.join(exportedPlugin, "mcp.json"));
+      chai.expect(Object.keys(exportedMcp.mcpServers)).to.deep.equal(["__proto__"]);
+
+      const secondImport = await importOpenPlugin({
+        path: exportedPlugin,
+        output: secondProject,
+      });
+      if (secondImport.isErr()) throw new Error(secondImport.error.message);
+      const secondManifest = await fs.readJSON(
+        path.join(secondProject, "appPackage", "manifest.json")
+      );
+      chai.expect(secondManifest.agentConnectors[0].id).to.equal("__proto__");
+    } finally {
+      await Promise.all(
+        [sourceDir, firstProject, exportedPlugin, secondProject].map(
+          async (directory) => await fs.remove(directory)
+        )
+      );
+    }
+  });
+
+  it("AP-ROUNDTRIP-02: preserves reusable and MCP tool-description fields", async () => {
+    const sourceDir = await tmp("op-tool-description-source-");
+    const firstProject = await tmp("op-tool-description-first-");
+    const exportedPlugin = await tmp("op-tool-description-export-");
+    const secondProject = await tmp("op-tool-description-second-");
+    try {
+      await seedSamplePlugin(sourceDir);
+      const firstImport = await importOpenPlugin({
+        path: sourceDir,
+        output: firstProject,
+        privacyUrl: "https://example.com/privacy",
+        termsUrl: "https://example.com/terms",
+        defaultAuthType: "None",
+      });
+      if (firstImport.isErr()) throw new Error(firstImport.error.message);
+
+      const toolDescription = '{"tools":[{"name":"search"}]}';
+      const toolDescriptionFile = "mcp-tool-description.json";
+      const firstManifestPath = path.join(firstProject, "appPackage", "manifest.json");
+      const firstManifest = await fs.readJSON(firstManifestPath);
+      firstManifest.agentConnectors[0].reusable = false;
+      firstManifest.agentConnectors[0].toolSource.remoteMcpServer.mcpToolDescription = {
+        file: toolDescriptionFile,
+      };
+      await fs.writeJSON(firstManifestPath, firstManifest, { spaces: 4 });
+      await fs.writeFile(
+        path.join(firstProject, "appPackage", toolDescriptionFile),
+        toolDescription
+      );
+
+      const exported = await exportOpenPlugin({ path: firstProject, output: exportedPlugin });
+      if (exported.isErr()) throw new Error(exported.error.message);
+      const exportedManifest = await fs.readJSON(path.join(exportedPlugin, "plugin.json"));
+      const preservedDescription =
+        exportedManifest.extensions["com.microsoft.agents-toolkit"].agentConnectors.web
+          .mcpToolDescription;
+      chai.expect(preservedDescription).to.deep.equal({
+        file: toolDescriptionFile,
+        source: ".microsoft-agents-toolkit/mcp-tool-descriptions/0.json",
+      });
+      vi.mocked(Generator.generateTemplate).mockImplementation(async (ctx, dest) => {
+        await fs.remove(path.join(exportedPlugin, preservedDescription.source));
+        const appName = ctx.templateVariables?.appName ?? "";
+        await scaffoldOpenPluginTemplateFromSource(dest, { appName });
+        return ok(undefined);
+      });
+      const secondImport = await importOpenPlugin({
+        path: exportedPlugin,
+        output: secondProject,
+      });
+      if (secondImport.isErr()) throw new Error(secondImport.error.message);
+
+      const secondManifest = await fs.readJSON(
+        path.join(secondProject, "appPackage", "manifest.json")
+      );
+      chai.expect(secondManifest.agentConnectors[0].reusable).to.equal(false);
+      chai
+        .expect(secondManifest.agentConnectors[0].toolSource.remoteMcpServer.mcpToolDescription)
+        .to.deep.equal({ file: toolDescriptionFile });
+      chai
+        .expect(
+          await fs.readFile(path.join(secondProject, "appPackage", toolDescriptionFile), "utf8")
+        )
+        .to.equal(toolDescription);
+    } finally {
+      await Promise.all(
+        [sourceDir, firstProject, exportedPlugin, secondProject].map(
+          async (directory) => await fs.remove(directory)
+        )
+      );
+    }
+  });
+
   for (const authorizationType of [
     "None",
     "OAuthPluginVault",

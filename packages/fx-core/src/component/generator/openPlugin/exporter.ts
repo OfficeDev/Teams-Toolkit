@@ -7,8 +7,9 @@ import * as path from "path";
 import { isValidHttpUrl } from "../../../common/stringUtils";
 import {
   copyDirectoryWithoutSymbolicLinks,
-  inspectPathWithinRoot,
   hasLinkedPathSegment,
+  inspectPathWithinRoot,
+  readFileWithinRoot,
   resolvePluginRoot,
 } from "./fileSystem";
 import { OpenPluginInputError } from "./errors";
@@ -18,9 +19,12 @@ import {
   DEFAULT_REMOTE_MCP_TYPE,
   MCP_CONFIG_FILE,
   MCP_SCHEMA_URL,
+  normalizePortableRelativePath,
   normalizePluginName,
+  portablePathsConflict,
   PLUGIN_MANIFEST_FILE,
   PLUGIN_SCHEMA_URL,
+  setRecordValue,
 } from "./spec";
 import {
   AtkAgentConnectorExt,
@@ -37,6 +41,13 @@ export interface ExportResult {
   outputPath: string;
   warnings: string[];
 }
+
+interface PreparedMcpToolDescription {
+  extension: NonNullable<AtkAgentConnectorExt["mcpToolDescription"]>;
+  contents?: Buffer;
+}
+
+const ATK_MCP_TOOL_DESCRIPTIONS_DIR = ".microsoft-agents-toolkit/mcp-tool-descriptions";
 
 /**
  * Export an ATK project (folder containing appPackage/manifest.json plus the
@@ -153,9 +164,11 @@ export async function exportOpenPlugin(
 
     const invalidDeveloperUrl = validateDeveloperUrls(manifest);
     if (invalidDeveloperUrl) return err(invalidDeveloperUrl);
-    const pluginJson = buildPluginJson(manifest, pluginName);
+    const mcpToolDescriptions = await prepareMcpToolDescriptions(appPackageDir, manifest, warnings);
+    const commandNames = await prepareCommands(appPackageDir, warnings);
+    const preflightPluginJson = buildPluginJson(manifest, pluginName, mcpToolDescriptions);
     try {
-      parseAgentPluginManifest(pluginJson);
+      parseAgentPluginManifest(preflightPluginJson);
     } catch (error) {
       if (!(error instanceof OpenPluginInputError)) throw error;
       const detail = error instanceof Error ? error.message : String(error);
@@ -169,7 +182,11 @@ export async function exportOpenPlugin(
     }
     const invalidMcpUrl = validateRemoteMcpUrls(manifest);
     if (invalidMcpUrl) return err(invalidMcpUrl);
-    const destinationCollision = validateExportDestinationKeys(manifest);
+    const destinationCollision = validateExportDestinationKeys(
+      manifest,
+      mcpToolDescriptions,
+      commandNames
+    );
     if (destinationCollision) return err(destinationCollision);
 
     if (await fs.pathExists(outputPath)) {
@@ -186,12 +203,14 @@ export async function exportOpenPlugin(
     }
     await fs.ensureDir(outputPath);
 
+    await copyMcpToolDescriptions(outputPath, mcpToolDescriptions);
+    const pluginJson = buildPluginJson(manifest, pluginName, mcpToolDescriptions);
     const manifestOut = path.join(outputPath, PLUGIN_MANIFEST_FILE);
     await fs.writeJSON(manifestOut, pluginJson, { spaces: 2 });
 
     await writeMcpJson(outputPath, manifest, warnings);
     await copySkills(outputPath, appPackageDir, manifest, warnings);
-    await copyCommands(outputPath, appPackageDir, warnings);
+    await copyCommands(outputPath, appPackageDir, commandNames, warnings);
     await copyIcons(outputPath, appPackageDir, warnings);
 
     return ok({ outputPath, warnings });
@@ -235,11 +254,13 @@ interface TeamsLikeManifest {
   agentSkills?: Array<{ folder?: string }>;
   agentConnectors?: Array<{
     id?: string;
+    reusable?: boolean;
     displayName?: string;
     description?: string;
     toolSource?: {
       remoteMcpServer?: {
         mcpServerUrl?: string;
+        mcpToolDescription?: { file?: string };
         authorization?: { type?: string; referenceId?: string };
       };
     };
@@ -369,6 +390,12 @@ function parseAgentConnector(
     if (parsed && typeof parsed !== "string") return parsed.message;
   }
   if (typeof id === "string") connector.id = id;
+  if (value.reusable !== undefined) {
+    if (typeof value.reusable !== "boolean") {
+      return `manifest 'agentConnectors[${index}].reusable' must be a boolean.`;
+    }
+    connector.reusable = value.reusable;
+  }
   if (typeof displayName === "string") connector.displayName = displayName;
   if (typeof description === "string") connector.description = description;
   if (value.toolSource === undefined) return connector;
@@ -383,6 +410,21 @@ function parseAgentConnector(
   const serverUrl = readOptionalString(value.toolSource.remoteMcpServer, "mcpServerUrl");
   if (serverUrl && typeof serverUrl !== "string") return serverUrl.message;
   if (typeof serverUrl === "string") remote.mcpServerUrl = serverUrl;
+  const rawMcpToolDescription = value.toolSource.remoteMcpServer.mcpToolDescription;
+  if (rawMcpToolDescription !== undefined) {
+    if (!isRecord(rawMcpToolDescription)) {
+      return `manifest 'agentConnectors[${index}].toolSource.remoteMcpServer.mcpToolDescription' must be an object.`;
+    }
+    const file = readOptionalString(rawMcpToolDescription, "file");
+    if (file && typeof file !== "string") return file.message;
+    const normalizedFile =
+      typeof file === "string" ? normalizePortableRelativePath(file) : undefined;
+    if (typeof file === "string" && normalizedFile === undefined) {
+      return `manifest 'agentConnectors[${index}].toolSource.remoteMcpServer.mcpToolDescription.file' must be a relative path.`;
+    }
+    remote.mcpToolDescription = {};
+    if (normalizedFile !== undefined) remote.mcpToolDescription.file = normalizedFile;
+  }
   const rawAuthorization = value.toolSource.remoteMcpServer.authorization;
   if (rawAuthorization !== undefined) {
     if (!isRecord(rawAuthorization)) {
@@ -418,7 +460,11 @@ function derivePluginName(manifest: TeamsLikeManifest): string {
   return "exported-plugin";
 }
 
-function buildPluginJson(manifest: TeamsLikeManifest, pluginName: string): Record<string, unknown> {
+function buildPluginJson(
+  manifest: TeamsLikeManifest,
+  pluginName: string,
+  mcpToolDescriptions: ReadonlyMap<string, PreparedMcpToolDescription>
+): Record<string, unknown> {
   const author: Record<string, unknown> = {};
   if (manifest.developer?.name) author.name = manifest.developer.name;
   if (manifest.developer?.websiteUrl) author.url = manifest.developer.websiteUrl;
@@ -467,13 +513,18 @@ function buildPluginJson(manifest: TeamsLikeManifest, pluginName: string): Recor
     const override: AtkAgentConnectorExt = {};
     if (connector.displayName) override.displayName = connector.displayName;
     if (connector.description) override.description = connector.description;
+    if (connector.reusable !== undefined) override.reusable = connector.reusable;
+    const mcpToolDescription = mcpToolDescriptions.get(connector.id);
+    if (mcpToolDescription) {
+      override.mcpToolDescription = { ...mcpToolDescription.extension };
+    }
     const auth = connector.toolSource?.remoteMcpServer?.authorization;
     if (auth?.type && isAuthorizationType(auth.type)) {
       override.authorization = { type: auth.type };
       if (auth.referenceId) override.authorization.referenceId = auth.referenceId;
     }
     if (Object.keys(override).length > 0) {
-      connectorOverrides[connector.id] = override;
+      setRecordValue(connectorOverrides, connector.id, override);
     }
   }
   if (Object.keys(connectorOverrides).length > 0) {
@@ -489,6 +540,48 @@ function buildPluginJson(manifest: TeamsLikeManifest, pluginName: string): Recor
   return pluginJson;
 }
 
+async function prepareMcpToolDescriptions(
+  appPackageDir: string,
+  manifest: TeamsLikeManifest,
+  warnings: string[]
+): Promise<Map<string, PreparedMcpToolDescription>> {
+  const prepared = new Map<string, PreparedMcpToolDescription>();
+  for (const [index, connector] of (manifest.agentConnectors ?? []).entries()) {
+    const id = connector.id;
+    const description = connector.toolSource?.remoteMcpServer?.mcpToolDescription;
+    if (!id || description === undefined) continue;
+    if (description.file === undefined) {
+      prepared.set(id, { extension: {} });
+      continue;
+    }
+    const sourceFile = await readFileWithinRoot(appPackageDir, description.file);
+    if (sourceFile.status !== "ok") {
+      warnings.push(
+        `Connector '${id}' MCP tool-description file '${description.file}' is not a safe regular file and was skipped.`
+      );
+      continue;
+    }
+    const source = path.posix.join(ATK_MCP_TOOL_DESCRIPTIONS_DIR, `${index}.json`);
+    prepared.set(id, {
+      extension: { file: description.file, source },
+      contents: sourceFile.contents,
+    });
+  }
+  return prepared;
+}
+
+async function copyMcpToolDescriptions(
+  outputPath: string,
+  prepared: ReadonlyMap<string, PreparedMcpToolDescription>
+): Promise<void> {
+  for (const description of prepared.values()) {
+    if (!description.contents || !description.extension.source) continue;
+    const destination = path.join(outputPath, description.extension.source);
+    await fs.ensureDir(path.dirname(destination));
+    await fs.writeFile(destination, description.contents);
+  }
+}
+
 function isAuthorizationType(value: string): value is ConnectorAuthorizationType {
   return (
     value === "None" ||
@@ -499,7 +592,11 @@ function isAuthorizationType(value: string): value is ConnectorAuthorizationType
   );
 }
 
-function validateExportDestinationKeys(manifest: TeamsLikeManifest): UserError | undefined {
+function validateExportDestinationKeys(
+  manifest: TeamsLikeManifest,
+  mcpToolDescriptions: ReadonlyMap<string, PreparedMcpToolDescription>,
+  commandNames: readonly string[]
+): UserError | undefined {
   const connectorIds = new Set<string>();
   for (const connector of manifest.agentConnectors ?? []) {
     if (!connector.id) continue;
@@ -525,6 +622,50 @@ function validateExportDestinationKeys(manifest: TeamsLikeManifest): UserError |
       );
     }
     skillNames.add(name);
+  }
+
+  const reservedPaths = [
+    "manifest.json",
+    "color.png",
+    "outline.png",
+    ...[...skillNames].map((name) => path.posix.join("skills", name)),
+    ...commandNames.map((name) => path.posix.join("commands", name)),
+  ];
+  const destinations = new Map<string, { path: string; contents: Buffer }>();
+  for (const description of mcpToolDescriptions.values()) {
+    const file = description.extension.file;
+    if (!file || !description.contents) continue;
+    const reservedPath = reservedPaths.find((candidate) => portablePathsConflict(file, candidate));
+    if (reservedPath) {
+      return new UserError(
+        OPEN_PLUGIN_EXPORT_SOURCE,
+        "InvalidManifest",
+        `MCP tool-description path '${file}' collides with generated output '${reservedPath}'.`
+      );
+    }
+
+    const destinationKey = file.toLowerCase();
+    const existing = destinations.get(destinationKey);
+    if (existing) {
+      if (existing.path !== file || !existing.contents.equals(description.contents)) {
+        return new UserError(
+          OPEN_PLUGIN_EXPORT_SOURCE,
+          "InvalidManifest",
+          `MCP tool-description paths '${existing.path}' and '${file}' collide.`
+        );
+      }
+      continue;
+    }
+    for (const destination of destinations.values()) {
+      if (portablePathsConflict(file, destination.path)) {
+        return new UserError(
+          OPEN_PLUGIN_EXPORT_SOURCE,
+          "InvalidManifest",
+          `MCP tool-description paths '${destination.path}' and '${file}' collide.`
+        );
+      }
+    }
+    destinations.set(destinationKey, { path: file, contents: description.contents });
   }
   return undefined;
 }
@@ -582,7 +723,7 @@ async function writeMcpJson(
     }
     // "http" is not an Agent Plugins transport; 1.0.0 defines stdio,
     // streamable-http and (legacy) sse.
-    servers[id] = { type: DEFAULT_REMOTE_MCP_TYPE, url: remote.mcpServerUrl };
+    setRecordValue(servers, id, { type: DEFAULT_REMOTE_MCP_TYPE, url: remote.mcpServerUrl });
   }
   if (Object.keys(servers).length === 0) {
     return;
@@ -652,11 +793,7 @@ async function copySkills(
   }
 }
 
-async function copyCommands(
-  outputPath: string,
-  appPackageDir: string,
-  warnings: string[]
-): Promise<void> {
+async function prepareCommands(appPackageDir: string, warnings: string[]): Promise<string[]> {
   const trustedAppPackageDir = appPackageDir;
   const inspectedCommands = await inspectPathWithinRoot(
     trustedAppPackageDir,
@@ -665,13 +802,14 @@ async function copyCommands(
   );
   if (inspectedCommands.status === "outside") {
     warnings.push("Commands directory resolves outside appPackage; skipped.");
-    return;
+    return [];
   }
   if (inspectedCommands.status === "wrong-kind") {
     warnings.push("Commands path is not a directory; skipped.");
-    return;
+    return [];
   }
-  if (inspectedCommands.status === "missing") return;
+  if (inspectedCommands.status === "missing") return [];
+  const commandNames: string[] = [];
   const entries = await fs.readdir(inspectedCommands.path, { withFileTypes: true });
   for (const entry of entries) {
     if (entry.isSymbolicLink()) {
@@ -696,10 +834,31 @@ async function copyCommands(
     if (command.status === "outside") {
       warnings.push(`Command '${entry.name}' resolves outside appPackage; skipped.`);
     } else if (command.status === "ok") {
-      const destination = path.join(outputPath, "commands", entry.name);
-      await fs.ensureDir(path.dirname(destination));
-      await fs.copy(command.path, destination);
+      commandNames.push(entry.name);
     }
+  }
+  return commandNames;
+}
+
+async function copyCommands(
+  outputPath: string,
+  appPackageDir: string,
+  commandNames: readonly string[],
+  warnings: string[]
+): Promise<void> {
+  for (const commandName of commandNames) {
+    const command = await inspectPathWithinRoot(
+      appPackageDir,
+      path.join("commands", commandName),
+      "file"
+    );
+    if (command.status !== "ok") {
+      warnings.push(`Command '${commandName}' is no longer a safe regular file; skipped.`);
+      continue;
+    }
+    const destination = path.join(outputPath, "commands", commandName);
+    await fs.ensureDir(path.dirname(destination));
+    await fs.copy(command.path, destination);
   }
 }
 

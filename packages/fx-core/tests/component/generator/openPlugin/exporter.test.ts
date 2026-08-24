@@ -122,6 +122,61 @@ describe("openPlugin.exportOpenPlugin", () => {
     });
   });
 
+  it("AP-PATH-19: rejects an absolute MCP tool-description path", async () => {
+    const appPackage = path.join(projectDir, "appPackage");
+    const toolDescriptionPath = path.join(appPackage, "mcp-tool-description.json");
+    await fs.writeFile(toolDescriptionPath, "{}");
+    const manifestPath = path.join(appPackage, "manifest.json");
+    const manifest = await fs.readJSON(manifestPath);
+    manifest.agentConnectors[0].toolSource.remoteMcpServer.mcpToolDescription = {
+      file: toolDescriptionPath,
+    };
+    await fs.writeJSON(manifestPath, manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    chai.expect(res.isErr()).to.equal(true);
+    if (res.isErr()) {
+      chai.expect(res.error.name).to.equal("InvalidManifest");
+      chai.expect(res.error.message).to.include("must be a relative path");
+    }
+  });
+
+  it("AP-PATH-20: rejects an MCP tool-description path that collides with generated output", async () => {
+    const manifestPath = path.join(projectDir, "appPackage", "manifest.json");
+    const manifest = await fs.readJSON(manifestPath);
+    manifest.agentConnectors[0].toolSource.remoteMcpServer.mcpToolDescription = {
+      file: "manifest.json",
+    };
+    await fs.writeJSON(manifestPath, manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    chai.expect(res.isErr()).to.equal(true);
+    if (res.isErr()) {
+      chai.expect(res.error.name).to.equal("InvalidManifest");
+      chai.expect(res.error.message).to.match(/MCP tool-description path.*collides/i);
+    }
+  });
+
+  it("AP-PATH-21: rejects an MCP tool-description path that collides with an exported command", async () => {
+    const manifestPath = path.join(projectDir, "appPackage", "manifest.json");
+    const manifest = await fs.readJSON(manifestPath);
+    manifest.agentConnectors[0].toolSource.remoteMcpServer.mcpToolDescription = {
+      file: "commands/deploy.md",
+    };
+    await fs.writeJSON(manifestPath, manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    chai.expect(res.isErr()).to.equal(true);
+    if (res.isErr()) {
+      chai.expect(res.error.name).to.equal("InvalidManifest");
+      chai.expect(res.error.message).to.match(/MCP tool-description path.*collides/i);
+    }
+    chai.expect(await fs.pathExists(outDir)).to.equal(false);
+  });
+
   it("writes mcp.json with remote MCP servers and skips stdio connectors with a warning", async () => {
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
     if (res.isErr()) throw new Error(res.error.message);

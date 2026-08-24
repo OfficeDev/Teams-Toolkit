@@ -5,6 +5,7 @@ import { FxError, UserError } from "@microsoft/teamsfx-api";
 import { err, ok, Result } from "neverthrow";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import * as mcpToolFetcher from "../../../common/mcpToolFetcher";
+import { setRecordValue } from "./spec";
 import { ConnectorAuthorizationType, DefaultAuthOption, ParsedOpenPlugin } from "./types";
 
 const SOURCE = "OpenPluginImport";
@@ -72,11 +73,11 @@ export async function resolveOpenPluginMcpAuth(
 
     const override = parsed.atkExtension?.agentConnectors?.[serverName]?.authorization?.type;
     if (override) {
-      authTypes[serverName] = override;
+      setRecordValue(authTypes, serverName, override);
       continue;
     }
     if (defaultAuth !== "Auto") {
-      authTypes[serverName] = defaultAuth;
+      setRecordValue(authTypes, serverName, defaultAuth);
       continue;
     }
     const probeTarget = classifyAuthProbeTarget(serverUrl);
@@ -84,7 +85,7 @@ export async function resolveOpenPluginMcpAuth(
       return err(unresolvedAuth(serverName));
     }
     if (probeTarget === "noProbe") {
-      authTypes[serverName] = "None";
+      setRecordValue(authTypes, serverName, "None");
       warnings.push(getLocalizedString("core.openPluginImport.autoAuthNone", serverName));
       continue;
     }
@@ -101,15 +102,15 @@ export async function resolveOpenPluginMcpAuth(
 
     try {
       await mcpToolFetcher.resolveMCPOAuthMetadata(probe.authMetadataUrl, undefined, serverUrl);
-      authTypes[serverName] = "OAuthPluginVault";
+      setRecordValue(authTypes, serverName, "OAuthPluginVault");
       warnings.push(getLocalizedString("core.openPluginImport.autoAuthOAuth", serverName));
     } catch {
       if (probe.requiresAuth) {
-        authTypes[serverName] = "OAuthPluginVault";
+        setRecordValue(authTypes, serverName, "OAuthPluginVault");
         warnings.push(getLocalizedString("core.openPluginImport.authFallback", serverName));
         continue;
       }
-      authTypes[serverName] = "None";
+      setRecordValue(authTypes, serverName, "None");
       warnings.push(getLocalizedString("core.openPluginImport.autoAuthNone", serverName));
     }
   }

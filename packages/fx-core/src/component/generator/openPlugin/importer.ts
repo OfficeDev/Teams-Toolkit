@@ -129,12 +129,14 @@ export async function importOpenPlugin(
     const appPackageDir = path.join(projectPath, "appPackage");
     await fs.ensureDir(appPackageDir);
 
-    // Manifest (vDevPreview agentSkills/agentConnectors are variable-length).
-    await fs.writeJSON(path.join(appPackageDir, "manifest.json"), manifest, { spaces: 4 });
-
     // Copy skill folders and (when present) the commands folder.
     for (const op of copyOps) {
       const destination = path.join(projectPath, op.destRelative);
+      if (op.kind === "contents") {
+        await fs.ensureDir(path.dirname(destination));
+        await fs.writeFile(destination, op.contents);
+        continue;
+      }
       const source = await inspectPathWithinRoot(
         parsed.pluginRoot,
         path.relative(parsed.pluginRoot, op.src),
@@ -164,6 +166,9 @@ export async function importOpenPlugin(
         );
       }
     }
+
+    // Manifest (vDevPreview agentSkills/agentConnectors are variable-length).
+    await fs.writeJSON(path.join(appPackageDir, "manifest.json"), manifest, { spaces: 4 });
 
     // Strip SKILL.md frontmatter fields that Teams Developer Portal rejects.
     // Allowed: name, description, license, metadata, compatibility.

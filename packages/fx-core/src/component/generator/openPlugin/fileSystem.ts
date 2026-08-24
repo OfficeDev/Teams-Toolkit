@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { promises as nodeFs } from "fs";
 import fs from "fs-extra";
 import * as path from "path";
 import { OpenPluginInputError } from "./errors";
@@ -13,6 +14,11 @@ export type InspectedPath =
   | { status: "missing" }
   | { status: "outside" }
   | { status: "wrong-kind"; actualKind: string };
+
+export type ReadFileWithinRootResult =
+  | { status: "ok"; path: string; contents: Buffer }
+  | Exclude<InspectedPath, { status: "ok" }>
+  | { status: "changed" };
 
 export type SkippedSymbolicLinkHandler = (relativePath: string, resolvesOutside: boolean) => void;
 
@@ -97,6 +103,37 @@ export async function inspectPathWithinRoot(
   return { status: "ok", path: lexicalPath };
 }
 
+export async function readFileWithinRoot(
+  realRoot: string,
+  relativePath: string
+): Promise<ReadFileWithinRootResult> {
+  const inspected = await inspectPathWithinRoot(realRoot, relativePath, "file");
+  if (inspected.status !== "ok") return inspected;
+
+  let handle: Awaited<ReturnType<typeof nodeFs.open>> | undefined;
+  try {
+    handle = await nodeFs.open(inspected.path, "r");
+    const beforeRead = await handle.stat();
+    if (!beforeRead.isFile()) {
+      return { status: "wrong-kind", actualKind: describeKind(beforeRead) };
+    }
+    const contents = await handle.readFile();
+    const afterRead = await handle.stat();
+    const reinspected = await inspectPathWithinRoot(realRoot, relativePath, "file");
+    if (reinspected.status !== "ok") return reinspected;
+    const current = await fs.lstat(reinspected.path);
+    if (!isSameFileSnapshot(beforeRead, afterRead) || !isSameFileSnapshot(afterRead, current)) {
+      return { status: "changed" };
+    }
+    return { status: "ok", path: reinspected.path, contents };
+  } catch (error) {
+    if (hasErrorCode(error, "ENOENT")) return { status: "missing" };
+    throw error;
+  } finally {
+    await handle?.close();
+  }
+}
+
 export async function copyDirectoryWithoutSymbolicLinks(
   sourceDirectory: string,
   destinationDirectory: string,
@@ -145,6 +182,16 @@ function describeKind(stat: fs.Stats): string {
   if (stat.isDirectory()) return "directory";
   if (stat.isFile()) return "file";
   return "filesystem entry";
+}
+
+function isSameFileSnapshot(left: fs.Stats, right: fs.Stats): boolean {
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.size === right.size &&
+    left.mtimeMs === right.mtimeMs &&
+    left.ctimeMs === right.ctimeMs
+  );
 }
 
 function hasErrorCode(error: unknown, code: string): boolean {

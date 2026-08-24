@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { createHash } from "crypto";
 import * as path from "path";
 import { isValidHttpUrl } from "../../../common/stringUtils";
 import { parseAuthor } from "./authorParser";
 import { deterministicAppId } from "./deterministicId";
 import { OpenPluginInputError } from "./errors";
+import { normalizePortableRelativePath, portablePathsConflict } from "./spec";
 import { toTitleCaseFromKebab, truncateAtWordBoundary } from "./textUtils";
 import {
   AuthorizationType,
@@ -29,6 +31,8 @@ const NAME_FULL_MAX = 100;
 const DESC_SHORT_MAX = 80;
 const DESC_FULL_MAX = 4000;
 const MAX_AGENT_CONNECTORS = 10;
+const MAX_AUTHORIZATION_REFERENCE_ID_LENGTH = 128;
+const AUTHORIZATION_REFERENCE_HASH_LENGTH = 12;
 
 export function validateMcpServerCount(mcpServers: Record<string, OpenPluginMcpServerEntry>): void {
   const connectorCount = Object.values(mcpServers).filter(
@@ -130,8 +134,69 @@ export function mapToTtkProject(
       });
     }
   }
+  copyOps.push(...buildMcpToolDescriptionCopyOps(parsed, ext));
 
   return { manifest, copyOps, warnings };
+}
+
+function buildMcpToolDescriptionCopyOps(
+  parsed: ParsedOpenPlugin,
+  extension: AtkExtensionBlock
+): CopyOp[] {
+  const reservedPaths = [
+    "manifest.json",
+    "color.png",
+    "outline.png",
+    ...parsed.skills.map((skill) => path.posix.join("skills", skill)),
+    ...parsed.commands.map((command) => path.posix.join("commands", command)),
+  ];
+  const destinations = new Map<string, { path: string; contents: Buffer }>();
+  const copyOps: CopyOp[] = [];
+
+  for (const serverName of Object.keys(parsed.mcpServers)) {
+    const description = extension.agentConnectors?.[serverName]?.mcpToolDescription;
+    if (!description?.file || !description.contents) continue;
+    const normalizedFile = normalizePortableRelativePath(description.file);
+    if (!normalizedFile) {
+      throw new OpenPluginInputError(
+        `MCP tool-description path '${description.file}' must identify a file within appPackage.`
+      );
+    }
+    const reservedPath = reservedPaths.find((candidate) =>
+      portablePathsConflict(normalizedFile, candidate)
+    );
+    if (reservedPath) {
+      throw new OpenPluginInputError(
+        `MCP tool-description path '${normalizedFile}' collides with generated output '${reservedPath}'.`
+      );
+    }
+
+    const destinationKey = normalizedFile.toLowerCase();
+    const existing = destinations.get(destinationKey);
+    if (existing) {
+      if (existing.path !== normalizedFile || !existing.contents.equals(description.contents)) {
+        throw new OpenPluginInputError(
+          `MCP tool-description paths '${existing.path}' and '${normalizedFile}' collide.`
+        );
+      }
+      continue;
+    }
+    for (const destination of destinations.values()) {
+      if (portablePathsConflict(normalizedFile, destination.path)) {
+        throw new OpenPluginInputError(
+          `MCP tool-description paths '${destination.path}' and '${normalizedFile}' collide.`
+        );
+      }
+    }
+
+    destinations.set(destinationKey, { path: normalizedFile, contents: description.contents });
+    copyOps.push({
+      contents: description.contents,
+      destRelative: path.join("appPackage", normalizedFile),
+      kind: "contents",
+    });
+  }
+  return copyOps;
 }
 
 function resolveDeveloperInputs(
@@ -208,26 +273,47 @@ function buildAgentConnectors(
     const authorization: Record<string, unknown> = { type: authType };
     if (authType !== "None") {
       authorization.referenceId =
-        override?.authorization?.referenceId ?? `${pluginName}-${name}-auth`;
+        override?.authorization?.referenceId ?? createAuthorizationReferenceId(pluginName, name);
     }
     const description =
       override?.description ??
       (typeof server.description === "string" && server.description
         ? server.description
         : `Remote MCP server providing tools for ${pluginName}`);
-    out.push({
+    const remoteMcpServer: Record<string, unknown> = {
+      mcpServerUrl: url,
+      authorization,
+    };
+    if (override?.mcpToolDescription) {
+      remoteMcpServer.mcpToolDescription =
+        override.mcpToolDescription.file === undefined
+          ? {}
+          : { file: override.mcpToolDescription.file };
+    }
+    const mappedConnector: Record<string, unknown> = {
       id: name,
       displayName: override?.displayName ?? `${name} MCP Server`,
       description,
       toolSource: {
-        remoteMcpServer: {
-          mcpServerUrl: url,
-          authorization,
-        },
+        remoteMcpServer,
       },
-    });
+    };
+    if (override?.reusable !== undefined) mappedConnector.reusable = override.reusable;
+    out.push(mappedConnector);
   }
   return out;
+}
+
+function createAuthorizationReferenceId(pluginName: string, serverName: string): string {
+  const referenceId = `${pluginName}-${serverName}-auth`;
+  if (referenceId.length <= MAX_AUTHORIZATION_REFERENCE_ID_LENGTH) return referenceId;
+
+  const hash = createHash("sha256")
+    .update(referenceId)
+    .digest("hex")
+    .slice(0, AUTHORIZATION_REFERENCE_HASH_LENGTH);
+  const suffix = `-${hash}-auth`;
+  return `${referenceId.slice(0, MAX_AUTHORIZATION_REFERENCE_ID_LENGTH - suffix.length)}${suffix}`;
 }
 
 function isSecureHttpUrl(value: string): boolean {

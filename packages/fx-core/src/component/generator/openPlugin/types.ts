@@ -143,7 +143,8 @@ export interface AtkExtensionBlock {
   /**
    * Per-agentConnector overrides preserved verbatim: the keys are the
    * connector ids (matching the .mcp.json server name). Values store the
-   * fields .mcp.json cannot carry: displayName, description, authorization.
+   * fields .mcp.json cannot carry: displayName, description, reusable,
+   * authorization, and MCP tool-description metadata.
    */
   agentConnectors?: Record<string, AtkAgentConnectorExt>;
 }
@@ -151,9 +152,18 @@ export interface AtkExtensionBlock {
 export interface AtkAgentConnectorExt {
   displayName?: string;
   description?: string;
+  reusable?: boolean;
   authorization?: {
     type: ConnectorAuthorizationType;
     referenceId?: string;
+  };
+  mcpToolDescription?: {
+    /** Original path relative to the Toolkit appPackage directory. */
+    file?: string;
+    /** Path to the preserved file copy relative to the Agent Plugin root. */
+    source?: string;
+    /** Validated file snapshot used only while importing. */
+    contents?: Buffer;
   };
 }
 
@@ -183,11 +193,9 @@ export interface ExportInputs {
   manifestKind?: "open-plugin" | "claude-plugin" | "cursor-plugin";
 }
 
-export interface CopyOp {
-  src: string;
-  destRelative: string;
-  kind: "file" | "directory";
-}
+export type CopyOp =
+  | { src: string; destRelative: string; kind: "file" | "directory" }
+  | { contents: Buffer; destRelative: string; kind: "contents" };
 
 export interface MappedManifest {
   manifest: Record<string, unknown>;

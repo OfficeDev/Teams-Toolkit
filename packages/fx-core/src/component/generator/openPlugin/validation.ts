@@ -3,7 +3,13 @@
 
 import * as path from "path";
 import { OpenPluginInputError } from "./errors";
-import { isValidPluginName, MCP_SCHEMA_URL, PLUGIN_SCHEMA_URL, resolveWithinRoot } from "./spec";
+import {
+  isValidPluginName,
+  MCP_SCHEMA_URL,
+  PLUGIN_SCHEMA_URL,
+  resolveWithinRoot,
+  setRecordValue,
+} from "./spec";
 import {
   AtkAgentConnectorExt,
   AtkExtensionBlock,
@@ -332,6 +338,41 @@ function parseExtensionConnectors(
     );
     if (displayName !== undefined) connector.displayName = displayName;
     if (description !== undefined) connector.description = description;
+    if (rawConnector.reusable !== undefined) {
+      if (typeof rawConnector.reusable === "boolean") {
+        connector.reusable = rawConnector.reusable;
+      } else {
+        warnings.push(
+          `Toolkit extension field 'agentConnectors.${serverName}.reusable' is invalid and was ignored.`
+        );
+      }
+    }
+
+    if (rawConnector.mcpToolDescription !== undefined) {
+      const fieldPath = `agentConnectors.${serverName}.mcpToolDescription`;
+      if (!isRecord(rawConnector.mcpToolDescription)) {
+        warnings.push(`Toolkit extension field '${fieldPath}' is invalid and was ignored.`);
+      } else {
+        const mcpToolDescription: NonNullable<AtkAgentConnectorExt["mcpToolDescription"]> = {};
+        const file = readExtensionString(
+          rawConnector.mcpToolDescription,
+          "file",
+          `${fieldPath}.file`,
+          warnings,
+          (item) => hasLength(item, 2048)
+        );
+        const source = readExtensionString(
+          rawConnector.mcpToolDescription,
+          "source",
+          `${fieldPath}.source`,
+          warnings,
+          (item) => hasLength(item, 2048)
+        );
+        if (file !== undefined) mcpToolDescription.file = file;
+        if (source !== undefined) mcpToolDescription.source = source;
+        connector.mcpToolDescription = mcpToolDescription;
+      }
+    }
 
     if (rawConnector.authorization !== undefined) {
       const fieldPath = `agentConnectors.${serverName}.authorization`;
@@ -351,7 +392,7 @@ function parseExtensionConnectors(
         if (referenceId !== undefined) connector.authorization.referenceId = referenceId;
       }
     }
-    if (Object.keys(connector).length > 0) connectors[serverName] = connector;
+    if (Object.keys(connector).length > 0) setRecordValue(connectors, serverName, connector);
   }
   return Object.keys(connectors).length > 0 ? connectors : undefined;
 }
@@ -450,7 +491,7 @@ export function parseAgentPluginMcpJson(value: unknown): ParsedAgentPluginMcpJso
         invalidRemoteMcpServers.push(name);
       }
     } else {
-      mcpServers[name] = parsed;
+      setRecordValue(mcpServers, name, parsed);
     }
   }
   return { mcpServers, invalidRemoteMcpServers, warnings };
@@ -500,7 +541,7 @@ function parseStdioServer(value: Record<string, unknown>): OpenPluginMcpServerEn
   if (isRecord(value.env)) {
     const env: Record<string, string> = {};
     for (const [name, envValue] of Object.entries(value.env)) {
-      if (typeof envValue === "string") env[name] = envValue;
+      if (typeof envValue === "string") setRecordValue(env, name, envValue);
     }
     entry.env = env;
   }
@@ -525,7 +566,7 @@ function parseRemoteServer(value: Record<string, unknown>): OpenPluginMcpServerE
   if (isRecord(value.headers)) {
     const headers: Record<string, string> = {};
     for (const [name, headerValue] of Object.entries(value.headers)) {
-      if (typeof headerValue === "string") headers[name] = headerValue;
+      if (typeof headerValue === "string") setRecordValue(headers, name, headerValue);
     }
     entry.headers = headers;
   }

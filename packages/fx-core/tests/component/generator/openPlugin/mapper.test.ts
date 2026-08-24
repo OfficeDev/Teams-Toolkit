@@ -146,6 +146,92 @@ describe("openPlugin.mapToTtkProject", () => {
     });
   });
 
+  it("AP-MAP-02: bounds generated authorization reference IDs without collisions", () => {
+    const pluginName = "p".repeat(64);
+    const sharedServerPrefix = "s".repeat(63);
+    const parsed = baseParsed({
+      manifest: { ...baseParsed().manifest, name: pluginName },
+      mcpServers: {
+        [`${sharedServerPrefix}a`]: { url: "https://a.example.com" },
+        [`${sharedServerPrefix}b`]: { url: "https://b.example.com" },
+      },
+    });
+
+    const first = mapToTtkProject(parsed, baseInputs({ defaultAuthType: "ApiKeyPluginVault" }));
+    const second = mapToTtkProject(parsed, baseInputs({ defaultAuthType: "ApiKeyPluginVault" }));
+    const firstReferenceIds = (first.manifest.agentConnectors as any[]).map(
+      (connector) => connector.toolSource.remoteMcpServer.authorization.referenceId
+    );
+    const secondReferenceIds = (second.manifest.agentConnectors as any[]).map(
+      (connector) => connector.toolSource.remoteMcpServer.authorization.referenceId
+    );
+
+    chai.expect(firstReferenceIds.every((referenceId) => referenceId.length <= 128)).to.equal(true);
+    chai
+      .expect(firstReferenceIds.every((referenceId) => /-[0-9a-f]{12}-auth$/.test(referenceId)))
+      .to.equal(true);
+    chai.expect(new Set(firstReferenceIds).size).to.equal(2);
+    chai.expect(secondReferenceIds).to.deep.equal(firstReferenceIds);
+  });
+
+  it.each([
+    "manifest.json",
+    "COLOR.PNG",
+    "skills",
+    "skills/alpha-skill/tool.json",
+    "commands/deploy.md/nested.json",
+  ])("AP-MAP-03: rejects MCP tool-description collision at %s", (file) => {
+    const parsed = baseParsed({
+      mcpServers: { svc: { url: "https://svc.example.com" } },
+      skills: ["alpha-skill"],
+      skillsRoot: "/tmp/plugin/skills",
+      commands: ["deploy.md"],
+      commandsRoot: "/tmp/plugin/commands",
+      atkExtension: {
+        agentConnectors: {
+          svc: {
+            mcpToolDescription: { file, source: "source.json", contents: Buffer.from("{}") },
+          },
+        },
+      },
+    });
+
+    chai
+      .expect(() => mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" })))
+      .to.throw(/MCP tool-description path.*collides/i);
+  });
+
+  it("AP-MAP-04: rejects case-insensitive MCP tool-description collisions", () => {
+    const parsed = baseParsed({
+      mcpServers: {
+        alpha: { url: "https://alpha.example.com" },
+        beta: { url: "https://beta.example.com" },
+      },
+      atkExtension: {
+        agentConnectors: {
+          alpha: {
+            mcpToolDescription: {
+              file: "descriptions/tools.json",
+              source: "alpha.json",
+              contents: Buffer.from("alpha"),
+            },
+          },
+          beta: {
+            mcpToolDescription: {
+              file: "DESCRIPTIONS/TOOLS.JSON",
+              source: "beta.json",
+              contents: Buffer.from("beta"),
+            },
+          },
+        },
+      },
+    });
+
+    chai
+      .expect(() => mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" })))
+      .to.throw(/MCP tool-description paths.*collide/i);
+  });
+
   it("skips stdio MCP servers (no url) with a warning", () => {
     const { manifest, warnings } = mapToTtkProject(
       baseParsed({

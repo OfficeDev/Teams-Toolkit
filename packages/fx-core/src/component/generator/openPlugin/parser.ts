@@ -4,7 +4,7 @@
 import fs from "fs-extra";
 import * as path from "path";
 import { OpenPluginInputError } from "./errors";
-import { inspectPathWithinRoot, resolvePluginRoot } from "./fileSystem";
+import { inspectPathWithinRoot, readFileWithinRoot, resolvePluginRoot } from "./fileSystem";
 import { getAgentSkillValidationError } from "./skillValidation";
 import {
   ATK_EXTENSION_NAMESPACE,
@@ -13,7 +13,9 @@ import {
   LEGACY_MCP_CONFIG_FILE,
   MCP_CONFIG_FILE,
   PLUGIN_MANIFEST_FILE,
+  normalizePortableRelativePath,
   resolveWithinRoot,
+  setRecordValue,
 } from "./spec";
 import {
   AtkExtensionBlock,
@@ -200,7 +202,9 @@ export async function readOpenPluginDir(root: string): Promise<ParsedOpenPlugin>
       readLegacyMcpServers(mcpJson, mcpServers, invalidRemoteMcpServers, warnings);
     } else {
       const parsedMcp = parseAgentPluginMcpJson(mcpJson);
-      Object.assign(mcpServers, parsedMcp.mcpServers);
+      for (const [name, server] of Object.entries(parsedMcp.mcpServers)) {
+        setRecordValue(mcpServers, name, server);
+      }
       invalidRemoteMcpServers.push(...parsedMcp.invalidRemoteMcpServers);
       warnings.push(...parsedMcp.warnings);
     }
@@ -320,6 +324,9 @@ export async function readOpenPluginDir(root: string): Promise<ParsedOpenPlugin>
 
   // 7. Round-trip extension block (written by `atk export agentplugin`).
   const atkExtension = readAtkExtensionBlock(manifest, warnings);
+  if (atkExtension) {
+    await validateAtkExtensionFiles(absRoot, atkExtension, warnings);
+  }
 
   return {
     pluginRoot: absRoot,
@@ -338,6 +345,40 @@ export async function readOpenPluginDir(root: string): Promise<ParsedOpenPlugin>
     warnings,
     atkExtension,
   };
+}
+
+async function validateAtkExtensionFiles(
+  pluginRoot: string,
+  extension: AtkExtensionBlock,
+  warnings: string[]
+): Promise<void> {
+  for (const [serverName, connector] of Object.entries(extension.agentConnectors ?? {})) {
+    const description = connector.mcpToolDescription;
+    if (!description) continue;
+    if (description.file === undefined) {
+      delete description.source;
+      continue;
+    }
+    const normalizedFile = normalizePortableRelativePath(description.file);
+    const normalizedSource = description.source
+      ? normalizePortableRelativePath(description.source)
+      : undefined;
+    const destination = normalizedFile ? resolveWithinRoot(pluginRoot, normalizedFile) : undefined;
+    const source =
+      normalizedSource !== undefined
+        ? await readFileWithinRoot(pluginRoot, normalizedSource)
+        : undefined;
+    if (!destination || source?.status !== "ok") {
+      delete connector.mcpToolDescription;
+      warnings.push(
+        `Toolkit extension connector '${serverName}' has an unsafe or missing MCP tool-description file and it was ignored.`
+      );
+    } else {
+      description.file = normalizedFile;
+      description.source = normalizedSource;
+      description.contents = source.contents;
+    }
+  }
 }
 
 /**
@@ -375,7 +416,7 @@ function readLegacyMcpServers(
     if (name === "$schema" || !isRecord(server)) continue;
     const entry: OpenPluginMcpServerEntry = {};
     for (const [field, fieldValue] of Object.entries(server)) {
-      entry[field] = fieldValue;
+      setRecordValue(entry, field, fieldValue);
     }
     if (entry.url !== undefined) {
       const urlError = getRemoteMcpUrlError(entry.url);
@@ -385,7 +426,7 @@ function readLegacyMcpServers(
         continue;
       }
     }
-    mcpServers[name] = entry;
+    setRecordValue(mcpServers, name, entry);
   }
 }
 
