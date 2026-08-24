@@ -46,22 +46,6 @@ const MANIFEST_LOCATIONS: ManifestLocation[] = [
   ...LEGACY_MANIFEST_LOCATIONS.map((l) => ({ ...l, legacy: true })),
 ];
 
-/**
- * Component-relocation fields. Agent Plugins 1.0.0 removed these — component
- * locations are fixed and the manifest cannot override them. Honoured only for
- * pre-1.0.0 layouts.
- */
-const RELOCATION_FIELDS: Array<keyof OpenPluginManifest> = [
-  "skills",
-  "commands",
-  "mcpServers",
-  "agents",
-  "hooks",
-  "rules",
-  "lspServers",
-  "outputStyles",
-];
-
 const UNMAPPED_FIELDS: Array<keyof OpenPluginManifest> = [
   "agents",
   "hooks",
@@ -325,19 +309,6 @@ export async function readOpenPluginDir(root: string): Promise<ParsedOpenPlugin>
   for (const field of UNMAPPED_FIELDS) {
     if (manifest[field] !== undefined) {
       warnings.push(`'${field}' field is present but not supported by MOS3 today; dropped.`);
-    }
-  }
-
-  // 5b. Agent Plugins 1.0.0 closes the manifest schema, so relocation fields
-  // are schema violations rather than merely unsupported.
-  if (!isLegacyLayout) {
-    const offenders = RELOCATION_FIELDS.filter((f) => manifest[f] !== undefined);
-    if (offenders.length > 0) {
-      warnings.push(
-        `plugin.json declares ${offenders.map((f) => `'${String(f)}'`).join(", ")}, which Agent ` +
-          `Plugins 1.0.0 does not permit (the manifest schema is closed and component locations ` +
-          `are fixed). These fields were ignored.`
-      );
     }
   }
 

@@ -364,9 +364,9 @@ describe("openPlugin.readOpenPluginDir", () => {
     const parsed = await readOpenPluginDir(tempDir);
     // The fixed skills/ location wins; the override is ignored.
     chai.expect(parsed.skills).to.deep.equal(["fixed-skill"]);
-    chai
-      .expect(parsed.warnings.some((w) => w.includes("'skills'") && w.includes("ignored")))
-      .to.equal(true);
+    const relocationWarnings = parsed.warnings.filter((warning) => warning.includes("'skills'"));
+    chai.expect(relocationWarnings).to.have.lengthOf(1);
+    chai.expect(relocationWarnings[0]).to.include("component locations are fixed");
   });
 
   it("rejects a component path that escapes the plugin root", async () => {

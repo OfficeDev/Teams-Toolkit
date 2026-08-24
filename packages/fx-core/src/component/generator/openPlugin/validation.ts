@@ -7,7 +7,6 @@ import { isValidPluginName, MCP_SCHEMA_URL, PLUGIN_SCHEMA_URL, resolveWithinRoot
 import {
   AtkAgentConnectorExt,
   AtkExtensionBlock,
-  AuthorizationType,
   ConnectorAuthorizationType,
   OpenPluginManifest,
   OpenPluginMcpServerEntry,
@@ -35,6 +34,16 @@ const PLUGIN_FIELDS = new Set([
   "license",
   "keywords",
   "extensions",
+]);
+const RELOCATION_FIELDS = new Set([
+  "skills",
+  "commands",
+  "mcpServers",
+  "agents",
+  "hooks",
+  "rules",
+  "lspServers",
+  "outputStyles",
 ]);
 
 const STDIO_FIELDS = new Set(["type", "command", "args", "env", "cwd"]);
@@ -133,12 +142,22 @@ export function parseAgentPluginManifest(value: unknown): ParsedAgentPluginManif
     }
   }
 
+  const relocationFields: string[] = [];
   for (const field of Object.keys(value)) {
-    if (!PLUGIN_FIELDS.has(field)) {
+    if (RELOCATION_FIELDS.has(field)) {
+      relocationFields.push(field);
+    } else if (!PLUGIN_FIELDS.has(field)) {
       warnings.push(
         `plugin.json field '${field}' is not defined by Agent Plugins 1.0.0 and was ignored.`
       );
     }
+  }
+  if (relocationFields.length > 0) {
+    warnings.push(
+      `plugin.json declares ${relocationFields.map((field) => `'${field}'`).join(", ")}, which ` +
+        `Agent Plugins 1.0.0 does not permit (the manifest schema is closed and component ` +
+        `locations are fixed). These fields were ignored.`
+    );
   }
   return { manifest, warnings };
 }

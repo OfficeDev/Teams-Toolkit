@@ -57,7 +57,7 @@
     "description": "Import an external agent plugin into a Microsoft 365 Agents Toolkit project."
   },
   "import.openplugin": {
-    "description": "Import an Agent Plugins v1.0.0 directory (agent-plugins.org) into a scaffolded Microsoft 365 Agents Toolkit project (agentSkills + agentConnectors, vDevPreview manifest). Pre-1.0.0 Open Plugin / Claude Code / Cursor layouts are also accepted. Alias: 'agentplugin'."
+    "description": "Import an Agent Plugins v1.0.0 directory (agent-plugins.org) into a scaffolded Microsoft 365 Agents Toolkit project (agentSkills + agentConnectors, devPreview manifest). Pre-1.0.0 Open Plugin / Claude Code / Cursor layouts are also accepted. Alias: 'agentplugin'."
   },
   "export": {
     "description": "Export a Microsoft 365 Agents Toolkit project to an external agent plugin format."
