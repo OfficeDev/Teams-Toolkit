@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { UserError } from "@microsoft/teamsfx-api";
+import { OpenPluginInputError } from "../../../../src/component/generator/openPlugin/errors";
 import { exportOpenPlugin } from "../../../../src/component/generator/openPlugin/exporter";
 import * as validation from "../../../../src/component/generator/openPlugin/validation";
 import { assert, chai, vi } from "vitest";
@@ -500,6 +501,175 @@ describe("openPlugin.exportOpenPlugin", () => {
         .to.equal(true);
     } finally {
       await fs.remove(outside);
+    }
+  });
+
+  it.each(["missing", "wrong-kind"])(
+    "AP-EXPORT-06: rejects a %s appPackage manifest",
+    async (manifestState) => {
+      const manifestPath = path.join(projectDir, "appPackage", "manifest.json");
+      await fs.remove(manifestPath);
+      if (manifestState === "wrong-kind") {
+        await fs.ensureDir(manifestPath);
+      }
+
+      const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+      assert.isTrue(res.isErr());
+      if (res.isErr()) {
+        assert.equal(
+          res.error.name,
+          manifestState === "missing" ? "ManifestNotFound" : "InvalidProjectStructure"
+        );
+      }
+      chai.expect(await fs.pathExists(outDir)).to.equal(false);
+    }
+  );
+
+  it.each([
+    ["agentConnectors", { agentConnectors: {} }],
+    ["developer.name", { developer: { name: 42 } }],
+    ["connector.toolSource", { agentConnectors: [{ id: "web", toolSource: "remote" }] }],
+    [
+      "connector.remoteMcpServer",
+      { agentConnectors: [{ id: "web", toolSource: { remoteMcpServer: "remote" } }] },
+    ],
+    [
+      "connector.authorization",
+      {
+        agentConnectors: [
+          {
+            id: "web",
+            toolSource: {
+              remoteMcpServer: {
+                mcpServerUrl: "https://example.com/mcp",
+                authorization: "None",
+              },
+            },
+          },
+        ],
+      },
+    ],
+  ])("AP-EXPORT-07: rejects malformed %s input", async (_field, override) => {
+    const manifestPath = path.join(projectDir, "appPackage", "manifest.json");
+    const manifest = await fs.readJSON(manifestPath);
+    Object.assign(manifest, override);
+    await fs.writeJSON(manifestPath, manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) assert.equal(res.error.name, "InvalidManifest");
+    chai.expect(await fs.pathExists(outDir)).to.equal(false);
+  });
+
+  it("AP-EXPORT-08: converts generated manifest validation errors to a user error", async () => {
+    vi.spyOn(validation, "parseAgentPluginManifest").mockImplementation(() => {
+      throw new OpenPluginInputError("invalid generated manifest");
+    });
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) {
+      assert.equal(res.error.name, "InvalidAgentPluginManifest");
+      chai.expect(res.error.message).to.include("invalid generated manifest");
+    }
+    chai.expect(await fs.pathExists(outDir)).to.equal(false);
+  });
+
+  it("AP-EXPORT-09: derives the plugin name from packageName when display names are absent", async () => {
+    const manifestPath = path.join(projectDir, "appPackage", "manifest.json");
+    const manifest = await fs.readJSON(manifestPath);
+    delete manifest.name;
+    manifest.packageName = "com.example.package-fallback";
+    await fs.writeJSON(manifestPath, manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const plugin = await fs.readJSON(path.join(outDir, "plugin.json"));
+    chai.expect(plugin.name).to.equal("package-fallback");
+  });
+
+  it("AP-EXPORT-10: skips wrong-kind skill, command, and icon paths", async () => {
+    const appPackageDir = path.join(projectDir, "appPackage");
+    const alphaSkill = path.join(appPackageDir, "skills", "alpha-skill");
+    const betaSkillMd = path.join(appPackageDir, "skills", "beta-skill", "SKILL.md");
+    const commands = path.join(appPackageDir, "commands");
+    const outlineIcon = path.join(appPackageDir, "outline.png");
+    await fs.remove(alphaSkill);
+    await fs.writeFile(alphaSkill, "not a directory");
+    await fs.remove(betaSkillMd);
+    await fs.remove(commands);
+    await fs.writeFile(commands, "not a directory");
+    await fs.remove(outlineIcon);
+    await fs.ensureDir(outlineIcon);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    chai
+      .expect(res.value.warnings.some((warning) => warning.includes("not a directory")))
+      .to.equal(true);
+    chai
+      .expect(res.value.warnings.some((warning) => warning.includes("safe SKILL.md")))
+      .to.equal(true);
+    chai
+      .expect(res.value.warnings.some((warning) => warning.includes("not a regular file")))
+      .to.equal(true);
+    chai.expect(await fs.pathExists(path.join(outDir, "skills", "alpha-skill"))).to.equal(false);
+    chai.expect(await fs.pathExists(path.join(outDir, "skills", "beta-skill"))).to.equal(false);
+    chai.expect(await fs.pathExists(path.join(outDir, "commands"))).to.equal(false);
+    chai.expect(await fs.pathExists(path.join(outDir, "outline.png"))).to.equal(false);
+  });
+
+  it("AP-EXPORT-11: skips an exported skill's nested symbolic link", async () => {
+    let outside: string | undefined;
+    try {
+      outside = await tmp("op-export-skill-link-target-");
+      const linkedDirectory = path.join(
+        projectDir,
+        "appPackage",
+        "skills",
+        "alpha-skill",
+        "linked"
+      );
+      await fs.writeFile(path.join(outside, "outside.md"), "outside");
+      await fs.ensureSymlink(
+        outside,
+        linkedDirectory,
+        process.platform === "win32" ? "junction" : "dir"
+      );
+      const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+      if (res.isErr()) throw new Error(res.error.message);
+      chai
+        .expect(await fs.pathExists(path.join(outDir, "skills", "alpha-skill", "linked")))
+        .to.equal(false);
+      chai.expect(res.value.warnings.some((warning) => warning.includes("linked"))).to.equal(true);
+    } finally {
+      if (outside) await fs.remove(outside);
+    }
+  });
+
+  it("AP-EXPORT-12: skips a commands directory link outside appPackage", async () => {
+    let outside: string | undefined;
+    try {
+      outside = await tmp("op-export-commands-link-target-");
+      const commands = path.join(projectDir, "appPackage", "commands");
+      await fs.writeFile(path.join(outside, "outside.md"), "outside");
+      await fs.remove(commands);
+      await fs.ensureSymlink(outside, commands, process.platform === "win32" ? "junction" : "dir");
+      const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+      if (res.isErr()) throw new Error(res.error.message);
+      chai.expect(await fs.pathExists(path.join(outDir, "commands", "outside.md"))).to.equal(false);
+      chai
+        .expect(res.value.warnings.some((warning) => warning.includes("outside appPackage")))
+        .to.equal(true);
+    } finally {
+      if (outside) await fs.remove(outside);
     }
   });
 });

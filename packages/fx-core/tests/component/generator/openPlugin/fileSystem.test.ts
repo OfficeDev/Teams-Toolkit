@@ -12,6 +12,23 @@ async function tmp(prefix: string): Promise<string> {
 }
 
 describe("openPlugin.fileSystem", () => {
+  it("AP-PATH-18: rejects a file used as an intermediate directory", async () => {
+    const root = await tmp("op-fs-intermediate-file-");
+    try {
+      await fs.writeFile(path.join(root, "skills"), "not a directory");
+
+      const inspected = await inspectPathWithinRoot(
+        root,
+        path.join("skills", "alpha-skill"),
+        "directory"
+      );
+
+      chai.expect(inspected.status).to.equal("wrong-kind");
+    } finally {
+      await fs.remove(root);
+    }
+  });
+
   it("rejects descendants after the trusted root is replaced with a junction", async () => {
     const root = await tmp("op-fs-root-");
     const replacement = await tmp("op-fs-replacement-");

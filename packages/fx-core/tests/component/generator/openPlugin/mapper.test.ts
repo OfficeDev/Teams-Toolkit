@@ -119,6 +119,19 @@ describe("openPlugin.mapToTtkProject", () => {
     chai.expect(warnings.some((warning) => warning.includes("requires HTTPS"))).to.equal(true);
   });
 
+  it("AP-MAP-01: skips a malformed remote MCP URL", () => {
+    const { manifest, warnings } = mapToTtkProject(
+      baseParsed({
+        mcpServers: { invalid: { url: "not a URL" } },
+      }),
+      baseInputs(),
+      { invalid: "None" }
+    );
+
+    chai.expect(manifest.agentConnectors).to.equal(undefined);
+    chai.expect(warnings.some((warning) => warning.includes("requires HTTPS"))).to.equal(true);
+  });
+
   it("respects an explicit defaultAuthType override", () => {
     const { manifest } = mapToTtkProject(
       baseParsed({
