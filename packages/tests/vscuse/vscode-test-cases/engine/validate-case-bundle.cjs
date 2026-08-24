@@ -33,6 +33,7 @@ const allowedStepTypes = new Set([
   "configureTypeSpecAction",
   "addDaCapability",
   "addDaAction",
+  "addApiAuthConfiguration",
   "regenerateDaAction",
   "packageApp",
   "publishDeveloperPortal",

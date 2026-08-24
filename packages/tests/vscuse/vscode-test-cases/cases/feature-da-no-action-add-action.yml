@@ -12,6 +12,91 @@ cases:
         check-openapi-action,
       ]
 
+  - id: feature-da-two-openapi-actions-personal-provision
+    scenarioId: SCN-DA-ADD-OPENAPI-ACTION
+    workItemIds: [29293016]
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-openapi-action,
+        add-openapi-action,
+        check-two-openapi-actions,
+        set-personal-scope,
+        login-m365,
+        provision,
+      ]
+
+  - id: feature-da-no-action-api-key-auth-provision
+    scenarioId: SCN-DA-ADD-OPENAPI-ACTION
+    workItemIds: [31543255]
+    gate: manual
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-api-key-openapi-action,
+        check-openapi-action,
+        add-api-key-auth,
+        check-api-key-auth,
+        login-m365,
+        provision-api-key,
+      ]
+
+  - id: feature-da-no-action-bearer-auth-provision
+    scenarioId: SCN-DA-ADD-OPENAPI-ACTION
+    workItemIds: [31043015]
+    gate: manual
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-bearer-openapi-action,
+        check-openapi-action,
+        add-bearer-auth,
+        check-bearer-auth,
+        login-m365,
+        provision-api-key,
+      ]
+
+  - id: feature-da-no-action-entra-auth-remote-preview
+    scenarioId: SCN-DA-ADD-OPENAPI-ACTION
+    workItemIds: [31538607]
+    gate: manual
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-entra-openapi-action,
+        check-openapi-action,
+        add-entra-auth,
+        check-entra-auth,
+        login-m365,
+        provision-entra,
+        f5-copilot-remote,
+        open-agent,
+        check-entra-sign-in,
+      ]
+
+  - id: feature-da-no-action-oauth-auth-remote-preview
+    scenarioId: SCN-DA-ADD-OPENAPI-ACTION
+    workItemIds: [31043030]
+    gate: manual
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-oauth-openapi-action,
+        check-openapi-action,
+        add-oauth-auth,
+        check-oauth-auth,
+        login-m365,
+        provision-oauth,
+        f5-copilot-remote,
+        open-agent,
+        check-oauth-sign-in,
+      ]
+
 steps:
   scaffold-da-no-action:
     type: scaffold
@@ -45,8 +130,68 @@ steps:
     type: addDaAction
     with:
       source: openapi
-      url: https://raw.githubusercontent.com/huimiu/api-spec-example/main/repair-service.yml
+      url: https://raw.githubusercontent.com/huimiu/api-spec-example/229f757740f3d0ca22de8e79478062bd56bc4cbe/repair-service.yml
       operations: all
+
+  add-api-key-openapi-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_apikey.yaml
+      operations: all
+
+  add-bearer-openapi-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_bearer.yaml
+      operations: all
+
+  add-entra-openapi-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_aad_tmp.yaml
+      operations: all
+
+  add-oauth-openapi-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_github.yaml
+      operations: all
+
+  add-api-key-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: api-key
+      authName: apiKey
+      location: header
+      keyName: X-API-KEY
+
+  add-bearer-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: bearer-token
+      authName: apiKey
+
+  add-entra-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: microsoft-entra
+      authName: aadAuthCode
+      scope: "api://plugincb4aae.azurewebsites.net/4cfde729-32e4-4862-a409-07e14dbfd296/readpairs_read: Read repair records"
+
+  add-oauth-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: oauth
+      authName: oauth2
+      authorizationUrl: https://github.com/login/oauth/authorize
+      tokenUrl: https://github.com/login/oauth/access_token
+      refreshUrl: ""
+      scope: "repo: Read repos"
+      pkce: false
 
   check-openapi-action:
     type: checks
@@ -63,3 +208,243 @@ steps:
         path: appPackage/declarativeAgent.json
         expect:
           contains: ['"actions"', '"id": "action_1"']
+
+  check-two-openapi-actions:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/ai-plugin_1.json
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi_1.yaml
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: ['"actions"', '"id": "action_1"', '"id": "action_2"']
+
+  check-api-key-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "ApiKeyPluginVault"'
+            - '"reference_id": "${{APIKEY_REGISTRATION_ID}}"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          contains:
+            - "apiKey:"
+            - "type: apiKey"
+            - "in: header"
+            - "name: X-API-KEY"
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "name: apiKey"
+            - "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml"
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "name: apiKey"
+            - "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml"
+
+  check-bearer-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "ApiKeyPluginVault"'
+            - '"reference_id": "${{APIKEY_REGISTRATION_ID}}"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          contains:
+            - "apiKey:"
+            - "type: http"
+            - "scheme: bearer"
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "name: apiKey"
+            - "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml"
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "name: apiKey"
+            - "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml"
+
+  check-entra-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{AADAUTHCODE_REGISTRATION_ID}}"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          contains:
+            - "aadAuthCode:"
+            - "type: oauth2"
+            - "authorizationCode:"
+            - "https://login.microsoftonline.com/${{TEAMS_APP_TENANT_ID}}/oauth2/v2.0/authorize"
+            - "https://login.microsoftonline.com/${{TEAMS_APP_TENANT_ID}}/oauth2/v2.0/token"
+            - "api://plugincb4aae.azurewebsites.net/4cfde729-32e4-4862-a409-07e14dbfd296/readpairs_read: Read repair records"
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: oauth/register"
+            - "name: aadAuthCode"
+            - "flow: authorizationCode"
+            - "identityProvider: MicrosoftEntra"
+            - "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml"
+            - "configurationId: AADAUTHCODE_REGISTRATION_ID"
+            - "applicationIdUri: AADAUTHCODE_APPLICATION_ID_URI"
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: oauth/register"
+            - "name: aadAuthCode"
+            - "flow: authorizationCode"
+            - "identityProvider: MicrosoftEntra"
+            - "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml"
+            - "configurationId: AADAUTHCODE_REGISTRATION_ID"
+            - "applicationIdUri: AADAUTHCODE_APPLICATION_ID_URI"
+
+  check-oauth-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{OAUTH2_REGISTRATION_ID}}"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          contains:
+            - "oauth2:"
+            - "type: oauth2"
+            - "authorizationCode:"
+            - "https://github.com/login/oauth/authorize"
+            - "https://github.com/login/oauth/access_token"
+            - "repo: Read repos"
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: oauth/register"
+            - "name: oauth2"
+            - "flow: authorizationCode"
+            - "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml"
+            - "configurationId: OAUTH2_REGISTRATION_ID"
+          notContains:
+            - "isPKCEEnabled: true"
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: oauth/register"
+            - "name: oauth2"
+            - "flow: authorizationCode"
+            - "apiSpecPath: ./appPackage/apiSpecificationFile/openapi.yaml"
+            - "configurationId: OAUTH2_REGISTRATION_ID"
+          notContains:
+            - "isPKCEEnabled: true"
+
+  set-personal-scope:
+    type: userEnvironment
+    with:
+      target: dev
+      variables:
+        AGENT_SCOPE: personal
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision:
+    type: provision
+
+  provision-api-key:
+    type: provision
+    with:
+      apiKey: "${{secret:EXISTING_API_KEY}}"
+
+  provision-entra:
+    type: provision
+    with:
+      entra:
+        clientId: "${{env:EXISTING_ENTRA_CLIENT_ID}}"
+
+  provision-oauth:
+    type: provision
+    with:
+      oauth:
+        clientId: "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
+        clientSecret: "${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-entra-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          namePrefix: Sign in to
+
+  check-oauth-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: List repositories for the authenticated user
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          name: Sign in to GitHub v3 REST API

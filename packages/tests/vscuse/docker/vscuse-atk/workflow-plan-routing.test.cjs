@@ -20,8 +20,42 @@ test("VTR-01: template workflow excludes separately scheduled plans", () => {
 
   assert.equal(
     workflow.jobs.run.with.plan_find_args,
-    '-name "*.json" ! -name "Feature_*" ! -name "Sample_*" ! -name "Regular_*"',
+    '-name "*.json" ! -name "Feature_*" ! -name "feature-*" ! -name "Sample_*" ! -name "Regular_*"',
   );
+});
+
+test("VTR-04: feature workflow selects legacy and generated feature plans", () => {
+  const workflow = readWorkflow("ui-test-vscuse-features.yml");
+
+  assert.equal(
+    workflow.jobs.run.with.plan_find_args,
+    '\\( -name "Feature_*.json" -o -name "feature-*.json" \\)',
+  );
+});
+
+test("VTR-05: PR selector recognizes generated feature plan names", () => {
+  const workflow = readWorkflow("pr-vscuse-test.yml");
+  const selectorStep = workflow.jobs["select-plans-and-run"].steps.find(
+    (step) => step.id === "ai-select",
+  );
+
+  assert.ok(selectorStep);
+  assert.match(selectorStep.run, /GENERATED FEATURE PLAN RULE/);
+  assert.match(selectorStep.run, /feature-\*/);
+  assert.match(selectorStep.run, /feature-da-\*/);
+  assert.match(selectorStep.run, /do not require.*_ts.*_js.*_py/i);
+
+  const basePromptIndex = selectorStep.run.indexOf(
+    "SYSTEM_PROMPT='You are a test plan selector",
+  );
+  const generatedFeatureRuleIndex = selectorStep.run.indexOf(
+    "GENERATED FEATURE PLAN RULE",
+  );
+  const userPromptIndex = selectorStep.run.indexOf("USER_PROMPT=$(printf");
+
+  assert.ok(basePromptIndex >= 0);
+  assert.ok(generatedFeatureRuleIndex > basePromptIndex);
+  assert.ok(userPromptIndex > generatedFeatureRuleIndex);
 });
 
 test("VTR-02: regular workflow supports manual and weekly runs", () => {

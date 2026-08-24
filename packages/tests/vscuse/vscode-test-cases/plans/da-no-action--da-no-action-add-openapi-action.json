@@ -1201,7 +1201,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "https://raw.githubusercontent.com/huimiu/api-spec-example/main/repair-service.yml"
+        "text": "https://raw.githubusercontent.com/huimiu/api-spec-example/229f757740f3d0ca22de8e79478062bd56bc4cbe/repair-service.yml"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],

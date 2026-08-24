@@ -18,6 +18,24 @@ cases:
         check-github-issues,
       ]
 
+  - id: feature-da-typespec-package-action-remote-preview
+    scenarioId: SCN-DA-CREATE-TYPESPEC
+    workItemIds: [33517192]
+    gate: manual
+    steps:
+      [
+        scaffold-typespec,
+        check-scaffold,
+        configure-github-action,
+        check-configured-action,
+        package-dev,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+        open-agent,
+        check-github-issues,
+      ]
+
 steps:
   scaffold-typespec:
     type: scaffold
@@ -70,6 +88,11 @@ steps:
           notContains:
             - "// @conversationStarter(#{"
             - "// op searchIssues is global.GitHubAPI.searchIssues;"
+
+  package-dev:
+    type: packageApp
+    with:
+      environment: dev
 
   login-m365:
     type: login

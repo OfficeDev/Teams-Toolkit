@@ -1,8 +1,8 @@
 name: uitest-vscuse-common
 #
 # Reusable workflow that contains the shared pipeline for the vscuse UI test workflows:
-#   - ui-test-vscuse-template.yml  (non-prefixed top-level plans)
-#   - ui-test-vscuse-features.yml  (Feature_* plans)
+#   - ui-test-vscuse-template.yml  (plans outside separately scheduled prefixes)
+#   - ui-test-vscuse-features.yml  (legacy Feature_* and generated feature-* plans)
 #   - ui-test-vscuse-samples.yml   (Sample_* plans)
 #   - ui-test-vscuse-regular.yml   (Regular_* plans)
 #
