@@ -58,10 +58,15 @@ export const LEGACY_MANIFEST_LOCATIONS: ReadonlyArray<{
 /** `name` constraints from plugin.schema.json. */
 export const PLUGIN_NAME_MAX_LENGTH = 64;
 export const PLUGIN_NAME_PATTERN = /^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
+const WINDOWS_RESERVED_DEVICE_NAME_PATTERN = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])$/;
 
 /** Transport types permitted by mcp.schema.json. `sse` is legacy HTTP+SSE. */
-export const MCP_SERVER_TYPES = ["stdio", "streamable-http", "sse"] as const;
-export type AgentPluginMcpServerType = (typeof MCP_SERVER_TYPES)[number];
+export type AgentPluginMcpServerType = "stdio" | "streamable-http" | "sse";
+export const MCP_SERVER_TYPES: readonly AgentPluginMcpServerType[] = [
+  "stdio",
+  "streamable-http",
+  "sse",
+];
 
 /** Transport emitted by `atk export` for remote MCP servers. */
 export const DEFAULT_REMOTE_MCP_TYPE: AgentPluginMcpServerType = "streamable-http";
@@ -76,9 +81,7 @@ export function isValidPluginName(name: string): boolean {
 }
 
 export function isSupportedMcpServerType(value: unknown): value is AgentPluginMcpServerType {
-  return (
-    typeof value === "string" && (MCP_SERVER_TYPES as readonly string[]).includes(value.trim())
-  );
+  return value === "stdio" || value === "streamable-http" || value === "sse";
 }
 
 /**
@@ -100,6 +103,10 @@ export function normalizePluginName(raw: string, fallback = "exported-plugin"): 
   if (s.length > PLUGIN_NAME_MAX_LENGTH) {
     s = s.slice(0, PLUGIN_NAME_MAX_LENGTH).replace(/[.-]+$/, "");
   }
+  const windowsBaseName = s.split(".", 1)[0];
+  if (WINDOWS_RESERVED_DEVICE_NAME_PATTERN.test(windowsBaseName)) {
+    s = `plugin-${s}`.slice(0, PLUGIN_NAME_MAX_LENGTH).replace(/[.-]+$/, "");
+  }
   return s.length > 0 ? s : fallback;
 }
 
@@ -115,7 +122,7 @@ export function resolveWithinRoot(root: string, relative: string): string | unde
   if (rel === "") {
     return resolved;
   }
-  if (rel.startsWith("..") || path.isAbsolute(rel)) {
+  if (rel === ".." || rel.startsWith(`..${path.sep}`) || path.isAbsolute(rel)) {
     return undefined;
   }
   return resolved;

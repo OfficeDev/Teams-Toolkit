@@ -11,7 +11,20 @@ async function makeTempDir(): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), "op-parser-"));
 }
 
+async function expectReadFailure(root: string, pattern: RegExp): Promise<void> {
+  let message: string | undefined;
+  try {
+    await readOpenPluginDir(root);
+  } catch (error) {
+    if (error instanceof Error) {
+      message = error.message;
+    }
+  }
+  chai.expect(message).to.match(pattern);
+}
+
 const PLUGIN_SCHEMA_URL = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json";
+const MCP_SCHEMA_URL = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json";
 
 interface ManifestSeedOptions {
   manifestRel?: string;
@@ -19,6 +32,7 @@ interface ManifestSeedOptions {
   mcpJson?: Record<string, unknown> | null;
   /** Filename for the MCP config. Defaults to the 1.0.0 name. */
   mcpRel?: string;
+  includeMcpSchema?: boolean;
   skills?: string[];
   commands?: string[];
   invalidSkillNames?: string[];
@@ -40,12 +54,21 @@ async function seedPlugin(root: string, opts: ManifestSeedOptions = {}): Promise
     }
   );
   if (opts.mcpJson) {
-    await fs.writeJSON(path.join(root, opts.mcpRel ?? "mcp.json"), opts.mcpJson);
+    const mcpRel = opts.mcpRel ?? "mcp.json";
+    const isLegacy = manifestRel !== "plugin.json" || mcpRel === ".mcp.json";
+    const mcpJson =
+      !isLegacy && opts.includeMcpSchema !== false
+        ? { $schema: MCP_SCHEMA_URL, ...opts.mcpJson }
+        : opts.mcpJson;
+    await fs.writeJSON(path.join(root, mcpRel), mcpJson);
   }
   for (const name of opts.skills ?? []) {
     const dir = path.join(root, "skills", name);
     await fs.ensureDir(dir);
-    await fs.writeFile(path.join(dir, "SKILL.md"), `---\nname: ${name}\n---\nbody`);
+    await fs.writeFile(
+      path.join(dir, "SKILL.md"),
+      `---\nname: ${name}\ndescription: Test skill ${name}\n---\nbody`
+    );
   }
   for (const name of opts.invalidSkillNames ?? []) {
     const dir = path.join(root, "skills", name);
@@ -127,27 +150,46 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai.expect(parsed.manifest.name).to.equal("demo-plugin");
   });
 
-  it("warns when $schema is missing on a 1.0.0 layout", async () => {
+  it("AP-VALIDATE-01: rejects a 1.0.0 manifest without $schema", async () => {
     await seedPlugin(tempDir, { pluginJson: { name: "demo-plugin" } });
-    const parsed = await readOpenPluginDir(tempDir);
-    chai.expect(parsed.warnings.some((w) => w.includes("$schema"))).to.equal(true);
+    await expectReadFailure(tempDir, /\$schema/);
   });
 
-  it("warns when the plugin name violates the 1.0.0 name constraint", async () => {
+  it("AP-VALIDATE-02: rejects a 1.0.0 manifest with an invalid name", async () => {
     await seedPlugin(tempDir, {
       pluginJson: { $schema: PLUGIN_SCHEMA_URL, name: "Bad--Name" },
     });
-    const parsed = await readOpenPluginDir(tempDir);
-    chai.expect(parsed.warnings.some((w) => w.includes("Bad--Name"))).to.equal(true);
+    await expectReadFailure(tempDir, /name/);
   });
 
-  it("reads mcp.json and warns when a server entry has no type", async () => {
+  it("AP-VALIDATE-03: rejects a known extensions field with the wrong type", async () => {
+    await seedPlugin(tempDir, {
+      pluginJson: { $schema: PLUGIN_SCHEMA_URL, name: "demo-plugin", extensions: [] },
+    });
+
+    await expectReadFailure(tempDir, /extensions/);
+  });
+
+  it("AP-VALIDATE-04: reports and ignores an unknown root field", async () => {
+    await seedPlugin(tempDir, {
+      pluginJson: { $schema: PLUGIN_SCHEMA_URL, name: "demo-plugin", futureField: true },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.manifest.name).to.equal("demo-plugin");
+    chai.expect(parsed.warnings.some((warning) => warning.includes("futureField"))).to.equal(true);
+  });
+
+  it("AP-MCP-01: skips a 1.0.0 MCP server entry without a type", async () => {
     await seedPlugin(tempDir, {
       mcpJson: { mcpServers: { alpha: { url: "https://alpha.example.com" } } },
     });
     const parsed = await readOpenPluginDir(tempDir);
-    chai.expect(Object.keys(parsed.mcpServers)).to.deep.equal(["alpha"]);
-    chai.expect(parsed.warnings.some((w) => w.includes("no 'type'"))).to.equal(true);
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai
+      .expect(parsed.warnings.some((w) => w.includes("alpha") && w.includes("invalid")))
+      .to.equal(true);
   });
 
   it("accepts the 1.0.0 transports without warning", async () => {
@@ -165,16 +207,39 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai.expect(parsed.warnings.some((w) => w.includes("type"))).to.equal(false);
   });
 
-  it("warns on an unrecognized MCP transport", async () => {
+  it("AP-MCP-02: skips an unrecognized MCP transport", async () => {
     await seedPlugin(tempDir, {
       mcpJson: { mcpServers: { alpha: { type: "http", url: "https://alpha.example.com" } } },
     });
     const parsed = await readOpenPluginDir(tempDir);
-    chai.expect(parsed.warnings.some((w) => w.includes("unrecognized type 'http'"))).to.equal(true);
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai
+      .expect(parsed.warnings.some((w) => w.includes("alpha") && w.includes("invalid")))
+      .to.equal(true);
   });
 
-  it("falls back to legacy .mcp.json and warns", async () => {
+  it("AP-PATH-04: skips a stdio cwd that escapes PLUGIN_ROOT", async () => {
     await seedPlugin(tempDir, {
+      mcpJson: {
+        mcpServers: {
+          unsafe: {
+            type: "stdio",
+            command: "node",
+            cwd: "${PLUGIN_ROOT}/../outside",
+          },
+        },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai.expect(parsed.warnings.some((warning) => warning.includes("unsafe"))).to.equal(true);
+  });
+
+  it("falls back to legacy .mcp.json for a legacy manifest and warns", async () => {
+    await seedPlugin(tempDir, {
+      manifestRel: ".plugin/plugin.json",
       mcpRel: ".mcp.json",
       mcpJson: {
         mcpServers: { alpha: { type: "streamable-http", url: "https://alpha.example.com" } },
@@ -185,15 +250,47 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai.expect(parsed.warnings.some((w) => w.includes(".mcp.json"))).to.equal(true);
   });
 
-  it("ignores the $schema key when reading the bare-object mcp form", async () => {
+  it("AP-MCP-03: disables MCP when the 1.0.0 top-level shape is invalid", async () => {
     await seedPlugin(tempDir, {
       mcpJson: {
-        $schema: "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
         gamma: { type: "streamable-http", url: "https://gamma.example.com" },
       },
     });
     const parsed = await readOpenPluginDir(tempDir);
-    chai.expect(Object.keys(parsed.mcpServers)).to.deep.equal(["gamma"]);
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai
+      .expect(parsed.warnings.some((w) => w.includes("mcp.json") && w.includes("invalid")))
+      .to.equal(true);
+  });
+
+  it("AP-MCP-04: disables MCP when $schema is missing", async () => {
+    await seedPlugin(tempDir, {
+      includeMcpSchema: false,
+      mcpJson: {
+        mcpServers: {
+          alpha: { type: "streamable-http", url: "https://alpha.example.com" },
+        },
+      },
+    });
+    const parsed = await readOpenPluginDir(tempDir);
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai.expect(parsed.warnings.some((w) => w.includes("$schema"))).to.equal(true);
+  });
+
+  it("AP-MCP-05: disables MCP when mcp.json contains malformed JSON", async () => {
+    await seedPlugin(tempDir);
+    await fs.writeFile(path.join(tempDir, "mcp.json"), "{ invalid json");
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai
+      .expect(
+        parsed.warnings.some(
+          (warning) => warning.includes("mcp.json") && warning.includes("invalid")
+        )
+      )
+      .to.equal(true);
   });
 
   it("reads the toolkit block from extensions[com.microsoft.agents-toolkit]", async () => {
@@ -201,24 +298,54 @@ describe("openPlugin.readOpenPluginDir", () => {
       pluginJson: {
         $schema: PLUGIN_SCHEMA_URL,
         name: "demo-plugin",
-        extensions: { "com.microsoft.agents-toolkit": { id: "abc", accentColor: "#123456" } },
+        extensions: {
+          "com.microsoft.agents-toolkit": {
+            id: "12345678-1234-1234-1234-123456789abc",
+            accentColor: "#123456",
+          },
+        },
       },
     });
     const parsed = await readOpenPluginDir(tempDir);
-    chai.expect(parsed.atkExtension?.id).to.equal("abc");
+    chai.expect(parsed.atkExtension?.id).to.equal("12345678-1234-1234-1234-123456789abc");
     chai.expect(parsed.atkExtension?.accentColor).to.equal("#123456");
   });
 
-  it("reads the legacy top-level toolkit block and warns", async () => {
+  it("AP-EXT-01: drops an invalid toolkit authorization override", async () => {
     await seedPlugin(tempDir, {
       pluginJson: {
         $schema: PLUGIN_SCHEMA_URL,
         name: "demo-plugin",
-        "x-microsoft-365-agents-toolkit": { id: "legacy-id" },
+        extensions: {
+          "com.microsoft.agents-toolkit": {
+            agentConnectors: {
+              web: { authorization: { type: "BypassDiscovery" } },
+            },
+          },
+        },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.atkExtension?.agentConnectors?.web?.authorization).to.equal(undefined);
+    chai
+      .expect(parsed.warnings.some((warning) => warning.includes("authorization.type")))
+      .to.equal(true);
+  });
+
+  it("reads the legacy top-level toolkit block and warns", async () => {
+    await seedPlugin(tempDir, {
+      manifestRel: ".plugin/plugin.json",
+      pluginJson: {
+        name: "demo-plugin",
+        "x-microsoft-365-agents-toolkit": {
+          id: "87654321-4321-4321-4321-cba987654321",
+        },
       },
     });
     const parsed = await readOpenPluginDir(tempDir);
-    chai.expect(parsed.atkExtension?.id).to.equal("legacy-id");
+    chai.expect(parsed.atkExtension?.id).to.equal("87654321-4321-4321-4321-cba987654321");
     chai
       .expect(parsed.warnings.some((w) => w.includes("x-microsoft-365-agents-toolkit")))
       .to.equal(true);
@@ -237,7 +364,9 @@ describe("openPlugin.readOpenPluginDir", () => {
     const parsed = await readOpenPluginDir(tempDir);
     // The fixed skills/ location wins; the override is ignored.
     chai.expect(parsed.skills).to.deep.equal(["fixed-skill"]);
-    chai.expect(parsed.warnings.some((w) => w.includes("no longer permits"))).to.equal(true);
+    chai
+      .expect(parsed.warnings.some((w) => w.includes("'skills'") && w.includes("ignored")))
+      .to.equal(true);
   });
 
   it("rejects a component path that escapes the plugin root", async () => {
@@ -250,12 +379,54 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai.expect(parsed.warnings.some((w) => w.includes("outside the plugin root"))).to.equal(true);
   });
 
+  it("AP-PATH-01: rejects a skills junction that resolves outside the plugin root", async () => {
+    await seedPlugin(tempDir);
+    const outside = await makeTempDir();
+    try {
+      await fs.ensureDir(path.join(outside, "external-skill"));
+      await fs.writeFile(path.join(outside, "external-skill", "SKILL.md"), "external");
+      await fs.ensureSymlink(
+        outside,
+        path.join(tempDir, "skills"),
+        process.platform === "win32" ? "junction" : "dir"
+      );
+
+      const parsed = await readOpenPluginDir(tempDir);
+
+      chai.expect(parsed.skills).to.deep.equal([]);
+      chai
+        .expect(parsed.warnings.some((w) => w.includes("outside the plugin root")))
+        .to.equal(true);
+    } finally {
+      await fs.remove(outside);
+    }
+  });
+
+  it("AP-COMPONENT-01: ignores a wrong-kind skills path and keeps valid MCP servers", async () => {
+    await seedPlugin(tempDir, {
+      mcpJson: {
+        mcpServers: {
+          alpha: { type: "streamable-http", url: "https://alpha.example.com" },
+        },
+      },
+    });
+    await fs.writeFile(path.join(tempDir, "skills"), "not a directory");
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(Object.keys(parsed.mcpServers)).to.deep.equal(["alpha"]);
+    chai.expect(parsed.skills).to.deep.equal([]);
+    chai
+      .expect(parsed.warnings.some((w) => w.includes("skills") && w.includes("directory")))
+      .to.equal(true);
+  });
+
   it("reads wrapped form of mcp.json", async () => {
     await seedPlugin(tempDir, {
       mcpJson: {
         mcpServers: {
-          alpha: { url: "https://alpha.example.com" },
-          beta: { url: "https://beta.example.com" },
+          alpha: { type: "streamable-http", url: "https://alpha.example.com" },
+          beta: { type: "streamable-http", url: "https://beta.example.com" },
         },
       },
     });
@@ -265,6 +436,8 @@ describe("openPlugin.readOpenPluginDir", () => {
 
   it("reads bare-object form of mcp.json", async () => {
     await seedPlugin(tempDir, {
+      manifestRel: ".plugin/plugin.json",
+      mcpRel: ".mcp.json",
       mcpJson: { gamma: { url: "https://gamma.example.com" } },
     });
     const parsed = await readOpenPluginDir(tempDir);
@@ -277,8 +450,35 @@ describe("openPlugin.readOpenPluginDir", () => {
       invalidSkillNames: ["Bad Name"],
     });
     const parsed = await readOpenPluginDir(tempDir);
-    chai.expect(parsed.skills).to.deep.equal(["alpha-skill", "beta_skill"]);
+    chai.expect(parsed.skills).to.deep.equal(["alpha-skill"]);
     chai.expect(parsed.warnings.some((w) => w.includes("Bad Name"))).to.equal(true);
+    chai.expect(parsed.warnings.some((w) => w.includes("beta_skill"))).to.equal(true);
+  });
+
+  it("AP-SKILL-01: skips a skill without valid required frontmatter", async () => {
+    await seedPlugin(tempDir, { skills: ["invalid-skill"] });
+    await fs.writeFile(
+      path.join(tempDir, "skills", "invalid-skill", "SKILL.md"),
+      "---\nname: other-name\n---\nbody"
+    );
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.skills).to.deep.equal([]);
+    chai.expect(parsed.warnings.some((w) => w.includes("invalid-skill"))).to.equal(true);
+  });
+
+  it("AP-SKILL-03: skips a skill with a non-string license", async () => {
+    await seedPlugin(tempDir, { skills: ["invalid-license"] });
+    await fs.writeFile(
+      path.join(tempDir, "skills", "invalid-license", "SKILL.md"),
+      "---\nname: invalid-license\ndescription: Test skill\nlicense:\n  type: MIT\n---\nbody"
+    );
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.skills).to.deep.equal([]);
+    chai.expect(parsed.warnings.some((warning) => warning.includes("license"))).to.equal(true);
   });
 
   it("discovers commands/*.md", async () => {
@@ -289,6 +489,7 @@ describe("openPlugin.readOpenPluginDir", () => {
 
   it("warns on unmapped Open Plugin fields", async () => {
     await seedPlugin(tempDir, {
+      manifestRel: ".plugin/plugin.json",
       pluginJson: {
         name: "demo-plugin",
         agents: "./agents",
@@ -300,22 +501,25 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai.expect(parsed.warnings.some((w) => w.includes("hooks"))).to.equal(true);
   });
 
-  it("rejects non-string component path override", async () => {
+  it("ignores non-string component path overrides in a 1.0.0 manifest", async () => {
     await seedPlugin(tempDir, {
-      pluginJson: { name: "demo-plugin", skills: ["./one", "./two"] },
+      pluginJson: {
+        $schema: PLUGIN_SCHEMA_URL,
+        name: "demo-plugin",
+        skills: ["./one", "./two"],
+      },
     });
-    let caught: Error | undefined;
-    try {
-      await readOpenPluginDir(tempDir);
-    } catch (e) {
-      caught = e as Error;
-    }
-    chai.expect(caught).to.exist;
-    chai.expect(caught!.message).to.match(/single-string form/);
+    const parsed = await readOpenPluginDir(tempDir);
+    chai.expect(parsed.skills).to.deep.equal([]);
+    chai
+      .expect(parsed.warnings.some((w) => w.includes("'skills'") && w.includes("ignored")))
+      .to.equal(true);
   });
 
   it("requires a 'name' field", async () => {
-    await seedPlugin(tempDir, { pluginJson: { version: "1.0.0" } });
+    await seedPlugin(tempDir, {
+      pluginJson: { $schema: PLUGIN_SCHEMA_URL, version: "1.0.0" },
+    });
     let caught: Error | undefined;
     try {
       await readOpenPluginDir(tempDir);
@@ -334,7 +538,7 @@ describe("openPlugin.readOpenPluginDir", () => {
     await fs.ensureDir(path.join(tempDir, "custom-skills", "my-skill"));
     await fs.writeFile(
       path.join(tempDir, "custom-skills", "my-skill", "SKILL.md"),
-      "---\nname: my-skill\n---\nbody"
+      "---\nname: my-skill\ndescription: Relocated test skill\n---\nbody"
     );
     const parsed = await readOpenPluginDir(tempDir);
     chai.expect(parsed.skills).to.deep.equal(["my-skill"]);

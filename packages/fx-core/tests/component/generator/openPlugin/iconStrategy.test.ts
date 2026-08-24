@@ -134,6 +134,60 @@ describe("openPlugin.applyIcons", () => {
     chai.expect(warnings.some((w) => w.includes("outside the plugin root"))).to.equal(true);
   });
 
+  it("AP-PATH-05: falls back when a logo junction resolves outside the plugin root", async () => {
+    const outside = await tmp("op-icon-outside-");
+    try {
+      await fs.writeFile(
+        path.join(outside, "color.png"),
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x12, 0x34])
+      );
+      await fs.ensureSymlink(
+        outside,
+        path.join(pluginRoot, "branding"),
+        process.platform === "win32" ? "junction" : "dir"
+      );
+      const warnings: string[] = [];
+
+      await applyIcons(
+        makeParsed({
+          pluginRoot,
+          manifest: { name: "fixture", logo: "./branding/color.png" } as any,
+        }),
+        appPkg,
+        warnings
+      );
+
+      const color = await fs.readFile(path.join(appPkg, "color.png"));
+      chai.expect(color.subarray(0, 8).equals(PNG_SIGNATURE)).to.equal(true);
+      chai
+        .expect(warnings.some((warning) => warning.includes("outside the plugin root")))
+        .to.equal(true);
+    } finally {
+      await fs.remove(outside);
+    }
+  });
+
+  it("AP-PATH-08: falls back when a root icon junction resolves outside the plugin root", async () => {
+    const outside = await tmp("op-icon-root-outside-");
+    try {
+      await fs.writeFile(path.join(outside, "secret.png"), "outside");
+      await fs.ensureSymlink(
+        outside,
+        path.join(pluginRoot, "color.png"),
+        process.platform === "win32" ? "junction" : "dir"
+      );
+      const warnings: string[] = [];
+
+      await applyIcons(makeParsed({ pluginRoot, hasColorPng: true }), appPkg, warnings);
+
+      const color = await fs.readFile(path.join(appPkg, "color.png"));
+      chai.expect(color.subarray(0, 8).equals(PNG_SIGNATURE)).to.equal(true);
+      chai.expect(warnings.some((warning) => warning.includes("color.png"))).to.equal(true);
+    } finally {
+      await fs.remove(outside);
+    }
+  });
+
   it("warns and falls back when the referenced logo file is missing", async () => {
     const warnings: string[] = [];
     await applyIcons(

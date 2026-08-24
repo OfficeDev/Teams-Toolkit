@@ -107,18 +107,16 @@ describe("openPlugin.mapToTtkProject", () => {
     ]);
   });
 
-  it("uses a resolved None type under Auto", () => {
-    const { manifest } = mapToTtkProject(
+  it("OPI-AUTH-07: skips an HTTP loopback URL that Teams cannot represent", () => {
+    const { manifest, warnings } = mapToTtkProject(
       baseParsed({
         mcpServers: { local: { url: "http://localhost:5050/sse" } },
       }),
       baseInputs(),
       { local: "None" }
     );
-    const connectors = manifest.agentConnectors as any[];
-    chai.expect(connectors[0].toolSource.remoteMcpServer.authorization).to.deep.equal({
-      type: "None",
-    });
+    chai.expect(manifest.agentConnectors).to.equal(undefined);
+    chai.expect(warnings.some((warning) => warning.includes("requires HTTPS"))).to.equal(true);
   });
 
   it("respects an explicit defaultAuthType override", () => {
@@ -213,7 +211,7 @@ describe("openPlugin.mapToTtkProject", () => {
       .to.throw(/termsOfUseUrl/);
   });
 
-  it("copies commands folder when present", () => {
+  it("copies only discovered command files when present", () => {
     const { copyOps } = mapToTtkProject(
       baseParsed({
         commands: ["deploy.md", "status.md"],
@@ -221,7 +219,9 @@ describe("openPlugin.mapToTtkProject", () => {
       }),
       baseInputs()
     );
-    chai.expect(copyOps.some((op) => op.destRelative === "appPackage/commands")).to.equal(true);
+    chai
+      .expect(copyOps.filter((op) => op.kind === "file").map((op) => op.destRelative))
+      .to.deep.equal(["appPackage/commands/deploy.md", "appPackage/commands/status.md"]);
   });
 
   it("uses default description when connector has no description", () => {

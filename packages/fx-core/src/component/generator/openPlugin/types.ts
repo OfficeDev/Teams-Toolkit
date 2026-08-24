@@ -27,6 +27,8 @@ export interface OpenPluginManifest {
    * namespace. The toolkit reads and writes `com.microsoft.agents-toolkit`.
    */
   extensions?: Record<string, unknown>;
+  /** Raw pre-1.0.0 toolkit extension block, retained only during legacy import. */
+  legacyAtkExtension?: unknown;
 
   // ---- Pre-1.0.0 fields, tolerated on import only ----
   // Agent Plugins 1.0.0 closes the manifest schema and fixes component
@@ -97,6 +99,7 @@ export interface ParsedOpenPlugin {
   /** True when the directory used a pre-1.0.0 layout. */
   isLegacyLayout: boolean;
   mcpServers: Record<string, OpenPluginMcpServerEntry>;
+  invalidRemoteMcpServers?: string[];
   skills: string[];
   skillsRoot?: string;
   commands: string[];
@@ -109,6 +112,8 @@ export interface ParsedOpenPlugin {
 }
 
 export type AuthorizationType = "None" | "OAuthPluginVault" | "ApiKeyPluginVault";
+export type ConnectorAuthorizationType =
+  AuthorizationType | "DynamicClientRegistration" | "AzureKeyVault";
 export type DefaultAuthOption = "Auto" | AuthorizationType;
 
 /**
@@ -147,7 +152,7 @@ export interface AtkAgentConnectorExt {
   displayName?: string;
   description?: string;
   authorization?: {
-    type: AuthorizationType;
+    type: ConnectorAuthorizationType;
     referenceId?: string;
   };
 }
@@ -181,6 +186,7 @@ export interface ExportInputs {
 export interface CopyOp {
   src: string;
   destRelative: string;
+  kind: "file" | "directory";
 }
 
 export interface MappedManifest {

@@ -102,17 +102,6 @@ describe("openPlugin fixture conversion (Contoso Helper)", () => {
             },
           },
         },
-        {
-          id: "local-dev",
-          displayName: "local-dev MCP Server",
-          description: "Remote MCP server providing tools for contoso-helper",
-          toolSource: {
-            remoteMcpServer: {
-              mcpServerUrl: "http://localhost:5050/sse",
-              authorization: { type: "None" },
-            },
-          },
-        },
       ],
     });
 
@@ -159,6 +148,12 @@ describe("openPlugin fixture conversion (Contoso Helper)", () => {
       .expect(
         warnings.some((w) => w.includes("stdio-only") && w.includes("no URL")),
         "expected stdio MCP warning"
+      )
+      .to.equal(true);
+    chai
+      .expect(
+        warnings.some((w) => w.includes("local-dev") && w.includes("requires HTTPS")),
+        "expected HTTP MCP omission warning"
       )
       .to.equal(true);
     chai

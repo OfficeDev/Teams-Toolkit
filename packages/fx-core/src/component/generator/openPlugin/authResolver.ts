@@ -5,12 +5,12 @@ import { FxError, UserError } from "@microsoft/teamsfx-api";
 import { err, ok, Result } from "neverthrow";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import * as mcpToolFetcher from "../../../common/mcpToolFetcher";
-import { AuthorizationType, DefaultAuthOption, ParsedOpenPlugin } from "./types";
+import { ConnectorAuthorizationType, DefaultAuthOption, ParsedOpenPlugin } from "./types";
 
 const SOURCE = "OpenPluginImport";
 
 export interface OpenPluginMcpAuthResolution {
-  authTypes: Readonly<Record<string, AuthorizationType>>;
+  authTypes: Readonly<Record<string, ConnectorAuthorizationType>>;
   warnings: string[];
 }
 
@@ -56,8 +56,12 @@ export async function resolveOpenPluginMcpAuth(
   parsed: ParsedOpenPlugin,
   defaultAuth: DefaultAuthOption
 ): Promise<Result<OpenPluginMcpAuthResolution, FxError>> {
-  const authTypes: Record<string, AuthorizationType> = {};
+  const authTypes: Record<string, ConnectorAuthorizationType> = {};
   const warnings: string[] = [];
+
+  if (defaultAuth === "Auto" && parsed.invalidRemoteMcpServers?.length) {
+    return err(unresolvedAuth([...parsed.invalidRemoteMcpServers].sort()[0]));
+  }
 
   for (const serverName of Object.keys(parsed.mcpServers).sort()) {
     const server = parsed.mcpServers[serverName];

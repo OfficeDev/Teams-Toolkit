@@ -3,6 +3,7 @@
 
 import fs from "fs-extra";
 import * as path from "path";
+import { inspectPathWithinRoot } from "./fileSystem";
 import { generatePlaceholderPng } from "./placeholderPng";
 import { ParsedOpenPlugin } from "./types";
 
@@ -22,22 +23,44 @@ export async function applyIcons(
   const colorDest = path.join(appPackageDir, "color.png");
   const outlineDest = path.join(appPackageDir, "outline.png");
 
-  if (parsed.hasColorPng) {
-    await fs.copy(path.join(parsed.pluginRoot, "color.png"), colorDest);
-  } else if (typeof parsed.manifest.logo === "string" && parsed.manifest.logo) {
+  const appliedColor = await tryApplyRootIcon(parsed.pluginRoot, "color.png", colorDest, warnings);
+  if (!appliedColor && typeof parsed.manifest.logo === "string" && parsed.manifest.logo) {
     const applied = await tryApplyLogo(parsed, colorDest, warnings);
     if (!applied) {
       await fs.writeFile(colorDest, generatePlaceholderPng(192, ...COLOR_FILL));
     }
-  } else {
+  } else if (!appliedColor) {
     await fs.writeFile(colorDest, generatePlaceholderPng(192, ...COLOR_FILL));
   }
 
-  if (parsed.hasOutlinePng) {
-    await fs.copy(path.join(parsed.pluginRoot, "outline.png"), outlineDest);
-  } else {
+  const appliedOutline = await tryApplyRootIcon(
+    parsed.pluginRoot,
+    "outline.png",
+    outlineDest,
+    warnings
+  );
+  if (!appliedOutline) {
     await fs.writeFile(outlineDest, generatePlaceholderPng(32, ...OUTLINE_FILL));
   }
+}
+
+async function tryApplyRootIcon(
+  pluginRoot: string,
+  fileName: string,
+  destination: string,
+  warnings: string[]
+): Promise<boolean> {
+  const inspected = await inspectPathWithinRoot(pluginRoot, fileName, "file");
+  if (inspected.status === "ok") {
+    await fs.copy(inspected.path, destination);
+    return true;
+  }
+  if (inspected.status === "outside") {
+    warnings.push(`'${fileName}' resolves outside the plugin root and was ignored.`);
+  } else if (inspected.status === "wrong-kind") {
+    warnings.push(`'${fileName}' is not a regular file and was ignored.`);
+  }
+  return false;
 }
 
 async function tryApplyLogo(
@@ -45,7 +68,8 @@ async function tryApplyLogo(
   colorDest: string,
   warnings: string[]
 ): Promise<boolean> {
-  const logo = parsed.manifest.logo as string;
+  const logo = parsed.manifest.logo;
+  if (typeof logo !== "string") return false;
   if (/^https?:\/\//i.test(logo)) {
     warnings.push(
       `'logo' field points to a remote URL (${logo}); using placeholder color.png. Download manually if you want to ship the original.`
@@ -56,18 +80,21 @@ async function tryApplyLogo(
     warnings.push(`'logo' field '${logo}' is not a .png file; using placeholder color.png.`);
     return false;
   }
-  const logoAbs = path.resolve(parsed.pluginRoot, logo);
-  const relativeToRoot = path.relative(parsed.pluginRoot, logoAbs);
-  if (relativeToRoot.startsWith("..") || path.isAbsolute(relativeToRoot)) {
+  const inspectedLogo = await inspectPathWithinRoot(parsed.pluginRoot, logo, "file");
+  if (inspectedLogo.status === "outside") {
     warnings.push(
       `'logo' field '${logo}' resolves outside the plugin root; using placeholder color.png.`
     );
     return false;
   }
-  if (!(await fs.pathExists(logoAbs))) {
+  if (inspectedLogo.status === "missing") {
     warnings.push(`'logo' field '${logo}' does not exist; using placeholder color.png.`);
     return false;
   }
-  await fs.copy(logoAbs, colorDest);
+  if (inspectedLogo.status === "wrong-kind") {
+    warnings.push(`'logo' field '${logo}' is not a file; using placeholder color.png.`);
+    return false;
+  }
+  await fs.copy(inspectedLogo.path, colorDest);
   return true;
 }

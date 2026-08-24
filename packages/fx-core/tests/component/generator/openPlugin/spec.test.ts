@@ -70,6 +70,14 @@ describe("openPlugin.spec", () => {
       chai.expect(out.length).to.equal(PLUGIN_NAME_MAX_LENGTH);
     });
 
+    it("disambiguates Windows reserved device names on every platform", () => {
+      for (const input of ["con", "AUX", "nul.json", "com1", "LPT9.plugin"]) {
+        const output = normalizePluginName(input);
+        chai.expect(output).to.match(/^plugin-/);
+        chai.expect(output.length).to.be.at.most(PLUGIN_NAME_MAX_LENGTH);
+      }
+    });
+
     it("always produces a name matching the published pattern", () => {
       const inputs = [
         "Demo Plugin",
@@ -113,6 +121,12 @@ describe("openPlugin.spec", () => {
 
     it("allows the root itself", () => {
       chai.expect(resolveWithinRoot(root, ".")).to.equal(root);
+    });
+
+    it("allows an in-root segment whose name starts with two dots", () => {
+      chai
+        .expect(resolveWithinRoot(root, "..cache/file.txt"))
+        .to.equal(path.join(root, "..cache", "file.txt"));
     });
 
     it("rejects traversal outside the root", () => {

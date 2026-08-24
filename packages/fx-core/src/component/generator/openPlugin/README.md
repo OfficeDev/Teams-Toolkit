@@ -26,8 +26,8 @@ components nor declare them inline:
 
 ### Accepted on import (back-compat)
 
-Import is tolerant; export is strict. Pre-1.0.0 directories still import, with a
-deprecation warning:
+Root-level Agent Plugins 1.0.0 files are validated strictly; pre-1.0.0
+directories remain tolerant and import with a deprecation warning:
 
 | Pre-1.0.0                                                                         | Agent Plugins 1.0.0                          |
 | --------------------------------------------------------------------------------- | -------------------------------------------- |
@@ -88,7 +88,7 @@ atk export agentplugin --path ./my-project --output ./my-plugin
 
 | Agent Plugins component                                       | Manifest field                                 | Notes                                                                                                                                                                  |
 | ------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `skills/<name>/SKILL.md`                                      | `agentSkills[].folder`                         | Copied verbatim; sorted alphabetically.                                                                                                                                |
+| `skills/<name>/SKILL.md`                                      | `agentSkills[].folder`                         | Validated against Agent Skills required frontmatter, copied without symbolic links, and sorted alphabetically.                                                         |
 | `mcp.json` `streamable-http` / `sse` servers                  | `agentConnectors[].toolSource.remoteMcpServer` | Preserved auth metadata or an explicit default wins. Auto uses an MCP `initialize` probe plus OAuth metadata discovery; localhost and non-HTTPS entries remain `None`. |
 | `mcp.json` `stdio` servers                                    | _(skipped)_                                    | Warning emitted; requires manual `localMcpServer` setup.                                                                                                               |
 | `commands/*.md`                                               | _(copied alongside, inert)_                    | Not an Agent Plugins component; kept so pre-1.0.0 directories round-trip.                                                                                              |
@@ -97,16 +97,22 @@ atk export agentplugin --path ./my-project --output ./my-plugin
 ## Spec conformance notes
 
 - **`$schema`** — export writes the mandated
-  `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`; import warns when
-  it is absent or unexpected.
+  `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`; a root
+  `plugin.json` is rejected when it is absent or unexpected. An invalid
+  root-level `mcp.json` disables MCP for that plugin, while invalid individual
+  server entries are skipped with warnings.
 - **`name`** — validated against the published pattern
   (`^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$`, 1–64 chars). Export
   normalizes a project's display name into a conformant slug.
 - **Closed schema** — 1.0.0 sets `additionalProperties: false`, so client data
   must be namespaced under `extensions`. Import reports unknown/relocation
   fields rather than rejecting the plugin, per the spec's conformance rules.
-- **Path containment** — component paths that resolve outside the plugin root
-  are rejected with a warning.
+- **Agent Skills** — `SKILL.md` must contain valid YAML frontmatter with a
+  `name` matching its folder and a non-empty `description`. Invalid skills are
+  skipped with warnings.
+- **Path containment** — component paths are resolved canonically. Paths and
+  junctions that resolve outside the plugin root are rejected, and symbolic
+  links are not copied into generated output.
 - **`PLUGIN_ROOT` / `PLUGIN_DATA`** — the spec requires clients launching stdio
   servers to expand these in `args`, `env`, and `cwd`. Not implemented: stdio
   servers are skipped on import (MOS3 has no `localMcpServer` equivalent yet),
@@ -147,6 +153,9 @@ openPlugin/
   spec.ts             # Agent Plugins 1.0.0 constants, name/type validation, path containment
   types.ts            # TypeScript interfaces (Import/Export inputs, AtkExtensionBlock)
   parser.ts           # Reads plugin dir: manifest probe, mcp.json, skills/, commands/, extension block
+  validation.ts       # Strict Agent Plugins 1.0.0 manifest and MCP validation
+  skillValidation.ts  # Agent Skills frontmatter validation
+  fileSystem.ts       # Canonical containment checks and link-safe directory copies
   authorParser.ts     # Parses author field (object or "Name <email> (url)" string)
   textUtils.ts        # Word-boundary truncation, kebab-to-title-case
   deterministicId.ts  # UUIDv5 (SHA-1) for stable manifest id generation

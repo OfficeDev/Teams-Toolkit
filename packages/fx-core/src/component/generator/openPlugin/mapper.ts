@@ -2,13 +2,16 @@
 // Licensed under the MIT license.
 
 import * as path from "path";
+import { isValidHttpUrl } from "../../../common/stringUtils";
 import { parseAuthor } from "./authorParser";
 import { deterministicAppId } from "./deterministicId";
+import { OpenPluginInputError } from "./errors";
 import { toTitleCaseFromKebab, truncateAtWordBoundary } from "./textUtils";
 import {
   AuthorizationType,
   AtkAgentConnectorExt,
   AtkExtensionBlock,
+  ConnectorAuthorizationType,
   CopyOp,
   ImportInputs,
   MappedManifest,
@@ -32,7 +35,7 @@ export function validateMcpServerCount(mcpServers: Record<string, OpenPluginMcpS
     (server) => typeof server.url === "string" && server.url.trim().length > 0
   ).length;
   if (connectorCount > MAX_AGENT_CONNECTORS) {
-    throw new Error(
+    throw new OpenPluginInputError(
       `Too many MCP servers: ${connectorCount}. The manifest caps agentConnectors at ${MAX_AGENT_CONNECTORS}.`
     );
   }
@@ -41,7 +44,7 @@ export function validateMcpServerCount(mcpServers: Record<string, OpenPluginMcpS
 export function mapToTtkProject(
   parsed: ParsedOpenPlugin,
   inputs: ImportInputs,
-  resolvedAuthTypes: Readonly<Record<string, AuthorizationType>> = {}
+  resolvedAuthTypes: Readonly<Record<string, ConnectorAuthorizationType>> = {}
 ): MappedManifest {
   const warnings = [...parsed.warnings];
   const pj = parsed.manifest;
@@ -54,25 +57,7 @@ export function mapToTtkProject(
     );
   }
 
-  const author = parseAuthor(pj.author);
-  const websiteUrl = inputs.websiteUrl ?? ext.developer?.websiteUrl ?? pj.homepage ?? author.url;
-  if (!websiteUrl) {
-    throw new Error(
-      "developer.websiteUrl could not be resolved. Set 'homepage' in plugin.json, 'author.url', or pass --website-url."
-    );
-  }
-  const privacyUrl = inputs.privacyUrl ?? ext.developer?.privacyUrl;
-  if (!privacyUrl) {
-    throw new Error(
-      "developer.privacyUrl is required. Pass --privacy-url (the Agent Plugins spec has no equivalent field)."
-    );
-  }
-  const termsUrl = inputs.termsUrl ?? ext.developer?.termsOfUseUrl;
-  if (!termsUrl) {
-    throw new Error(
-      "developer.termsOfUseUrl is required. Pass --terms-url (the Agent Plugins spec has no equivalent field)."
-    );
-  }
+  const { websiteUrl, privacyUrl, termsUrl, authorName } = resolveDeveloperInputs(parsed, inputs);
 
   // NOTE: the "openplugin:" seed is load-bearing — it feeds the deterministic
   // UUIDv5 app id. Renaming it would change the generated id for every existing
@@ -100,7 +85,7 @@ export function mapToTtkProject(
   );
 
   const developer: Record<string, unknown> = {
-    name: ext.developer?.name ?? author.name ?? "Unknown",
+    name: ext.developer?.name ?? authorName ?? "Unknown",
     websiteUrl,
     privacyUrl,
     termsOfUseUrl: termsUrl,
@@ -132,17 +117,64 @@ export function mapToTtkProject(
       copyOps.push({
         src: path.join(parsed.skillsRoot, skill),
         destRelative: `appPackage/skills/${skill}`,
+        kind: "directory",
       });
     }
   }
   if (parsed.commandsRoot && parsed.commands.length > 0) {
-    copyOps.push({
-      src: parsed.commandsRoot,
-      destRelative: "appPackage/commands",
-    });
+    for (const command of parsed.commands) {
+      copyOps.push({
+        src: path.join(parsed.commandsRoot, command),
+        destRelative: `appPackage/commands/${command}`,
+        kind: "file",
+      });
+    }
   }
 
   return { manifest, copyOps, warnings };
+}
+
+function resolveDeveloperInputs(
+  parsed: ParsedOpenPlugin,
+  inputs: ImportInputs
+): { websiteUrl: string; privacyUrl: string; termsUrl: string; authorName?: string } {
+  const author = parseAuthor(parsed.manifest.author);
+  const extension = parsed.atkExtension;
+  const websiteUrl =
+    inputs.websiteUrl ?? extension?.developer?.websiteUrl ?? parsed.manifest.homepage ?? author.url;
+  if (!websiteUrl) {
+    throw new OpenPluginInputError(
+      "developer.websiteUrl could not be resolved. Set 'homepage' in plugin.json, 'author.url', or pass --website-url."
+    );
+  }
+  const privacyUrl = inputs.privacyUrl ?? extension?.developer?.privacyUrl;
+  if (!privacyUrl) {
+    throw new OpenPluginInputError(
+      "developer.privacyUrl is required. Pass --privacy-url (the Agent Plugins spec has no equivalent field)."
+    );
+  }
+  const termsUrl = inputs.termsUrl ?? extension?.developer?.termsOfUseUrl;
+  if (!termsUrl) {
+    throw new OpenPluginInputError(
+      "developer.termsOfUseUrl is required. Pass --terms-url (the Agent Plugins spec has no equivalent field)."
+    );
+  }
+  for (const [field, value] of [
+    ["websiteUrl", websiteUrl],
+    ["privacyUrl", privacyUrl],
+    ["termsOfUseUrl", termsUrl],
+  ]) {
+    if (!isValidHttpUrl(value)) {
+      throw new OpenPluginInputError(`developer.${field} must be a valid HTTP(S) URL.`);
+    }
+  }
+
+  return { websiteUrl, privacyUrl, termsUrl, authorName: author.name };
+}
+
+export function validateImportInputs(parsed: ParsedOpenPlugin, inputs: ImportInputs): void {
+  resolveDeveloperInputs(parsed, inputs);
+  validateMcpServerCount(parsed.mcpServers);
 }
 
 function buildAgentConnectors(
@@ -151,7 +183,7 @@ function buildAgentConnectors(
   defaultAuth: "Auto" | AuthorizationType,
   extOverrides: Record<string, AtkAgentConnectorExt> | undefined,
   warnings: string[],
-  resolvedAuthTypes: Readonly<Record<string, AuthorizationType>>
+  resolvedAuthTypes: Readonly<Record<string, ConnectorAuthorizationType>>
 ): Record<string, unknown>[] {
   const out: Record<string, unknown>[] = [];
   const serverNames = Object.keys(mcpServers).sort();
@@ -164,8 +196,14 @@ function buildAgentConnectors(
       );
       continue;
     }
+    if (!isSecureHttpUrl(url)) {
+      warnings.push(
+        `Skipping MCP server '${name}': the Teams remoteMcpServer schema requires HTTPS.`
+      );
+      continue;
+    }
     const override = extOverrides?.[name];
-    const authType: AuthorizationType =
+    const authType: ConnectorAuthorizationType =
       override?.authorization?.type ?? resolveAuthType(name, defaultAuth, resolvedAuthTypes);
     const authorization: Record<string, unknown> = { type: authType };
     if (authType !== "None") {
@@ -192,11 +230,19 @@ function buildAgentConnectors(
   return out;
 }
 
+function isSecureHttpUrl(value: string): boolean {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function resolveAuthType(
   serverName: string,
   defaultAuth: "Auto" | AuthorizationType,
-  resolvedAuthTypes: Readonly<Record<string, AuthorizationType>>
-): AuthorizationType {
+  resolvedAuthTypes: Readonly<Record<string, ConnectorAuthorizationType>>
+): ConnectorAuthorizationType {
   if (defaultAuth !== "Auto") {
     return defaultAuth;
   }
