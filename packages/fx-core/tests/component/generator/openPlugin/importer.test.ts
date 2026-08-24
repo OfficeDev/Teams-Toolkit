@@ -984,6 +984,91 @@ describe("openPlugin.importOpenPlugin", () => {
     chai.expect(await fs.readFile(path.join(outDir, "preexisting.txt"), "utf8")).to.equal("hi");
   });
 
+  it("AP-PATH-17: rejects an empty output directory link before discovery", async () => {
+    const outside = await tmp("op-conv-output-link-target-");
+    await fs.ensureSymlink(outside, outDir, process.platform === "win32" ? "junction" : "dir");
+    try {
+      const res = await importOpenPlugin({
+        path: pluginDir,
+        output: outDir,
+        privacyUrl: "https://example.com/privacy",
+        termsUrl: "https://example.com/terms",
+      });
+
+      chai.expect(res.isErr()).to.equal(true);
+      if (res.isErr()) chai.expect(res.error.name).to.equal("InvalidOutputPath");
+      chai.expect(await fs.readdir(outside)).to.deep.equal([]);
+      chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
+      chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
+    } finally {
+      await fs.remove(outside);
+    }
+  });
+
+  it("SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-06: rejects a missing output beneath a directory link", async () => {
+    const outside = await tmp("op-conv-output-parent-link-target-");
+    const linkRoot = await tmp("op-conv-output-parent-link-");
+    const linkedParent = path.join(linkRoot, "linked");
+    const nestedOutput = path.join(linkedParent, "new-output");
+    await fs.ensureSymlink(
+      outside,
+      linkedParent,
+      process.platform === "win32" ? "junction" : "dir"
+    );
+    try {
+      const res = await importOpenPlugin({
+        path: pluginDir,
+        output: nestedOutput,
+        privacyUrl: "https://example.com/privacy",
+        termsUrl: "https://example.com/terms",
+      });
+
+      chai.expect(res.isErr()).to.equal(true);
+      if (res.isErr()) chai.expect(res.error.name).to.equal("InvalidOutputPath");
+      chai.expect(await fs.readdir(outside)).to.deep.equal([]);
+      chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
+      chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
+    } finally {
+      await fs.remove(linkRoot);
+      await fs.remove(outside);
+    }
+  });
+
+  it("SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-07: skips fixed-header MCP without probing it", async () => {
+    await fs.writeJSON(path.join(pluginDir, "mcp.json"), {
+      $schema: "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+      mcpServers: {
+        tenant: {
+          type: "streamable-http",
+          url: "https://tenant.example.com/mcp",
+          headers: { "X-Tenant": "public-tenant" },
+        },
+        plain: {
+          type: "streamable-http",
+          url: "https://plain.example.com/mcp",
+        },
+      },
+    });
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+    chai
+      .expect(manifest.agentConnectors.map((connector: { id: string }) => connector.id))
+      .to.eql(["plain"]);
+    chai.expect(res.value.warnings.some((warning) => warning.includes("tenant"))).to.equal(true);
+    chai.expect(mcpToolFetcher.probeMCPServerAuth).toHaveBeenCalledOnce();
+    chai
+      .expect(mcpToolFetcher.probeMCPServerAuth)
+      .toHaveBeenCalledWith("https://plain.example.com/mcp");
+  });
+
   it("SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-04: rejects excess connectors before discovery", async () => {
     const mcpServers: Record<string, { type: string; url: string }> = {};
     for (let index = 0; index < 11; index++) {

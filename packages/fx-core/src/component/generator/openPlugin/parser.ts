@@ -205,6 +205,7 @@ export async function readOpenPluginDir(root: string): Promise<ParsedOpenPlugin>
       warnings.push(...parsedMcp.warnings);
     }
   }
+  removeMcpServersWithFixedHeaders(mcpServers, warnings);
 
   // 3. Skills.
   const skillsAbs = resolveComponentPath(
@@ -385,5 +386,22 @@ function readLegacyMcpServers(
       }
     }
     mcpServers[name] = entry;
+  }
+}
+
+function removeMcpServersWithFixedHeaders(
+  mcpServers: Record<string, OpenPluginMcpServerEntry>,
+  warnings: string[]
+): void {
+  for (const [name, server] of Object.entries(mcpServers)) {
+    if (
+      server.headers !== undefined &&
+      (!isRecord(server.headers) || Object.keys(server.headers).length > 0)
+    ) {
+      delete mcpServers[name];
+      warnings.push(
+        `MCP server '${name}' declares fixed headers, which Teams agent connectors cannot represent, and was skipped.`
+      );
+    }
   }
 }

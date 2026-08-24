@@ -162,12 +162,33 @@ describe("openPlugin.readOpenPluginDir", () => {
     await expectReadFailure(tempDir, /name/);
   });
 
-  it("AP-VALIDATE-03: rejects a known extensions field with the wrong type", async () => {
+  it("AP-VALIDATE-03: reports and ignores a non-object extensions field", async () => {
     await seedPlugin(tempDir, {
       pluginJson: { $schema: PLUGIN_SCHEMA_URL, name: "demo-plugin", extensions: [] },
+      skills: ["valid-skill"],
     });
 
-    await expectReadFailure(tempDir, /extensions/);
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.manifest.extensions).to.equal(undefined);
+    chai.expect(parsed.skills).to.deep.equal(["valid-skill"]);
+    chai.expect(parsed.warnings.some((warning) => warning.includes("extensions"))).to.equal(true);
+  });
+
+  it("AP-VALIDATE-05: does not validate extension namespaces the Toolkit does not implement", async () => {
+    await seedPlugin(tempDir, {
+      pluginJson: {
+        $schema: PLUGIN_SCHEMA_URL,
+        name: "demo-plugin",
+        extensions: { "com.example.client": "client-defined-value" },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai
+      .expect(parsed.manifest.extensions?.["com.example.client"])
+      .to.equal("client-defined-value");
   });
 
   it("AP-VALIDATE-04: reports and ignores an unknown root field", async () => {
@@ -190,6 +211,113 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai
       .expect(parsed.warnings.some((w) => w.includes("alpha") && w.includes("invalid")))
       .to.equal(true);
+  });
+
+  it("AP-MCP-06: skips a remote MCP server with fixed headers that Teams cannot represent", async () => {
+    await seedPlugin(tempDir, {
+      mcpJson: {
+        mcpServers: {
+          tenant: {
+            type: "streamable-http",
+            url: "https://tenant.example.com/mcp",
+            headers: { "X-Tenant": "public-tenant" },
+          },
+          plain: { type: "streamable-http", url: "https://plain.example.com/mcp" },
+        },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.mcpServers).to.have.keys(["plain"]);
+    chai
+      .expect(
+        parsed.warnings.some((warning) => warning.includes("tenant") && warning.includes("headers"))
+      )
+      .to.equal(true);
+  });
+
+  it("AP-MCP-07: skips legacy remote MCP headers that Teams cannot represent", async () => {
+    await seedPlugin(tempDir, {
+      manifestRel: ".plugin/plugin.json",
+      mcpRel: ".mcp.json",
+      mcpJson: {
+        mcpServers: {
+          tenant: {
+            url: "https://tenant.example.com/mcp",
+            headers: { "X-Tenant": "public-tenant" },
+          },
+          plain: { url: "https://plain.example.com/mcp" },
+        },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.mcpServers).to.have.keys(["plain"]);
+    chai
+      .expect(
+        parsed.warnings.some((warning) => warning.includes("tenant") && warning.includes("headers"))
+      )
+      .to.equal(true);
+  });
+
+  it("AP-MCP-08: skips malformed current remote MCP headers", async () => {
+    await seedPlugin(tempDir, {
+      mcpJson: {
+        mcpServers: {
+          tenant: {
+            type: "streamable-http",
+            url: "https://tenant.example.com/mcp",
+            headers: "X-Tenant: public-tenant",
+          },
+        },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai.expect(parsed.warnings.some((warning) => warning.includes("headers"))).to.equal(true);
+  });
+
+  it("AP-MCP-09: skips malformed legacy remote MCP headers", async () => {
+    await seedPlugin(tempDir, {
+      manifestRel: ".plugin/plugin.json",
+      mcpRel: ".mcp.json",
+      mcpJson: {
+        mcpServers: {
+          tenant: {
+            url: "https://tenant.example.com/mcp",
+            headers: "X-Tenant: public-tenant",
+          },
+        },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai.expect(parsed.warnings.some((warning) => warning.includes("headers"))).to.equal(true);
+  });
+
+  it("AP-MCP-10: preserves a remote MCP server with empty headers", async () => {
+    await seedPlugin(tempDir, {
+      mcpJson: {
+        mcpServers: {
+          plain: {
+            type: "streamable-http",
+            url: "https://plain.example.com/mcp",
+            headers: {},
+          },
+        },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.mcpServers).to.have.keys(["plain"]);
+    chai.expect(parsed.warnings.some((warning) => warning.includes("headers"))).to.equal(false);
   });
 
   it("accepts the 1.0.0 transports without warning", async () => {

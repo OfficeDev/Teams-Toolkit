@@ -280,6 +280,42 @@ describe("openPlugin.exportOpenPlugin", () => {
     if (res.isErr()) assert.equal(res.error.name, "OutputDirectoryNotEmpty");
   });
 
+  it("AP-PATH-15: rejects an empty output directory link", async () => {
+    const outside = await tmp("op-export-output-link-target-");
+    await fs.ensureSymlink(outside, outDir, process.platform === "win32" ? "junction" : "dir");
+    try {
+      const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+      assert.isTrue(res.isErr());
+      if (res.isErr()) assert.equal(res.error.name, "InvalidOutputPath");
+      chai.expect(await fs.readdir(outside)).to.deep.equal([]);
+    } finally {
+      await fs.remove(outside);
+    }
+  });
+
+  it("AP-PATH-16: rejects a missing output beneath a directory link", async () => {
+    const outside = await tmp("op-export-output-parent-link-target-");
+    const linkRoot = await tmp("op-export-output-parent-link-");
+    const linkedParent = path.join(linkRoot, "linked");
+    const nestedOutput = path.join(linkedParent, "new-output");
+    await fs.ensureSymlink(
+      outside,
+      linkedParent,
+      process.platform === "win32" ? "junction" : "dir"
+    );
+    try {
+      const res = await exportOpenPlugin({ path: projectDir, output: nestedOutput });
+
+      assert.isTrue(res.isErr());
+      if (res.isErr()) assert.equal(res.error.name, "InvalidOutputPath");
+      chai.expect(await fs.readdir(outside)).to.deep.equal([]);
+    } finally {
+      await fs.remove(linkRoot);
+      await fs.remove(outside);
+    }
+  });
+
   it("returns MissingProjectPath when --path is absent", async () => {
     const res = await exportOpenPlugin({ path: "", output: outDir });
     assert.isTrue(res.isErr());

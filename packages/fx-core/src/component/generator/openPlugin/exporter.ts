@@ -8,6 +8,7 @@ import { isValidHttpUrl } from "../../../common/stringUtils";
 import {
   copyDirectoryWithoutSymbolicLinks,
   inspectPathWithinRoot,
+  hasLinkedPathSegment,
   resolvePluginRoot,
 } from "./fileSystem";
 import { OpenPluginInputError } from "./errors";
@@ -139,6 +140,16 @@ export async function exportOpenPlugin(
     const pluginName = derivePluginName(manifest);
     const defaultOutput = path.join(process.cwd(), `${pluginName}-agentplugin`);
     const outputPath = path.resolve(inputs.output ?? defaultOutput);
+
+    if (await hasLinkedPathSegment(outputPath)) {
+      return err(
+        new UserError(
+          OPEN_PLUGIN_EXPORT_SOURCE,
+          "InvalidOutputPath",
+          `Output path must not be a symbolic link or junction: ${outputPath}.`
+        )
+      );
+    }
 
     const invalidDeveloperUrl = validateDeveloperUrls(manifest);
     if (invalidDeveloperUrl) return err(invalidDeveloperUrl);

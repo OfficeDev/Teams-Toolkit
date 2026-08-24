@@ -129,16 +129,9 @@ export function parseAgentPluginManifest(value: unknown): ParsedAgentPluginManif
   const warnings: string[] = [];
   if (value.extensions !== undefined) {
     if (!isRecord(value.extensions)) {
-      throw new OpenPluginInputError("plugin.json 'extensions' must be an object.");
+      warnings.push("plugin.json 'extensions' must be an object and was ignored.");
     } else {
-      const extensions: Record<string, unknown> = {};
-      for (const [namespace, extension] of Object.entries(value.extensions)) {
-        if (!isRecord(extension)) {
-          throw new OpenPluginInputError(`plugin.json extension '${namespace}' must be an object.`);
-        }
-        extensions[namespace] = extension;
-      }
-      manifest.extensions = extensions;
+      manifest.extensions = value.extensions;
     }
   }
 

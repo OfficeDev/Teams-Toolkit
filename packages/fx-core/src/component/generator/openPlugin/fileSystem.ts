@@ -16,6 +16,20 @@ export type InspectedPath =
 
 export type SkippedSymbolicLinkHandler = (relativePath: string, resolvesOutside: boolean) => void;
 
+export async function hasLinkedPathSegment(candidatePath: string): Promise<boolean> {
+  let inspectedPath = path.resolve(candidatePath);
+  while (true) {
+    try {
+      if ((await fs.lstat(inspectedPath)).isSymbolicLink()) return true;
+    } catch (error) {
+      if (!hasErrorCode(error, "ENOENT")) throw error;
+    }
+    const parentPath = path.dirname(inspectedPath);
+    if (parentPath === inspectedPath) return false;
+    inspectedPath = parentPath;
+  }
+}
+
 export async function resolvePluginRoot(root: string): Promise<string> {
   const requestedRoot = path.resolve(root);
   let realRoot: string;

@@ -19,7 +19,11 @@ import { Generator } from "../generator";
 import { TemplateNames } from "../templates/templateNames";
 import { resolveOpenPluginMcpAuth } from "./authResolver";
 import { OpenPluginInputError } from "./errors";
-import { copyDirectoryWithoutSymbolicLinks, inspectPathWithinRoot } from "./fileSystem";
+import {
+  copyDirectoryWithoutSymbolicLinks,
+  inspectPathWithinRoot,
+  hasLinkedPathSegment,
+} from "./fileSystem";
 import { applyIcons } from "./iconStrategy";
 import { mapToTtkProject, validateImportInputs } from "./mapper";
 import { readOpenPluginDir } from "./parser";
@@ -59,6 +63,15 @@ export async function importOpenPlugin(
     const defaultOutput = path.join(process.cwd(), normalizePluginName(parsed.manifest.name));
     const projectPath = path.resolve(inputs.output ?? defaultOutput);
 
+    if (await hasLinkedPathSegment(projectPath)) {
+      return err(
+        new UserError(
+          OPEN_PLUGIN_IMPORT_SOURCE,
+          "InvalidOutputPath",
+          `Output path must not be a symbolic link or junction: ${projectPath}.`
+        )
+      );
+    }
     if (await fs.pathExists(projectPath)) {
       const entries = await fs.readdir(projectPath);
       if (entries.length > 0) {
