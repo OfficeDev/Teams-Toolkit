@@ -3335,6 +3335,53 @@ test("VCB-46: an account with no account-picker recording fails to compile", asy
   assert.equal(result.diagnostics[0].code, "VCB_ACCOUNT_PICKER_UNSUPPORTED");
 });
 
+test("VCB-171: Microsoft 365 sign-in waits for browser confirmation before closing", async () => {
+  const emailForm = await compileFixture(
+    "da-no-action.yml",
+    (sourceText) => sourceText,
+  );
+  const accountPicker = await compileFixture(
+    "weather-agent.yml",
+    (sourceText) => sourceText,
+  );
+
+  assert.equal(emailForm.ok, true);
+  assert.equal(accountPicker.ok, true);
+
+  for (const { steps, prefix } of [
+    {
+      steps: emailForm.value[0].plan.steps,
+      prefix: "step_signInM365_",
+    },
+    {
+      steps: accountPicker.value[0].plan.steps,
+      prefix: "step_signInM365FromPicker_",
+    },
+  ]) {
+    const submitIndex = steps.findIndex((step) =>
+      step.step_id.startsWith(`${prefix}submit_`),
+    );
+    const confirmationIndex = steps.findIndex((step) =>
+      step.step_id.startsWith(`${prefix}assertComplete_`),
+    );
+    const closeIndex = steps.findIndex((step) =>
+      step.step_id.startsWith(`${prefix}closeBrowser_`),
+    );
+    const readyIndex = steps.findIndex((step) =>
+      step.step_id.startsWith(`${prefix}assertReady_`),
+    );
+
+    assert.equal(submitIndex >= 0, true, prefix);
+    assert.equal(confirmationIndex > submitIndex, true, prefix);
+    assert.equal(closeIndex > confirmationIndex, true, prefix);
+    assert.equal(readyIndex > closeIndex, true, prefix);
+    assert.match(steps[confirmationIndex].description, /sign-in confirmation/i);
+    assert.deepEqual(steps[closeIndex].depends_on, [
+      steps[confirmationIndex].step_id,
+    ]);
+  }
+});
+
 test("VCB-47: every sign-in verifies the account in the ACCOUNTS section", async () => {
   const result = await compileFixture(
     "weather-agent.yml",
