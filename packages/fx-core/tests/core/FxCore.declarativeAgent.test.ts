@@ -2641,7 +2641,10 @@ describe("addPlugin", async () => {
       .spyOn(actionInjectorModule.ActionInjector, "injectCreateOAuthActionForMCP")
       .mockResolvedValue();
 
-    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockImplementation((_projectPath, env) =>
+      env === "local" ? "m365agents.local.yml" : "m365agents.yml"
+    );
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "ensureFile").mockResolvedValue();
     vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
@@ -2649,7 +2652,10 @@ describe("addPlugin", async () => {
     const result = await core.addPlugin(inputs);
 
     assert.isTrue(result.isOk());
-    assert.isTrue(injectStub.mock.calls.length === 1);
+    assert.deepEqual(
+      injectStub.mock.calls.map((call) => call[0]),
+      ["m365agents.yml", "m365agents.local.yml"]
+    );
     // Verify registration ID pattern
     const registrationId = injectStub.mock.calls[0][3];
     assert.equal(registrationId, "MCP_DA_AUTH_ID_ACTION_1");
@@ -3182,7 +3188,10 @@ describe("addPlugin", async () => {
       .spyOn(actionInjectorModule.ActionInjector, "injectCreateDcrActionForMCP")
       .mockResolvedValue();
 
-    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(pathUtils, "getYmlFilePath").mockImplementation((_projectPath, env) =>
+      env === "local" ? "m365agents.local.yml" : "m365agents.yml"
+    );
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "ensureFile").mockResolvedValue();
     const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
 
@@ -3193,7 +3202,10 @@ describe("addPlugin", async () => {
     assert.equal(modifyFrontDoorStub.mock.calls.length, 0);
 
     // oauth-dynamic reuses the DCR injector (dcr/register) — not the OAuth one.
-    assert.equal(dcrInjectStub.mock.calls.length, 1);
+    assert.deepEqual(
+      dcrInjectStub.mock.calls.map((call) => call[0]),
+      ["m365agents.yml", "m365agents.local.yml"]
+    );
     assert.equal(dcrInjectStub.mock.calls[0][1], "examplecom");
     assert.equal(dcrInjectStub.mock.calls[0][2], "MCP_DA_AUTH_ID_EXAMPLECOM");
     assert.equal(oauthInjectStub.mock.calls.length, 0);

@@ -45,7 +45,7 @@ export const ImportOpenPluginOptions: CLICommandOption[] = [
     name: "default-auth-type",
     type: "string",
     description:
-      "Default auth type for MCP connectors discovered in .mcp.json. 'Auto' picks OAuthPluginVault for non-localhost HTTPS, None otherwise.",
+      "Default auth type for MCP connectors discovered in .mcp.json. 'Auto' probes remote HTTPS MCP endpoints and OAuth metadata, warns on inferred choices, and requires an explicit type when auth is unresolved.",
     default: "Auto",
     choices: ["Auto", "None", "OAuthPluginVault", "ApiKeyPluginVault"],
   },

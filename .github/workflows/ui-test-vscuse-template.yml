@@ -1,7 +1,7 @@
 name: uitest-vscuse-template
 #
-# Caller that runs the non-Feature / non-Sample template plans via the shared reusable workflow.
-# Also triggers ui-test-vscuse-others.yml after the report finishes when invoked by schedule.
+# Caller that runs the non-Feature / non-Sample / non-Regular template plans via the shared reusable workflow.
+# Also triggers ui-test-vscuse-features.yml after the report finishes when invoked by schedule.
 on:
   workflow_dispatch:
     inputs:
@@ -31,7 +31,7 @@ on:
         type: number
         default: 7
       schedule_trigger:
-        description: 'Whether the build is triggered by schedule'
+        description: "Whether the build is triggered by schedule"
         type: boolean
         default: false
 
@@ -64,7 +64,7 @@ jobs:
       max_retries: ${{ fromJson(github.event.inputs.max_retries || '7') }}
       schedule_trigger: ${{ github.event.inputs.schedule_trigger == 'true' }}
       # Pipeline-specific knobs
-      plan_find_args: '-name "*.json" ! -name "Feature_*" ! -name "Sample_*"'
+      plan_find_args: '-name "*.json" ! -name "Feature_*" ! -name "Sample_*" ! -name "Regular_*"'
       main_timeout_minutes: 50
       max_parallel: 50
       no_failed_step_text: " "
@@ -88,5 +88,3 @@ jobs:
             -f image_tag=${{ github.event.inputs.image_tag || 'latest' }} \
             -f vscuse_version=${{ github.event.inputs.vscuse_version || 'latest' }} \
             -f schedule_trigger=${{ github.event.inputs.schedule_trigger || 'false' }}
-
-

@@ -67,6 +67,11 @@ export default class TelemetryReporter {
   }
 
   private createAppInsightsClient(key: string) {
+    // The SDK's internal logging writes straight to the console (console.warn -> stderr) by
+    // default, including when the telemetry endpoint itself is unreachable. Telemetry transport
+    // failures are never actionable for CLI users and must not be mistaken for command output,
+    // so keep an undeliverable telemetry beacon silent.
+    appInsights.Configuration.setInternalLogging(false, false);
     if (appInsights.defaultClient) {
       this.appInsightsClient = new appInsights.TelemetryClient(key);
       this.appInsightsClient.channel.setUseDiskRetryCaching(true);

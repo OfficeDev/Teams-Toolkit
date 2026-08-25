@@ -1,0 +1,68 @@
+name: uitest-vscuse-regular
+#
+# Caller that runs Regular_* plans weekly or on demand via the shared reusable workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      test_plan:
+        description: "Comma-separated list of test plans to run"
+        required: false
+      image_tag:
+        description: "Docker image tag to use (e.g., 'latest', 'CY251212stable')"
+        required: true
+        default: "latest"
+      vscuse_version:
+        description: "VSCUSE Python package version to use (e.g., 'latest', 'v0.2.47')"
+        required: false
+        type: string
+        default: "latest"
+      template_version:
+        description: "Template version to inject into VSCUSE config.yaml. Version of the template used in the image, e.g. 0.0.0-rc."
+        required: false
+        type: string
+      email-receiver:
+        description: "email notification receiver"
+        required: false
+        type: string
+      max_retries:
+        description: "Maximum number of retry attempts (1-20, default: 7)"
+        required: false
+        type: number
+        default: 7
+      schedule_trigger:
+        description: "Whether the build is triggered by schedule"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 2 * * 1" # Mondays at 10:00 (UTC+8)
+
+permissions:
+  actions: read
+
+concurrency:
+  group: ${{ format('uitest-vscuse-regular-{0}', (github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/release/')) && github.run_id || github.ref_name) }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    uses: ./.github/workflows/ui-test-vscuse-common.yml
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      security-events: write
+      actions: write
+    with:
+      test_plan: ${{ github.event.inputs.test_plan || '' }}
+      image_tag: ${{ github.event.inputs.image_tag || 'latest' }}
+      vscuse_version: ${{ github.event.inputs.vscuse_version || 'latest' }}
+      template_version: ${{ github.event.inputs.template_version || '' }}
+      email_receiver: ${{ github.event.inputs.email-receiver || '' }}
+      max_retries: ${{ fromJson(github.event.inputs.max_retries || '7') }}
+      schedule_trigger: ${{ github.event_name == 'schedule' || github.event.inputs.schedule_trigger == 'true' }}
+      plan_find_args: '-name "Regular_*.json"'
+      main_timeout_minutes: 80
+      no_failed_step_text: "No failed step found"
+      filter_no_errors_found: false
+      email_subject_suffix: "[Regular]"

@@ -1195,6 +1195,10 @@
   "core.MCPForDA.authRequired": "The MCP server at %s requires authentication. Tools could not be fetched automatically. To add tools, run:\n  %s",
   "core.MCPForDA.noToolsFetched": "No tools were discovered from the MCP server at %s. To add tools later, run:\n  %s",
   "core.MCPForDA.mcpServerUrlNotAnEndpoint": "%s answered an MCP initialize request with HTTP %s, so it may not be an MCP server URL. Verify the URL before provisioning.",
+  "core.openPluginImport.autoAuthNone": "Auto inferred authentication type None for MCP server '%s'. Verify this choice if individual tools require authentication or use an API key.",
+  "core.openPluginImport.autoAuthOAuth": "Auto inferred OAuthPluginVault for MCP server '%s'. The generated reference ID is a placeholder and must be registered before use.",
+  "core.openPluginImport.authFallback": "OAuth metadata could not be resolved for MCP server '%s' after it confirmed authentication is required. Auto fell back to OAuthPluginVault. Verify the authentication type and register the generated reference ID before use.",
+  "core.openPluginImport.unresolvedMcpAuth": "Unable to resolve authentication for MCP server '%s' while --default-auth-type is Auto. Specify None, OAuthPluginVault, or ApiKeyPluginVault explicitly.",
   "core.MCPForDA.openYmlFile": "Open m365agents.yml",
   "core.MCPForDA.fetchError": "Failed to fetch tools from the MCP server at %s. To add tools later, run:\n  %s"
 }

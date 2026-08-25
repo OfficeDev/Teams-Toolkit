@@ -9,5 +9,20 @@
   },
   "logo": "./assets/logo.png",
   "agents": "./agents-dir",
-  "hooks": "./hooks-dir"
+  "hooks": "./hooks-dir",
+  "x-microsoft-365-agents-toolkit": {
+    "agentConnectors": {
+      "contoso-tools": {
+        "authorization": {
+          "type": "OAuthPluginVault",
+          "referenceId": "contoso-helper-contoso-tools-auth"
+        }
+      },
+      "local-dev": {
+        "authorization": {
+          "type": "None"
+        }
+      }
+    }
+  }
 }
