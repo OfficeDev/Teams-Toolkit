@@ -1,7 +1,8 @@
 ﻿name: PR VscUse Test Plan Selector
 
-# Triggered automatically on every PR open/sync/reopen/ready_for_review,
-# OR manually via workflow_dispatch with a pr_number input.
+# Triggered automatically on same-repository PR open/sync/reopen/ready_for_review,
+# OR manually via workflow_dispatch with a pr_number input. Automatic fork PR
+# events are skipped because pull_request tokens are read-only.
 #
 # IMPORTANT: this workflow is INFORMATIONAL ONLY — it must NEVER block merge.
 #   * The job always exits with success, regardless of UI test outcome.
@@ -44,10 +45,12 @@ permissions:
 
 jobs:
   select-plans-and-run:
-    # Run for: automatic PR events (skip drafts) or manual dispatch.
+    # Automatic fork runs cannot post comments or dispatch workflows with their read-only token.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.draft == false &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
 
     steps:
