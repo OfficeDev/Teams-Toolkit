@@ -122,7 +122,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.pr-context.outputs.head_ref }}
+          ref: refs/pull/${{ steps.pr-context.outputs.pr_number }}/head
           fetch-depth: 0
           sparse-checkout: |
             packages/tests/vscuse/vscode-test-cases/plans
@@ -265,11 +265,9 @@ jobs:
         if: steps.code-check.outputs.skip_dispatch != 'true' && steps.code-check.outputs.has_code_files == 'true'
         env:
           BASE_REF: ${{ steps.pr-context.outputs.base_ref }}
-          HEAD_REF: ${{ steps.pr-context.outputs.head_ref }}
         run: |
           git fetch origin "$BASE_REF" --depth=50 2>/dev/null || true
-          git fetch origin "$HEAD_REF" --depth=50 2>/dev/null || true
-          DIFF_STAT=$(git diff "origin/${BASE_REF}...origin/${HEAD_REF}" --stat --no-color 2>/dev/null \
+          DIFF_STAT=$(git diff "origin/${BASE_REF}...HEAD" --stat --no-color 2>/dev/null \
             | tail -5 || echo "(diff unavailable)")
           echo "diff_stat<<EOF" >> "$GITHUB_OUTPUT"
           echo "$DIFF_STAT"     >> "$GITHUB_OUTPUT"
