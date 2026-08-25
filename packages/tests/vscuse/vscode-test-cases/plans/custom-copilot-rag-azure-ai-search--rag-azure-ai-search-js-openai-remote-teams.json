@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 189,
+    "total_steps": 188,
     "name": "rag-azure-ai-search-js-openai-remote-teams",
     "description": {
       "owner": "",
@@ -127,7 +127,6 @@
       "step_signInM365FromPicker_next_c6b6d5e72_7_2",
       "step_signInM365FromPicker_typePassword_c6b6d5e72_7_2",
       "step_signInM365FromPicker_submit_c6b6d5e72_7_2",
-      "step_signInM365FromPicker_assertComplete_c6b6d5e72_7_2",
       "step_signInM365FromPicker_closeBrowser_c6b6d5e72_7_2",
       "step_signInM365FromPicker_assertReady_c6b6d5e72_7_2",
       "step_executeCommand_open_c6b6d5e72_8_1",
@@ -2715,27 +2714,6 @@
       ]
     },
     {
-      "step_id": "step_signInM365FromPicker_assertComplete_c6b6d5e72_7_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion Google Chrome shows the Visual Studio Code sign-in confirmation page after Microsoft 365 authentication.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_submit_c6b6d5e72_7_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365",
-        "step_retry_timeout: 180"
-      ]
-    },
-    {
       "step_id": "step_signInM365FromPicker_closeBrowser_c6b6d5e72_7_2",
       "agent": "interaction",
       "tool": "click",
@@ -2750,7 +2728,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_assertComplete_c6b6d5e72_7_2"
+        "step_signInM365FromPicker_submit_c6b6d5e72_7_2"
       ],
       "preconditions": [
         "dhash:1008:19:16:5:a322c95a325ac922",

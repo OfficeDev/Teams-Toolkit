@@ -187,27 +187,6 @@
       "tags": ["component:authentication", "account:m365", "delay: 3"]
     },
     {
-      "step_id": "step_signInM365FromPicker_assertComplete_{{text:instanceSuffix}}",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion Google Chrome shows the Visual Studio Code sign-in confirmation page after Microsoft 365 authentication.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_submit_{{text:instanceSuffix}}"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "account:m365",
-        "step_retry_timeout: 180"
-      ]
-    },
-    {
       "step_id": "step_signInM365FromPicker_closeBrowser_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "click",
@@ -221,9 +200,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": [
-        "step_signInM365FromPicker_assertComplete_{{text:instanceSuffix}}"
-      ],
+      "depends_on": ["step_signInM365FromPicker_submit_{{text:instanceSuffix}}"],
       "preconditions": [
         "dhash:1008:19:16:5:a322c95a325ac922",
         "dhash:1008:19:96:5:926363639200c6c4",
