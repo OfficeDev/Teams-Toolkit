@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
 import { UserError } from "@microsoft/teamsfx-api";
+import { getDefaultString, getLocalizedString } from "../../../../src/common/localizeUtils";
 import { OpenPluginInputError } from "../../../../src/component/generator/openPlugin/errors";
 import { exportOpenPlugin } from "../../../../src/component/generator/openPlugin/exporter";
 import * as validation from "../../../../src/component/generator/openPlugin/validation";
@@ -13,6 +14,15 @@ import { assert, chai, vi } from "vitest";
 const ATK_EXTENSION_NAMESPACE = "com.microsoft.agents-toolkit";
 const PLUGIN_SCHEMA_URL = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json";
 const MCP_SCHEMA_URL = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json";
+
+function expectLocalizedDisplayMessage(displayMessage: string | undefined, key: string): string {
+  const defaultMessage = getDefaultString(key);
+  const localizedMessage = getLocalizedString(key);
+  chai.expect(defaultMessage).not.to.equal("");
+  chai.expect(localizedMessage).not.to.equal("");
+  chai.expect(displayMessage).to.equal(localizedMessage);
+  return defaultMessage;
+}
 
 async function tmp(prefix: string): Promise<string> {
   return await fs.mkdtemp(path.join(os.tmpdir(), prefix));
@@ -414,7 +424,14 @@ describe("openPlugin.exportOpenPlugin", () => {
   it("returns MissingProjectPath when --path is absent", async () => {
     const res = await exportOpenPlugin({ path: "", output: outDir });
     assert.isTrue(res.isErr());
-    if (res.isErr()) assert.equal(res.error.name, "MissingProjectPath");
+    if (res.isErr()) {
+      assert.equal(res.error.name, "MissingProjectPath");
+      const defaultMessage = expectLocalizedDisplayMessage(
+        res.error.displayMessage,
+        "core.openPluginExport.missingProjectPath"
+      );
+      chai.expect(res.error.message).to.equal(defaultMessage);
+    }
   });
 
   it("AP-EXPORT-01: rejects a remote MCP URL that Agent Plugins 1.0.0 forbids", async () => {
@@ -427,7 +444,14 @@ describe("openPlugin.exportOpenPlugin", () => {
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
 
     assert.isTrue(res.isErr());
-    if (res.isErr()) assert.equal(res.error.name, "InvalidMcpServerUrl");
+    if (res.isErr()) {
+      assert.equal(res.error.name, "InvalidMcpServerUrl");
+      chai.expect(res.error.message).to.include("web");
+      expectLocalizedDisplayMessage(
+        res.error.displayMessage,
+        "core.openPluginExport.invalidMcpServerUrl"
+      );
+    }
   });
 
   it("rejects an empty remote MCP URL before writing output", async () => {
@@ -463,7 +487,11 @@ describe("openPlugin.exportOpenPlugin", () => {
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
 
     assert.isTrue(res.isErr());
-    if (res.isErr()) assert.equal(res.error.name, "ExportOpenPluginFailed");
+    if (res.isErr()) {
+      assert.equal(res.error.name, "ExportOpenPluginFailed");
+      chai.expect(res.error.message).to.equal("unexpected parser failure");
+      expectLocalizedDisplayMessage(res.error.displayMessage, "core.openPluginExport.failed");
+    }
     chai.expect(await fs.pathExists(outDir)).to.equal(false);
   });
 
@@ -476,7 +504,14 @@ describe("openPlugin.exportOpenPlugin", () => {
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
 
     assert.isTrue(res.isErr());
-    if (res.isErr()) assert.equal(res.error.name, "InvalidManifest");
+    if (res.isErr()) {
+      assert.equal(res.error.name, "InvalidManifest");
+      chai.expect(res.error.message).to.include("agentSkills");
+      expectLocalizedDisplayMessage(
+        res.error.displayMessage,
+        "core.openPluginExport.invalidManifest"
+      );
+    }
     chai.expect(await fs.pathExists(outDir)).to.equal(false);
   });
 

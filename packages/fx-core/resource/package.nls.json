@@ -1205,6 +1205,16 @@
   "core.openPluginImport.missingPluginPath": "The --path option is required.",
   "core.openPluginImport.outputDirectoryNotEmpty": "The output directory is not empty: %s. Choose a different --output path or empty the directory.",
   "core.openPluginImport.unresolvedMcpAuth": "Unable to resolve authentication for MCP server '%s' while --default-auth-type is Auto. Specify None, OAuthPluginVault, or ApiKeyPluginVault explicitly.",
+  "core.openPluginExport.failed": "Failed to export the Agent Plugin.",
+  "core.openPluginExport.invalidAgentPluginManifest": "The project cannot be exported as an Agent Plugins 1.0.0 manifest.",
+  "core.openPluginExport.invalidManifest": "The project manifest is invalid.",
+  "core.openPluginExport.invalidMcpServerUrl": "The project contains an MCP server URL that cannot be exported.",
+  "core.openPluginExport.invalidOutputPath": "The output path must not be a symbolic link or junction.",
+  "core.openPluginExport.invalidProjectPath": "The project path is invalid.",
+  "core.openPluginExport.invalidProjectStructure": "The project structure is invalid.",
+  "core.openPluginExport.manifestNotFound": "appPackage/manifest.json was not found in the project.",
+  "core.openPluginExport.missingProjectPath": "The --path option is required.",
+  "core.openPluginExport.outputDirectoryNotEmpty": "The output directory is not empty. Choose a different --output path or empty the directory.",
   "core.MCPForDA.openYmlFile": "Open m365agents.yml",
   "core.MCPForDA.fetchError": "Failed to fetch tools from the MCP server at %s. To add tools later, run:\n  %s"
 }

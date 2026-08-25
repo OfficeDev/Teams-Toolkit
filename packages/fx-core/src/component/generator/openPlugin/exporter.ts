@@ -4,6 +4,7 @@
 import { err, FxError, ok, Result, SystemError, UserError } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import * as path from "path";
+import { getDefaultString, getLocalizedString } from "../../../common/localizeUtils";
 import { isValidHttpUrl } from "../../../common/stringUtils";
 import {
   copyDirectoryWithoutSymbolicLinks,
@@ -49,6 +50,15 @@ interface PreparedMcpToolDescription {
 
 const ATK_MCP_TOOL_DESCRIPTIONS_DIR = ".microsoft-agents-toolkit/mcp-tool-descriptions";
 
+function localizedExportUserError(name: string, key: string, message?: string): UserError {
+  return new UserError({
+    source: OPEN_PLUGIN_EXPORT_SOURCE,
+    name,
+    message: message ?? getDefaultString(key),
+    displayMessage: getLocalizedString(key),
+  });
+}
+
 /**
  * Export an ATK project (folder containing appPackage/manifest.json plus the
  * usual agentSkills/agentConnectors layout) into an Agent Plugins v1.0.0
@@ -66,25 +76,25 @@ export async function exportOpenPlugin(
   try {
     if (!inputs.path) {
       return err(
-        new UserError(OPEN_PLUGIN_EXPORT_SOURCE, "MissingProjectPath", "--path is required.")
+        localizedExportUserError("MissingProjectPath", "core.openPluginExport.missingProjectPath")
       );
     }
     const projectRoot = await resolvePluginRoot(inputs.path);
     const inspectedAppPackage = await inspectPathWithinRoot(projectRoot, "appPackage", "directory");
     if (inspectedAppPackage.status === "outside" || inspectedAppPackage.status === "wrong-kind") {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
           "InvalidProjectStructure",
+          "core.openPluginExport.invalidProjectStructure",
           "appPackage must be a directory contained within the project root."
         )
       );
     }
     if (inspectedAppPackage.status === "missing") {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
           "ManifestNotFound",
+          "core.openPluginExport.manifestNotFound",
           `appPackage/manifest.json not found under ${projectRoot}.`
         )
       );
@@ -97,18 +107,18 @@ export async function exportOpenPlugin(
     );
     if (inspectedManifest.status === "outside" || inspectedManifest.status === "wrong-kind") {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
           "InvalidProjectStructure",
+          "core.openPluginExport.invalidProjectStructure",
           "appPackage/manifest.json must be a regular file contained within the project root."
         )
       );
     }
     if (inspectedManifest.status === "missing") {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
           "ManifestNotFound",
+          "core.openPluginExport.manifestNotFound",
           `appPackage/manifest.json not found under ${projectRoot}.`
         )
       );
@@ -118,25 +128,31 @@ export async function exportOpenPlugin(
     const manifestRaw: unknown = await fs.readJSON(manifestPath);
     if (!isRecord(manifestRaw)) {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
           "InvalidManifest",
+          "core.openPluginExport.invalidManifest",
           `appPackage/manifest.json is not a JSON object: ${manifestPath}.`
         )
       );
     }
     if (manifestRaw.version !== undefined && typeof manifestRaw.version !== "string") {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
           "InvalidAgentPluginManifest",
+          "core.openPluginExport.invalidAgentPluginManifest",
           "Cannot export an Agent Plugins 1.0.0 manifest: version must be a string."
         )
       );
     }
     const parsedManifest = parseTeamsLikeManifest(manifestRaw);
     if (typeof parsedManifest === "string") {
-      return err(new UserError(OPEN_PLUGIN_EXPORT_SOURCE, "InvalidManifest", parsedManifest));
+      return err(
+        localizedExportUserError(
+          "InvalidManifest",
+          "core.openPluginExport.invalidManifest",
+          parsedManifest
+        )
+      );
     }
     const manifest = parsedManifest;
     const warnings: string[] = [];
@@ -154,9 +170,9 @@ export async function exportOpenPlugin(
 
     if (await hasLinkedPathSegment(outputPath)) {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
           "InvalidOutputPath",
+          "core.openPluginExport.invalidOutputPath",
           `Output path must not be a symbolic link or junction: ${outputPath}.`
         )
       );
@@ -173,9 +189,9 @@ export async function exportOpenPlugin(
       if (!(error instanceof OpenPluginInputError)) throw error;
       const detail = error instanceof Error ? error.message : String(error);
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
           "InvalidAgentPluginManifest",
+          "core.openPluginExport.invalidAgentPluginManifest",
           `Cannot export an Agent Plugins 1.0.0 manifest: ${detail}`
         )
       );
@@ -193,9 +209,9 @@ export async function exportOpenPlugin(
       const entries = await fs.readdir(outputPath);
       if (entries.length > 0) {
         return err(
-          new UserError(
-            OPEN_PLUGIN_EXPORT_SOURCE,
+          localizedExportUserError(
             "OutputDirectoryNotEmpty",
+            "core.openPluginExport.outputDirectoryNotEmpty",
             `Output directory is not empty: ${outputPath}. Choose a different --output path or empty the directory.`
           )
         );
@@ -220,7 +236,11 @@ export async function exportOpenPlugin(
     }
     if (e instanceof OpenPluginInputError) {
       return err(
-        new UserError(OPEN_PLUGIN_EXPORT_SOURCE, "InvalidProjectPath", e.message, e.message)
+        localizedExportUserError(
+          "InvalidProjectPath",
+          "core.openPluginExport.invalidProjectPath",
+          e.message
+        )
       );
     }
     const message = e instanceof Error ? e.message : String(e);
@@ -229,7 +249,7 @@ export async function exportOpenPlugin(
         source: OPEN_PLUGIN_EXPORT_SOURCE,
         name: "ExportOpenPluginFailed",
         message,
-        displayMessage: message,
+        displayMessage: getLocalizedString("core.openPluginExport.failed"),
       })
     );
   }
@@ -601,9 +621,9 @@ function validateExportDestinationKeys(
   for (const connector of manifest.agentConnectors ?? []) {
     if (!connector.id) continue;
     if (connectorIds.has(connector.id)) {
-      return new UserError(
-        OPEN_PLUGIN_EXPORT_SOURCE,
+      return localizedExportUserError(
         "InvalidManifest",
+        "core.openPluginExport.invalidManifest",
         `Duplicate connector id '${connector.id}' cannot be exported.`
       );
     }
@@ -615,9 +635,9 @@ function validateExportDestinationKeys(
     if (!skill.folder) continue;
     const name = path.basename(skill.folder.replace(/^\.\//, "")).toLowerCase();
     if (skillNames.has(name)) {
-      return new UserError(
-        OPEN_PLUGIN_EXPORT_SOURCE,
+      return localizedExportUserError(
         "InvalidManifest",
+        "core.openPluginExport.invalidManifest",
         `Multiple Agent Skills resolve to the export destination '${name}'.`
       );
     }
@@ -638,9 +658,9 @@ function validateExportDestinationKeys(
     if (!file || !description.contents) continue;
     const reservedPath = reservedPaths.find((candidate) => portablePathsConflict(file, candidate));
     if (reservedPath) {
-      return new UserError(
-        OPEN_PLUGIN_EXPORT_SOURCE,
+      return localizedExportUserError(
         "InvalidManifest",
+        "core.openPluginExport.invalidManifest",
         `MCP tool-description path '${file}' collides with generated output '${reservedPath}'.`
       );
     }
@@ -649,9 +669,9 @@ function validateExportDestinationKeys(
     const existing = destinations.get(destinationKey);
     if (existing) {
       if (existing.path !== file || !existing.contents.equals(description.contents)) {
-        return new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        return localizedExportUserError(
           "InvalidManifest",
+          "core.openPluginExport.invalidManifest",
           `MCP tool-description paths '${existing.path}' and '${file}' collide.`
         );
       }
@@ -659,9 +679,9 @@ function validateExportDestinationKeys(
     }
     for (const destination of destinations.values()) {
       if (portablePathsConflict(file, destination.path)) {
-        return new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        return localizedExportUserError(
           "InvalidManifest",
+          "core.openPluginExport.invalidManifest",
           `MCP tool-description paths '${destination.path}' and '${file}' collide.`
         );
       }
@@ -677,9 +697,9 @@ function validateRemoteMcpUrls(manifest: TeamsLikeManifest): UserError | undefin
     if (url === undefined) continue;
     const validationError = getRemoteMcpUrlError(url);
     if (validationError) {
-      return new UserError(
-        OPEN_PLUGIN_EXPORT_SOURCE,
+      return localizedExportUserError(
         "InvalidMcpServerUrl",
+        "core.openPluginExport.invalidMcpServerUrl",
         `Connector '${connector.id ?? "(unnamed)"}' cannot be exported: ${validationError}`
       );
     }
@@ -695,9 +715,9 @@ function validateDeveloperUrls(manifest: TeamsLikeManifest): UserError | undefin
   ];
   for (const [field, value] of urls) {
     if (value !== undefined && !isValidHttpUrl(value)) {
-      return new UserError(
-        OPEN_PLUGIN_EXPORT_SOURCE,
+      return localizedExportUserError(
         "InvalidManifest",
+        "core.openPluginExport.invalidManifest",
         `Developer '${field}' must be a valid HTTP(S) URL.`
       );
     }
