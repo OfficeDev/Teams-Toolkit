@@ -14,6 +14,7 @@ import {
 import fs from "fs-extra";
 import yaml from "js-yaml";
 import * as path from "path";
+import { getDefaultString, getLocalizedString } from "../../../common/localizeUtils";
 import { createContext } from "../../../common/globalVars";
 import { Generator } from "../generator";
 import { TemplateNames } from "../templates/templateNames";
@@ -38,6 +39,15 @@ export interface ImportResult {
   warnings: string[];
 }
 
+function localizedImportUserError(name: string, key: string, ...params: string[]): UserError {
+  return new UserError({
+    source: OPEN_PLUGIN_IMPORT_SOURCE,
+    name,
+    message: getDefaultString(key, ...params),
+    displayMessage: getLocalizedString(key, ...params),
+  });
+}
+
 /**
  * Import an Open Plugin / Claude Code plugin / Cursor plugin directory into
  * a scaffolded Microsoft 365 Agents Toolkit project. The output is a usable
@@ -56,7 +66,7 @@ export async function importOpenPlugin(
   try {
     if (!inputs.path) {
       return err(
-        new UserError(OPEN_PLUGIN_IMPORT_SOURCE, "MissingPluginPath", "--path is required.")
+        localizedImportUserError("MissingPluginPath", "core.openPluginImport.missingPluginPath")
       );
     }
     const parsed = await readOpenPluginDir(inputs.path);
@@ -65,10 +75,10 @@ export async function importOpenPlugin(
 
     if (await hasLinkedPathSegment(projectPath)) {
       return err(
-        new UserError(
-          OPEN_PLUGIN_IMPORT_SOURCE,
+        localizedImportUserError(
           "InvalidOutputPath",
-          `Output path must not be a symbolic link or junction: ${projectPath}.`
+          "core.openPluginImport.invalidOutputPath",
+          projectPath
         )
       );
     }
@@ -76,10 +86,10 @@ export async function importOpenPlugin(
       const entries = await fs.readdir(projectPath);
       if (entries.length > 0) {
         return err(
-          new UserError(
-            OPEN_PLUGIN_IMPORT_SOURCE,
+          localizedImportUserError(
             "OutputDirectoryNotEmpty",
-            `Output directory is not empty: ${projectPath}. Choose a different --output path or empty the directory.`
+            "core.openPluginImport.outputDirectoryNotEmpty",
+            projectPath
           )
         );
       }
@@ -94,7 +104,13 @@ export async function importOpenPlugin(
     }).manifest;
     const preflightError = await getMappedManifestValidationError(preflightManifest);
     if (preflightError) {
-      return err(new UserError(OPEN_PLUGIN_IMPORT_SOURCE, "InvalidManifest", preflightError));
+      return err(
+        localizedImportUserError(
+          "InvalidManifest",
+          "core.openPluginImport.invalidManifest",
+          preflightError
+        )
+      );
     }
 
     const authResolution = await resolveOpenPluginMcpAuth(parsed, inputs.defaultAuthType ?? "Auto");
@@ -110,7 +126,11 @@ export async function importOpenPlugin(
     const manifestValidationError = await getMappedManifestValidationError(manifest);
     if (manifestValidationError) {
       return err(
-        new UserError(OPEN_PLUGIN_IMPORT_SOURCE, "InvalidManifest", manifestValidationError)
+        localizedImportUserError(
+          "InvalidManifest",
+          "core.openPluginImport.invalidManifest",
+          manifestValidationError
+        )
       );
     }
 
@@ -183,7 +203,9 @@ export async function importOpenPlugin(
       return err(e);
     }
     if (e instanceof OpenPluginInputError) {
-      return err(new UserError(OPEN_PLUGIN_IMPORT_SOURCE, "InvalidPlugin", e.message, e.message));
+      return err(
+        localizedImportUserError("InvalidPlugin", "core.openPluginImport.invalidPlugin", e.message)
+      );
     }
     const message = e instanceof Error ? e.message : String(e);
     return err(
@@ -191,7 +213,7 @@ export async function importOpenPlugin(
         source: OPEN_PLUGIN_IMPORT_SOURCE,
         name: "ImportOpenPluginFailed",
         message,
-        displayMessage: message,
+        displayMessage: getLocalizedString("core.openPluginImport.failed"),
       })
     );
   }
@@ -204,11 +226,10 @@ async function getMappedManifestValidationError(
   try {
     typedManifest = TeamsManifestConverter.jsonToManifest(JSON.stringify(manifest));
   } catch (error) {
-    const detail = error instanceof Error ? error.message : String(error);
-    return `Mapped Teams manifest is invalid: ${detail}`;
+    return error instanceof Error ? error.message : String(error);
   }
   const errors = await AppManifestUtils.validateAgainstSchema(typedManifest);
-  return errors.length > 0 ? `Mapped Teams manifest is invalid: ${errors.join(" ")}` : undefined;
+  return errors.length > 0 ? errors.join(" ") : undefined;
 }
 
 // Teams Developer Portal accepts only these SKILL.md frontmatter keys.

@@ -15,7 +15,7 @@ export interface OpenPluginMcpAuthResolution {
   warnings: string[];
 }
 
-type AuthProbeTarget = "invalid" | "noProbe" | "remote";
+type AuthProbeTarget = "invalid" | "unsupported" | "noProbe" | "remote";
 
 function isLocalHostname(hostname: string): boolean {
   if (
@@ -34,8 +34,11 @@ function isLocalHostname(hostname: string): boolean {
 function classifyAuthProbeTarget(serverUrl: string): AuthProbeTarget {
   try {
     const parsed = new URL(serverUrl);
+    if (parsed.protocol !== "https:") {
+      return "unsupported";
+    }
     const hostname = parsed.hostname.toLowerCase().replace(/\.$/, "");
-    return parsed.protocol === "https:" && !isLocalHostname(hostname) ? "remote" : "noProbe";
+    return isLocalHostname(hostname) ? "noProbe" : "remote";
   } catch {
     return "invalid";
   }
@@ -83,6 +86,9 @@ export async function resolveOpenPluginMcpAuth(
     const probeTarget = classifyAuthProbeTarget(serverUrl);
     if (probeTarget === "invalid") {
       return err(unresolvedAuth(serverName));
+    }
+    if (probeTarget === "unsupported") {
+      continue;
     }
     if (probeTarget === "noProbe") {
       setRecordValue(authTypes, serverName, "None");

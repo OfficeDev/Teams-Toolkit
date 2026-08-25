@@ -5,6 +5,7 @@ import { AppManifestUtils, ok, SystemError, UserError } from "@microsoft/teamsfx
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
+import { getDefaultString, getLocalizedString } from "../../../../src/common/localizeUtils";
 import * as mcpToolFetcher from "../../../../src/common/mcpToolFetcher";
 import { setTools } from "../../../../src/common/globalVars";
 import { Generator } from "../../../../src/component/generator/generator";
@@ -412,7 +413,13 @@ describe("openPlugin.importOpenPlugin", () => {
     });
 
     chai.expect(res.isErr()).to.equal(true);
-    if (res.isErr()) chai.expect(res.error).to.be.instanceOf(SystemError);
+    if (res.isErr()) {
+      chai.expect(res.error).to.be.instanceOf(SystemError);
+      chai.expect(res.error.message).to.equal("schema unavailable");
+      chai
+        .expect(res.error.displayMessage)
+        .to.equal(getLocalizedString("core.openPluginImport.failed"));
+    }
     chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
     chai.expect(await fs.pathExists(outDir)).to.equal(false);
   });
@@ -435,7 +442,15 @@ describe("openPlugin.importOpenPlugin", () => {
       });
 
       chai.expect(res.isErr()).to.equal(true);
-      if (res.isErr()) chai.expect(res.error.name).to.equal("InvalidManifest");
+      if (res.isErr()) {
+        const defaultPrefix = getDefaultString("core.openPluginImport.invalidManifest", "");
+        const localizedPrefix = getLocalizedString("core.openPluginImport.invalidManifest", "");
+        chai.expect(res.error.name).to.equal("InvalidManifest");
+        chai.expect(defaultPrefix).not.to.equal("");
+        chai.expect(localizedPrefix).not.to.equal("");
+        chai.expect(res.error.message.startsWith(defaultPrefix)).to.equal(true);
+        chai.expect(res.error.displayMessage.startsWith(localizedPrefix)).to.equal(true);
+      }
       chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
       chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
       chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
@@ -913,7 +928,7 @@ describe("openPlugin.importOpenPlugin", () => {
           .filter((warning) => warning.startsWith("Auto inferred"))
           .map((warning) => warning.match(/server '([^']+)'/)?.[1])
       )
-      .to.deep.equal(["local", "public", "secure"]);
+      .to.deep.equal(["public", "secure"]);
   });
 
   it("surfaces a warning for stdio MCP servers", async () => {
@@ -977,6 +992,12 @@ describe("openPlugin.importOpenPlugin", () => {
     chai.expect(res.isErr()).to.equal(true);
     if (res.isErr()) {
       chai.expect(res.error.name).to.equal("OutputDirectoryNotEmpty");
+      chai
+        .expect(res.error.message)
+        .to.equal(getDefaultString("core.openPluginImport.outputDirectoryNotEmpty", outDir));
+      chai
+        .expect(res.error.displayMessage)
+        .to.equal(getLocalizedString("core.openPluginImport.outputDirectoryNotEmpty", outDir));
     }
     chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
     chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
@@ -996,7 +1017,15 @@ describe("openPlugin.importOpenPlugin", () => {
       });
 
       chai.expect(res.isErr()).to.equal(true);
-      if (res.isErr()) chai.expect(res.error.name).to.equal("InvalidOutputPath");
+      if (res.isErr()) {
+        chai.expect(res.error.name).to.equal("InvalidOutputPath");
+        chai
+          .expect(res.error.message)
+          .to.equal(getDefaultString("core.openPluginImport.invalidOutputPath", outDir));
+        chai
+          .expect(res.error.displayMessage)
+          .to.equal(getLocalizedString("core.openPluginImport.invalidOutputPath", outDir));
+      }
       chai.expect(await fs.readdir(outside)).to.deep.equal([]);
       chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
       chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
@@ -1098,14 +1127,24 @@ describe("openPlugin.importOpenPlugin", () => {
   });
 
   it("returns an error when --path does not exist", async () => {
+    const missingPath = path.join(pluginDir, "does-not-exist");
     const res = await importOpenPlugin({
-      path: path.join(pluginDir, "does-not-exist"),
+      path: missingPath,
       output: outDir,
       privacyUrl: "https://example.com/privacy",
       termsUrl: "https://example.com/terms",
     });
     chai.expect(res.isErr()).to.equal(true);
-    if (res.isErr()) chai.expect(res.error).to.be.instanceOf(UserError);
+    if (res.isErr()) {
+      const defaultPrefix = getDefaultString("core.openPluginImport.invalidPlugin", "");
+      const localizedPrefix = getLocalizedString("core.openPluginImport.invalidPlugin", "");
+      chai.expect(res.error).to.be.instanceOf(UserError);
+      chai.expect(res.error.name).to.equal("InvalidPlugin");
+      chai.expect(defaultPrefix).not.to.equal("");
+      chai.expect(localizedPrefix).not.to.equal("");
+      chai.expect(res.error.message.startsWith(defaultPrefix)).to.equal(true);
+      chai.expect(res.error.displayMessage.startsWith(localizedPrefix)).to.equal(true);
+    }
   });
 
   it("returns MissingPluginPath when path is empty", async () => {
@@ -1118,6 +1157,12 @@ describe("openPlugin.importOpenPlugin", () => {
     chai.expect(res.isErr()).to.equal(true);
     if (res.isErr()) {
       chai.expect(res.error.name).to.equal("MissingPluginPath");
+      chai
+        .expect(res.error.message)
+        .to.equal(getDefaultString("core.openPluginImport.missingPluginPath"));
+      chai
+        .expect(res.error.displayMessage)
+        .to.equal(getLocalizedString("core.openPluginImport.missingPluginPath"));
     }
   });
 
