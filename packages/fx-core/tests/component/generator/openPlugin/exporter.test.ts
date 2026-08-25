@@ -122,6 +122,23 @@ describe("openPlugin.exportOpenPlugin", () => {
     });
   });
 
+  it("AP-EXPORT-13: synthesizes valid defaults from a minimal Teams manifest", async () => {
+    await fs.writeJSON(path.join(projectDir, "appPackage", "manifest.json"), {});
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const plugin = await fs.readJSON(path.join(outDir, "plugin.json"));
+    chai.expect(plugin).to.include({
+      $schema: PLUGIN_SCHEMA_URL,
+      name: "exported-plugin",
+      version: "1.0.0",
+      description: "exported-plugin",
+    });
+    chai.expect(plugin.extensions).to.equal(undefined);
+    chai.expect(await fs.pathExists(path.join(outDir, "mcp.json"))).to.equal(false);
+  });
+
   it("AP-PATH-19: rejects an absolute MCP tool-description path", async () => {
     const appPackage = path.join(projectDir, "appPackage");
     const toolDescriptionPath = path.join(appPackage, "mcp-tool-description.json");
@@ -536,6 +553,36 @@ describe("openPlugin.exportOpenPlugin", () => {
       .to.equal(true);
   });
 
+  it("AP-EXPORT-14: preserves empty and skips missing MCP tool descriptions", async () => {
+    const manifestPath = path.join(projectDir, "appPackage", "manifest.json");
+    const manifest = await fs.readJSON(manifestPath);
+    manifest.agentConnectors = [
+      {
+        id: "empty",
+        toolSource: { remoteMcpServer: { mcpToolDescription: {} } },
+      },
+      {
+        id: "missing",
+        toolSource: { remoteMcpServer: { mcpToolDescription: { file: "missing.json" } } },
+      },
+    ];
+    await fs.writeJSON(manifestPath, manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const plugin = await fs.readJSON(path.join(outDir, "plugin.json"));
+    const connectors = plugin.extensions[ATK_EXTENSION_NAMESPACE].agentConnectors;
+    chai.expect(connectors.empty.mcpToolDescription).to.deep.equal({});
+    chai.expect(connectors.missing).to.equal(undefined);
+    chai
+      .expect(res.value.warnings.some((warning) => warning.includes("missing.json")))
+      .to.equal(true);
+    chai
+      .expect(await fs.pathExists(path.join(outDir, ".microsoft", "mcp-tool-descriptions")))
+      .to.equal(false);
+  });
+
   it("AP-PATH-06: skips nested command junctions that escape appPackage", async () => {
     const outside = await tmp("op-export-outside-command-");
     try {
@@ -604,7 +651,15 @@ describe("openPlugin.exportOpenPlugin", () => {
   );
 
   it.each([
+    ["schema", { $schema: 42 }],
+    ["name", { name: "demo" }],
+    ["description", { description: "demo" }],
     ["agentConnectors", { agentConnectors: {} }],
+    ["agentSkills entry", { agentSkills: ["./skills/alpha-skill"] }],
+    ["agentSkills folder", { agentSkills: [{ folder: 42 }] }],
+    ["connector entry", { agentConnectors: ["web"] }],
+    ["connector id", { agentConnectors: [{ id: 42 }] }],
+    ["connector reusable", { agentConnectors: [{ id: "web", reusable: "yes" }] }],
     ["developer.name", { developer: { name: 42 } }],
     ["connector.toolSource", { agentConnectors: [{ id: "web", toolSource: "remote" }] }],
     [
@@ -627,11 +682,65 @@ describe("openPlugin.exportOpenPlugin", () => {
         ],
       },
     ],
+    [
+      "connector tool description",
+      {
+        agentConnectors: [
+          {
+            id: "web",
+            toolSource: { remoteMcpServer: { mcpToolDescription: "tools.json" } },
+          },
+        ],
+      },
+    ],
+    [
+      "connector tool-description file",
+      {
+        agentConnectors: [
+          {
+            id: "web",
+            toolSource: { remoteMcpServer: { mcpToolDescription: { file: 42 } } },
+          },
+        ],
+      },
+    ],
+    [
+      "connector authorization type",
+      {
+        agentConnectors: [
+          {
+            id: "web",
+            toolSource: { remoteMcpServer: { authorization: { type: 42 } } },
+          },
+        ],
+      },
+    ],
+    [
+      "connector authorization reference",
+      {
+        agentConnectors: [
+          {
+            id: "web",
+            toolSource: { remoteMcpServer: { authorization: { referenceId: 42 } } },
+          },
+        ],
+      },
+    ],
   ])("AP-EXPORT-07: rejects malformed %s input", async (_field, override) => {
     const manifestPath = path.join(projectDir, "appPackage", "manifest.json");
     const manifest = await fs.readJSON(manifestPath);
     Object.assign(manifest, override);
     await fs.writeJSON(manifestPath, manifest);
+
+    const res = await exportOpenPlugin({ path: projectDir, output: outDir });
+
+    assert.isTrue(res.isErr());
+    if (res.isErr()) assert.equal(res.error.name, "InvalidManifest");
+    chai.expect(await fs.pathExists(outDir)).to.equal(false);
+  });
+
+  it("AP-EXPORT-15: rejects a primitive Teams manifest", async () => {
+    await fs.writeJSON(path.join(projectDir, "appPackage", "manifest.json"), "invalid");
 
     const res = await exportOpenPlugin({ path: projectDir, output: outDir });
 

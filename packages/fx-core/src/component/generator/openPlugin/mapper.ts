@@ -40,7 +40,7 @@ const CONNECTOR_ID_HASH_LENGTH = 12;
 
 export function validateMcpServerCount(mcpServers: Record<string, OpenPluginMcpServerEntry>): void {
   const connectorCount = Object.values(mcpServers).filter(
-    (server) => typeof server.url === "string" && server.url.trim().length > 0
+    (server) => typeof server.url === "string" && isSecureHttpUrl(server.url.trim())
   ).length;
   if (connectorCount > MAX_AGENT_CONNECTORS) {
     throw new OpenPluginInputError(

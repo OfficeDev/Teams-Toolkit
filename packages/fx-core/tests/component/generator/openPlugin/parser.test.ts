@@ -111,6 +111,18 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai.expect(caught!.message).to.match(/No plugin manifest/);
   });
 
+  it("AP-MANIFEST-01: rejects malformed plugin.json", async () => {
+    await fs.writeFile(path.join(tempDir, "plugin.json"), "{ invalid json");
+
+    await expectReadFailure(tempDir, /plugin\.json contains invalid JSON/);
+  });
+
+  it("AP-MANIFEST-02: rejects a plugin.json directory", async () => {
+    await fs.ensureDir(path.join(tempDir, "plugin.json"));
+
+    await expectReadFailure(tempDir, /plugin\.json.*regular file/);
+  });
+
   it("finds plugin.json in the plugin root (Agent Plugins 1.0.0)", async () => {
     await seedPlugin(tempDir);
     const parsed = await readOpenPluginDir(tempDir);
@@ -421,6 +433,22 @@ describe("openPlugin.readOpenPluginDir", () => {
       .to.equal(true);
   });
 
+  it("AP-MCP-15: disables MCP when mcp.json is a directory", async () => {
+    await seedPlugin(tempDir);
+    await fs.ensureDir(path.join(tempDir, "mcp.json"));
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.mcpServers).to.deep.equal({});
+    chai
+      .expect(
+        parsed.warnings.some(
+          (warning) => warning.includes("mcp.json") && warning.includes("regular file")
+        )
+      )
+      .to.equal(true);
+  });
+
   it("reads the toolkit block from extensions[com.microsoft.agents-toolkit]", async () => {
     await seedPlugin(tempDir, {
       pluginJson: {
@@ -459,6 +487,39 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai.expect(parsed.atkExtension?.agentConnectors?.web?.authorization).to.equal(undefined);
     chai
       .expect(parsed.warnings.some((warning) => warning.includes("authorization.type")))
+      .to.equal(true);
+  });
+
+  it("AP-EXT-06: sanitizes incomplete toolkit tool-description metadata", async () => {
+    await seedPlugin(tempDir, {
+      pluginJson: {
+        $schema: PLUGIN_SCHEMA_URL,
+        name: "demo-plugin",
+        extensions: {
+          "com.microsoft.agents-toolkit": {
+            agentConnectors: {
+              empty: { mcpToolDescription: { source: "descriptions/empty.json" } },
+              missing: {
+                mcpToolDescription: { file: "tools.json", source: "descriptions/missing.json" },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.atkExtension?.agentConnectors?.empty?.mcpToolDescription).to.deep.equal({});
+    chai
+      .expect(parsed.atkExtension?.agentConnectors?.missing?.mcpToolDescription)
+      .to.equal(undefined);
+    chai
+      .expect(
+        parsed.warnings.some(
+          (warning) => warning.includes("missing") && warning.includes("ignored")
+        )
+      )
       .to.equal(true);
   });
 
@@ -609,6 +670,51 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai.expect(parsed.warnings.some((warning) => warning.includes("license"))).to.equal(true);
   });
 
+  it.each([
+    ["invalid YAML", "name: invalid-skill\ndescription: [", /valid YAML/],
+    ["scalar YAML", "invalid-skill", /YAML mapping/],
+    ["missing description", "name: invalid-skill", /description/],
+    ["empty description", 'name: invalid-skill\ndescription: ""', /description/],
+    [
+      "oversized description",
+      `name: invalid-skill\ndescription: ${"d".repeat(1025)}`,
+      /description/,
+    ],
+    [
+      "empty compatibility",
+      'name: invalid-skill\ndescription: valid\ncompatibility: ""',
+      /compatibility/,
+    ],
+    [
+      "oversized compatibility",
+      `name: invalid-skill\ndescription: valid\ncompatibility: ${"c".repeat(501)}`,
+      /compatibility/,
+    ],
+    ["empty license", 'name: invalid-skill\ndescription: valid\nlicense: ""', /license/],
+    ["scalar metadata", "name: invalid-skill\ndescription: valid\nmetadata: value", /metadata/],
+    [
+      "non-string metadata value",
+      "name: invalid-skill\ndescription: valid\nmetadata:\n  count: 1",
+      /metadata/,
+    ],
+    [
+      "non-string allowed-tools",
+      "name: invalid-skill\ndescription: valid\nallowed-tools:\n  - Read",
+      /allowed-tools/,
+    ],
+  ])("AP-SKILL-04: skips a skill with %s", async (_case, frontmatter, warningPattern) => {
+    await seedPlugin(tempDir, { skills: ["valid-skill", "invalid-skill"] });
+    await fs.writeFile(
+      path.join(tempDir, "skills", "invalid-skill", "SKILL.md"),
+      `---\n${frontmatter}\n---\nbody`
+    );
+
+    const parsed = await readOpenPluginDir(tempDir);
+
+    chai.expect(parsed.skills).to.deep.equal(["valid-skill"]);
+    chai.expect(parsed.warnings.some((warning) => warningPattern.test(warning))).to.equal(true);
+  });
+
   it("discovers commands/*.md", async () => {
     await seedPlugin(tempDir, { commands: ["foo.md", "bar.md"] });
     const parsed = await readOpenPluginDir(tempDir);
@@ -642,6 +748,15 @@ describe("openPlugin.readOpenPluginDir", () => {
     chai
       .expect(parsed.warnings.some((w) => w.includes("'skills'") && w.includes("ignored")))
       .to.equal(true);
+  });
+
+  it("AP-MANIFEST-03: rejects a non-string component override in a legacy manifest", async () => {
+    await seedPlugin(tempDir, {
+      manifestRel: ".plugin/plugin.json",
+      pluginJson: { name: "demo-plugin", skills: ["./skills"] },
+    });
+
+    await expectReadFailure(tempDir, /'skills' override is set to a non-string value/);
   });
 
   it("requires a 'name' field", async () => {

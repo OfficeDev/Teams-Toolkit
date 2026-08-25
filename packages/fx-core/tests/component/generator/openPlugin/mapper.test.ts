@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 import { createHash } from "crypto";
+import * as path from "path";
 import { chai } from "vitest";
 import {
   ACCENT_COLOR,
@@ -254,6 +255,110 @@ describe("openPlugin.mapToTtkProject", () => {
       .to.throw(/MCP tool-description path.*collides/i);
   });
 
+  it("AP-MAP-10: rejects an escaping MCP tool-description destination", () => {
+    const parsed = baseParsed({
+      mcpServers: { svc: { url: "https://svc.example.com" } },
+      atkExtension: {
+        agentConnectors: {
+          svc: {
+            mcpToolDescription: {
+              file: "../escape.json",
+              source: "source.json",
+              contents: Buffer.from("{}"),
+            },
+          },
+        },
+      },
+    });
+
+    chai
+      .expect(() => mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" })))
+      .to.throw(/must identify a file within appPackage/i);
+  });
+
+  it("AP-MAP-11: deduplicates identical MCP tool-description destinations", () => {
+    const contents = Buffer.from("{}");
+    const parsed = baseParsed({
+      mcpServers: {
+        alpha: { url: "https://alpha.example.com" },
+        beta: { url: "https://beta.example.com" },
+      },
+      atkExtension: {
+        agentConnectors: {
+          alpha: {
+            mcpToolDescription: { file: "descriptions/tools.json", contents, source: "a.json" },
+          },
+          beta: {
+            mcpToolDescription: { file: "descriptions/tools.json", contents, source: "b.json" },
+          },
+        },
+      },
+    });
+
+    const mapped = mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" }));
+
+    chai.expect(mapped.copyOps).to.have.length(1);
+    chai
+      .expect(mapped.copyOps[0].destRelative)
+      .to.equal(path.join("appPackage", "descriptions", "tools.json"));
+  });
+
+  it("AP-MAP-12: rejects ancestor MCP tool-description destinations", () => {
+    const parsed = baseParsed({
+      mcpServers: {
+        alpha: { url: "https://alpha.example.com" },
+        beta: { url: "https://beta.example.com" },
+      },
+      atkExtension: {
+        agentConnectors: {
+          alpha: {
+            mcpToolDescription: {
+              file: "descriptions",
+              contents: Buffer.from("alpha"),
+              source: "a.json",
+            },
+          },
+          beta: {
+            mcpToolDescription: {
+              file: "descriptions/tools.json",
+              contents: Buffer.from("beta"),
+              source: "b.json",
+            },
+          },
+        },
+      },
+    });
+
+    chai
+      .expect(() => mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" })))
+      .to.throw(/MCP tool-description paths.*collide/i);
+  });
+
+  it("AP-MAP-13: preserves an empty MCP tool-description override", () => {
+    const parsed = baseParsed({
+      mcpServers: { svc: { url: "https://svc.example.com" } },
+      atkExtension: { agentConnectors: { svc: { mcpToolDescription: {} } } },
+    });
+
+    const mapped = mapToTtkProject(parsed, baseInputs({ defaultAuthType: "None" }));
+
+    chai.expect(mapped.manifest.agentConnectors).to.deep.equal([
+      {
+        id: "svc",
+        displayName: "svc MCP Server",
+        description: "Remote MCP server providing tools for demo-plugin",
+        toolSource: {
+          remoteMcpServer: {
+            mcpServerUrl: "https://svc.example.com",
+            authorization: { type: "None" },
+            mcpToolDescription: {},
+          },
+        },
+      },
+    ]);
+    chai.expect(mapped.copyOps).to.deep.equal([]);
+  });
+
   it("AP-MAP-06: bounds connector fields for long Agent Plugin server names", () => {
     const sharedServerPrefix = "s".repeat(150);
     const firstServerName = `${sharedServerPrefix}a`;
@@ -363,6 +468,23 @@ describe("openPlugin.mapToTtkProject", () => {
     chai
       .expect(() => mapToTtkProject(baseParsed({ mcpServers }), baseInputs(), authTypes))
       .to.throw(/caps agentConnectors at 10/);
+  });
+
+  it("AP-MAP-09: excludes skipped HTTP servers from the connector limit", () => {
+    const mcpServers: Record<string, { url: string }> = {
+      skipped: { url: "http://localhost:3000" },
+    };
+    for (let index = 0; index < 10; index++) {
+      mcpServers[`svc-${index}`] = { url: `https://svc-${index}.example.com` };
+    }
+
+    const { manifest, warnings } = mapToTtkProject(
+      baseParsed({ mcpServers }),
+      baseInputs({ defaultAuthType: "None" })
+    );
+
+    chai.expect(manifest.agentConnectors).to.have.length(10);
+    chai.expect(warnings.some((warning) => warning.includes("requires HTTPS"))).to.equal(true);
   });
 
   it("OPI-AUTH-07: does not guess when an Auto resolution is missing", () => {
