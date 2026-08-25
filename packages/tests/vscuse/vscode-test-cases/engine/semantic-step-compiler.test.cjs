@@ -825,6 +825,11 @@ test("VCB-85: existing API registration credentials are prompted only during pro
     }
     assert.match(
       plan.steps[targetSelectionIndex + 1].step_id,
+      /step_browserM365SignIn_refreshPage/,
+      caseId,
+    );
+    assert.match(
+      plan.steps[targetSelectionIndex + 2].step_id,
       /step_browserM365SignIn_assertAccount/,
       caseId,
     );
@@ -872,8 +877,14 @@ test("VCB-86: Copilot browser authentication preserves the launch deep link", as
 
   assert.equal(result.ok, true);
   for (const generated of result.value) {
+    const confirmationIndex = generated.plan.steps.findIndex((step) =>
+      step.step_id.startsWith("step_browserM365SignIn_confirmStaySignedIn_"),
+    );
+    assert.equal(confirmationIndex >= 0, true, generated.caseId);
     assert.equal(
-      generated.plan.steps.some((step) => step.parameters.key === "f5"),
+      generated.plan.steps
+        .slice(confirmationIndex + 1)
+        .some((step) => step.parameters.key === "f5"),
       false,
       generated.caseId,
     );
@@ -6951,7 +6962,7 @@ steps:
   );
 });
 
-test("VCB-167: no-action Bearer configuration reuses API-key provision without API-key fields", async () => {
+test("VCB-167: no-action Bearer configuration provisions with the bearer token secret", async () => {
   const sourceText = `version: 1
 cases:
   - id: no-action-bearer
@@ -7005,7 +7016,7 @@ steps:
   provision:
     type: provision
     with:
-      apiKey: "\${{secret:EXISTING_API_KEY}}"
+      apiKey: "\${{secret:EXISTING_API_BEARER_TOKEN}}"
 `;
   const result = compileInlineSource(sourceText, "vscuse-vcb-167.yml");
   assert.equal(
@@ -7126,6 +7137,22 @@ steps:
   assert.notEqual(provisionIndex, -1);
   assert.equal(authSuccessIndex < loginIndex, true);
   assert.equal(loginIndex < provisionIndex, true);
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "${{secret:EXISTING_API_BEARER_TOKEN}}",
+    ),
+    true,
+  );
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "${{secret:EXISTING_API_KEY}}",
+    ),
+    false,
+  );
   const fileAssertions = readFileAssertions(migrated.plan);
   assert.deepEqual(
     fileAssertions.map((assertion) => assertion.path),
@@ -7158,7 +7185,7 @@ steps:
   }
 });
 
-test("VCB-168: no-action Microsoft Entra configuration provisions an existing client ID", async () => {
+test("VCB-168: no-action Microsoft Entra configuration verifies persistent notifications", async () => {
   const scope =
     "api://plugincb4aae.azurewebsites.net/4cfde729-32e4-4862-a409-07e14dbfd296/readpairs_read: Read repair records";
   const sourceText = `version: 1
@@ -7251,26 +7278,46 @@ steps:
     (step) =>
       step.tool === "type_text" && step.parameters.text === commandTitle,
   );
-  const guidanceText =
-    "Microsoft 365 Agents Toolkit has successfully added Microsoft Entra authentication to the selected APIs. Please: 1. Find the application id uri with placeholder AADAUTHCODE_APPLICATION_ID_URI in .env files and update it to the Microsoft Entra app. 2. Add https://teams.microsoft.com/api/platform/v1.0/oAuthConsentRedirect to redirect uri of the Mcirosoft Entra app.";
+  const guidancePrefix = "Microsoft 365 Agents Toolkit has successfully ad";
   const successText =
     "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
-  const guidanceIndex = steps.findIndex((step) =>
-    step.description.includes(guidanceText),
-  );
-  const successIndex = steps.findIndex((step) =>
-    step.description.includes(successText),
+  const notificationAssertions = steps.filter(
+    (step) =>
+      step.agent === "assertion" &&
+      (step.description.includes(guidancePrefix) ||
+        step.description.includes(successText)),
   );
   assert.notEqual(commandIndex, -1);
-  assert.notEqual(guidanceIndex, -1);
-  assert.notEqual(successIndex, -1);
-  assert.equal(guidanceIndex < successIndex, true);
-  const configurationSteps = steps.slice(commandIndex, successIndex + 1);
+  assert.equal(notificationAssertions.length, 1);
+  assert.equal(
+    notificationAssertions[0].description.includes(guidancePrefix),
+    true,
+  );
+  assert.match(notificationAssertions[0].description, /yellow warning/);
+  assert.equal(
+    notificationAssertions[0].description.includes(successText),
+    true,
+  );
+  const notificationIndex = steps.indexOf(notificationAssertions[0]);
+  const notificationCenterIndex = steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Show Notifications",
+  );
+  assert.notEqual(notificationCenterIndex, -1);
+  assert.equal(notificationCenterIndex < notificationIndex, true);
+  const configurationSteps = steps.slice(commandIndex, notificationIndex + 1);
   assert.deepEqual(
     configurationSteps
       .filter((step) => step.tool === "type_text")
       .map((step) => step.parameters.text),
-    [commandTitle, "aadAuthCode", "Microsoft Entra", scope],
+    [
+      commandTitle,
+      "aadAuthCode",
+      "Microsoft Entra",
+      scope,
+      "Notifications: Show Notifications",
+    ],
   );
   assert.equal(
     configurationSteps.some((step) => step.tool === "click"),

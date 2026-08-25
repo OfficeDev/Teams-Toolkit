@@ -58,6 +58,24 @@ test("VTR-05: PR selector recognizes generated feature plan names", () => {
   assert.ok(userPromptIndex > generatedFeatureRuleIndex);
 });
 
+test("VTR-06: shared workflow supplies retained feature auth fixtures", () => {
+  const workflow = readWorkflow("ui-test-vscuse-common.yml");
+  const environment = workflow.jobs.main.env;
+
+  assert.equal(
+    environment.EXISTING_ENTRA_CLIENT_ID,
+    "${{ secrets.EXISTING_ENTRA_CLIENT_ID || '4cfde729-32e4-4862-a409-07e14dbfd296' }}",
+  );
+  assert.equal(
+    environment.EXISTING_GITHUB_OAUTH_CLIENT_ID,
+    "${{ secrets.EXISTING_GITHUB_OAUTH_CLIENT_ID || 'fakefakefakefakeid1' }}",
+  );
+  assert.equal(
+    environment.EXISTING_GITHUB_OAUTH_CLIENT_SECRET,
+    "${{ secrets.EXISTING_GITHUB_OAUTH_CLIENT_SECRET || 'fakefakefakefakefakefakefakefakefakefake' }}",
+  );
+});
+
 test("VTR-02: regular workflow supports manual and weekly runs", () => {
   const workflow = readWorkflow("ui-test-vscuse-regular.yml");
 

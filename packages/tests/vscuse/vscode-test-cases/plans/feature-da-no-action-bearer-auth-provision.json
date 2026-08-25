@@ -2755,7 +2755,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{secret:EXISTING_API_KEY}}"
+        "text": "${{secret:EXISTING_API_BEARER_TOKEN}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
