@@ -3,6 +3,7 @@
 
 import {
   AccountInfo,
+  AuthorizationUrlRequest,
   Configuration,
   PublicClientApplication,
   SilentFlowRequest,
@@ -162,6 +163,7 @@ export class CodeFlowLogin {
 
     // try get an unused port
     const app = express();
+    app.use(express.urlencoded({ extended: false }));
     const server = app.listen(serverPort);
     serverPort = (server.address() as AddressInfo).port;
     let lastSocketKey = 0;
@@ -178,11 +180,12 @@ export class CodeFlowLogin {
     });
 
     const authority = tenantId ? env.activeDirectoryEndpointUrl + tenantId : undefined;
-    const authCodeUrlParameters = {
+    const authCodeUrlParameters: AuthorizationUrlRequest = {
       scopes: scopes,
       codeChallenge: codeChallenge,
       codeChallengeMethod: "S256",
       redirectUri: `http://localhost:${serverPort}`,
+      responseMode: "form_post",
       prompt: "select_account",
       authority: authority,
       claims: claim,
@@ -193,9 +196,9 @@ export class CodeFlowLogin {
       (resolve, reject) => (deferredRedirect = { resolve, reject })
     );
 
-    app.get("/", (req: express.Request, res: express.Response) => {
+    app.post("/", (req: express.Request, res: express.Response) => {
       const tokenRequest = {
-        code: req.query.code as string,
+        code: req.body.code as string,
         scopes: scopes,
         redirectUri: `http://localhost:${serverPort}`,
         codeVerifier: codeVerifier,

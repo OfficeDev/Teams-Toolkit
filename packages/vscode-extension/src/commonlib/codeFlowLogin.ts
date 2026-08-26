@@ -141,6 +141,7 @@ export class CodeFlowLogin {
 
     // try get an unused port
     const app = express();
+    app.use(express.urlencoded({ extended: false }));
     const server = app.listen(serverPort);
     serverPort = (server.address() as AddressInfo).port;
     const authority = tenantId ? getTenantedAuthorityUrl(tenantId) : undefined;
@@ -150,6 +151,7 @@ export class CodeFlowLogin {
       codeChallenge: codeChallenge,
       codeChallengeMethod: "S256",
       redirectUri: `http://localhost:${serverPort}`,
+      responseMode: "form_post",
       prompt: !loginHint ? "select_account" : "login",
       loginHint,
       authority: authority,
@@ -160,10 +162,10 @@ export class CodeFlowLogin {
       (resolve, reject) => (deferredRedirect = { resolve, reject })
     );
 
-    app.get("/", (req: express.Request, res: express.Response) => {
+    app.post("/", (req: express.Request, res: express.Response) => {
       this.status = loggingIn;
       const tokenRequest = {
-        code: req.query.code as string,
+        code: req.body.code as string,
         scopes: scopes,
         redirectUri: `http://localhost:${serverPort}`,
         codeVerifier: codeVerifier,
