@@ -57,7 +57,14 @@ describe("CodeFlowLogin.loginWithBrowser", () => {
     vi.spyOn(codeFlowLogin.pca, "getAuthCodeUrl").mockImplementation(async (request: any) => {
       authorizationRequest = request;
       const callback = expressMocks.app.post.mock.calls[0][1];
-      void callback({ body: { code: "auth-code" } }, { sendStatus: vi.fn() });
+      void callback(
+        { body: { code: "auth-code" } },
+        {
+          end: vi.fn(),
+          sendStatus: vi.fn(),
+          writeHead: vi.fn(),
+        }
+      );
       return "https://login.microsoftonline.com/authorize";
     });
     vi.spyOn(codeFlowLogin.pca, "acquireTokenByCode").mockImplementation(async (request: any) => {
