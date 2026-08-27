@@ -118,7 +118,9 @@ test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section
     "authentication/m365/sign-in-from-account-picker.json.tpl",
   ]) {
     const signIn = render(relativePath);
-    const closeBrowser = signIn.steps.at(-2);
+    const closeBrowser = signIn.steps.find((step) =>
+      step.step_id.includes("_closeBrowser_"),
+    );
     const assertReady = signIn.steps.at(-1);
 
     assert.equal(closeBrowser.tool, "click");
@@ -128,6 +130,35 @@ test("VCB-47: Microsoft 365 sign-in verifies the account in the ACCOUNTS section
     assert.match(assertReady.description, /M365_ACCOUNT_NAME/);
     assert.match(assertReady.description, /the "ACCOUNTS" section lists/);
     assert.match(assertReady.description, /trailing ellipsis\.$/);
+  }
+});
+
+test("VCB-165: Microsoft 365 sign-in waits for the callback before closing the browser", () => {
+  for (const relativePath of [
+    "authentication/m365/sign-in.json.tpl",
+    "authentication/m365/sign-in-from-account-picker.json.tpl",
+  ]) {
+    const signIn = render(relativePath);
+    const assertCompleteIndex = signIn.steps.findIndex((step) =>
+      step.step_id.includes("_assertComplete_"),
+    );
+    const closeBrowserIndex = signIn.steps.findIndex((step) =>
+      step.step_id.includes("_closeBrowser_"),
+    );
+    const assertComplete = signIn.steps[assertCompleteIndex];
+    const closeBrowser = signIn.steps[closeBrowserIndex];
+
+    assert.equal(assertCompleteIndex >= 0, true);
+    assert.equal(closeBrowserIndex, assertCompleteIndex + 1);
+    assert.match(
+      assertComplete.description,
+      /You are signed in now and can close this page\.$/,
+    );
+    assert.equal(
+      assertComplete.tags.includes("step_retry_timeout: 180"),
+      true,
+    );
+    assert.equal(closeBrowser.depends_on[0], assertComplete.step_id);
   }
 });
 

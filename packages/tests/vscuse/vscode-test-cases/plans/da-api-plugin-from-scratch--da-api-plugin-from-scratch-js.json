@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 171,
+    "total_steps": 172,
     "name": "da-api-plugin-from-scratch-js",
     "description": {
       "owner": "",
@@ -103,6 +103,7 @@
       "step_signInM365FromPicker_next_c919bef1e_4_2",
       "step_signInM365FromPicker_typePassword_c919bef1e_4_2",
       "step_signInM365FromPicker_submit_c919bef1e_4_2",
+      "step_signInM365FromPicker_assertComplete_c919bef1e_4_2",
       "step_signInM365FromPicker_closeBrowser_c919bef1e_4_2",
       "step_signInM365FromPicker_assertReady_c919bef1e_4_2",
       "step_executeCommand_open_c919bef1e_5_1",
@@ -2185,6 +2186,27 @@
       ]
     },
     {
+      "step_id": "step_signInM365FromPicker_assertComplete_c919bef1e_4_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the M365 Account - Sign In page says You are signed in now and can close this page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_signInM365FromPicker_submit_c919bef1e_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
       "step_id": "step_signInM365FromPicker_closeBrowser_c919bef1e_4_2",
       "agent": "interaction",
       "tool": "click",
@@ -2199,7 +2221,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_signInM365FromPicker_submit_c919bef1e_4_2"
+        "step_signInM365FromPicker_assertComplete_c919bef1e_4_2"
       ],
       "preconditions": [
         "dhash:1008:19:16:5:a322c95a325ac922",

@@ -197,6 +197,25 @@
       ]
     },
     {
+      "step_id": "step_signInM365_assertComplete_{{text:instanceSuffix}}",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the M365 Account - Sign In page says You are signed in now and can close this page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": ["step_signInM365_submit_{{text:instanceSuffix}}"],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "account:m365",
+        "step_retry_timeout: 180"
+      ]
+    },
+    {
       "step_id": "step_signInM365_closeBrowser_{{text:instanceSuffix}}",
       "agent": "interaction",
       "tool": "click",
@@ -210,7 +229,7 @@
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
-      "depends_on": ["step_signInM365_submit_{{text:instanceSuffix}}"],
+      "depends_on": ["step_signInM365_assertComplete_{{text:instanceSuffix}}"],
       "preconditions": [
         "dhash:1004:19:16:5:aac833964c9633cc",
         "dhash:1004:19:96:5:d2232323c200e6e6",
