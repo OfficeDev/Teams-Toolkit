@@ -1154,6 +1154,43 @@ describe("ActionInjector", () => {
     });
   });
 
+  describe("injectCreateAPIKeyActionForMCP", () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("SCN-ADD-MCP-15: injects idempotent API-key registration using the MCP base URL", async () => {
+      const ymlContent = `
+        provision:
+          - uses: teamsApp/create
+            writeToEnvironmentFile:
+              teamsAppId: TEAMS_APP_ID
+      `;
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      const writeStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
+
+      const result = await ActionInjector.injectCreateAPIKeyActionForMCP(
+        "m365agents.yml",
+        "examplecom",
+        "MCP_DA_AUTH_ID_EXAMPLECOM",
+        "https://example.com/mcp"
+      );
+
+      assert.deepEqual(result, {
+        defaultRegistrationIdEnvName: "MCP_DA_AUTH_ID_EXAMPLECOM",
+        registrationIdEnvName: "MCP_DA_AUTH_ID_EXAMPLECOM",
+      });
+      const written = String(writeStub.mock.calls[0][1]);
+      assert.include(written, "uses: apiKey/register");
+      assert.include(written, "name: examplecom");
+      assert.include(written, "appId: ${{TEAMS_APP_ID}}");
+      assert.include(written, "baseUrl: https://example.com/mcp");
+      assert.include(written, "registrationId: MCP_DA_AUTH_ID_EXAMPLECOM");
+      assert.notInclude(written, "apiSpecPath:");
+      assert.notInclude(written, "primaryClientSecret:");
+    });
+  });
+
   describe("injectCreateDcrActionForMCP", () => {
     let writeStub: any;
 

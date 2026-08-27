@@ -16,9 +16,19 @@
       "keyPrefix": "template.daMcpServer.authType",
       "staticOptions": [
         { "id": "oauth", "label": "OAuth (with static registration)" },
-        { "id": "oauth-dynamic", "label": "OAuth (with dynamic registration)",
-          "condition": { "expr": "featureFlag('TEAMSFX_MCP_FOR_DA_DT') && featureFlag('TEAMSFX_MCP_FOR_DA_DCR')" } },
+        {
+          "id": "oauth-dynamic",
+          "label": "OAuth (with dynamic registration)",
+          "condition": {
+            "expr": "featureFlag('TEAMSFX_MCP_FOR_DA_DT') && featureFlag('TEAMSFX_MCP_FOR_DA_DCR')"
+          }
+        },
         { "id": "entra-sso", "label": "Entra SSO" },
+        {
+          "id": "bearer-token",
+          "label": "API Key (Bearer Token Auth)",
+          "detail": "Send an API key as an HTTP Bearer token."
+        },
         { "id": "none", "label": "None" }
       ],
       "default": "none"

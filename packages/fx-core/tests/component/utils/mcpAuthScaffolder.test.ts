@@ -45,6 +45,11 @@ describe("mcpAuthScaffolder", () => {
       assert.deepEqual(result, { type: "OAuthPluginVault", reference_id: "${{ID2}}" });
     });
 
+    it("SCN-ADD-MCP-15: returns ApiKeyPluginVault for bearer-token", () => {
+      const result = deriveMCPManifestOAuth("bearer-token", "ID3");
+      assert.deepEqual(result, { type: "ApiKeyPluginVault", reference_id: "${{ID3}}" });
+    });
+
     it("returns undefined for none auth type", () => {
       assert.isUndefined(deriveMCPManifestOAuth("none", "ID3"));
     });
@@ -71,6 +76,13 @@ describe("mcpAuthScaffolder", () => {
     it("returns empty for none", async () => {
       const stub = vi.spyOn(mcpAuthScaffolderDeps, "resolveMCPOAuthMetadata");
       const result = await resolveMCPAuthEndpoints("none", baseInputs);
+      assert.deepEqual(result, {});
+      assert.isTrue(stub.mock.calls.length === 0);
+    });
+
+    it("SCN-ADD-MCP-16: does not resolve OAuth endpoints for bearer-token", async () => {
+      const stub = vi.spyOn(mcpAuthScaffolderDeps, "resolveMCPOAuthMetadata");
+      const result = await resolveMCPAuthEndpoints("bearer-token", baseInputs);
       assert.deepEqual(result, {});
       assert.isTrue(stub.mock.calls.length === 0);
     });
@@ -169,6 +181,28 @@ describe("mcpAuthScaffolder", () => {
         baseArgs.mcpServerUrl,
         "https://auth/.well-known/oauth-authorization-server"
       );
+    });
+
+    it("SCN-ADD-MCP-15: injects API-key registration for bearer-token", async () => {
+      const apiKeyStub = vi
+        .spyOn(ActionInjector, "injectCreateAPIKeyActionForMCP")
+        .mockResolvedValue();
+      const oauthStub = vi
+        .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+        .mockResolvedValue();
+      const result = await injectMCPAuthActionToYml({
+        ...baseArgs,
+        authType: "bearer-token",
+        endpoints: {},
+      });
+      assert.deepEqual(result, {});
+      expect(apiKeyStub).toHaveBeenCalledExactlyOnceWith(
+        baseArgs.ymlPath,
+        baseArgs.authName,
+        baseArgs.registrationId,
+        baseArgs.mcpServerUrl
+      );
+      assert.isTrue(oauthStub.mock.calls.length === 0);
     });
 
     it("injects DCR action with placeholder when well-known url is missing", async () => {

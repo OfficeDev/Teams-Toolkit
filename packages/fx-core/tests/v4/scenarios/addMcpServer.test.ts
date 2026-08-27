@@ -4,6 +4,8 @@
 import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { scaffold } from "../../../src/v4/runtime/scaffold";
 import { mcpAuthScaffoldDeps } from "../../../src/v4/mcp/mcpAuthScaffold";
+import { deriveMCPNamespaceFromUrl } from "../../../src/component/generator/declarativeAgent/helper";
+import { deriveMCPManifestOAuth } from "../../../src/component/utils/mcpAuthScaffolder";
 import { afterEach, assert, beforeEach, vi } from "vitest";
 import {
   isRecord,
@@ -192,6 +194,18 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.strictEqual(condition.expr, "mcpServerUrl == null");
   });
 
+  it("SCN-ADD-MCP-13 and SCN-ADD-MCP-14: auth question accepts and describes bearer-token", () => {
+    const authTypeQuestion = questionItems(questions).find(
+      (question) => question.name === "authType"
+    );
+    assert.isDefined(authTypeQuestion);
+    const staticOptions = authTypeQuestion?.staticOptions;
+    assert.isTrue(isRecordArray(staticOptions));
+    const bearerToken = staticOptions.find((option) => option.id === "bearer-token");
+    assert.isDefined(bearerToken);
+    assert.isNotEmpty(bearerToken?.detail);
+  });
+
   it("SCN-ADD-MCP-10: static auth defers credentials to provision", async () => {
     assert.isTrue(isRecord(descriptor));
     const properties = recordProperty(recordProperty(descriptor, "optionsSchema"), "properties");
@@ -209,6 +223,26 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
       assert.notInclude(yml, "MCP_DA_OAUTH_");
       assert.notInclude(yml, "SECRET_MCP_DA_OAUTH_");
     }
+  });
+
+  it("SCN-ADD-MCP-15, SCN-ADD-MCP-16, and SCN-ADD-MCP-17: bearer-token matches the legacy auth contract without OAuth data", async () => {
+    const { files, outcome } = await run({ authType: "bearer-token" });
+    const plugin = readJsonObject(files, PLUGIN_PATH);
+    const runtime = runtimes(plugin)[0];
+    assert.equal(plugin.namespace, deriveMCPNamespaceFromUrl(MCP_SERVER_URL));
+    assert.deepEqual(auth(runtime), deriveMCPManifestOAuth("bearer-token", AUTH_ENV_VAR));
+    assert.include(outcome.stepsRun, "mcp-auth/inject-yml-action");
+    assert.include(outcome.stepsRun, "mcp-auth/persist-credential-env");
+    const yml = text(files, YML_PATH);
+    assert.include(yml, "uses: apiKey/register");
+    assert.include(yml, `baseUrl: ${MCP_SERVER_URL}`);
+    assert.notInclude(yml, "apiSpecPath:");
+    assert.notInclude(yml, "oauth/register");
+    assert.notInclude(yml, "dcr/register");
+    assert.notInclude(yml, "primaryClientSecret:");
+    assert.include(text(files, ENV_PATH), `${AUTH_ENV_VAR}=`);
+    assert.equal(mcpAuthScaffoldDeps.probeMCPServerAuth.mock.calls.length, 0);
+    assert.equal(mcpAuthScaffoldDeps.resolveMCPOAuthMetadata.mock.calls.length, 0);
   });
 
   it("SCN-ADD-MCP-05: a same-URL re-run skips render collision and does not duplicate actions or auth", async () => {

@@ -127,6 +127,27 @@ describe("v4 MCP auth YAML action", () => {
     });
   });
 
+  it("SCN-ADD-MCP-15: injects API-key registration for bearer-token", () => {
+    const result = injectMcpAuthActionYaml(BASE_YML, {
+      ...BASE_ARGS,
+      authType: "bearer-token",
+      endpoints: {},
+    });
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    assert.deepEqual(provisionActions(result._unsafeUnwrap().yaml)[1], {
+      uses: "apiKey/register",
+      with: {
+        name: "apigithubc",
+        appId: "${{TEAMS_APP_ID}}",
+        baseUrl: "https://api.github.com/mcp",
+      },
+      writeToEnvironmentFile: { registrationId: "MCP_DA_AUTH_ID_APIGITHUBC" },
+    });
+    assert.isFalse(result._unsafeUnwrap().oauthUrlPlaceholderUsed);
+    assert.isFalse(result._unsafeUnwrap().wellKnownUrlPlaceholderUsed);
+  });
+
   it("rejects an unknown auth type", () => {
     const result = injectMcpAuthActionYaml(BASE_YML, {
       ...BASE_ARGS,

@@ -18,8 +18,8 @@ export function gateMCPDAAuthTypeChoices(options: CLICommandOption[]): CLIComman
   for (const option of options) {
     if (option.name === "mcp-da-auth-type" && option.type === "string") {
       option.choices = showDCR
-        ? ["oauth", "oauth-dynamic", "entra-sso", "none"]
-        : ["oauth", "entra-sso", "none"];
+        ? ["oauth", "oauth-dynamic", "entra-sso", "bearer-token", "none"]
+        : ["oauth", "entra-sso", "bearer-token", "none"];
       break;
     }
   }

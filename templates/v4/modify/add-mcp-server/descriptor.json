@@ -19,7 +19,7 @@
     "properties": {
       "mcpServerUrl": { "type": "string", "format": "uri" },
       "teamsManifestPath": { "type": "string", "default": "appPackage/manifest.json" },
-      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic"], "default": "none" }
+      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic", "bearer-token"], "default": "none" }
     },
     "additionalProperties": false
   },
@@ -27,6 +27,7 @@
   "replaceMap": [
     { "var": "MCPForDAServerUrl", "from": "mcpServerUrl" },
     { "var": "IsNoAuth", "when": "authType == 'none'", "value": "true" },
+    { "var": "IsBearerToken", "when": "authType == 'bearer-token'", "value": "true" },
     { "var": "MicrosoftEntra", "when": "authType == 'entra-sso'", "value": "true" },
     { "var": "MCPNamespace", "expr": "mcpNamespace(mcpServerUrl)" },
     { "var": "MCPAuthRefId", "expr": "mcpAuthRef(mcpServerUrl)" }
