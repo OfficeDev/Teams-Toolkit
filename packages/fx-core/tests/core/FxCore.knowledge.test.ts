@@ -62,11 +62,18 @@ describe("addKnowledge", async () => {
       actions: [{}],
       capabilities: [],
     });
+    await fs.writeJson("test1.json", {
+      actions: [{}],
+      capabilities: [],
+    });
   });
 
   afterEach(async () => {
     if (await fs.pathExists("fakeAgentManifest.json")) {
       await fs.unlink("fakeAgentManifest.json");
+    }
+    if (await fs.pathExists("test1.json")) {
+      await fs.unlink("test1.json");
     }
     vi.restoreAllMocks();
   });
@@ -605,12 +612,14 @@ describe("addKnowledge", async () => {
       } as DeclarativeCopilotManifestSchema)
     );
 
+    const expectedError = new UserError("test", "test", "test");
     vi.spyOn(copilotGptManifestUtils, "addWebSearchCapability").mockResolvedValue(
-      err(new UserError("test", "test", "test"))
+      err(expectedError)
     );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    assert.isTrue(result.isOk());
+    assert.isTrue(result.isErr());
+    assert.strictEqual(result._unsafeUnwrapErr(), expectedError);
   });
 
   it("error path: add OneDrive & Sharepoint capability", async () => {
@@ -644,12 +653,14 @@ describe("addKnowledge", async () => {
       } as DeclarativeCopilotManifestSchema)
     );
 
+    const expectedError = new UserError("test", "test", "test");
     vi.spyOn(copilotGptManifestUtils, "addOneDriveSharePointCapability").mockResolvedValue(
-      err(new UserError("test", "test", "test"))
+      err(expectedError)
     );
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    assert.isTrue(result.isOk());
+    assert.isTrue(result.isErr());
+    assert.strictEqual(result._unsafeUnwrapErr(), expectedError);
   });
 
   it("error path: undefined projectPath", async () => {
@@ -882,14 +893,12 @@ describe("addKnowledge", async () => {
       ok("fakeAgentManifest.json")
     );
     vi.spyOn(MockUserInteraction.prototype, "showMessage").mockResolvedValue(ok("Add"));
-    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
-      err(new UserError("test", "test", "test"))
-    );
+    await fs.remove("test1.json");
 
     const core = new FxCore(tools);
     for (const inputs of inputsList) {
       const result = await core.addKnowledge(inputs);
-      assert.isTrue(result.isOk());
+      assert.isTrue(result.isErr());
     }
   });
 
@@ -1152,12 +1161,12 @@ describe("addKnowledge", async () => {
       } as DeclarativeCopilotManifestSchema)
     );
 
-    vi.spyOn(copilotGptManifestUtils, "addGCCapability").mockResolvedValue(
-      err(new UserError("test", "test", "test"))
-    );
+    const expectedError = new UserError("test", "test", "test");
+    vi.spyOn(copilotGptManifestUtils, "addGCCapability").mockResolvedValue(err(expectedError));
     const core = new FxCore(tools);
     const result = await core.addKnowledge(inputs);
-    assert.isTrue(result.isOk());
+    assert.isTrue(result.isErr());
+    assert.strictEqual(result._unsafeUnwrapErr(), expectedError);
   });
 
   it("happy path: add OneDrive & Sharepoint(search all)", async () => {

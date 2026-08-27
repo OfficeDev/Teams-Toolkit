@@ -27,11 +27,12 @@ cases:
         scaffold-rag-search-ts-openai,
         check-rag-search-ts-openai,
         fill-azure-search-credentials,
-        use-fake-openai-key,
+        use-gpt-4o-mini-ts,
+        redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat-openai-fake-key,
+        check-rag-search-chat,
       ]
 
   - id: rag-azure-ai-search-js-azure-openai-local-teams
@@ -57,11 +58,12 @@ cases:
         scaffold-rag-search-js-openai,
         check-rag-search-js-openai,
         fill-azure-search-credentials,
-        use-fake-openai-key,
+        use-gpt-4o-mini-js,
+        redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat-openai-fake-key,
+        check-rag-search-chat,
       ]
 
   - id: rag-azure-ai-search-py-azure-openai-local-teams
@@ -87,13 +89,164 @@ cases:
       [
         scaffold-rag-search-py-openai,
         check-rag-search-py-openai,
+        use-gpt-4o-mini-py,
         create-python-environment,
         fill-azure-search-credentials,
         redirect-openai-base-url,
         login-m365,
         f5-teams-local,
         open-app,
-        check-rag-search-chat-openai,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-ts-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-01
+    workItemIds: [27569083]
+    steps:
+      [
+        scaffold-rag-search-ts-azure-openai,
+        check-rag-search-ts-azure-openai,
+        fill-dev-node-azure-search-credentials,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-node,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-js-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-03
+    workItemIds: [27569119]
+    steps:
+      [
+        scaffold-rag-search-js-azure-openai,
+        check-rag-search-js-azure-openai,
+        fill-dev-node-azure-search-credentials,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-node,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-py-azure-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-04
+    workItemIds: [27454388]
+    steps:
+      [
+        scaffold-rag-search-py-azure-openai,
+        check-rag-search-py-azure-openai,
+        create-python-environment,
+        fill-dev-python-azure-search-credentials,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-python,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-ts-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-01
+    workItemIds: [36534502]
+    steps:
+      [
+        scaffold-rag-search-ts-azure-openai,
+        check-rag-search-ts-azure-openai,
+        fill-playground-node-azure-search-credentials,
+        f5-playground,
+        open-app,
+        check-rag-search-playground-chat,
+      ]
+
+  - id: rag-azure-ai-search-js-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-03
+    workItemIds: [27569090]
+    steps:
+      [
+        scaffold-rag-search-js-azure-openai,
+        check-rag-search-js-azure-openai,
+        fill-playground-node-azure-search-credentials,
+        f5-playground,
+        open-app,
+        check-rag-search-playground-chat,
+      ]
+
+  - id: rag-azure-ai-search-py-azure-openai-playground
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-04
+    workItemIds: [36534522]
+    steps:
+      [
+        scaffold-rag-search-py-azure-openai,
+        check-rag-search-py-azure-openai,
+        create-python-environment,
+        fill-playground-python-azure-search-credentials,
+        f5-playground,
+        open-app,
+        check-rag-search-playground-chat,
+      ]
+
+  - id: rag-azure-ai-search-ts-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-01
+    workItemIds: [28970327]
+    steps:
+      [
+        scaffold-rag-search-ts-openai,
+        check-rag-search-ts-openai,
+        use-gpt-4o-mini-ts,
+        fill-dev-openai-search-credentials,
+        redirect-openai-base-url-remote,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-node,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-js-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-03
+    workItemIds: [28970337]
+    steps:
+      [
+        scaffold-rag-search-js-openai,
+        check-rag-search-js-openai,
+        use-gpt-4o-mini-js,
+        fill-dev-openai-search-credentials,
+        redirect-openai-base-url-remote,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-node,
+        open-app,
+        check-rag-search-chat,
+      ]
+
+  - id: rag-azure-ai-search-py-openai-remote-teams
+    scenarioId: SCN-CREATE-RAG-AZURE-SEARCH-04
+    workItemIds: [27454412]
+    steps:
+      [
+        scaffold-rag-search-py-openai,
+        check-rag-search-py-openai,
+        use-gpt-4o-mini-py,
+        create-python-environment,
+        fill-dev-openai-search-credentials,
+        redirect-openai-base-url-remote,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-teams-remote-python,
+        open-app,
+        check-rag-search-chat,
       ]
 
 steps:
@@ -169,7 +322,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"']
+          contains: ['"manifestVersion": "1.30"']
 
   scaffold-rag-search-ts-openai:
     type: scaffold
@@ -184,8 +337,6 @@ steps:
           value: custom-copilot-rag-azure-ai-search
         - question: llmService
           value: llm-service-openai
-        # A secret expression is the only accepted shape here; the case replaces
-        # the value with the legacy fake key before launch.
         - question: openAIKey
           type: text
           value: "${{secret:AZURE_OPENAI_API_KEY}}"
@@ -288,8 +439,6 @@ steps:
           value: custom-copilot-rag-azure-ai-search
         - question: llmService
           value: llm-service-openai
-        # A secret expression is the only accepted shape here; the case replaces
-        # the value with the legacy fake key before launch.
         - question: openAIKey
           type: text
           value: "${{secret:AZURE_OPENAI_API_KEY}}"
@@ -432,6 +581,24 @@ steps:
     with:
       interpreter: "Python 3.12"
 
+  use-gpt-4o-mini-ts:
+    type: openAIModel
+    with:
+      path: src/config.ts
+      current: gpt-3.5-turbo
+
+  use-gpt-4o-mini-js:
+    type: openAIModel
+    with:
+      path: src/config.js
+      current: gpt-3.5-turbo
+
+  use-gpt-4o-mini-py:
+    type: openAIModel
+    with:
+      path: src/config.py
+      current: gpt-3.5-turbo
+
   # The templates read these from the generated runtime environment file, but
   # the scaffold never prompts for them, so the local lifecycle would otherwise
   # stop on an unresolved placeholder and open an input box mid-launch.
@@ -453,6 +620,51 @@ steps:
     with:
       AZURE_OPENAI_EMBEDDING_DEPLOYMENT: "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}"
 
+  fill-dev-node-azure-search-credentials:
+    type: userEnvironment
+    with:
+      target: dev
+      variables:
+        AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME: "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}"
+        SECRET_AZURE_SEARCH_KEY: "${{secret:AZURE_SEARCH_KEY}}"
+        AZURE_SEARCH_ENDPOINT: "${{env:AZURE_SEARCH_ENDPOINT}}"
+
+  fill-dev-python-azure-search-credentials:
+    type: userEnvironment
+    with:
+      target: dev
+      variables:
+        AZURE_OPENAI_EMBEDDING_DEPLOYMENT: "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}"
+        SECRET_AZURE_SEARCH_KEY: "${{secret:AZURE_SEARCH_KEY}}"
+        AZURE_SEARCH_ENDPOINT: "${{env:AZURE_SEARCH_ENDPOINT}}"
+
+  fill-playground-node-azure-search-credentials:
+    type: userEnvironment
+    with:
+      target: playground
+      variables:
+        AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME: "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}"
+        SECRET_AZURE_SEARCH_KEY: "${{secret:AZURE_SEARCH_KEY}}"
+        AZURE_SEARCH_ENDPOINT: "${{env:AZURE_SEARCH_ENDPOINT}}"
+
+  fill-playground-python-azure-search-credentials:
+    type: userEnvironment
+    with:
+      target: playground
+      variables:
+        AZURE_OPENAI_EMBEDDING_DEPLOYMENT: "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}"
+        SECRET_AZURE_SEARCH_KEY: "${{secret:AZURE_SEARCH_KEY}}"
+        AZURE_SEARCH_ENDPOINT: "${{env:AZURE_SEARCH_ENDPOINT}}"
+
+  fill-dev-openai-search-credentials:
+    type: userEnvironment
+    with:
+      target: dev
+      variables:
+        SECRET_OPENAI_API_KEY: "${{secret:AZURE_OPENAI_API_KEY}}"
+        SECRET_AZURE_SEARCH_KEY: "${{secret:AZURE_SEARCH_KEY}}"
+        AZURE_SEARCH_ENDPOINT: "${{env:AZURE_SEARCH_ENDPOINT}}"
+
   # The OpenAI branch reads OPENAI_BASE_URL, so pointing it at the Azure OpenAI
   # v1 surface lets the case reuse the Azure OpenAI key it already supplied.
   redirect-openai-base-url:
@@ -460,12 +672,17 @@ steps:
     with:
       OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 
-  # The legacy Node plans ran on this fake key and asserted the failure it
-  # produced, which is coverage of the authentication path no working key gives.
-  use-fake-openai-key:
-    type: localEnvironment
+  redirect-openai-base-url-remote:
+    type: remoteEnvironment
     with:
-      OPENAI_API_KEY: faked_openapi_key
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
 
   login-m365:
     type: login
@@ -474,10 +691,42 @@ steps:
       account: "${{env:M365_ACCOUNT_NAME}}"
       password: "${{secret:M365_ACCOUNT_PASSWORD}}"
 
+  provision-arm:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  deploy:
+    type: deploy
+    with:
+      environment: none
+
   f5-teams-local:
     type: target
     with:
       profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  f5-teams-remote-node:
+    type: target
+    with:
+      profile: "Launch Remote in Teams (Chrome)"
+      profileSelection: first
+
+  f5-teams-remote-python:
+    type: target
+    with:
+      profile: "Launch Remote (Chrome)"
+      profileSelection: first
+
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
       profileSelection: first
 
   open-app:
@@ -499,25 +748,14 @@ steps:
           replied: true
           notContains: ["error"]
 
-  check-rag-search-chat-openai:
+  check-rag-search-playground-chat:
     type: checks
     with:
-      # The OpenAI branch hardcodes `gpt-3.5-turbo` and `text-embedding-ada-002`
-      # in the generated config, and the redirected Azure OpenAI resource
-      # resolves those as deployment names it does not host, so the reply cannot
-      # be grounded. The legacy Python plan asserted its failure in the terminal,
-      # which no adapter reaches, so the case asserts the reply itself.
       - type: chat
-        send: What is the Contoso Electronics PerksPlus program?
+        send: hi
         expect:
           replied: true
-
-  check-rag-search-chat-openai-fake-key:
-    type: checks
-    with:
-      # The wording is the Teams AI library's, not the model's, and is what the
-      # legacy Node plans asserted on the same fake key.
       - type: chat
-        send: What is the Contoso Electronics PerksPlus program?
+        send: List Contoso history in table
         expect:
-          contains: ["encountered an error"]
+          replied: true

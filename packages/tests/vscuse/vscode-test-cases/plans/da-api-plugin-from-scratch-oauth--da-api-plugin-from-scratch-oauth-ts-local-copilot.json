@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 97,
+    "total_steps": 98,
     "name": "da-api-plugin-from-scratch-oauth-ts-local-copilot",
     "description": {
       "owner": "",
@@ -94,6 +94,7 @@
       "step_filterOption_filter_cd0ec540a_4_2",
       "step_filterOption_assertOption_cd0ec540a_4_2",
       "step_filterOption_confirm_cd0ec540a_4_2",
+      "step_browserM365SignIn_refreshPage_cd0ec540a_4_3",
       "step_browserM365SignIn_assertAccount_cd0ec540a_4_3",
       "step_browserM365SignIn_focusAccount_cd0ec540a_4_3",
       "step_browserM365SignIn_enterAccount_cd0ec540a_4_3",
@@ -1169,7 +1170,7 @@
       "parameters": {
         "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6ImFwcFBhY2thZ2UvYWktcGx1Z2luLmpzb24iLCJleGlzdHMiOnRydWUsImNvbnRhaW5zIjpbIlwibmFtZXNwYWNlXCI6IFwicmVwYWlyc1wiIiwiXCJ0eXBlXCI6IFwiT3BlbkFwaVwiIiwiXCJ0eXBlXCI6IFwiT0F1dGhQbHVnaW5WYXVsdFwiIiwiXCJyZWZlcmVuY2VfaWRcIjogXCIke3tPQVVUSDJBVVRIQ09ERV9DT05GSUdVUkFUSU9OX0lEfX1cIiIsIlwidXJsXCI6IFwiYXBpU3BlY2lmaWNhdGlvbkZpbGUvcmVwYWlyLnltbFwiIl0sIm5vdENvbnRhaW5zIjpbIlwicmVmZXJlbmNlX2lkXCI6IFwiJHt7QUFEQVVUSENPREVfQ09ORklHVVJBVElPTl9JRH19XCIiXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1192,7 +1193,7 @@
       "parameters": {
         "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6Im0zNjVhZ2VudHMubG9jYWwueW1sIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6WyJ1c2VzOiBhYWRBcHAvY3JlYXRlIiwiZ2VuZXJhdGVDbGllbnRTZWNyZXQ6IHRydWUiLCJjbGllbnRTZWNyZXQ6IFNFQ1JFVF9BQURfQVBQX0NMSUVOVF9TRUNSRVQiLCJ1c2VzOiBvYXV0aC9yZWdpc3RlciIsImNsaWVudFNlY3JldDogJHt7U0VDUkVUX0FBRF9BUFBfQ0xJRU5UX1NFQ1JFVH19IiwiY29uZmlndXJhdGlvbklkOiBPQVVUSDJBVVRIQ09ERV9DT05GSUdVUkFUSU9OX0lEIl0sIm5vdENvbnRhaW5zIjpbImlkZW50aXR5UHJvdmlkZXI6IE1pY3Jvc29mdEVudHJhIl19XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1215,7 +1216,7 @@
       "parameters": {
         "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6Im0zNjVhZ2VudHMueW1sIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6WyJ1c2VzOiBhYWRBcHAvY3JlYXRlIiwiZ2VuZXJhdGVDbGllbnRTZWNyZXQ6IHRydWUiLCJjbGllbnRTZWNyZXQ6IFNFQ1JFVF9BQURfQVBQX0NMSUVOVF9TRUNSRVQiLCJ1c2VzOiBvYXV0aC9yZWdpc3RlciIsImNsaWVudFNlY3JldDogJHt7U0VDUkVUX0FBRF9BUFBfQ0xJRU5UX1NFQ1JFVH19IiwiY29uZmlndXJhdGlvbklkOiBPQVVUSDJBVVRIQ09ERV9DT05GSUdVUkFUSU9OX0lEIl0sIm5vdENvbnRhaW5zIjpbImlkZW50aXR5UHJvdmlkZXI6IE1pY3Jvc29mdEVudHJhIl19XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1238,7 +1239,7 @@
       "parameters": {
         "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6ImFhZC5tYW5pZmVzdC5qc29uIiwiZXhpc3RzIjp0cnVlLCJjb250YWlucyI6W10sIm5vdENvbnRhaW5zIjpbXX1d\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1261,7 +1262,7 @@
       "parameters": {
         "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9mdW5jdGlvbnMvcmVwYWlycy50cyIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOltdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1284,7 +1285,7 @@
       "parameters": {
         "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9mdW5jdGlvbnMvcmVwYWlycy5qcyIsImV4aXN0cyI6ZmFsc2UsImNvbnRhaW5zIjpbXSwibm90Q29udGFpbnMiOltdfV0=\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1307,7 +1308,7 @@
       "parameters": {
         "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InRzY29uZmlnLmpzb24iLCJleGlzdHMiOnRydWUsImNvbnRhaW5zIjpbXSwibm90Q29udGFpbnMiOltdfV0=\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
       },
-      "description": "@code verify the authored workspace file existence and content assertions without logging file contents.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1867,6 +1868,28 @@
       ]
     },
     {
+      "step_id": "step_browserM365SignIn_refreshPage_cd0ec540a_4_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f5"
+      },
+      "description": "Refresh the Microsoft sign-in page before checking for account entry.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_confirm_cd0ec540a_4_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:authentication",
+        "surface:browser"
+      ]
+    },
+    {
       "step_id": "step_browserM365SignIn_assertAccount_cd0ec540a_4_3",
       "agent": "assertion",
       "tool": "",
@@ -1877,7 +1900,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_cd0ec540a_4_2"
+        "step_browserM365SignIn_refreshPage_cd0ec540a_4_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1893,10 +1916,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 429,
-        "y": 347
+        "x": 512,
+        "y": 384
       },
-      "description": "Click the email or username input on the Microsoft sign-in page.",
+      "description": "Click the \"Email, phone, or Skype\" input on the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1908,7 +1931,8 @@
       "postconditions": [],
       "tags": [
         "component:authentication",
-        "surface:browser"
+        "surface:browser",
+        "ocr:true"
       ]
     },
     {
@@ -2069,7 +2093,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Microsoft 365 Copilot shows an agent selected in the Agents list and that agent's chat open in the main section with a visible message input.",
+      "description": "@assertion Microsoft 365 Copilot shows an agent's chat open in the main section with a visible message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

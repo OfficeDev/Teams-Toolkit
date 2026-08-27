@@ -15,6 +15,19 @@ cases:
         check-instruction,
       ]
 
+  - id: da-no-action-local-copilot
+    scenarioId: SCN-DA-CREATE-NO-ACTION
+    workItemIds: [35719162]
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-reply,
+      ]
+
 steps:
   scaffold-da-no-action:
     type: scaffold
@@ -45,7 +58,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"', '"declarativeAgents"']
+          contains: ['"manifestVersion": "1.30"', '"declarativeAgents"']
       - type: file
         path: m365agents.yml
         expect:
@@ -72,6 +85,12 @@ steps:
       profile: "Preview in Copilot (Chrome)"
       profileSelection: second
 
+  f5-copilot-local:
+    type: target
+    with:
+      profile: "Preview Local in Copilot (Chrome)"
+      profileSelection: first
+
   open-agent:
     type: open
     with:
@@ -91,3 +110,11 @@ steps:
             [
               "Thanks for using Microsoft 365 Agents Toolkit to create your declarative agent!",
             ]
+
+  check-reply:
+    type: checks
+    with:
+      - type: chat
+        send: how can you assistant me?
+        expect:
+          replied: true

@@ -168,6 +168,9 @@ const LEGACY_SSE_TIMEOUT_MS = 5000;
 /** Stop buffering an event stream that is not going to name an endpoint. */
 const LEGACY_SSE_MAX_BYTES = 8192;
 
+/** Bound each OAuth metadata discovery hop so an unreachable issuer cannot stall scaffolding. */
+const MCP_AUTH_METADATA_TIMEOUT_MS = 10000;
+
 /**
  * A 2xx alone proves nothing: a truncated URL on a host that serves a landing page answers 200
  * with HTML. The JSON-RPC envelope in the payload is the actual proof. The body text is searched
@@ -413,7 +416,7 @@ async function candidatesFromProtectedResourceMetadata(
 ): Promise<string[]> {
   let response;
   try {
-    response = await axios.get(authMetadataUrl);
+    response = await axios.get(authMetadataUrl, { timeout: MCP_AUTH_METADATA_TIMEOUT_MS });
   } catch (error) {
     // A server advertising a document it cannot serve is broken, but the MCP server URL may
     // still lead to the authorization server, so let the caller try that before failing.
@@ -483,7 +486,9 @@ export async function resolveMCPOAuthMetadata(
 
   for (const candidate of candidates) {
     try {
-      const metadataResponse = await axios.get(candidate);
+      const metadataResponse = await axios.get(candidate, {
+        timeout: MCP_AUTH_METADATA_TIMEOUT_MS,
+      });
       const authorizationUrl = metadataResponse.data?.authorization_endpoint;
       const tokenUrl = metadataResponse.data?.token_endpoint;
       const refreshUrl = metadataResponse.data?.refresh_endpoint;

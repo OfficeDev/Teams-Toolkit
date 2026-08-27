@@ -5,6 +5,7 @@ import { ok } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import * as os from "os";
 import * as path from "path";
+import * as mcpToolFetcher from "../../../../src/common/mcpToolFetcher";
 import { setTools } from "../../../../src/common/globalVars";
 import { Generator } from "../../../../src/component/generator/generator";
 import { importOpenPlugin } from "../../../../src/component/generator/openPlugin/importer";
@@ -61,6 +62,16 @@ describe("openPlugin.importOpenPlugin", () => {
       await scaffoldOpenPluginTemplateFromSource(dest, { appName });
       return ok(undefined);
     });
+    vi.spyOn(mcpToolFetcher, "probeMCPServerAuth").mockResolvedValue({
+      requiresAuth: true,
+      endpointStatus: "confirmed",
+      authMetadataUrl: "https://web.example.com/.well-known/oauth-protected-resource",
+    });
+    vi.spyOn(mcpToolFetcher, "resolveMCPOAuthMetadata").mockResolvedValue({
+      authorizationUrl: "https://login.example.com/authorize",
+      tokenUrl: "https://login.example.com/token",
+      wellKnownUrl: "https://login.example.com/.well-known/oauth-authorization-server",
+    });
   });
 
   afterEach(async () => {
@@ -69,7 +80,7 @@ describe("openPlugin.importOpenPlugin", () => {
     await fs.remove(outDir);
   });
 
-  it("scaffolds the expected project tree", async () => {
+  it("SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-01: scaffolds an Auto-auth Toolkit project", async () => {
     const res = await importOpenPlugin({
       path: pluginDir,
       output: outDir,
@@ -99,6 +110,11 @@ describe("openPlugin.importOpenPlugin", () => {
     for (const rel of expected) {
       chai.expect(await fs.pathExists(path.join(outDir, rel)), `missing ${rel}`).to.equal(true);
     }
+    const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+    chai
+      .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization.type)
+      .to.equal("OAuthPluginVault");
+    chai.expect(res.value.warnings.some((warning) => warning.includes("web"))).to.equal(true);
   });
 
   it("emits the expected agentSkills and agentConnectors in manifest.json", async () => {
@@ -128,6 +144,349 @@ describe("openPlugin.importOpenPlugin", () => {
     chai
       .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization.type)
       .to.equal("OAuthPluginVault");
+  });
+
+  it("OPI-AUTH-03: Auto selects None for a confirmed public MCP endpoint", async () => {
+    vi.mocked(mcpToolFetcher.probeMCPServerAuth).mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "confirmed",
+    });
+    vi.mocked(mcpToolFetcher.resolveMCPOAuthMetadata).mockRejectedValue(
+      new Error("No OAuth metadata")
+    );
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+    chai
+      .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization)
+      .to.deep.equal({ type: "None" });
+    chai.expect(res.value.warnings.some((warning) => warning.includes("web"))).to.equal(true);
+  });
+
+  it("OPI-AUTH-04: Auto selects OAuth for a confirmed auth challenge", async () => {
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+    chai
+      .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization)
+      .to.deep.equal({
+        type: "OAuthPluginVault",
+        referenceId: "demo-plugin-web-auth",
+      });
+    chai.expect(mcpToolFetcher.probeMCPServerAuth).toHaveBeenCalledOnce();
+    chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).toHaveBeenCalledOnce();
+    chai.expect(res.value.warnings.some((warning) => warning.includes("web"))).to.equal(true);
+  });
+
+  it("OPI-AUTH-05: Auto detects OAuth deferred until tool calls", async () => {
+    vi.mocked(mcpToolFetcher.probeMCPServerAuth).mockResolvedValue({
+      requiresAuth: false,
+      endpointStatus: "confirmed",
+    });
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+    chai
+      .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization.type)
+      .to.equal("OAuthPluginVault");
+    chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).toHaveBeenCalledOnce();
+    chai.expect(res.value.warnings.some((warning) => warning.includes("web"))).to.equal(true);
+  });
+
+  it("OPI-AUTH-08 / SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-05: falls back to OAuth for a confirmed challenge without metadata", async () => {
+    vi.mocked(mcpToolFetcher.resolveMCPOAuthMetadata).mockRejectedValue(
+      new Error("No OAuth metadata")
+    );
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+    chai
+      .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization)
+      .to.deep.equal({
+        type: "OAuthPluginVault",
+        referenceId: "demo-plugin-web-auth",
+      });
+    chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).toHaveBeenCalledOnce();
+    chai
+      .expect(
+        res.value.warnings.some(
+          (warning) =>
+            warning.includes("web") &&
+            warning.includes("could not be resolved") &&
+            warning.includes("Verify") &&
+            warning.includes("register")
+        )
+      )
+      .to.equal(true);
+  });
+
+  it("OPI-AUTH-06: Auto stops before scaffolding when auth is unresolved", async () => {
+    const probe = vi.mocked(mcpToolFetcher.probeMCPServerAuth);
+    const cases = [
+      async () =>
+        probe.mockResolvedValueOnce({ requiresAuth: true, endpointStatus: "undetermined" }),
+      async () =>
+        probe.mockResolvedValueOnce({
+          requiresAuth: true,
+          endpointStatus: "notEndpoint",
+          responseStatus: 404,
+        }),
+      async () => probe.mockRejectedValueOnce(new Error("network unavailable")),
+    ];
+
+    for (const arrange of cases) {
+      await fs.remove(outDir);
+      vi.mocked(Generator.generateTemplate).mockClear();
+      await arrange();
+
+      const res = await importOpenPlugin({
+        path: pluginDir,
+        output: outDir,
+        privacyUrl: "https://example.com/privacy",
+        termsUrl: "https://example.com/terms",
+      });
+
+      chai.expect(res.isErr()).to.equal(true);
+      if (res.isErr()) chai.expect(res.error.name).to.equal("UnresolvedMcpAuth");
+      chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
+      chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
+      chai.expect(await fs.pathExists(outDir)).to.equal(false);
+    }
+  });
+
+  it("OPI-AUTH-06: Auto rejects an invalid MCP URL without probing", async () => {
+    await fs.writeJSON(path.join(pluginDir, ".mcp.json"), {
+      mcpServers: {
+        invalid: { url: "not-a-valid-url" },
+      },
+    });
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    chai.expect(res.isErr()).to.equal(true);
+    if (res.isErr()) chai.expect(res.error.name).to.equal("UnresolvedMcpAuth");
+    chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
+    chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
+  });
+
+  it("OPI-AUTH-01: preserves an exported connector override without discovery", async () => {
+    const manifestPath = path.join(pluginDir, ".plugin", "plugin.json");
+    const sourceManifest = await fs.readJSON(manifestPath);
+    sourceManifest["x-microsoft-365-agents-toolkit"] = {
+      agentConnectors: {
+        web: {
+          authorization: {
+            type: "ApiKeyPluginVault",
+            referenceId: "existing-api-key-reference",
+          },
+        },
+      },
+    };
+    await fs.writeJSON(manifestPath, sourceManifest);
+
+    for (const defaultAuthType of [
+      "Auto",
+      "None",
+      "OAuthPluginVault",
+      "ApiKeyPluginVault",
+    ] as const) {
+      await fs.remove(outDir);
+      const res = await importOpenPlugin({
+        path: pluginDir,
+        output: outDir,
+        privacyUrl: "https://example.com/privacy",
+        termsUrl: "https://example.com/terms",
+        defaultAuthType,
+      });
+
+      if (res.isErr()) throw new Error(res.error.message);
+      const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+      chai
+        .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization)
+        .to.deep.equal({
+          type: "ApiKeyPluginVault",
+          referenceId: "existing-api-key-reference",
+        });
+      chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
+      chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
+    }
+  });
+
+  it("OPI-AUTH-02: applies every explicit default without discovery", async () => {
+    for (const defaultAuthType of ["None", "OAuthPluginVault", "ApiKeyPluginVault"] as const) {
+      await fs.remove(outDir);
+      const res = await importOpenPlugin({
+        path: pluginDir,
+        output: outDir,
+        privacyUrl: "https://example.com/privacy",
+        termsUrl: "https://example.com/terms",
+        defaultAuthType,
+      });
+
+      if (res.isErr()) throw new Error(res.error.message);
+      const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+      chai
+        .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization.type)
+        .to.equal(defaultAuthType);
+      chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
+      chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
+    }
+  });
+
+  it("OPI-AUTH-07: keeps localhost variants on None without discovery", async () => {
+    for (const serverUrl of [
+      "http://localhost:5050/sse",
+      "http://tools.example.com/mcp",
+      "https://[::1]/mcp",
+      "https://[::ffff:127.0.0.1]/mcp",
+      "https://tools.localhost./mcp",
+    ]) {
+      await fs.remove(outDir);
+      await fs.writeJSON(path.join(pluginDir, ".mcp.json"), {
+        mcpServers: {
+          local: { url: serverUrl },
+        },
+      });
+
+      const res = await importOpenPlugin({
+        path: pluginDir,
+        output: outDir,
+        privacyUrl: "https://example.com/privacy",
+        termsUrl: "https://example.com/terms",
+      });
+
+      if (res.isErr()) throw new Error(res.error.message);
+      const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+      chai
+        .expect(manifest.agentConnectors[0].toolSource.remoteMcpServer.authorization)
+        .to.deep.equal({ type: "None" });
+      chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
+      chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
+    }
+  });
+
+  it("OPI-AUTH-07: probes a public IPv6 MCP server", async () => {
+    const serverUrl = "https://[2001:db8::1]/mcp";
+    await fs.writeJSON(path.join(pluginDir, ".mcp.json"), {
+      mcpServers: {
+        remote: { url: serverUrl },
+      },
+    });
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    chai.expect(mcpToolFetcher.probeMCPServerAuth).toHaveBeenCalledWith(serverUrl);
+    chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).toHaveBeenCalledOnce();
+  });
+
+  it("OPI-AUTH-07: resolves mixed connectors in deterministic server-name order", async () => {
+    await fs.writeJSON(path.join(pluginDir, ".mcp.json"), {
+      mcpServers: {
+        secure: { url: "https://secure.example.com/mcp" },
+        stdio: { command: "node", args: ["server.js"] },
+        public: { url: "https://public.example.com/mcp" },
+        preserved: { url: "https://preserved.example.com/mcp" },
+        local: { url: "http://localhost:5050/sse" },
+      },
+    });
+    const manifestPath = path.join(pluginDir, ".plugin", "plugin.json");
+    const sourceManifest = await fs.readJSON(manifestPath);
+    sourceManifest["x-microsoft-365-agents-toolkit"] = {
+      agentConnectors: {
+        preserved: {
+          authorization: {
+            type: "ApiKeyPluginVault",
+            referenceId: "existing-api-key-reference",
+          },
+        },
+      },
+    };
+    await fs.writeJSON(manifestPath, sourceManifest);
+    vi.mocked(mcpToolFetcher.probeMCPServerAuth).mockImplementation(async (serverUrl) => ({
+      requiresAuth: serverUrl.includes("secure"),
+      endpointStatus: "confirmed",
+      authMetadataUrl: serverUrl.includes("secure")
+        ? "https://secure.example.com/.well-known/oauth-protected-resource"
+        : undefined,
+    }));
+    vi.mocked(mcpToolFetcher.resolveMCPOAuthMetadata).mockImplementation(
+      async (_authMetadataUrl, _wellKnownUrl, serverUrl) => {
+        if (!serverUrl?.includes("secure")) throw new Error("No OAuth metadata");
+        return {
+          authorizationUrl: "https://login.example.com/authorize",
+          tokenUrl: "https://login.example.com/token",
+          wellKnownUrl: "https://login.example.com/.well-known/oauth-authorization-server",
+        };
+      }
+    );
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    if (res.isErr()) throw new Error(res.error.message);
+    const manifest = await fs.readJSON(path.join(outDir, "appPackage", "manifest.json"));
+    chai
+      .expect(manifest.agentConnectors.map((connector: any) => connector.id))
+      .to.deep.equal(["local", "preserved", "public", "secure"]);
+    chai
+      .expect(
+        manifest.agentConnectors.map(
+          (connector: any) => connector.toolSource.remoteMcpServer.authorization.type
+        )
+      )
+      .to.deep.equal(["None", "ApiKeyPluginVault", "None", "OAuthPluginVault"]);
+    chai
+      .expect(vi.mocked(mcpToolFetcher.probeMCPServerAuth).mock.calls.map((call) => call[0]))
+      .to.deep.equal(["https://public.example.com/mcp", "https://secure.example.com/mcp"]);
+    chai
+      .expect(
+        res.value.warnings
+          .filter((warning) => warning.startsWith("Auto inferred"))
+          .map((warning) => warning.match(/server '([^']+)'/)?.[1])
+      )
+      .to.deep.equal(["local", "public", "secure"]);
   });
 
   it("surfaces a warning for stdio MCP servers", async () => {
@@ -179,7 +538,7 @@ describe("openPlugin.importOpenPlugin", () => {
     }
   });
 
-  it("refuses to write into a non-empty output directory", async () => {
+  it("SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-03: rejects non-empty output before discovery", async () => {
     await fs.ensureDir(outDir);
     await fs.writeFile(path.join(outDir, "preexisting.txt"), "hi");
     const res = await importOpenPlugin({
@@ -192,6 +551,31 @@ describe("openPlugin.importOpenPlugin", () => {
     if (res.isErr()) {
       chai.expect(res.error.name).to.equal("OutputDirectoryNotEmpty");
     }
+    chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
+    chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
+    chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
+    chai.expect(await fs.readFile(path.join(outDir, "preexisting.txt"), "utf8")).to.equal("hi");
+  });
+
+  it("SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-04: rejects excess connectors before discovery", async () => {
+    const mcpServers: Record<string, { url: string }> = {};
+    for (let index = 0; index < 11; index++) {
+      mcpServers[`svc-${index}`] = { url: `https://svc-${index}.example.com/mcp` };
+    }
+    await fs.writeJSON(path.join(pluginDir, ".mcp.json"), { mcpServers });
+
+    const res = await importOpenPlugin({
+      path: pluginDir,
+      output: outDir,
+      privacyUrl: "https://example.com/privacy",
+      termsUrl: "https://example.com/terms",
+    });
+
+    chai.expect(res.isErr()).to.equal(true);
+    chai.expect(mcpToolFetcher.probeMCPServerAuth).not.toHaveBeenCalled();
+    chai.expect(mcpToolFetcher.resolveMCPOAuthMetadata).not.toHaveBeenCalled();
+    chai.expect(Generator.generateTemplate).not.toHaveBeenCalled();
+    chai.expect(await fs.pathExists(outDir)).to.equal(false);
   });
 
   it("returns an error when --path does not exist", async () => {

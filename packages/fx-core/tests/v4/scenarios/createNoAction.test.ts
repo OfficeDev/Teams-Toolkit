@@ -89,7 +89,7 @@ describe("SCN-DA-CREATE-NO-ACTION (v4, T3 InMemoryRuntime)", () => {
     const name = recordProperty(manifest, "name");
     const copilotAgents = recordProperty(manifest, "copilotAgents");
     const agents = copilotAgents.declarativeAgents;
-    assert.strictEqual(manifest.manifestVersion, "1.29");
+    assert.strictEqual(manifest.manifestVersion, "1.30");
     // the env-var refs survive render verbatim (provision resolves them later).
     assert.strictEqual(manifest.id, "${{TEAMS_APP_ID}}");
     assert.strictEqual(name.short, "MyAgent${{APP_NAME_SUFFIX}}");

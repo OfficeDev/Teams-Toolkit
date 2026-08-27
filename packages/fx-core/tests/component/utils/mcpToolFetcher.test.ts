@@ -555,6 +555,27 @@ describe("mcpToolFetcher", () => {
       assert.isTrue(getStub.mock.calls.length === 1);
     });
 
+    it("should bound every OAuth metadata request with a timeout", async () => {
+      const getStub = vi.spyOn(axios, "get");
+      getStub.mockResolvedValueOnce({
+        status: 200,
+        data: { authorization_servers: ["https://auth.example.com/oauth"] },
+      });
+      getStub.mockResolvedValueOnce({
+        data: {
+          authorization_endpoint: "https://auth.example.com/authorize",
+          token_endpoint: "https://auth.example.com/token",
+        },
+      });
+
+      await resolveMCPOAuthMetadata("https://example.com/.well-known/oauth-protected-resource");
+
+      assert.equal(getStub.mock.calls.length, 2);
+      for (const call of getStub.mock.calls) {
+        assert.deepEqual(call[1], { timeout: 10000 });
+      }
+    });
+
     it("should throw when both authMetadataUrl and wellKnownUrl are undefined", async () => {
       try {
         await resolveMCPOAuthMetadata(undefined, undefined);

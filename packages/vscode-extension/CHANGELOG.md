@@ -2,6 +2,12 @@
 > Note: This changelog only includes the changes for the stable versions of Microsoft 365 Agents Toolkit (evolved from Teams Toolkit). For the changelog of pre-released versions, please refer to the [Microsoft 365 Agents Toolkit Pre-release Changelog](https://github.com/OfficeDev/TeamsFx/blob/dev/packages/vscode-extension/PRERELEASE.md).
 
 
+## 6.14.1 - August 11, 2026
+
+### Bug Fix
+- Improved app package security by preventing path traversal and symlink or junction escapes during packaging, while keeping local diagnostics actionable and telemetry free of file path details, [PR #16582](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16582)
+
+
 ## 6.14.0 - August 5, 2026
 
 ### New Features

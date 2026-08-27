@@ -1,6 +1,6 @@
 ---
 description: Rules for the generated vscuse case engine - use when changing packages/tests/vscuse/vscode-test-cases cases, components, engine code, generated plans, or the compile-vscuse-case-bundles spec. Covers the verification loop, component format constraints, evidence-backed assertions, and the no-fabricated-coordinates rule.
-applyTo: 'packages/tests/vscuse/vscode-test-cases/**,docs/03-specs/operations/product/compile-vscuse-case-bundles.md'
+applyTo: "packages/tests/vscuse/vscode-test-cases/**,docs/03-specs/operations/product/compile-vscuse-case-bundles.md"
 ---
 
 # vscuse Generated Case Engine Rules
@@ -61,8 +61,8 @@ vscuse has **no coordinate-free interaction tool**: every `click` requires
 - Prefer typed filtering (`type_text` into a quick input, then assert the option
   is selectable) over recorded clicks for quick-pick options.
 - Never fabricate coordinates. Widget geometry is not derivable, and it is not
-  even stable per option: inside the single recorded plan
-  `plans/DA_Add_Action_Import_Existing_API.json`, `Declarative Agent` was clicked
+  even stable per option: inside the retired
+  `DA_Add_Action_Import_Existing_API` recording, `Declarative Agent` was clicked
   at y 93 and y 86, `No Action` at y 132 and y 135, and `Start with a New API` at
   y 82 and y 128. A misplaced click silently selects the wrong option instead of
   failing.

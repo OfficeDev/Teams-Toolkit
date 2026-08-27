@@ -229,6 +229,9 @@ export async function activate(context: vscode.ExtensionContext) {
     activateOfficeDevRegistration(context);
   }
 
+  // Initialize ExP before constructing FX Core so its provider is injected into Tools.
+  await exp.initialize(context);
+
   // Call activate function of toolkit core.
   activateHandlers();
 

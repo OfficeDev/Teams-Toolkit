@@ -1,0 +1,56 @@
+version: 1
+
+cases:
+  - id: da-add-copilot-connector
+    scenarioId: SCN-DA-ADD-COPILOT-CONNECTOR
+    workItemIds: [31677285]
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-copilot-connector,
+        check-copilot-connector,
+      ]
+
+steps:
+  scaffold-da-no-action:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-da-no-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          exists: true
+          notContains: ['"capabilities"']
+      - type: file
+        path: appPackage/manifest.json
+        expect:
+          contains: ['"manifestVersion": "1.30"', '"declarativeAgents"']
+
+  add-copilot-connector:
+    type: addDaCapability
+    with:
+      capability: copilotConnector
+      connectionId: testconnector
+
+  check-copilot-connector:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: [testconnector]

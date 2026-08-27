@@ -68,6 +68,23 @@ jobs:
         with:
           ref: ${{ github.event.inputs.source_ref || github.ref }}
 
+      - name: Resolve image source
+        id: source
+        env:
+          REQUESTED_SOURCE_REF: ${{ github.event.inputs.source_ref || github.ref_name }}
+        run: |
+          source_ref="${REQUESTED_SOURCE_REF#refs/heads/}"
+          source_ref="${source_ref#refs/tags/}"
+          source_sha=$(git rev-parse HEAD)
+          source_sha_short="${source_sha:0:7}"
+          if [ -z "$source_ref" ]; then
+            echo "Unable to resolve the checked-out source ref."
+            exit 1
+          fi
+          echo "source_ref=$source_ref" >> "$GITHUB_OUTPUT"
+          echo "source_sha=$source_sha" >> "$GITHUB_OUTPUT"
+          echo "source_sha_short=$source_sha_short" >> "$GITHUB_OUTPUT"
+
       - name: Download latest M365 Agent Toolkit
         id: m365_download
         run: |
@@ -139,13 +156,15 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
+            type=raw,value=${{ steps.source.outputs.source_ref }}
+            type=raw,value=${{ steps.source.outputs.source_ref }}-${{ steps.source.outputs.source_sha_short }}
             type=raw,value=${{ github.event.inputs.tag || 'latest' }}
             type=raw,value=teamsfx-${{ steps.m365_download.outputs.teamsfx_run_id }},enable=${{ steps.m365_download.outputs.teamsfx_run_id != '' }}
+          labels: |
+            org.opencontainers.image.revision=${{ steps.source.outputs.source_sha }}
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ./packages/tests/vscuse/docker/vscuse-atk
@@ -159,6 +178,26 @@ jobs:
           cache-from: ${{ github.event.inputs.no_cache != 'true' && 'type=gha' || '' }}
           cache-to: ${{ github.event.inputs.no_cache != 'true' && 'type=gha,mode=max' || '' }}
           no-cache: ${{ github.event.inputs.no_cache == 'true' }}
+
+      - name: Verify published image
+        run: |
+          image="${REGISTRY}/${IMAGE_NAME}@${{ steps.build.outputs.digest }}"
+          docker pull "$image"
+
+          actual_revision=$(docker image inspect "$image" --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}')
+          if [ "$actual_revision" != "${{ steps.source.outputs.source_sha }}" ]; then
+            echo "Expected OCI revision ${{ steps.source.outputs.source_sha }}, got $actual_revision."
+            exit 1
+          fi
+
+          actual_entrypoint=$(docker image inspect "$image" --format '{{ join .Config.Entrypoint " " }}')
+          if [ "$actual_entrypoint" != "/usr/local/bin/vscuse-atk-entrypoint.sh" ]; then
+            echo "Unexpected image entrypoint: $actual_entrypoint"
+            exit 1
+          fi
+
+          docker run --rm --entrypoint /bin/sh "$image" -c \
+            'test -x /usr/local/bin/vscuse-atk-entrypoint.sh && test -f /usr/local/lib/vscuse-atk/sync-vscode-feature-flags.cjs'
 
       - name: Image summary
         if: success()

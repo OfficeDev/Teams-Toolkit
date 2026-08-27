@@ -1,0 +1,344 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "name.short": {
+      "type": "string",
+      "maxLength": 30,
+      "$ref": "#/definitions/nonEmptyString"
+    },
+    "name.full": {
+      "type": "string",
+      "maxLength": 100,
+      "$ref": "#/definitions/nonEmptyString"
+    },
+    "description.short": {
+      "type": "string",
+      "maxLength": 80,
+      "$ref": "#/definitions/nonEmptyString"
+    },
+    "description.full": {
+      "type": "string",
+      "maxLength": 4000,
+      "$ref": "#/definitions/nonEmptyString"
+    },
+    "localizationKeys": {
+      "type": "object",
+      "patternProperties": {
+        "^\\[\\[[a-zA-Z_][a-zA-Z0-9_]*\\]\\]$": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "patternProperties": {
+    "^staticTabs\\[([0-9]|1[0-5])\\]\\.name$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^bots\\[0\\]\\.commandLists\\[[0-2]\\]\\.commands\\[([0-9]|1[0-1])\\]\\.title$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^bots\\[0\\]\\.commandLists\\[[0-2]\\]\\.commands\\[([0-9]|1[0-1])\\]\\.description$": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "^bots\\[0\\]\\.commandLists\\[[0-2]\\]\\.commands\\[([0-9]|1[0-1])\\]\\.prompt$": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "^composeExtensions\\[0\\]\\.commands\\[[0-9]\\]\\.title$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^composeExtensions\\[0\\]\\.commands\\[[0-9]\\]\\.description$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^composeExtensions\\[0\\]\\.commands\\[[0-9]\\]\\.parameters\\[[0-4]\\]\\.title$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^composeExtensions\\[0\\]\\.commands\\[[0-9]\\]\\.parameters\\[[0-4]\\]\\.description$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^composeExtensions\\[0\\]\\.commands\\[[0-9]\\]\\.parameters\\[[0-4]\\]\\.value$": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "^composeExtensions\\[0\\]\\.commands\\[[0-9]\\]\\.parameters\\[[0-4]\\]\\.choices\\[[0-9]\\]\\.title$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^composeExtensions\\[0\\]\\.commands\\[[0-9]\\]\\.samplePrompts\\[[0-4]\\]\\.text$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^composeExtensions\\[0\\]\\.commands\\[[0-9]\\]\\.taskInfo\\.title$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^activities.activityTypes\\[\\b([0-9]|[1-8][0-9]|9[0-9]|1[01][0-9]|12[0-7])\\b]\\.description$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^activities.activityTypes\\[\\b([0-9]|[1-8][0-9]|9[0-9]|1[01][0-9]|12[0-7])\\b]\\.templateText$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^meetingExtensionDefinition.scenes\\[[0-9]\\]\\.name$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.audienceClaimUrl$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.label$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.customMobileRibbonGroups\\[[0-9]\\]\\.label$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.customMobileRibbonGroups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.icons\\[[0-8]\\]\\.url$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.customMobileRibbonGroups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.label$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.icons\\[[0-7]\\]\\.url$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.label$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.icons\\[[0-7]\\]\\.url$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.label$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.supertip\\.title$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.supertip\\.description$": {
+      "type": "string",
+      "maxLength": 250
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.items\\[[1]?[0-9]\\]\\.icons\\[[0-7]\\]\\.url$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.items\\[[1]?[0-9]\\]\\.label$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.items\\[[1]?[0-9]\\]\\.supertip\\.title$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.tabs\\[[1]?[0-9]\\]\\.groups\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.items\\[[1]?[0-9]\\]\\.supertip\\.description$": {
+      "type": "string",
+      "maxLength": 250
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.fixedControls\\[[1]?[0-9]\\]\\.label$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.fixedControls\\[[1]?[0-9]\\]\\.supertip\\.title$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.fixedControls\\[[1]?[0-9]\\]\\.supertip\\.description$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.spamPreProcessingDialog\\.title$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.spamPreProcessingDialog\\.description$": {
+      "type": "string",
+      "maxLength": 250
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.spamPreProcessingDialog\\.spamFreeTextSectionTitle$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.spamPreProcessingDialog\\.spamReportingOptions\\.title$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.spamPreProcessingDialog\\.spamReportingOptions\\.options\\[[0-4]\\]$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.spamPreProcessingDialog\\.spamMoreInfo\\.text$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.ribbons\\[[0-9]\\]\\.spamPreProcessingDialog\\.spamMoreInfo\\.url$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.code\\.page$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.code\\.script$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.actions\\[(1[0-4][0-9]|[1-9]?[0-9])\\]\\.displayName$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.customFunctions\\.metadataUrl$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.customFunctions\\.functions\\[[0-9]\\]\\.name$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.customFunctions\\.functions\\[[0-9]\\]\\.description$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.customFunctions\\.functions\\[[0-9]\\]\\.parameters\\[[0-9]\\]\\.name$": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.customFunctions\\.functions\\[[0-9]\\]\\.parameters\\[[0-9]\\]\\.description$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.customFunctions\\.enums\\[[0-9]\\]\\.values\\[[0-9]\\]\\.name$": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.customFunctions\\.enums\\[[0-9]\\]\\.values\\[[0-9]\\]\\.tooltip$": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "^extensions\\[[0]\\]\\.runtimes\\[[1]?[0-9]\\]\\.customFunctions\\.namespace\\.name$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^extensions\\[[0]\\]\\.keyboardShortcuts\\[[0-9]\\]\\.shortcuts\\[[0-9]\\]\\.key\\.default$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^extensions\\[[0]\\]\\.keyboardShortcuts\\[[0-9]\\]\\.shortcuts\\[[0-9]\\]\\.key\\.mac$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^extensions\\[[0]\\]\\.keyboardShortcuts\\[[0-9]\\]\\.shortcuts\\[[0-9]\\]\\.key\\.web$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^extensions\\[[0]\\]\\.keyboardShortcuts\\[[0-9]\\]\\.shortcuts\\[[0-9]\\]\\.key\\.windows$": {
+      "type": "string",
+      "maxLength": 32
+    },
+    "^extensions\\[[0]\\]\\.alternates\\[[0-9]\\]\\.alternateIcons\\.icon\\.url$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.alternates\\[[0-9]\\]\\.alternateIcons\\.highResolutionIcon\\.url$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.getStartedMessages\\[[0-2]\\]\\.title$": {
+      "type": "string",
+      "maxLength": 125
+    },
+    "^extensions\\[[0]\\]\\.getStartedMessages\\[[0-2]\\]\\.description$": {
+      "type": "string",
+      "maxLength": 250
+    },
+    "^extensions\\[[0]\\]\\.getStartedMessages\\[[0-2]\\]\\.learnMoreUrl$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.contentRuntimes\\[[1]?[0-9]\\]\\.code\\.page$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.contextMenus\\[[0-9]\\]\\.menus\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.icons\\[[0-7]\\]\\.url$": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.contextMenus\\[[0-9]\\]\\.menus\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.label": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.contextMenus\\[[0-9]\\]\\.menus\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.supertip\\.title": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.contextMenus\\[[0-9]\\]\\.menus\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.supertip\\.description": {
+      "type": "string",
+      "maxLength": 250
+    },
+    "^extensions\\[[0]\\]\\.contextMenus\\[[0-9]\\]\\.menus\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.items\\[[1]?[0-9]\\]\\.icons\\[[0-7]\\]\\.url": {
+      "type": "string",
+      "maxLength": 2048
+    },
+    "^extensions\\[[0]\\]\\.contextMenus\\[[0-9]\\]\\.menus\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.items\\[[1]?[0-9]\\]\\.label": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.contextMenus\\[[0-9]\\]\\.menus\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.items\\[[1]?[0-9]\\]\\.supertip\\.title": {
+      "type": "string",
+      "maxLength": 64
+    },
+    "^extensions\\[[0]\\]\\.contextMenus\\[[0-9]\\]\\.menus\\[[0-9]\\]\\.controls\\[[1]?[0-9]\\]\\.items\\[[1]?[0-9]\\]\\.supertip\\.description": {
+      "type": "string",
+      "maxLength": 250
+    },
+    "^copilotAgents.customEngineAgents\\[0\\]\\.disclaimer.text$": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "^agentConnectors\\[[0-9]\\]\\.displayName$": {
+      "type": "string",
+      "maxLength": 128
+    },
+    "^agentConnectors\\[[0-9]\\]\\.description$": {
+      "type": "string",
+      "maxLength": 4000
+    },
+    "^description\\.features\\[[0-2]+\\]\\.title$": {
+      "type": "string",
+      "maxLength": 45
+    },
+    "^description\\.features\\[[0-2]+\\]\\.description$": {
+      "type": "string",
+      "maxLength": 120
+    }
+  },
+  "required": [ "name.short", "description.short", "description.full" ],
+  "definitions": {
+    "nonEmptyString": {
+      "type": "string",
+      "pattern": "^(?![nN][uU][lL]{2}$)\\s*\\S.*"
+    }
+  }
+}

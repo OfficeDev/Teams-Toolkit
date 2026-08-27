@@ -1,26 +1,9 @@
 version: 1
 
 # The Teams Collaborator Agent template ships TypeScript only and reads Azure
-# OpenAI settings directly, so the bundle authors one scaffold and varies only
-# the launch surface. Remote stops after the deployed app conversation opens,
-# matching the recorded scenario, while local continues into the collaborator
-# chat.
+# OpenAI settings directly, so the retained bundle authors one scaffold and
+# varies only the local Teams and Agents Playground launch surfaces.
 cases:
-  - id: collaborator-ts-azure-openai-remote-teams
-    scenarioId: SCN-CREATE-COLLABORATOR-01
-    workItemIds: [35692291]
-    steps:
-      [
-        scaffold-collaborator-ts,
-        check-collaborator-ts,
-        login-azure,
-        login-m365,
-        provision-arm,
-        deploy,
-        f5-teams-remote,
-        open-app,
-      ]
-
   - id: collaborator-ts-azure-openai-local-teams
     scenarioId: SCN-CREATE-COLLABORATOR-01
     workItemIds: [35527255]
@@ -32,6 +15,18 @@ cases:
         f5-teams-local,
         open-app,
         check-collaborator-chat,
+      ]
+
+  - id: collaborator-ts-azure-openai-playground
+    scenarioId: SCN-CREATE-COLLABORATOR-01
+    workItemIds: [36048495]
+    steps:
+      [
+        scaffold-collaborator-ts,
+        check-collaborator-ts,
+        f5-playground,
+        open-app,
+        check-collaborator-playground-chat,
       ]
 
 steps:
@@ -109,14 +104,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"']
-
-  login-azure:
-    type: login
-    with:
-      type: azure
-      account: "${{env:AZURE_ACCOUNT_NAME}}"
-      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+          contains: ['"manifestVersion": "1.30"']
 
   login-m365:
     type: login
@@ -125,30 +113,16 @@ steps:
       account: "${{env:M365_ACCOUNT_NAME}}"
       password: "${{secret:M365_ACCOUNT_PASSWORD}}"
 
-  provision-arm:
-    type: provision
-    with:
-      environment: none
-      arm:
-        targetResourceGroupName: "+ New resource group"
-        newResourceGroupName: "${{var:app_name}}-rg"
-        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
-
-  deploy:
-    type: deploy
-    with:
-      environment: none
-
-  f5-teams-remote:
-    type: target
-    with:
-      profile: "Launch Remote (Chrome)"
-      profileSelection: first
-
   f5-teams-local:
     type: target
     with:
       profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+
+  f5-playground:
+    type: target
+    with:
+      profile: "Debug in Microsoft 365 Agents Playground"
       profileSelection: first
 
   open-app:
@@ -165,5 +139,13 @@ steps:
     with:
       - type: chat
         send: Create a task to review the proposal by Friday
+        expect:
+          replied: true
+
+  check-collaborator-playground-chat:
+    type: checks
+    with:
+      - type: chat
+        send: "@Collaborator create a task to review the proposal by Friday"
         expect:
           replied: true

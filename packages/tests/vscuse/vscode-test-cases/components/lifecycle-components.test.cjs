@@ -12,6 +12,7 @@ const substitutions = {
   convergedSubject: "the Microsoft Teams conversation is open",
   destination: "chat",
   dialogTitle: "Confirm provisioning\nfor dev",
+  dependencyLabel: "src/requirements.txt",
   inputValue: "test value",
   instanceSuffix: "lifecycle_1",
   notificationText: 'stage completed "successfully"\nwith details',
@@ -189,6 +190,29 @@ test("VCB-50: the multi-select component selects by control, not by position", (
     assert.notEqual(step.parameters.key, "down");
     assert.equal(/\bSelected\b/.test(step.description), false);
   }
+});
+
+test("VCB-159: Python dependencies preserve the multi-select keyboard flow", () => {
+  const pythonDependencies = render("quick-input/python-dependencies.json.tpl");
+  const [
+    assertQuestion,
+    assertDependency,
+    focusSelectAll,
+    selectAll,
+    restoreFocus,
+    confirm,
+  ] = pythonDependencies.steps;
+
+  assert.match(assertDependency.description, /src\/requirements\.txt/);
+  assert.equal(focusSelectAll.parameters.keys, "shift+tab");
+  assert.equal(selectAll.parameters.key, "space");
+  assert.equal(restoreFocus.parameters.keys, "tab");
+  assert.equal(confirm.parameters.key, "enter");
+  assert.deepEqual(assertDependency.depends_on, [assertQuestion.step_id]);
+  assert.deepEqual(focusSelectAll.depends_on, [assertDependency.step_id]);
+  assert.deepEqual(selectAll.depends_on, [focusSelectAll.step_id]);
+  assert.deepEqual(restoreFocus.depends_on, [selectAll.step_id]);
+  assert.deepEqual(confirm.depends_on, [restoreFocus.step_id]);
 });
 
 test("VCB-58: the multi-select component asserts no checked state", () => {
@@ -370,4 +394,18 @@ test("VCB-83: the Teams app details clicks resolve their target with OCR", () =>
   }
   assert.match(clicks[0].description, /"Add" or "Open"/);
   assert.match(clicks[1].description, /"Added successfully!" or "Let's go"/);
+});
+
+test("VCB-164: browser account entry resolves its input with OCR", () => {
+  const component = render("authentication/browser/m365-sign-in.json.tpl");
+  const focusAccount = component.steps.find((step) => step.tool === "click");
+
+  assert.match(focusAccount.description, /"Email, phone, or Skype" input/);
+  assert.deepEqual(focusAccount.parameters, {
+    button: "left",
+    x: 512,
+    y: 384,
+  });
+  assert.equal(focusAccount.tags.includes("ocr:true"), true);
+  assert.deepEqual(focusAccount.preconditions, []);
 });

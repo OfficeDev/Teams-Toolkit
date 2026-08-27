@@ -69,13 +69,6 @@ cases:
         check-weather-chat,
       ]
 
-  # The OpenAI remote cases end at the launched surface and assert no
-  # completion. An Azure OpenAI resource speaks the OpenAI v1 protocol, so the
-  # local cases below redirect the OpenAI client at it and do assert one, but a
-  # remote run reads its app settings from infra/azure.bicep, which declares only
-  # the key. What both halves cover is the OpenAI branch of the scaffold question
-  # tree, which asks for a single key instead of an endpoint and a deployment
-  # name, and the different generated configuration that follows from it.
   - id: weather-ts-openai-remote-teams
     scenarioId: SCN-CREATE-WEATHER-03
     workItemIds: [34648339]
@@ -83,12 +76,14 @@ cases:
       [
         scaffold-weather-ts-openai,
         check-weather-ts,
+        redirect-openai-base-url-remote,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
         f5-teams-remote,
         open-app,
+        check-weather-chat,
       ]
 
   - id: weather-ts-openai-local-teams
@@ -112,12 +107,14 @@ cases:
       [
         scaffold-weather-js-openai,
         check-weather-js,
+        redirect-openai-base-url-remote,
         login-azure,
         login-m365,
         provision-arm,
         deploy,
         f5-teams-remote,
         open-app,
+        check-weather-chat,
       ]
 
   - id: weather-js-openai-local-teams
@@ -134,9 +131,9 @@ cases:
         check-weather-chat,
       ]
 
-  # Surfaces beyond Teams, sampled on the canonical TypeScript + Azure OpenAI
-  # combination. A custom engine agent previewed in Copilot needs its bot
-  # deployed first, unlike a declarative agent.
+  # A custom engine agent previewed remotely in Copilot needs its bot deployed
+  # first, unlike a declarative agent. Both Azure OpenAI language packages keep
+  # a one-to-one Copilot replacement for their recorded scenarios.
   - id: weather-ts-azure-openai-remote-copilot
     scenarioId: SCN-CREATE-WEATHER-01
     workItemIds: [33338502]
@@ -166,6 +163,35 @@ cases:
         check-weather-chat,
       ]
 
+  - id: weather-js-azure-openai-remote-copilot
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [33338497]
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
+        login-azure,
+        login-m365,
+        provision-arm,
+        deploy,
+        f5-copilot-remote,
+        open-agent,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-azure-openai-local-copilot
+    scenarioId: SCN-CREATE-WEATHER-01
+    workItemIds: [33338500]
+    steps:
+      [
+        scaffold-weather-js-azure-openai,
+        check-weather-js,
+        login-m365,
+        f5-copilot-local,
+        open-agent,
+        check-weather-chat,
+      ]
+
   # The Agents Playground hosts the agent locally and never signs in to
   # Microsoft 365, so this is the shortest case that still exercises a real
   # completion from the scaffolded agent.
@@ -188,6 +214,35 @@ cases:
       [
         scaffold-weather-js-azure-openai,
         check-weather-js,
+        f5-playground,
+        open-app,
+        check-weather-chat,
+      ]
+
+  # The retained OpenAI plans stopped at the Playground welcome state. Their
+  # replacements reuse the existing successful weather interaction without
+  # adding response wording or coordinates.
+  - id: weather-ts-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [33338503]
+    steps:
+      [
+        scaffold-weather-ts-openai,
+        check-weather-ts,
+        redirect-openai-base-url-playground,
+        f5-playground,
+        open-app,
+        check-weather-chat,
+      ]
+
+  - id: weather-js-openai-playground
+    scenarioId: SCN-CREATE-WEATHER-03
+    workItemIds: [33338498]
+    steps:
+      [
+        scaffold-weather-js-openai,
+        check-weather-js,
+        redirect-openai-base-url-playground,
         f5-playground,
         open-app,
         check-weather-chat,
@@ -254,7 +309,7 @@ steps:
       - type: file
         path: appPackage/manifest.json
         expect:
-          contains: ['"manifestVersion": "1.29"']
+          contains: ['"manifestVersion": "1.30"']
 
   scaffold-weather-ts-openai:
     type: scaffold
@@ -338,6 +393,16 @@ steps:
   # travels through.
   redirect-openai-base-url:
     type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  redirect-openai-base-url-playground:
+    type: playgroundEnvironment
+    with:
+      OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+
+  redirect-openai-base-url-remote:
+    type: remoteEnvironment
     with:
       OPENAI_BASE_URL: "${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
 

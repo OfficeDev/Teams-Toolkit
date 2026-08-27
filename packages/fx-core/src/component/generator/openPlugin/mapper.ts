@@ -27,7 +27,22 @@ const DESC_SHORT_MAX = 80;
 const DESC_FULL_MAX = 4000;
 const MAX_AGENT_CONNECTORS = 10;
 
-export function mapToTtkProject(parsed: ParsedOpenPlugin, inputs: ImportInputs): MappedManifest {
+export function validateMcpServerCount(mcpServers: Record<string, OpenPluginMcpServerEntry>): void {
+  const connectorCount = Object.values(mcpServers).filter(
+    (server) => typeof server.url === "string" && server.url.trim().length > 0
+  ).length;
+  if (connectorCount > MAX_AGENT_CONNECTORS) {
+    throw new Error(
+      `Too many MCP servers: ${connectorCount}. The manifest caps agentConnectors at ${MAX_AGENT_CONNECTORS}.`
+    );
+  }
+}
+
+export function mapToTtkProject(
+  parsed: ParsedOpenPlugin,
+  inputs: ImportInputs,
+  resolvedAuthTypes: Readonly<Record<string, AuthorizationType>> = {}
+): MappedManifest {
   const warnings = [...parsed.warnings];
   const pj = parsed.manifest;
   const pluginName = pj.name;
@@ -71,19 +86,15 @@ export function mapToTtkProject(parsed: ParsedOpenPlugin, inputs: ImportInputs):
 
   const agentSkills = parsed.skills.map((folder) => ({ folder: `./skills/${folder}` }));
 
+  validateMcpServerCount(parsed.mcpServers);
   const agentConnectors = buildAgentConnectors(
     parsed.mcpServers,
     pluginName,
     inputs.defaultAuthType ?? "Auto",
     ext.agentConnectors,
-    warnings
+    warnings,
+    resolvedAuthTypes
   );
-
-  if (agentConnectors.length > MAX_AGENT_CONNECTORS) {
-    throw new Error(
-      `Too many MCP servers: ${agentConnectors.length}. The manifest caps agentConnectors at ${MAX_AGENT_CONNECTORS}.`
-    );
-  }
 
   const developer: Record<string, unknown> = {
     name: ext.developer?.name ?? author.name ?? "Unknown",
@@ -136,7 +147,8 @@ function buildAgentConnectors(
   pluginName: string,
   defaultAuth: "Auto" | AuthorizationType,
   extOverrides: Record<string, AtkAgentConnectorExt> | undefined,
-  warnings: string[]
+  warnings: string[],
+  resolvedAuthTypes: Readonly<Record<string, AuthorizationType>>
 ): Record<string, unknown>[] {
   const out: Record<string, unknown>[] = [];
   const serverNames = Object.keys(mcpServers).sort();
@@ -151,7 +163,7 @@ function buildAgentConnectors(
     }
     const override = extOverrides?.[name];
     const authType: AuthorizationType =
-      override?.authorization?.type ?? resolveAuthType(url, defaultAuth);
+      override?.authorization?.type ?? resolveAuthType(name, defaultAuth, resolvedAuthTypes);
     const authorization: Record<string, unknown> = { type: authType };
     if (authType !== "None") {
       authorization.referenceId =
@@ -177,14 +189,17 @@ function buildAgentConnectors(
   return out;
 }
 
-function resolveAuthType(url: string, defaultAuth: "Auto" | AuthorizationType): AuthorizationType {
+function resolveAuthType(
+  serverName: string,
+  defaultAuth: "Auto" | AuthorizationType,
+  resolvedAuthTypes: Readonly<Record<string, AuthorizationType>>
+): AuthorizationType {
   if (defaultAuth !== "Auto") {
     return defaultAuth;
   }
-  const isHttps = /^https:\/\//i.test(url);
-  const isLocal = /localhost|127\.0\.0\.1/.test(url);
-  if (isHttps && !isLocal) {
-    return "OAuthPluginVault";
+  const resolved = resolvedAuthTypes[serverName];
+  if (!resolved) {
+    throw new Error(`Missing resolved auth type for MCP server '${serverName}'.`);
   }
-  return "None";
+  return resolved;
 }

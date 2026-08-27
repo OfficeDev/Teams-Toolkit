@@ -1,0 +1,89 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "additionalProperties": false,
+    "type": "object",
+    "properties": {
+        "version": {
+            "type": "string",
+            "description": "The version of the schema this manifest is using.",
+            "const": "1.0"
+        },
+        "$schema": {
+            "type": "string",
+            "format": "uri"
+        },
+        "jsonPath": {
+            "type": "string",
+            "description": "The path to the results in the response JSON.",
+            "maxLength": 256
+        },
+        "responseLayout": {
+            "type": "string",
+            "description": "Specifies the layout of the attachments. Used for responses of type result. Supported types are list and grid.",
+            "enum": [
+                "list",
+                "grid"
+            ]
+        },
+        "responseCardTemplate": {
+            "type": "object",
+            "properties": {},
+            "description": "The adaptive card template for each result in the response."
+        },
+        "previewCardTemplate": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "The preview card template for each result in the response.",
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "description": "The title of the preview card.",
+                    "maxLength": 256
+                },
+                "subtitle": {
+                    "type": "string",
+                    "description": "The subtitle of the preview card.",
+                    "maxLength": 256
+                },
+                "text": {
+                    "type": "string",
+                    "description": "The text of the preview card.",
+                    "maxLength": 256
+                },
+                "image": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "url": {
+                            "type": "string",
+                            "description": "The url to the image. Must be https or a data url scheme. Redirect urls are not supported.",
+                            "maxLength": 2048
+                        },
+                        "alt": {
+                            "type": "string",
+                            "description": "Accessible description of the image.",
+                            "maxLength": 256
+                        },
+                        "$when": {
+                            "type": "string",
+                            "description": "An optional conditional expression used to determine if the image element will appear to the user.",
+                            "maxLength": 256
+                        }
+                    },
+                    "required": [
+                        "url"
+                    ]
+                }
+            },
+            "required": [
+                "title"
+            ]
+        }
+    },
+    "required": [
+        "version",
+        "responseLayout",
+        "responseCardTemplate",
+        "previewCardTemplate"
+    ]
+}
