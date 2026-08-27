@@ -144,6 +144,15 @@ test("VCB-62: account readiness waits out the toolkit's Signing in state", () =>
   }
 });
 
+test("VCB-165: Azure account readiness waits before its first assertion", () => {
+  const assertReady = render(
+    "authentication/azure/sign-in.json.tpl",
+  ).steps.at(-1);
+
+  assert.equal(assertReady.tags.includes("delay: 30"), true);
+  assert.equal(assertReady.tags.includes("step_retry_timeout: 180"), true);
+});
+
 test("VCB-63: Copilot conversation clicks resolve their target by OCR", () => {
   for (const [relativePath, control] of [
     ["browser/copilot/allow-action.json.tpl", '"Allow" button'],
