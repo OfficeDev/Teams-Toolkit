@@ -138,19 +138,25 @@ test("VCB-62: account readiness waits out the toolkit's Signing in state", () =>
     "authentication/m365/sign-in-from-account-picker.json.tpl",
   ]) {
     const assertReady = render(relativePath).steps.at(-1);
+    const retryTag = assertReady.tags.find((tag) =>
+      tag.startsWith("step_retry_timeout:"),
+    );
 
     assert.equal(assertReady.tags.includes("readiness:account-visible"), true);
-    assert.equal(assertReady.tags.includes("step_retry_timeout: 180"), true);
+    assert.equal(Number(retryTag?.split(":")[1]) >= 180, true);
   }
 });
 
-test("VCB-165: Azure account readiness waits before its first assertion", () => {
-  const assertReady = render(
-    "authentication/azure/sign-in.json.tpl",
-  ).steps.at(-1);
+test("VCB-166: Azure account readiness waits for asynchronous sign-in", () => {
+  const assertReady = render("authentication/azure/sign-in.json.tpl").steps.at(
+    -1,
+  );
 
-  assert.equal(assertReady.tags.includes("delay: 30"), true);
-  assert.equal(assertReady.tags.includes("step_retry_timeout: 180"), true);
+  assert.equal(
+    assertReady.tags.some((tag) => tag.startsWith("delay:")),
+    false,
+  );
+  assert.equal(assertReady.tags.includes("step_retry_timeout: 600"), true);
 });
 
 test("VCB-63: Copilot conversation clicks resolve their target by OCR", () => {

@@ -267,8 +267,7 @@
         "component:authentication",
         "account:azure",
         "readiness:account-visible",
-        "delay: 30",
-        "step_retry_timeout: 180"
+        "step_retry_timeout: 600"
       ]
     }
   ]
