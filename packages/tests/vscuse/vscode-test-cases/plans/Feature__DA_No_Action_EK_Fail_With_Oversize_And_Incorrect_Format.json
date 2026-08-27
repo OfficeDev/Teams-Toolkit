@@ -80,7 +80,7 @@
         "x": 354,
         "y": 88
       },
-      "description": "Select the \"Declarative Agent – Agents for Microsoft 365 Copilot\" option in the \"New Project\" dropdown within Visual Studio Code.",
+      "description": "Select the \"Declarative Agent \u2013 Agents for Microsoft 365 Copilot\" option in the \"New Project\" dropdown within Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -164,7 +164,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nFILE=\"/home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve/testing.docx\"\nDIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve\"\nSIZE_MB=2\nSIZE_BYTES=$((SIZE_MB * 1024 * 1024))\n\n# Ensure directory exists\nif [ ! -d \"$DIR\" ]; then\n  mkdir -p \"$DIR\"\nfi\n\n# Create a large dummy file and name it .docx\nhead -c \"$SIZE_BYTES\" /dev/urandom > \"$FILE\"\n\n# Show stats to verify size\nls -lh \"$FILE\"\nstat \"$FILE\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\n-rw-r--r-- 1 vscode vscode 2.0M Dec 25 06:22 /home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve/testing.docx\n  File: /home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve/testing.docx\n  Size: 2097152   \tBlocks: 4096       IO Block: 4096   regular file\nDevice: 57h/87d\tInode: 224605      Links: 1\nAccess: (0644/-rw-r--r--)  Uid: ( 1000/  vscode)   Gid: ( 1000/  vscode)\nAccess: 2025-12-25 06:22:46.709423610 +0000\nModify: 2025-12-25 06:22:46.713423885 +0000\nChange: 2025-12-25 06:22:46.713423885 +0000\n Birth: 2025-12-25 06:22:46.709423610 +0000\n\n✓ Script executed successfully\n\n=== STDERR ==="
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nFILE=\"/home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve/testing.docx\"\nDIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve\"\nSIZE_MB=2\nSIZE_BYTES=$((SIZE_MB * 1024 * 1024))\n\n# Ensure directory exists\nif [ ! -d \"$DIR\" ]; then\n  mkdir -p \"$DIR\"\nfi\n\n# Create a large dummy file and name it .docx\nhead -c \"$SIZE_BYTES\" /dev/urandom > \"$FILE\"\n\n# Show stats to verify size\nls -lh \"$FILE\"\nstat \"$FILE\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\n-rw-r--r-- 1 vscode vscode 2.0M Dec 25 06:22 /home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve/testing.docx\n  File: /home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve/testing.docx\n  Size: 2097152   \tBlocks: 4096       IO Block: 4096   regular file\nDevice: 57h/87d\tInode: 224605      Links: 1\nAccess: (0644/-rw-r--r--)  Uid: ( 1000/  vscode)   Gid: ( 1000/  vscode)\nAccess: 2025-12-25 06:22:46.709423610 +0000\nModify: 2025-12-25 06:22:46.713423885 +0000\nChange: 2025-12-25 06:22:46.713423885 +0000\n Birth: 2025-12-25 06:22:46.709423610 +0000\n\n\u2713 Script executed successfully\n\n=== STDERR ==="
       },
       "description": "@code create testing.docx file more than 1mb at path: '/home/vscode/AgentsToolkitProjects/${{var:app_name}}'",
       "content_refs": [],
@@ -467,7 +467,7 @@
         "x": 617,
         "y": 624
       },
-      "description": "Click the “[AppStudioPlugin.ManifestValidationFailed]: Microsoft 365 Agents Toolkit” error notification popup in the lower right corner of the Visual Studio Code window to view details about the manifest validation failure.",
+      "description": "Click the \u201c[AppStudioPlugin.ManifestValidationFailed]: Microsoft 365 Agents Toolkit\u201d error notification popup in the lower right corner of the Visual Studio Code window to view details about the manifest validation failure.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -556,7 +556,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/bin/bash\nset -e\n\nDIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve\"\nFILE=\"$DIR/testing.png\"\n\nif [ ! -d \"$DIR\" ]; then\n  echo \"Directory does not exist: $DIR\"\n  exit 1\nfi\n\ntouch \"$FILE\"\nif [ -f \"$FILE\" ]; then\n  echo \"File created: $FILE\"\nelse\n  echo \"Failed to create file: $FILE\"\n  exit 1\nfi\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nFile created: /home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve/testing.png\n\n✓ Script executed successfully"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/bin/bash\nset -e\n\nDIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve\"\nFILE=\"$DIR/testing.png\"\n\nif [ ! -d \"$DIR\" ]; then\n  echo \"Directory does not exist: $DIR\"\n  exit 1\nfi\n\ntouch \"$FILE\"\nif [ -f \"$FILE\" ]; then\n  echo \"File created: $FILE\"\nelse\n  echo \"Failed to create file: $FILE\"\n  exit 1\nfi\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDOUT ===\nFile created: /home/vscode/AgentsToolkitProjects/vscuse_app_uY7ve/testing.png\n\n\u2713 Script executed successfully"
       },
       "description": "@code create testing.png file at path: '/home/vscode/AgentsToolkitProjects/${{var:app_name}}'",
       "content_refs": [],

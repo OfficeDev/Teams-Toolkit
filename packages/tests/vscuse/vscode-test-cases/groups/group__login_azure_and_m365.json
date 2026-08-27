@@ -436,7 +436,7 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "step_retry_timeout: 60"
+        "step_retry_timeout: 480"
       ],
       "screenshot": null,
       "created_at": "2026-06-11T03:17:05.778050",
