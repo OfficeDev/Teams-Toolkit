@@ -200,7 +200,7 @@ export class WrappedAxiosClient {
       }
       if (
         upperMethod === HttpMethod.POST &&
-        fullPath.match(new RegExp("/v1.0/apps/apppackage", "i"))
+        fullPath.match(new RegExp("/v1.0/apps(?:\\?|$)", "i"))
       ) {
         return APP_STUDIO_API_NAMES.CREATE_APP;
       }

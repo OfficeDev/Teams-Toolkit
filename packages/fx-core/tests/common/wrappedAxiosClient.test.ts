@@ -147,6 +147,15 @@ describe("Wrapped Axios Client Test", () => {
     expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
+  it("classifies the new create app route", () => {
+    const apiName = WrappedAxiosClient.convertUrlToApiName(
+      `${getResourceServiceEndpoint(ResourceServiceType.TDP)}/v1.0/apps`,
+      "POST"
+    );
+
+    expect(apiName).toBe(APP_STUDIO_API_NAMES.CREATE_APP);
+  });
+
   it("Dependency API start telemetry", async () => {
     const mockedRequest = {
       method: "POST",

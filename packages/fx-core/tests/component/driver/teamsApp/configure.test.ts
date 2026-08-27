@@ -192,14 +192,19 @@ describe("teamsApp/update", async () => {
       appPackagePath: "fakePath",
     };
 
-    const teamsAppId = uuid();
+    const appId = uuid();
+    const resourceAppId = uuid();
     const updateAppSpy = vi.spyOn(teamsDevPortalClient, "updateApp").mockResolvedValue(appDef);
-    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue(appDef);
+    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue({
+      ...appDef,
+      appId: resourceAppId,
+      teamsAppId: appId,
+    });
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       const manifest = new TeamsAppManifest();
-      manifest.id = teamsAppId;
+      manifest.id = appId;
       manifest.staticTabs = [
         {
           entityId: "index",
@@ -227,7 +232,7 @@ describe("teamsApp/update", async () => {
     console.log(JSON.stringify(result));
     chai.assert.isTrue(result.isOk());
     expect(updateAppSpy).toHaveBeenCalledOnce();
-    expect(updateAppSpy.mock.calls[0][1]).toBe(teamsAppId);
+    expect(updateAppSpy.mock.calls[0][1]).toBe(resourceAppId);
   });
 
   it("execute", async () => {
