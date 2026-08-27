@@ -1159,6 +1159,63 @@ describe("ActionInjector", () => {
       vi.restoreAllMocks();
     });
 
+    it("throws if the provision node is missing", async () => {
+      vi.spyOn(fs, "readFile").mockResolvedValue("version: 1.0.0" as any);
+
+      try {
+        await ActionInjector.injectCreateAPIKeyActionForMCP(
+          "m365agents.yml",
+          "examplecom",
+          "MCP_DA_AUTH_ID_EXAMPLECOM",
+          "https://example.com/mcp"
+        );
+        assert.fail("Expected InjectAPIKeyActionFailedError to be thrown");
+      } catch (error) {
+        assert.instanceOf(error, InjectAPIKeyActionFailedError);
+      }
+    });
+
+    it("returns without writing if the registration ID already exists", async () => {
+      const ymlContent = `
+        provision:
+          - uses: apiKey/register
+            writeToEnvironmentFile:
+              registrationId: MCP_DA_AUTH_ID_EXAMPLECOM
+      `;
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      const writeStub = vi.spyOn(fs, "writeFile").mockResolvedValue();
+
+      const result = await ActionInjector.injectCreateAPIKeyActionForMCP(
+        "m365agents.yml",
+        "examplecom",
+        "MCP_DA_AUTH_ID_EXAMPLECOM",
+        "https://example.com/mcp"
+      );
+
+      assert.isUndefined(result);
+      assert.isFalse(writeStub.mock.calls.length > 0);
+    });
+
+    it("throws if the Teams app ID output is missing", async () => {
+      const ymlContent = `
+        provision:
+          - uses: teamsApp/create
+      `;
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+
+      try {
+        await ActionInjector.injectCreateAPIKeyActionForMCP(
+          "m365agents.yml",
+          "examplecom",
+          "MCP_DA_AUTH_ID_EXAMPLECOM",
+          "https://example.com/mcp"
+        );
+        assert.fail("Expected InjectAPIKeyActionFailedError to be thrown");
+      } catch (error) {
+        assert.instanceOf(error, InjectAPIKeyActionFailedError);
+      }
+    });
+
     it("SCN-ADD-MCP-15: injects idempotent API-key registration using the MCP base URL", async () => {
       const ymlContent = `
         provision:
