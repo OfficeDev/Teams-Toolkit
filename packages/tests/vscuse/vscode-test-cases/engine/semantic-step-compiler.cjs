@@ -1728,14 +1728,19 @@ function createSemanticStepCompiler() {
 
   function compileAddDaAction(state, definition) {
     const inputs = definition.with;
-    if (
-      state.template !== "da/no-action" ||
-      !isRecord(inputs) ||
-      !hasOnlyFields(inputs, new Set(["source", "url", "operations"])) ||
-      inputs.source !== "openapi" ||
-      !isHttpsUrl(inputs.url) ||
-      inputs.operations !== "all"
-    ) {
+    const isOpenApi =
+      isRecord(inputs) &&
+      hasOnlyFields(inputs, new Set(["source", "url", "operations"])) &&
+      inputs.source === "openapi" &&
+      isHttpsUrl(inputs.url) &&
+      inputs.operations === "all";
+    const isMcpBearer =
+      isRecord(inputs) &&
+      hasOnlyFields(inputs, new Set(["source", "url", "authType"])) &&
+      inputs.source === "mcp" &&
+      isHttpsUrl(inputs.url) &&
+      inputs.authType === "bearer-token";
+    if (state.template !== "da/no-action" || (!isOpenApi && !isMcpBearer)) {
       return failure(
         "VCB_ADD_DA_ACTION_INPUT_INVALID",
         "The declarative-agent action input is not supported.",
@@ -1749,6 +1754,34 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    if (isMcpBearer) {
+      error = append(
+        output,
+        render(state, "quick-input/single-select.json.tpl", {
+          optionLabel: "Start with a MCP server",
+          questionTitle: "Add an Action",
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "quick-input/text.json.tpl", {
+          inputValue: inputs.url,
+          questionTitle: "MCP Server URL",
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "quick-input/single-select.json.tpl", {
+          optionLabel: "API Key (Bearer Token Auth)",
+          questionTitle: "Select Authentication Type",
+        }),
+      );
+      if (error) return error;
+      state.completed.add("addDaAction");
+      return { ok: true, value: output };
+    }
     error = append(
       output,
       render(state, "quick-input/single-select.json.tpl", {

@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 170 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 171 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 170 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 170);
+  assert.equal(first.value.files.length, 171);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 170);
+  assert.equal(generatedFiles.length, 171);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -6255,6 +6255,146 @@ steps:
   }
 });
 
+test("VCB-165: addDaAction adds an MCP action with bearer-token authentication", () => {
+  const sourceText = `version: 1
+cases:
+  - id: add-mcp-bearer-action
+    scenarioId: SCN-DA-ADD-MCP-ACTION-TO-DA
+    workItemIds: [165]
+    steps: [scaffold, check, add-action, verify]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { exists: true }
+  add-action:
+    type: addDaAction
+    with:
+      source: mcp
+      url: https://example.com/mcp
+      authType: bearer-token
+  verify:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin-examplecom.json
+        expect:
+          contains: ['"type": "ApiKeyPluginVault"', '"reference_id": "\${{MCP_DA_AUTH_ID_EXAMPLECOM}}"']
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["uses: apiKey/register", "baseUrl: https://example.com/mcp", "registrationId: MCP_DA_AUTH_ID_EXAMPLECOM"]
+          notContains: ["oauth/register", "clientId:", "clientSecret:"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains: ["uses: apiKey/register", "baseUrl: https://example.com/mcp", "registrationId: MCP_DA_AUTH_ID_EXAMPLECOM"]
+          notContains: ["oauth/register", "clientId:", "clientSecret:"]
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-165.yml");
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("Microsoft 365 Agents: Add Action"), true);
+  assert.equal(typedValues.includes("Start with a MCP server"), true);
+  assert.equal(typedValues.includes("https://example.com/mcp"), true);
+  assert.equal(typedValues.includes("API Key (Bearer Token Auth)"), true);
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes("Enter OpenAPI Document URL"),
+    ),
+    false,
+  );
+  const addActionCommandIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Add Action",
+  );
+  const firstFileCheckIndex = plan.steps.findIndex(
+    (step, index) =>
+      index > addActionCommandIndex && step.tags.includes("assertion:file"),
+  );
+  const authConfirmationIndex = plan.steps.findIndex(
+    (step) => step.step_id === plan.steps[firstFileCheckIndex].depends_on[0],
+  );
+  assert.equal(addActionCommandIndex >= 0, true);
+  assert.equal(authConfirmationIndex > addActionCommandIndex, true);
+  assert.equal(firstFileCheckIndex > authConfirmationIndex, true);
+  assert.equal(plan.steps[authConfirmationIndex].tool, "key_press");
+  assert.equal(plan.steps[authConfirmationIndex].parameters.key, "enter");
+  assert.equal(
+    plan.steps[authConfirmationIndex].tags.includes("answer_type:singleSelect"),
+    true,
+  );
+  assert.equal(
+    plan.steps
+      .slice(addActionCommandIndex, authConfirmationIndex + 1)
+      .some((step) => step.tool === "click"),
+    false,
+  );
+  assert.equal(
+    plan.steps
+      .slice(addActionCommandIndex, firstFileCheckIndex)
+      .some((step) => step.tags.includes("component:notifications")),
+    false,
+  );
+  assert.equal(
+    plan.steps[firstFileCheckIndex].tags.includes("step_retry_timeout:120"),
+    true,
+  );
+  const assertionByPath = new Map(
+    readFileAssertions(plan).map((assertion) => [assertion.path, assertion]),
+  );
+  assert.equal(
+    assertionByPath.has("appPackage/ai-plugin-examplecom.json"),
+    true,
+  );
+  assert.equal(assertionByPath.has("m365agents.yml"), true);
+  assert.equal(assertionByPath.has("m365agents.local.yml"), true);
+
+  for (const [label, invalidSource] of [
+    [
+      "unsupported auth type",
+      sourceText.replace("authType: bearer-token", "authType: oauth"),
+    ],
+    ["non-HTTPS URL", sourceText.replace("https://example", "http://example")],
+    [
+      "missing auth type",
+      sourceText.replace("\n      authType: bearer-token", ""),
+    ],
+    [
+      "extra field",
+      sourceText.replace(
+        "      authType: bearer-token",
+        "      authType: bearer-token\n      operations: all",
+      ),
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-165-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_ADD_DA_ACTION_INPUT_INVALID",
+      label,
+    );
+  }
+});
+
 test("VCB-151: regenerateDaAction selects a supported operation without pointer coordinates", () => {
   const sourceText = `version: 1
 cases:
@@ -7098,7 +7238,6 @@ test("VCB-154: seven legacy plans are replaced, two are retired, and five remain
       migration.legacy,
     );
   }
-
   const envRecreated = await compileFixture(
     "non-sso-tab.yml",
     (sourceText) => sourceText,
