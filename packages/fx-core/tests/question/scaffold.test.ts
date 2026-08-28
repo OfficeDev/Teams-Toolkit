@@ -72,6 +72,7 @@ import {
   teamsProjectTypeDeps,
   TeamsProjectTypeOptions,
   updateActionWithMCP,
+  MCPForDAAddAuthTypeStaticOptions,
   MCPForDAAuthTypeStaticOptions,
   MCPForDAAuthCredentialNodes,
   MCPServerTypeNode,
@@ -393,6 +394,28 @@ describe("MCPForDAAuthTypeStaticOptions", () => {
     const options = MCPForDAAuthTypeStaticOptions();
     assert.lengthOf(options, 3);
   });
+});
+
+describe("MCPForDAAddAuthTypeStaticOptions", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  for (const v4Enabled of [false, true]) {
+    it(`SCN-ADD-MCP-13: offers bearer-token auth when v4 is ${v4Enabled ? "on" : "off"}`, () => {
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+        return flag === FeatureFlags.V4Enabled ? v4Enabled : false;
+      });
+
+      const options = MCPForDAAddAuthTypeStaticOptions();
+
+      assert.sameMembers(
+        options.map((option) => option.id),
+        ["oauth", "entra-sso", "bearer-token", "none"]
+      );
+      assert.isNotEmpty(options.find((option) => option.id === "bearer-token")?.detail);
+    });
+  }
 });
 
 describe("MCPForDAAuthCredentialNodes", () => {

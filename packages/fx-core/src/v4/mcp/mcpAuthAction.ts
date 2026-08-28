@@ -7,7 +7,13 @@ import { isMap, isSeq, parseDocument } from "yaml";
 
 const SOURCE = "Scaffold";
 const MIN_DCR_YAML_VERSION = "v1.13";
-const SUPPORTED_AUTH_TYPES = new Set(["none", "oauth", "entra-sso", "oauth-dynamic"]);
+const SUPPORTED_AUTH_TYPES = new Set([
+  "none",
+  "oauth",
+  "entra-sso",
+  "oauth-dynamic",
+  "bearer-token",
+]);
 
 export const MCP_DCR_WELL_KNOWN_URL_PLACEHOLDER =
   "<PLEASE_FILL_IN_WELL_KNOWN_AUTHORIZATION_SERVER_URL>";
@@ -58,7 +64,8 @@ function registrationId(item: unknown): string | undefined {
   if (!isMap(output)) {
     return undefined;
   }
-  const value = output.get("configurationId");
+  const outputName = uses(item) === "apiKey/register" ? "registrationId" : "configurationId";
+  const value = output.get(outputName);
   return typeof value === "string" ? value : undefined;
 }
 
@@ -164,6 +171,18 @@ function dcrAction(
   };
 }
 
+function apiKeyAction(args: MCPAuthActionArgs, appIdEnvName: string): Record<string, unknown> {
+  return {
+    uses: "apiKey/register",
+    with: {
+      name: args.authName,
+      appId: `\${{${appIdEnvName}}}`,
+      baseUrl: args.mcpServerUrl,
+    },
+    writeToEnvironmentFile: { registrationId: args.registrationId },
+  };
+}
+
 /** Add an MCP auth provision action while preserving the surrounding YAML document. */
 export function injectMcpAuthActionYaml(
   yaml: string,
@@ -185,7 +204,12 @@ export function injectMcpAuthActionYaml(
     return failure("The rendered m365agents.yml does not declare a provision sequence.");
   }
 
-  const actionUses = args.authType === "oauth-dynamic" ? "dcr/register" : "oauth/register";
+  const actionUses =
+    args.authType === "oauth-dynamic"
+      ? "dcr/register"
+      : args.authType === "bearer-token"
+        ? "apiKey/register"
+        : "oauth/register";
   const alreadyRegistered = provision.items.some(
     (item) => uses(item) === actionUses && registrationId(item) === args.registrationId
   );
@@ -214,7 +238,9 @@ export function injectMcpAuthActionYaml(
           appIdEnvName,
           args.endpoints.wellKnownUrl ?? MCP_DCR_WELL_KNOWN_URL_PLACEHOLDER
         )
-      : oauthAction(args, appIdEnvName);
+      : args.authType === "bearer-token"
+        ? apiKeyAction(args, appIdEnvName)
+        : oauthAction(args, appIdEnvName);
   provision.items.splice(teamsAppIndex + 1, 0, document.createNode(action));
 
   if (args.authType === "oauth-dynamic") {

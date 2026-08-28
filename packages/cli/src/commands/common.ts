@@ -6,20 +6,26 @@ import { featureFlagManager, FeatureFlags } from "@microsoft/teamsfx-core";
 import { commands } from "../resource";
 
 /**
- * Gates the `oauth-dynamic` (DCR) value of the `mcp-da-auth-type` option behind the feature
- * flags. The value is accepted only when both `TEAMSFX_MCP_FOR_DA_DT` and `TEAMSFX_MCP_FOR_DA_DCR`
- * are on, mirroring the model-layer `MCPForDAAuthTypeStaticOptions()` so the CLI parse layer and
- * the interactive picker stay consistent.
+ * Gates the values of the `mcp-da-auth-type` option by command and feature flags.
+ * `bearer-token` belongs only to add-action, while `oauth-dynamic` is accepted only when both
+ * `TEAMSFX_MCP_FOR_DA_DT` and `TEAMSFX_MCP_FOR_DA_DCR` are on.
  */
-export function gateMCPDAAuthTypeChoices(options: CLICommandOption[]): CLICommandOption[] {
+export function gateMCPDAAuthTypeChoices(
+  options: CLICommandOption[],
+  allowBearerToken: boolean
+): CLICommandOption[] {
   const showDCR =
     featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT) &&
     featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADCR);
   for (const option of options) {
     if (option.name === "mcp-da-auth-type" && option.type === "string") {
-      option.choices = showDCR
-        ? ["oauth", "oauth-dynamic", "entra-sso", "none"]
-        : ["oauth", "entra-sso", "none"];
+      option.choices = [
+        "oauth",
+        ...(showDCR ? ["oauth-dynamic"] : []),
+        "entra-sso",
+        ...(allowBearerToken ? ["bearer-token"] : []),
+        "none",
+      ];
       break;
     }
   }

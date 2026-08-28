@@ -4,6 +4,13 @@
 import { createInMemoryRuntime } from "../../../src/v4/runtime/inMemoryRuntime";
 import { scaffold } from "../../../src/v4/runtime/scaffold";
 import { mcpAuthScaffoldDeps } from "../../../src/v4/mcp/mcpAuthScaffold";
+import { ActionInjector } from "../../../src/component/configManager/actionInjector";
+import { deriveMCPNamespaceFromUrl } from "../../../src/component/generator/declarativeAgent/helper";
+import { deriveMCPManifestOAuth } from "../../../src/component/utils/mcpAuthScaffolder";
+import * as fs from "fs-extra";
+import * as os from "os";
+import * as path from "path";
+import { parse } from "yaml";
 import { afterEach, assert, beforeEach, vi } from "vitest";
 import {
   isRecord,
@@ -28,9 +35,19 @@ const PLUGIN_PATH = `appPackage/ai-plugin-${NAMESPACE}.json`;
 const TEAMS_MANIFEST_PATH = "appPackage/manifest.json";
 const DA_MANIFEST_PATH = "appPackage/declarativeAgent.json";
 const YML_PATH = "m365agents.yml";
+const LOCAL_YML_PATH = "m365agents.local.yml";
 const ENV_PATH = "env/.env.dev";
 const AUTH_REF = "${{MCP_DA_AUTH_ID_APIGITHUBC}}";
 const AUTH_ENV_VAR = "MCP_DA_AUTH_ID_APIGITHUBC";
+const BASE_YML = [
+  "version: v1.12",
+  "provision:",
+  "  - uses: teamsApp/create",
+  "    with:",
+  "      name: existing",
+  "    writeToEnvironmentFile:",
+  "      teamsAppId: TEAMS_APP_ID",
+].join("\n");
 
 const templatePackage = loadV4Package("modify", "add-mcp-server");
 const descriptor = templatePackage.descriptor;
@@ -61,6 +78,16 @@ function questionItems(value: unknown): Record<string, unknown>[] {
   return items;
 }
 
+function apiKeyRegistration(yml: string): Record<string, unknown> {
+  const parsed: unknown = parse(yml);
+  assert.isTrue(isRecord(parsed));
+  const provision = parsed.provision;
+  assert.isTrue(isRecordArray(provision));
+  const action = provision.find((item) => item.uses === "apiKey/register");
+  assert.isDefined(action);
+  return action ?? {};
+}
+
 interface RunOptions {
   authType?: string;
   teamsManifestPath?: string;
@@ -75,7 +102,7 @@ async function run(options: RunOptions = {}): Promise<{
   return runV4Package(templatePackage, {
     answers: { mcpServerUrl: MCP_SERVER_URL, teamsManifestPath, authType },
     callerFloor: { appName: "Existing Agent", language: "common" },
-    existing: [TEAMS_MANIFEST_PATH, DA_MANIFEST_PATH, YML_PATH, ENV_PATH],
+    existing: [TEAMS_MANIFEST_PATH, DA_MANIFEST_PATH, YML_PATH, LOCAL_YML_PATH, ENV_PATH],
     seedFiles: {
       [TEAMS_MANIFEST_PATH]: JSON.stringify({
         copilotAgents: {
@@ -83,15 +110,8 @@ async function run(options: RunOptions = {}): Promise<{
         },
       }),
       [DA_MANIFEST_PATH]: JSON.stringify({ name: "Existing Agent" }),
-      [YML_PATH]: [
-        "version: v1.12",
-        "provision:",
-        "  - uses: teamsApp/create",
-        "    with:",
-        "      name: existing",
-        "    writeToEnvironmentFile:",
-        "      teamsAppId: TEAMS_APP_ID",
-      ].join("\n"),
+      [YML_PATH]: BASE_YML,
+      [LOCAL_YML_PATH]: BASE_YML,
       [ENV_PATH]: "TEAMSFX_ENV=dev\n",
     },
     targetPath: "/project",
@@ -192,6 +212,18 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.strictEqual(condition.expr, "mcpServerUrl == null");
   });
 
+  it("SCN-ADD-MCP-13 and SCN-ADD-MCP-14: auth question accepts and describes bearer-token", () => {
+    const authTypeQuestion = questionItems(questions).find(
+      (question) => question.name === "authType"
+    );
+    assert.isDefined(authTypeQuestion);
+    const staticOptions = authTypeQuestion?.staticOptions;
+    assert.isTrue(isRecordArray(staticOptions));
+    const bearerToken = staticOptions.find((option) => option.id === "bearer-token");
+    assert.isDefined(bearerToken);
+    assert.isNotEmpty(bearerToken?.detail);
+  });
+
   it("SCN-ADD-MCP-10: static auth defers credentials to provision", async () => {
     assert.isTrue(isRecord(descriptor));
     const properties = recordProperty(recordProperty(descriptor, "optionsSchema"), "properties");
@@ -208,6 +240,50 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
       assert.notInclude(yml, "clientSecret:");
       assert.notInclude(yml, "MCP_DA_OAUTH_");
       assert.notInclude(yml, "SECRET_MCP_DA_OAUTH_");
+    }
+  });
+
+  it("SCN-ADD-MCP-15 and SCN-ADD-MCP-16: bearer-token uses API-key auth without OAuth data", async () => {
+    const { files, outcome } = await run({ authType: "bearer-token" });
+    const plugin = readJsonObject(files, PLUGIN_PATH);
+    const runtime = runtimes(plugin)[0];
+    assert.equal(plugin.namespace, deriveMCPNamespaceFromUrl(MCP_SERVER_URL));
+    assert.deepEqual(auth(runtime), deriveMCPManifestOAuth("bearer-token", AUTH_ENV_VAR));
+    assert.include(outcome.stepsRun, "mcp-auth/inject-yml-action");
+    assert.include(outcome.stepsRun, "mcp-auth/persist-credential-env");
+    const yml = text(files, YML_PATH);
+    assert.include(yml, "uses: apiKey/register");
+    assert.include(text(files, LOCAL_YML_PATH), "uses: apiKey/register");
+    assert.include(yml, `baseUrl: ${MCP_SERVER_URL}`);
+    assert.notInclude(yml, "apiSpecPath:");
+    assert.notInclude(yml, "oauth/register");
+    assert.notInclude(yml, "dcr/register");
+    assert.notInclude(yml, "primaryClientSecret:");
+    assert.include(text(files, ENV_PATH), `${AUTH_ENV_VAR}=`);
+    assert.equal(mcpAuthScaffoldDeps.probeMCPServerAuth.mock.calls.length, 0);
+    assert.equal(mcpAuthScaffoldDeps.resolveMCPOAuthMetadata.mock.calls.length, 0);
+  });
+
+  it("SCN-ADD-MCP-17: bearer-token emits an API-key action equivalent to legacy", async () => {
+    const { files } = await run({ authType: "bearer-token" });
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "atk-add-mcp-parity-"));
+    const legacyYmlPath = path.join(tempDir, "m365agents.yml");
+
+    try {
+      fs.writeFileSync(legacyYmlPath, BASE_YML, "utf8");
+      await ActionInjector.injectCreateAPIKeyActionForMCP(
+        legacyYmlPath,
+        NAMESPACE,
+        AUTH_ENV_VAR,
+        MCP_SERVER_URL
+      );
+
+      assert.deepEqual(
+        apiKeyRegistration(text(files, YML_PATH)),
+        apiKeyRegistration(fs.readFileSync(legacyYmlPath, "utf8"))
+      );
+    } finally {
+      fs.removeSync(tempDir);
     }
   });
 

@@ -2856,6 +2856,91 @@ describe("addPlugin", async () => {
     }
   });
 
+  it("SCN-ADD-MCP-16/17: v4-off bearer-token uses API-key auth without OAuth data", async () => {
+    const appName = await mockV3Project();
+    const projectPath = path.join(os.tmpdir(), appName);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.Folder]: os.tmpdir(),
+      [QuestionNames.TeamsAppManifestFilePath]: "manifest.json",
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "",
+      [QuestionNames.MCPForDAAuthType]: "bearer-token",
+      projectPath,
+    };
+    const manifest = new TeamsAppManifest();
+    manifest.name = { short: "My MCP App", full: "My MCP App" };
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(
+      copilotGptManifestUtils,
+      "getDefaultNextAvailablePluginManifestPath"
+    ).mockResolvedValue("ai-plugin_1.json");
+    vi.spyOn(copilotGptManifestUtils, "addAction").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(addPluginTools.ui, "showMessage").mockImplementation((level) => {
+      return Promise.resolve(ok(level === "warn" ? "Add" : ""));
+    });
+    const declarativeAgentModule = await import("../../src/core/FxCore.declarativeAgent");
+    const modifyFrontDoorStub = vi.spyOn(
+      declarativeAgentModule.fxCoreDeclarativeAgentDeps,
+      "modifyProjectFrontDoor"
+    );
+    const mcpToolFetcherModule = await import("../../src/component/utils/mcpToolFetcher");
+    const probeStub = vi.spyOn(mcpToolFetcherModule, "probeMCPServerAuth");
+    const apiKeyInjectStub = vi
+      .spyOn(ActionInjector, "injectCreateAPIKeyActionForMCP")
+      .mockResolvedValue();
+    const oauthInjectStub = vi
+      .spyOn(ActionInjector, "injectCreateOAuthActionForMCP")
+      .mockResolvedValue();
+    vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
+    vi.spyOn(fs, "ensureFile").mockResolvedValue();
+    const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    const writeEnvStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+
+    const result = await new FxCore(addPluginTools).addPlugin(inputs);
+
+    assert.isTrue(result.isOk());
+    assert.equal(modifyFrontDoorStub.mock.calls.length, 0);
+    assert.equal(probeStub.mock.calls.length, 0);
+    assert.equal(oauthInjectStub.mock.calls.length, 0);
+    expect(apiKeyInjectStub).toHaveBeenCalledExactlyOnceWith(
+      "m365agents.yml",
+      "examplecom",
+      "MCP_DA_AUTH_ID_EXAMPLECOM",
+      "https://example.com/mcp"
+    );
+    assert.equal(writeEnvStub.mock.calls.length, 0);
+    const pluginCall = writeJSONStub.mock.calls.find((call) =>
+      String(call[0]).includes("ai-plugin")
+    );
+    assert.isDefined(pluginCall);
+    const pluginManifest = pluginCall![1] as any;
+    assert.equal(pluginManifest.namespace, "examplecom");
+    assert.deepEqual(pluginManifest.runtimes[0].auth, {
+      type: "ApiKeyPluginVault",
+      reference_id: "${{MCP_DA_AUTH_ID_EXAMPLECOM}}",
+    });
+
+    if (await fs.pathExists(projectPath)) {
+      await fs.remove(projectPath);
+    }
+  });
+
   it("from MCP (DT flag on): omits the scope env ref and var when no scope is entered (oauth)", async () => {
     const appName = await mockV3Project();
     const projectPath = path.join(os.tmpdir(), appName);

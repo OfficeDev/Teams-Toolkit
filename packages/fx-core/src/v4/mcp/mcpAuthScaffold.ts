@@ -119,6 +119,7 @@ export async function injectMcpAuthAction(
     ymlPath: string;
     authType: string;
     mcpServerUrl: string;
+    optionalYmlPaths?: string[];
     credentialFields?: { clientId: boolean; clientSecret: boolean; scope: boolean };
   }
 ): Promise<Result<void, FxError>> {
@@ -131,45 +132,58 @@ export async function injectMcpAuthAction(
       )
     );
   }
+  const ymlFiles = [{ path: args.ymlPath, content: current }];
+  for (const optionalYmlPath of args.optionalYmlPaths ?? []) {
+    const optionalYml = ctx.read(optionalYmlPath);
+    if (optionalYml !== undefined) {
+      ymlFiles.push({ path: optionalYmlPath, content: optionalYml });
+    }
+  }
   const identifiers = mcpAuthIdentifiers(args.mcpServerUrl);
   const endpoints = await resolveEndpoints(args.authType, args.mcpServerUrl, ctx.warn);
-  const injectResult = injectMcpAuthActionYaml(current.toString("utf8"), {
-    authType: args.authType,
-    authName: identifiers.namespace,
-    registrationId: identifiers.registrationId,
-    mcpServerUrl: args.mcpServerUrl,
-    endpoints,
-    ...(args.authType === "oauth" && args.credentialFields?.clientId
-      ? {
-          credentialEnvNames: {
-            clientId: identifiers.clientId,
-            ...(args.credentialFields.clientSecret
-              ? { clientSecret: identifiers.clientSecret }
-              : {}),
-            ...(args.credentialFields.scope ? { scope: identifiers.scope } : {}),
-          },
-        }
-      : {}),
-    ...(args.authType === "entra-sso" && args.credentialFields?.clientId
-      ? { credentialEnvNames: { clientId: identifiers.clientId } }
-      : {}),
-  });
-  if (injectResult.isErr()) {
-    return err(injectResult.error);
+  let wellKnownUrlPlaceholderUsed = false;
+  let oauthUrlPlaceholderUsed = false;
+  for (const ymlFile of ymlFiles) {
+    const injectResult = injectMcpAuthActionYaml(ymlFile.content.toString("utf8"), {
+      authType: args.authType,
+      authName: identifiers.namespace,
+      registrationId: identifiers.registrationId,
+      mcpServerUrl: args.mcpServerUrl,
+      endpoints,
+      ...(args.authType === "oauth" && args.credentialFields?.clientId
+        ? {
+            credentialEnvNames: {
+              clientId: identifiers.clientId,
+              ...(args.credentialFields.clientSecret
+                ? { clientSecret: identifiers.clientSecret }
+                : {}),
+              ...(args.credentialFields.scope ? { scope: identifiers.scope } : {}),
+            },
+          }
+        : {}),
+      ...(args.authType === "entra-sso" && args.credentialFields?.clientId
+        ? { credentialEnvNames: { clientId: identifiers.clientId } }
+        : {}),
+    });
+    if (injectResult.isErr()) {
+      return err(injectResult.error);
+    }
+    wellKnownUrlPlaceholderUsed ||= injectResult.value.wellKnownUrlPlaceholderUsed;
+    oauthUrlPlaceholderUsed ||= injectResult.value.oauthUrlPlaceholderUsed;
+    ctx.write(ymlFile.path, Buffer.from(injectResult.value.yaml, "utf8"));
   }
-  if (injectResult.value.wellKnownUrlPlaceholderUsed) {
+  if (wellKnownUrlPlaceholderUsed) {
     ctx.warn?.({
       type: "mcpAuthDcrWellKnownUrlPlaceholder",
       content: getLocalizedString("core.MCPForDA.mcpAuthDcrPlaceholderWarning"),
     });
   }
-  if (injectResult.value.oauthUrlPlaceholderUsed) {
+  if (oauthUrlPlaceholderUsed) {
     ctx.warn?.({
       type: "mcpAuthOAuthUrlPlaceholder",
       content: getLocalizedString("core.MCPForDA.mcpAuthOAuthPlaceholderWarning"),
     });
   }
-  ctx.write(args.ymlPath, Buffer.from(injectResult.value.yaml, "utf8"));
   return ok(undefined);
 }
 

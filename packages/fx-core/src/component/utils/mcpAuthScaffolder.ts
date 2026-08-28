@@ -42,10 +42,13 @@ export interface ResolvedMCPAuthEndpoints {
 export function deriveMCPManifestOAuth(
   authType: string | undefined,
   registrationId: string | undefined
-): { type: "OAuthPluginVault"; reference_id: string } | undefined {
+):
+  | { type: "OAuthPluginVault"; reference_id: string }
+  | { type: "ApiKeyPluginVault"; reference_id: string }
+  | undefined {
   if (authType && authType !== "none" && registrationId) {
     return {
-      type: "OAuthPluginVault",
+      type: authType === "bearer-token" ? "ApiKeyPluginVault" : "OAuthPluginVault",
       reference_id: `\${{${registrationId}}}`,
     };
   }
@@ -160,6 +163,15 @@ export async function injectMCPAuthActionToYml(args: {
   scopes?: string;
 }): Promise<InjectMCPAuthActionResult> {
   if (args.authType === "none") return {};
+  if (args.authType === "bearer-token") {
+    await ActionInjector.injectCreateAPIKeyActionForMCP(
+      args.ymlPath,
+      args.authName,
+      args.registrationId,
+      args.mcpServerUrl
+    );
+    return {};
+  }
   if (args.authType === "oauth-dynamic") {
     const placeholderUsed = !args.endpoints.wellKnownUrl;
     const wellKnownUrl = args.endpoints.wellKnownUrl ?? MCP_DCR_WELL_KNOWN_URL_PLACEHOLDER;

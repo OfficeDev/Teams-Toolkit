@@ -1144,6 +1144,7 @@
   "core.createProjectQuestion.mcpForDa.Auth.OAuthDynamic.Detail": "MCP server registers a client at runtime; no extra details needed.",
   "core.createProjectQuestion.mcpForDa.Auth.EntraSSO": "Entra SSO",
   "core.createProjectQuestion.mcpForDa.Auth.EntraSSO.Detail": "Use a Microsoft Entra app for single sign-on. The toolkit will ask for the Entra app client id.",
+  "core.createProjectQuestion.mcpForDa.Auth.BearerToken.Detail": "Send an API key as an HTTP Bearer token.",
   "core.createProjectQuestion.mcpForDa.Auth.None": "None",
   "core.createProjectQuestion.mcpForDa.Auth.None.Detail": "The MCP server does not require authentication.",
   "core.createProjectQuestion.mcpForDa.ClientId.title": "OAuth Client ID",

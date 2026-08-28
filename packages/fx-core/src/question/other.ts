@@ -63,8 +63,8 @@ import {
 import { UninstallInputs } from "./inputs";
 import { inputOrSearchAPISpecNode } from "./scaffold/commonNodes";
 import {
+  MCPForDAAddAuthTypeStaticOptions,
   MCPForDAAuthCredentialNodes,
-  MCPForDAAuthTypeStaticOptions,
   validateMCPServerUrl,
 } from "./scaffold/vsc/teamsProjectTypeNode";
 
@@ -752,7 +752,7 @@ export function addPluginQuestionNode(): IQTreeNode {
               type: "singleSelect",
               name: QuestionNames.MCPForDAAuthType,
               title: getLocalizedString("core.createProjectQuestion.mcpForDa.AuthType.title"),
-              staticOptions: MCPForDAAuthTypeStaticOptions(),
+              staticOptions: MCPForDAAddAuthTypeStaticOptions(),
               default: "oauth",
             },
             children:

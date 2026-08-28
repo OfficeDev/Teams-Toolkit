@@ -26,6 +26,13 @@ function stringParam(params: StepParams, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+function stringArrayParam(params: StepParams, key: string): string[] | undefined {
+  const value = params[key];
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+    ? value
+    : undefined;
+}
+
 /** Registered step for injecting the shared v4 MCP auth action into `m365agents.yml`. */
 export const mcpAuthInjectYmlAction: RegisteredStep = {
   validateParams(resolved: StepParams): string | undefined {
@@ -38,6 +45,12 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
     }
     if (stringParam(resolved, "mcpServerUrl") === undefined) {
       return "missing string parameter 'mcpServerUrl'";
+    }
+    if (
+      resolved.optionalYmlPaths !== undefined &&
+      stringArrayParam(resolved, "optionalYmlPaths") === undefined
+    ) {
+      return "parameter 'optionalYmlPaths' must be a string array";
     }
     return undefined;
   },
@@ -54,6 +67,7 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
       ymlPath,
       authType,
       mcpServerUrl,
+      optionalYmlPaths: stringArrayParam(resolved, "optionalYmlPaths"),
       credentialFields: {
         clientId:
           authType === "oauth"
