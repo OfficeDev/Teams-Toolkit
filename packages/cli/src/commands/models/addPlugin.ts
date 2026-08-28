@@ -15,7 +15,7 @@ export const addPluginCommand: CLICommand = {
   name: "action",
   description: commands["add.action"].description,
   options: [
-    ...gateMCPDACredentialOptions(gateMCPDAAuthTypeChoices(AddPluginOptions)),
+    ...gateMCPDACredentialOptions(gateMCPDAAuthTypeChoices(AddPluginOptions, true)),
     ProjectFolderOption,
   ],
   telemetry: {

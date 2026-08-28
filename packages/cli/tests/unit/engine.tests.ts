@@ -29,6 +29,7 @@ import {
   listTemplatesCommand,
   m365SideloadingCommand,
 } from "../../src/commands/models";
+import { addPluginCommand } from "../../src/commands/models/addPlugin";
 import { getCreateCommand } from "../../src/commands/models/create";
 import { createSampleCommand } from "../../src/commands/models/createSample";
 import * as listTemplatesModule from "../../src/commands/models/listTemplates";
@@ -299,6 +300,56 @@ describe("CLI Engine", () => {
       assert.isUndefined(ctx.optionValues.daTemplate);
       assert.isUndefined(ctx.optionValues.actionSource);
       assert.isUndefined(ctx.optionValues.capabilities);
+    });
+    it("rejects bearer-token authentication for atk new", () => {
+      const command: CLIFoundCommand = { ...getCreateCommand(), fullName: "new" };
+      const ctx: CLIContext = {
+        command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+
+      const parseResult = engine.parseArgs(ctx, rootCommand, [
+        "--mcp-da-auth-type",
+        "bearer-token",
+      ]);
+      assert.isTrue(parseResult.isOk());
+      const authType = command.options?.find((option) => option.name === "mcp-da-auth-type");
+      assert.isDefined(authType);
+      if (authType === undefined) {
+        return;
+      }
+      const validationResult = engine.validateOption(command, authType, "option");
+
+      assert.isTrue(validationResult.isErr());
+      assert.instanceOf(validationResult._unsafeUnwrapErr(), InvalidChoiceError);
+    });
+    it("SCN-ADD-MCP-14: accepts bearer-token authentication for atk add action", () => {
+      const command: CLIFoundCommand = { ...addPluginCommand, fullName: "add action" };
+      const ctx: CLIContext = {
+        command,
+        optionValues: {},
+        globalOptionValues: {},
+        argumentValues: [],
+        telemetryProperties: {},
+      };
+
+      const parseResult = engine.parseArgs(ctx, rootCommand, [
+        "--mcp-da-auth-type",
+        "bearer-token",
+      ]);
+      assert.isTrue(parseResult.isOk());
+      const authType = command.options?.find((option) => option.name === "mcp-da-auth-type");
+      assert.isDefined(authType);
+      if (authType === undefined) {
+        return;
+      }
+      const validationResult = engine.validateOption(command, authType, "option");
+
+      assert.isTrue(validationResult.isOk());
+      assert.equal(ctx.optionValues["mcp-da-auth-type"], "bearer-token");
     });
     it("array type argument", async () => {
       const command: CLIFoundCommand = {

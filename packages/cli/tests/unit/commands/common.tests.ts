@@ -41,15 +41,22 @@ describe("commands/common MCP-for-DA gating", () => {
       it(`SCN-ADD-MCP-14: accepts bearer-token when v4 is ${v4Enabled ? "on" : "off"}`, () => {
         stubEnabledFlags(v4Enabled ? [FeatureFlags.V4Enabled] : []);
         const options = [authTypeOption()];
-        gateMCPDAAuthTypeChoices(options);
+        gateMCPDAAuthTypeChoices(options, true);
         assert.include(authTypeChoices(options), "bearer-token");
       });
     }
 
+    it("excludes bearer-token when the caller is atk new", () => {
+      stubEnabledFlags([]);
+      const options = [authTypeOption()];
+      gateMCPDAAuthTypeChoices(options, false);
+      assert.notInclude(authTypeChoices(options), "bearer-token");
+    });
+
     it("includes oauth-dynamic only when both DT and DCR flags are on", () => {
       stubEnabledFlags([FeatureFlags.MCPForDADT, FeatureFlags.MCPForDADCR]);
       const options = [authTypeOption()];
-      gateMCPDAAuthTypeChoices(options);
+      gateMCPDAAuthTypeChoices(options, true);
       assert.deepEqual(authTypeChoices(options), [
         "oauth",
         "oauth-dynamic",
@@ -62,14 +69,14 @@ describe("commands/common MCP-for-DA gating", () => {
     it("excludes oauth-dynamic when only DT flag is on", () => {
       stubEnabledFlags([FeatureFlags.MCPForDADT]);
       const options = [authTypeOption()];
-      gateMCPDAAuthTypeChoices(options);
+      gateMCPDAAuthTypeChoices(options, true);
       assert.deepEqual(authTypeChoices(options), ["oauth", "entra-sso", "bearer-token", "none"]);
     });
 
     it("excludes oauth-dynamic when both flags are off", () => {
       stubEnabledFlags([]);
       const options = [authTypeOption()];
-      gateMCPDAAuthTypeChoices(options);
+      gateMCPDAAuthTypeChoices(options, true);
       assert.deepEqual(authTypeChoices(options), ["oauth", "entra-sso", "bearer-token", "none"]);
     });
   });
