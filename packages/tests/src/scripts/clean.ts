@@ -25,6 +25,15 @@ const adminMicrosoftEntraAppName = [
   "Test SP",
 ];
 const excludePrefix: string = getAppNamePrefix();
+const keepNamePrefix = "keep-";
+
+function hasGeneratedNamePrefix(displayName?: string): boolean {
+  return displayName?.startsWith(excludePrefix) === true;
+}
+
+function hasKeepNamePrefix(displayName?: string): boolean {
+  return displayName?.startsWith(keepNamePrefix) === true;
+}
 
 function shouldSkipAadApp(displayName?: string): boolean {
   if (!displayName) {
@@ -33,7 +42,8 @@ function shouldSkipAadApp(displayName?: string): boolean {
 
   return (
     adminMicrosoftEntraAppName.some((name) => displayName.startsWith(name)) ||
-    displayName.startsWith(excludePrefix)
+    hasGeneratedNamePrefix(displayName) ||
+    hasKeepNamePrefix(displayName)
   );
 }
 
@@ -44,7 +54,7 @@ function shouldCleanByPrefix(displayName?: string): boolean {
 
   return (
     appNamePrefixList.some((name) => displayName.startsWith(name)) &&
-    !displayName.startsWith(excludePrefix)
+    !hasGeneratedNamePrefix(displayName)
   );
 }
 
