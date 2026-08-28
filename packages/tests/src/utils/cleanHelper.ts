@@ -189,7 +189,11 @@ export class GraphApiCleanHelper extends CleanHelper {
 
   public async listAad(): Promise<any[]> {
     const result: any[] = [];
-    const response = await this.execute("get", `/applications`, undefined);
+    const response = await this.execute(
+      "get",
+      `/applications?$select=id,appId,displayName,tags`,
+      undefined,
+    );
     if (response?.data?.value) {
       result.push(...(response?.data?.value as any[]));
     }
@@ -269,7 +273,11 @@ export class GraphApiCleanHelper extends CleanHelper {
 
   public async listEnterpriseApplications(): Promise<any[]> {
     const result: any[] = [];
-    const response = await this.execute("get", `/servicePrincipals`, undefined);
+    const response = await this.execute(
+      "get",
+      `/servicePrincipals?$select=id,displayName,tags`,
+      undefined,
+    );
     if (response?.data?.value) {
       result.push(...(response?.data?.value as any[]));
     }
@@ -703,10 +711,16 @@ export class DevTunnelCleanHelper {
     });
   }
 
-  public async deleteAll(tag = "TeamsToolkitCreatedTag"): Promise<void> {
+  public async deleteAll(
+    tag = "TeamsToolkitCreatedTag",
+    preserveTag = "NOT_DELETE",
+  ): Promise<void> {
     const tunnels = await this.tunnelManagementClientImpl.listTunnels();
     for (const tunnel of tunnels) {
-      if (tunnel?.labels?.includes(tag)) {
+      if (
+        tunnel?.labels?.includes(tag) &&
+        !tunnel.labels.includes(preserveTag)
+      ) {
         console.log(`clean dev tunnel ${tunnel.tunnelId}`);
         await this.tunnelManagementClientImpl.deleteTunnel(tunnel);
       }
@@ -790,6 +804,22 @@ export async function deleteResourceGroupByName(
     return result;
   }
   return false;
+}
+
+export async function resourceGroupHasTag(
+  name: string,
+  tagName: string,
+): Promise<boolean> {
+  const manager = await ResourceGroupManager.init();
+  if (!(await manager.hasResourceGroup(name))) {
+    return false;
+  }
+
+  const resourceGroup = await manager.getResourceGroup(name);
+  return Object.prototype.hasOwnProperty.call(
+    resourceGroup.tags ?? {},
+    tagName,
+  );
 }
 
 export async function filterResourceGroupByName(contains: string) {

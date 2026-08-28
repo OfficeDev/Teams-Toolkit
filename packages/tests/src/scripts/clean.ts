@@ -6,6 +6,7 @@ import {
   AppStudioCleanHelper,
   filterResourceGroupByName,
   deleteResourceGroupByName,
+  resourceGroupHasTag,
   GraphApiCleanHelper,
   SharePointApiCleanHelper,
   DevTunnelCleanHelper,
@@ -25,26 +26,65 @@ const adminMicrosoftEntraAppName = [
   "Test SP",
 ];
 const excludePrefix: string = getAppNamePrefix();
+const keepNamePrefix = "keep-";
+const notDeleteTag = "NOT_DELETE";
 
-function shouldSkipAadApp(displayName?: string): boolean {
+function hasNotDeleteTag(tags?: unknown): boolean {
+  if (Array.isArray(tags)) {
+    return tags.includes(notDeleteTag);
+  }
+
+  if (typeof tags === "string") {
+    return tags.split(/[\s,;]+/).includes(notDeleteTag);
+  }
+
+  if (typeof tags === "object" && tags !== null) {
+    return Object.prototype.hasOwnProperty.call(tags, notDeleteTag);
+  }
+
+  return false;
+}
+
+function hasGeneratedNamePrefix(displayName?: string): boolean {
+  return displayName?.startsWith(excludePrefix) === true;
+}
+
+function hasKeepNamePrefix(displayName?: string): boolean {
+  return displayName?.startsWith(keepNamePrefix) === true;
+}
+
+function shouldSkipAadApp(displayName?: string, tags?: unknown): boolean {
   if (!displayName) {
     return true;
   }
 
   return (
     adminMicrosoftEntraAppName.some((name) => displayName.startsWith(name)) ||
-    displayName.startsWith(excludePrefix)
+    hasGeneratedNamePrefix(displayName) ||
+    hasNotDeleteTag(tags)
   );
 }
 
-function shouldCleanByPrefix(displayName?: string): boolean {
+function shouldCleanByPrefix(displayName?: string, tags?: unknown): boolean {
   if (!displayName) {
     return false;
   }
 
   return (
     appNamePrefixList.some((name) => displayName.startsWith(name)) &&
-    !displayName.startsWith(excludePrefix)
+    !hasGeneratedNamePrefix(displayName) &&
+    !hasNotDeleteTag(tags)
+  );
+}
+
+function shouldCleanAgentResource(
+  displayName?: string,
+  tags?: unknown,
+): boolean {
+  return (
+    !hasGeneratedNamePrefix(displayName) &&
+    !hasKeepNamePrefix(displayName) &&
+    !hasNotDeleteTag(tags)
   );
 }
 
@@ -63,7 +103,7 @@ async function main() {
     if (teamsAppList) {
       for (const app of teamsAppList) {
         const displayName = app?.teamsAppDefinition?.displayName;
-        if (shouldCleanByPrefix(displayName)) {
+        if (shouldCleanByPrefix(displayName, app?.teamsAppDefinition?.tags)) {
           console.log(displayName);
           try {
             await cleanService.uninstallTeamsApp(teamsUserId, app?.id ?? "");
@@ -100,7 +140,7 @@ async function main() {
     const aadList = await cleanService.listAad();
     if (aadList) {
       for (const aad of aadList) {
-        if (!shouldSkipAadApp(aad.displayName)) {
+        if (!shouldSkipAadApp(aad.displayName, aad.tags)) {
           console.log(aad.displayName);
           try {
             await cleanService.deleteAad(aad.id!);
@@ -121,7 +161,9 @@ async function main() {
     const enterpriseAppList = await cleanService.listEnterpriseApplications();
     if (enterpriseAppList) {
       for (const enterpriseApp of enterpriseAppList) {
-        if (shouldCleanByPrefix(enterpriseApp.displayName)) {
+        if (
+          shouldCleanByPrefix(enterpriseApp.displayName, enterpriseApp.tags)
+        ) {
           console.log(enterpriseApp.displayName);
           try {
             await cleanService.deleteEnterpriseApplication(enterpriseApp.id!);
@@ -144,7 +186,7 @@ async function main() {
     const deletedAadList = await cleanService.listDeletedAad();
     if (deletedAadList) {
       for (const aad of deletedAadList) {
-        if (!shouldSkipAadApp(aad.displayName)) {
+        if (!shouldSkipAadApp(aad.displayName, aad.tags)) {
           console.log(aad.displayName);
           try {
             await cleanService.deleteDeletedItem(aad.id!);
@@ -168,7 +210,9 @@ async function main() {
       await cleanService.listDeletedEnterpriseApplications();
     if (deletedEnterpriseAppList) {
       for (const enterpriseApp of deletedEnterpriseAppList) {
-        if (shouldCleanByPrefix(enterpriseApp.displayName)) {
+        if (
+          shouldCleanByPrefix(enterpriseApp.displayName, enterpriseApp.tags)
+        ) {
           console.log(enterpriseApp.displayName);
           try {
             await cleanService.deleteDeletedItem(enterpriseApp.id!);
@@ -195,7 +239,7 @@ async function main() {
     const appStudioAppList = await addStudioCleanService.getAppsInAppStudio();
     if (appStudioAppList) {
       for (const app of appStudioAppList) {
-        if (!app?.displayName?.startsWith(excludePrefix)) {
+        if (shouldCleanAgentResource(app?.displayName, app?.tags)) {
           console.log(app?.displayName);
           try {
             await addStudioCleanService.deleteAppInAppStudio(
@@ -215,6 +259,10 @@ async function main() {
       await addStudioCleanService.getApiKeyRegistration();
     if (apiKeyRegistrationList) {
       for (const apiKey of apiKeyRegistrationList) {
+        if (hasNotDeleteTag(apiKey?.tags)) {
+          continue;
+        }
+
         try {
           await addStudioCleanService.deleteApiKeyRegistration(apiKey?.id);
           console.log(apiKey?.id, " is deleted");
@@ -239,7 +287,11 @@ async function main() {
     if (rgNameList.length > 0) {
       for (const rgName of rgNameList) {
         for (const name of rgNamePrefixList) {
-          if (rgName.startsWith(name) && !rgName.startsWith(excludePrefix)) {
+          if (
+            rgName.startsWith(name) &&
+            !hasGeneratedNamePrefix(rgName) &&
+            !(await resourceGroupHasTag(rgName, notDeleteTag))
+          ) {
             await deleteResourceGroupByName(rgName);
           }
         }
@@ -265,7 +317,8 @@ async function main() {
         for (const name of appNamePrefixList) {
           if (
             app.Title?.startsWith(name) &&
-            !app.Title?.startsWith(excludePrefix)
+            !hasGeneratedNamePrefix(app.Title) &&
+            !hasNotDeleteTag(app.Tags ?? app.tags)
           ) {
             console.log(app.Title);
             try {
@@ -290,7 +343,10 @@ async function main() {
       Env.username,
       Env.password,
     );
-    await devTunnelCleanHelper.deleteAll();
+    await devTunnelCleanHelper.deleteAll(
+      "TeamsToolkitCreatedTag",
+      notDeleteTag,
+    );
   } catch (e: any) {
     console.log(`Failed to clean dev tunnel`);
   }
@@ -312,8 +368,11 @@ async function main() {
       const acquisitions = await m365TitleCleanService.listAcquisitions();
       if (acquisitions) {
         for (const acquisition of acquisitions) {
-          if (!acquisition.titleDefinition.name.startsWith(excludePrefix)) {
-            console.log(acquisition.titleDefinition.name);
+          const titleName = acquisition.titleDefinition?.name;
+          const titleTags =
+            acquisition.tags ?? acquisition.titleDefinition?.tags;
+          if (shouldCleanAgentResource(titleName, titleTags)) {
+            console.log(titleName);
             console.log(acquisition.titleId);
             const result = await m365TitleCleanService.unacquire(
               acquisition.titleId,
