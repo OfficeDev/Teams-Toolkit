@@ -269,4 +269,12 @@ describe("v4 MCP auth YAML action", () => {
 
     assert.lengthOf(provisionActions(second.yaml), 2);
   });
+
+  it("SCN-ADD-MCP-05: bearer-token is idempotent by registration id", () => {
+    const args = { ...BASE_ARGS, authType: "bearer-token", endpoints: {} };
+    const first = injectMcpAuthActionYaml(BASE_YML, args)._unsafeUnwrap();
+    const second = injectMcpAuthActionYaml(first.yaml, args)._unsafeUnwrap();
+
+    assert.lengthOf(provisionActions(second.yaml), 2);
+  });
 });

@@ -64,7 +64,8 @@ function registrationId(item: unknown): string | undefined {
   if (!isMap(output)) {
     return undefined;
   }
-  const value = output.get("configurationId");
+  const outputName = uses(item) === "apiKey/register" ? "registrationId" : "configurationId";
+  const value = output.get(outputName);
   return typeof value === "string" ? value : undefined;
 }
 

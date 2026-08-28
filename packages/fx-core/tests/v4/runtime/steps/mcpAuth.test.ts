@@ -111,6 +111,14 @@ describe("mcp-auth steps (v4)", () => {
       assert.isString(
         mcpAuthInjectYmlAction.validateParams({ ymlPath: "m365agents.yml", authType: "oauth" })
       );
+      assert.isString(
+        mcpAuthInjectYmlAction.validateParams({
+          ymlPath: "m365agents.yml",
+          authType: "oauth",
+          mcpServerUrl: SERVER_URL,
+          optionalYmlPaths: "m365agents.local.yml",
+        })
+      );
     });
 
     it("injects oauth/register (Custom) with resolved endpoints after teamsApp/create for authType=oauth (SCN-CREATE-MCP-05)", async () => {
@@ -255,6 +263,23 @@ describe("mcp-auth steps (v4)", () => {
       );
       assert.isTrue(res.isErr());
       assert.instanceOf(res._unsafeUnwrapErr(), SystemError);
+    });
+
+    it("SCN-ADD-MCP-15: skips a missing optional local yml", async () => {
+      const { ctx, files } = makeCtx({ "m365agents.yml": PROVISION_YML });
+      const res = await mcpAuthInjectYmlAction.apply(
+        {
+          ymlPath: "m365agents.yml",
+          authType: "bearer-token",
+          mcpServerUrl: SERVER_URL,
+          optionalYmlPaths: ["m365agents.local.yml"],
+        },
+        ctx
+      );
+
+      assert.isTrue(res.isOk(), res.isErr() ? res.error.message : "expected ok");
+      assert.include(text(files, "m365agents.yml"), "uses: apiKey/register");
+      assert.isFalse(files.has("m365agents.local.yml"));
     });
   });
 
