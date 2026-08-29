@@ -1059,7 +1059,11 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:275:105:16:5:1671adc5555d5c4e",
+        "dhash:275:105:96:5:00909126e6000000",
+        "dhash:275:105:0:10:30a1c0c0c0c0c0c0"
+      ],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_d083fedc",
