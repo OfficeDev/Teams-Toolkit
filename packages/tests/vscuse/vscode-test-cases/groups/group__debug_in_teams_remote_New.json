@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 14,
+    "total_steps": 15,
     "created_at": "2026-06-05T07:17:55.823053",
     "name": "group  debug in teams remote New",
     "description": {
@@ -29,6 +29,7 @@
       "step_43083a6b",
       "step_54c039f2",
       "step_f28cf147",
+      "step_94ac162e",
       "step_f04602f2",
       "step_5af267b9",
       "step_d8d72db0"
@@ -292,6 +293,30 @@
       "tags": [],
       "screenshot": "step_f28cf147",
       "created_at": "2026-06-05T09:15:00.626276",
+      "plan_id": "plan_98b88aac"
+    },
+    {
+      "step_id": "step_94ac162e",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 288,
+        "y": 214
+      },
+      "description": "Retry clicking the blue \"Add\" button after the Microsoft Teams app details dialog has received focus.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "delay:3"
+      ],
+      "screenshot": "",
+      "created_at": "2026-08-29T02:09:29.912000",
       "plan_id": "plan_98b88aac"
     },
     {
