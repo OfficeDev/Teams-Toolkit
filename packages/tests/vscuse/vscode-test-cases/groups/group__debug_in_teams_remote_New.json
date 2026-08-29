@@ -279,7 +279,7 @@
       "parameters": {
         "button": "left",
         "x": 252,
-        "y": 248
+        "y": 218
       },
       "description": "Click the “Add” button within the app details  in Microsoft Teams (web interface), indicated by a blue button below the app name and publisher.",
       "content_refs": [],
