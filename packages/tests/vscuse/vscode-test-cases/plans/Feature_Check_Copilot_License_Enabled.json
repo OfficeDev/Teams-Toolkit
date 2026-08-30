@@ -234,20 +234,16 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 703,
-        "y": 100
+        "x": 974,
+        "y": 572
       },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the top of the Visual Studio Code interface to access a Microsoft 365 account.",
+      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the bottom-right of the Visual Studio Code interface to access a Microsoft 365 account.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:703:100:16:5:0000000000000000",
-        "dhash:703:100:96:5:00000042b2474971",
-        "dhash:703:100:0:10:9cb89590b0717d7f"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_47935ca7",
@@ -267,9 +263,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b28f0d9c7e6dae4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "delay:5"
@@ -293,11 +287,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:633:486:16:5:92aa29a3b24db200",
-        "dhash:633:486:96:5:000004b0300c0000",
-        "dhash:633:486:0:10:1b28f0cbc6e6dae4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_b16aa4f5",
@@ -339,9 +329,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_b92621be",
