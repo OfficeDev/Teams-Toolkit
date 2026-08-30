@@ -586,7 +586,7 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 447,
+        "x": 507,
         "y": 487
       },
       "description": "Click the \"Use another account\" option on the Microsoft \"Pick an account\" login screen in Google Chrome.",
@@ -649,13 +649,11 @@
     {
       "step_id": "step_c05b7c0a",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 626,
-        "y": 517
+        "key": "enter"
       },
-      "description": "Click the \"Next\" button on the Microsoft sign-in page in Google Chrome after entering the account email address.",
+      "description": "Press Enter in the focused email field to continue from the Microsoft sign-in page in Google Chrome.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -695,13 +693,11 @@
     {
       "step_id": "step_2688e66a",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 635,
-        "y": 542
+        "key": "enter"
       },
-      "description": "Click the blue \"Sign in\" button on the Microsoft account password entry screen in Google Chrome.",
+      "description": "Press Enter in the focused password field to submit the Microsoft account credentials in Google Chrome.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -747,7 +743,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's ${{secret:M365_ACCOUNT_NAME_EnableCopilotAccess}} in the \"ACCOUNTS\" section",
+      "description": "@assertion there's ${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}} in the \"ACCOUNTS\" section",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
