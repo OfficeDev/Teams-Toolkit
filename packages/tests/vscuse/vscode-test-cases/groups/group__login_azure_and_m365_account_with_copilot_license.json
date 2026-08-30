@@ -586,18 +586,24 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 507,
-        "y": 492
+        "x": 447,
+        "y": 487
       },
-      "description": "Click the \"Use another account\" option on the Microsoft sign-in page within Google Chrome to initiate logging in with a different account.",
+      "description": "Click the \"Use another account\" option on the Microsoft \"Pick an account\" login screen in Google Chrome.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:447:487:16:5:ac534b4aaaaa6a15",
+        "dhash:447:487:96:5:0100228d15a20000",
+        "dhash:447:487:0:10:1312e8d89ed6e6e4"
+      ],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "precondition_wait_timeout: 60"
+      ],
       "screenshot": "step_01b1f6b2",
       "created_at": "2026-06-16T23:27:23.768755",
       "plan_id": "plan_b36c23b3"
