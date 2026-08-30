@@ -649,11 +649,13 @@
     {
       "step_id": "step_c05b7c0a",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "key": "enter"
+        "button": "left",
+        "x": 634,
+        "y": 511
       },
-      "description": "Press Enter in the focused email field to continue from the Microsoft sign-in page in Google Chrome.",
+      "description": "Click the \"Next\" button on the Microsoft sign-in page in Google Chrome after entering the account email address.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -693,11 +695,13 @@
     {
       "step_id": "step_2688e66a",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "key": "enter"
+        "button": "left",
+        "x": 634,
+        "y": 545
       },
-      "description": "Press Enter in the focused password field to submit the Microsoft account credentials in Google Chrome.",
+      "description": "Click the \"Sign in\" button on the Microsoft password page in Google Chrome to submit the account credentials.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
