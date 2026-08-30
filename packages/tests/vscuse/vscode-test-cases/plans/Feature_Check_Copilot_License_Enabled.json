@@ -235,7 +235,7 @@
       "parameters": {
         "button": "left",
         "x": 974,
-        "y": 572
+        "y": 711
       },
       "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the bottom-right of the Visual Studio Code interface to access a Microsoft 365 account.",
       "content_refs": [],
