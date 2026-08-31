@@ -5,9 +5,14 @@ import fs from "fs-extra";
 import os from "os";
 import path from "path";
 import { UserError } from "@microsoft/teamsfx-api";
+import { err, ok } from "neverthrow";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FxCoreClient, WorkerReferenceInput } from "../../src/core/FxCoreClient";
-import { validateWorkerAgentGraph, workerAgentAtomicIo } from "../../src/core/workerAgents";
+import {
+  validateWorkerAgentGraph,
+  workerAgentAtomicIo,
+  workerValidationError,
+} from "../../src/core/workerAgents";
 import { MockTools } from "./utils";
 
 interface TestManifest {
@@ -146,6 +151,44 @@ describe("Worker agent lifecycle", () => {
     expect(await fs.readFile(rootManifestPath)).toEqual(original);
   });
 
+  it("compares distinct existing local files before adding a Worker", async () => {
+    await fs.writeJson(path.join(appPackagePath, "existing.json"), manifest());
+    await fs.writeJson(path.join(appPackagePath, "new.json"), manifest());
+    await fs.writeJson(rootManifestPath, manifest({ worker_agents: [{ file: "existing.json" }] }));
+
+    const result = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "file", file: "new.json" },
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) expect(result.value.changed).toBe(true);
+  });
+
+  it("returns no change for duplicate IDs and rejects missing or non-regular local files", async () => {
+    await fs.writeJson(rootManifestPath, manifest({ worker_agents: [{ id: "worker-id" }] }));
+    const duplicate = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "id", id: "worker-id" },
+    });
+    expect(duplicate.isOk()).toBe(true);
+    if (duplicate.isOk()) expect(duplicate.value.changed).toBe(false);
+
+    const missing = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "file", file: "missing.json" },
+    });
+    await fs.ensureDir(path.join(appPackagePath, "directory"));
+    const directory = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "file", file: "directory" },
+    });
+    for (const result of [missing, directory]) {
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) expect(result.error.name).toBe("WORKER_FILE_MISSING_OR_NOT_REGULAR");
+    }
+  });
+
   it("WORKER-ADD-04: preserves unknown root properties", async () => {
     await fs.writeJson(rootManifestPath, manifest({ unknown_root: { future: true } }), {
       spaces: 2,
@@ -242,6 +285,126 @@ describe("Worker agent lifecycle", () => {
     expect(await fs.readFile(rootManifestPath)).toEqual(original);
   });
 
+  it("WORKER-ADD-05: public operations reject invalid options and empty references", async () => {
+    const add = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "file", file: "" },
+    });
+    const remove = await client.removeWorkerAgent({
+      projectPath: "",
+      reference: { type: "id", id: "x" },
+    });
+    // @ts-expect-error Exercise the runtime boundary used by non-TypeScript consumers.
+    const inspect = await client.inspectWorkerAgents(undefined);
+    // @ts-expect-error Exercise the runtime boundary used by non-TypeScript consumers.
+    const validate = await client.validateWorkerAgents({ projectPath: 1 });
+
+    expect([add, remove, inspect, validate].every((result) => result.isErr())).toBe(true);
+    if (add.isErr()) expect(add.error.name).toBe("WORKER_REFERENCE_EMPTY");
+    for (const result of [remove, inspect, validate]) {
+      if (result.isErr()) expect(result.error.name).toBe("WORKER_OPTIONS_INVALID");
+    }
+  });
+
+  it("WORKER-ADD-05: rejects malformed runtime reference variants", async () => {
+    const references: unknown[] = [
+      undefined,
+      { type: "other" },
+      { type: "id", id: 1 },
+      { type: "file", file: 1 },
+      { type: "id", id: "worker-id", other: true },
+    ];
+
+    for (const reference of references) {
+      const result = await client.addWorkerAgent({
+        projectPath,
+        // @ts-expect-error Exercise runtime DTO validation.
+        reference,
+      });
+      expect(result.isErr()).toBe(true);
+    }
+  });
+
+  it("WORKER-ADD-05: reports malformed Teams manifest root discovery", async () => {
+    await fs.writeFile(path.join(appPackagePath, "manifest.json"), "{");
+
+    const result = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "id", id: "worker-id" },
+    });
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect(result.error.name).toBe("WORKER_MANIFEST_INVALID");
+  });
+
+  it("discovers legacy and resolved DA roots from the Teams manifest", async () => {
+    const declaredRootPath = path.join(appPackagePath, "resolved.json");
+    await fs.writeJson(declaredRootPath, manifest({ worker_agents: [{ id: "worker-id" }] }));
+    await fs.writeJson(path.join(appPackagePath, "manifest.json"), {
+      copilotExtensions: { declarativeCopilots: [{ file: "authored.json" }] },
+    });
+
+    const resolved = await validateWorkerAgentGraph({
+      projectPath,
+      resolveAgentFile: async (authored, containingManifestPath) => {
+        expect(authored).toBe("authored.json");
+        expect(containingManifestPath).toBe(path.join(appPackagePath, "manifest.json"));
+        return ok("resolved.json");
+      },
+    });
+    expect(resolved.isOk()).toBe(true);
+    if (resolved.isOk()) expect(resolved.value.valid).toBe(true);
+
+    const resolutionError = new UserError({
+      source: "test",
+      name: "ResolveFailed",
+      message: "Resolve failed",
+    });
+    const failed = await validateWorkerAgentGraph({
+      projectPath,
+      resolveAgentFile: async () => err(resolutionError),
+    });
+    expect(failed.isErr()).toBe(true);
+    if (failed.isErr()) expect(failed.error).toBe(resolutionError);
+  });
+
+  it("handles Teams manifests without a usable declarative agent root", async () => {
+    const teamsManifestPath = path.join(appPackagePath, "manifest.json");
+    await fs.writeJson(teamsManifestPath, []);
+    const nonObject = await validateWorkerAgentGraph({ projectPath, allowMissingRoot: true });
+    expect(nonObject.isOk()).toBe(true);
+
+    await fs.writeJson(teamsManifestPath, {
+      copilotAgents: { declarativeAgents: "invalid" },
+      copilotExtensions: { declarativeCopilots: [{}] },
+    });
+    const noAgent = await validateWorkerAgentGraph({ projectPath, allowMissingRoot: true });
+    expect(noAgent.isOk()).toBe(true);
+
+    await fs.writeJson(teamsManifestPath, {
+      copilotAgents: { declarativeAgents: [{ file: "../outside.json" }] },
+    });
+    const outside = await validateWorkerAgentGraph({ projectPath });
+    expect(outside.isErr()).toBe(true);
+    if (outside.isErr()) expect(outside.error.name).toBe("WORKER_FILE_OUTSIDE_PACKAGE");
+  });
+
+  it("uses the default root when Teams manifest has no DA and preserves discovery I/O errors", async () => {
+    const teamsManifestPath = path.join(appPackagePath, "manifest.json");
+    await fs.writeJson(teamsManifestPath, {});
+    const defaultRoot = await validateWorkerAgentGraph({ projectPath });
+    expect(defaultRoot.isOk()).toBe(true);
+
+    const readFile = fs.readFile;
+    vi.spyOn(fs, "readFile").mockImplementation(async (...args) => {
+      if (path.resolve(String(args[0])) === teamsManifestPath) throw "read failed";
+      return readFile(...args);
+    });
+    const failed = await validateWorkerAgentGraph({ projectPath });
+    expect(failed.isErr()).toBe(true);
+    if (failed.isErr()) expect(failed.error.name).toBe("WORKER_MANIFEST_READ_FAILED");
+  });
+
   it("WORKER-ADD-05: reports malformed authored JSON as a user error", async () => {
     await fs.writeFile(rootManifestPath, "{");
 
@@ -313,6 +476,24 @@ describe("Worker agent lifecycle", () => {
     expect((await fs.readdir(appPackagePath)).some((file) => file.endsWith(".tmp"))).toBe(false);
   });
 
+  it("WORKER-ADD-07: cancellation after staging removes the temporary file", async () => {
+    const controller = new AbortController();
+    const writeFile = workerAgentAtomicIo.writeFile;
+    vi.spyOn(workerAgentAtomicIo, "writeFile").mockImplementation(async (filePath, content) => {
+      await writeFile(filePath, content);
+      controller.abort();
+    });
+
+    const result = await client.addWorkerAgent(
+      { projectPath, reference: { type: "id", id: "worker-id" } },
+      { signal: controller.signal }
+    );
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect(result.error.name).toBe("UserCancel");
+    expect((await fs.readdir(appPackagePath)).some((file) => file.endsWith(".tmp"))).toBe(false);
+  });
+
   it("WORKER-ADD-09: replacement failure preserves original bytes", async () => {
     const original = await fs.readFile(rootManifestPath);
     vi.spyOn(workerAgentAtomicIo, "rename").mockRejectedValue(new Error("replace failed"));
@@ -325,6 +506,19 @@ describe("Worker agent lifecycle", () => {
     expect(result.isErr()).toBe(true);
     expect(await fs.readFile(rootManifestPath)).toEqual(original);
     expect((await fs.readdir(appPackagePath)).some((file) => file.endsWith(".tmp"))).toBe(false);
+  });
+
+  it("WORKER-ADD-09: preserves the primary write error when cleanup also fails", async () => {
+    vi.spyOn(workerAgentAtomicIo, "writeFile").mockRejectedValue(new Error("write failed"));
+    vi.spyOn(workerAgentAtomicIo, "remove").mockRejectedValue(new Error("cleanup failed"));
+
+    const result = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "id", id: "worker-id" },
+    });
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect(result.error.name).toBe("WORKER_MANIFEST_WRITE_FAILED");
   });
 
   it("WORKER-REMOVE-01: removes all equivalent hand-authored IDs", async () => {
@@ -361,6 +555,44 @@ describe("Worker agent lifecycle", () => {
     await expect(fs.readJson(rootManifestPath)).resolves.toMatchObject({ worker_agents: [] });
   });
 
+  it("keeps non-equivalent malformed and stale file entries during removal", async () => {
+    await fs.writeJson(
+      rootManifestPath,
+      manifest({ worker_agents: [null, { file: "../outside.json" }, { file: "other.json" }] })
+    );
+
+    const result = await client.removeWorkerAgent({
+      projectPath,
+      reference: { type: "file", file: "missing.json" },
+    });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) expect(result.value.changed).toBe(false);
+  });
+
+  it("returns public operation errors for invalid references and invalid DA roots", async () => {
+    const invalidReference = await client.removeWorkerAgent({
+      projectPath,
+      // @ts-expect-error Exercise runtime DTO validation.
+      reference: undefined,
+    });
+    expect(invalidReference.isErr()).toBe(true);
+    if (invalidReference.isErr()) {
+      expect(invalidReference.error.name).toBe("WORKER_REFERENCE_INVALID");
+    }
+
+    await fs.writeJson(rootManifestPath, { version: "v1.8" });
+    const add = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "id", id: "worker-id" },
+    });
+    const inspect = await client.inspectWorkerAgents({ projectPath });
+    for (const result of [add, inspect]) {
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) expect(result.error.name).toBe("WORKER_MANIFEST_INVALID");
+    }
+  });
+
   it("WORKER-REMOVE-02: removes all equivalent existing file aliases", async () => {
     await fs.writeJson(path.join(appPackagePath, "worker.json"), manifest());
     await fs.writeJson(
@@ -389,6 +621,31 @@ describe("Worker agent lifecycle", () => {
     expect(result.isOk()).toBe(true);
     if (result.isOk()) expect(result.value.changed).toBe(false);
     expect(await fs.readFile(rootManifestPath)).toEqual(original);
+  });
+
+  it("returns stable errors for unsupported schemas and malformed worker collections", async () => {
+    await fs.writeJson(rootManifestPath, manifest({ version: "not-semver" }));
+    const unsupported = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "id", id: "worker-id" },
+    });
+    expect(unsupported.isErr()).toBe(true);
+    if (unsupported.isErr()) expect(unsupported.error.name).toBe("WORKER_SCHEMA_UNSUPPORTED");
+
+    await fs.writeJson(rootManifestPath, { ...manifest(), worker_agents: {} });
+    const add = await client.addWorkerAgent({
+      projectPath,
+      reference: { type: "id", id: "worker-id" },
+    });
+    const remove = await client.removeWorkerAgent({
+      projectPath,
+      reference: { type: "id", id: "worker-id" },
+    });
+    const inspect = await client.inspectWorkerAgents({ projectPath });
+    for (const result of [add, remove, inspect]) {
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) expect(result.error.name).toBe("WORKER_ENTRIES_INVALID");
+    }
   });
 
   it("WORKER-REMOVE-05: removes matching entries despite unrelated graph errors", async () => {
@@ -561,6 +818,24 @@ describe("Worker agent lifecycle", () => {
     }
   });
 
+  it("WORKER-INSPECT-02: reports non-regular and escaping files as absent", async () => {
+    await fs.ensureDir(path.join(appPackagePath, "directory"));
+    await fs.writeJson(
+      rootManifestPath,
+      manifest({ worker_agents: [{ file: "directory" }, { file: "../outside.json" }] })
+    );
+
+    const result = await client.inspectWorkerAgents({ projectPath });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value.items).toEqual([
+        { type: "file", file: "directory", exists: false },
+        { type: "file", file: "../outside.json", exists: false },
+      ]);
+    }
+  });
+
   it("WORKER-INSPECT-04: returns no items when worker_agents is absent or empty", async () => {
     const absent = await client.inspectWorkerAgents({ projectPath });
     expect(absent.isOk() && absent.value.items).toEqual([]);
@@ -579,6 +854,24 @@ describe("Worker agent lifecycle", () => {
     expect(result.isOk()).toBe(true);
     if (result.isOk()) expect(result.value.items).toEqual([{ type: "id", id: "published-id" }]);
     expect(tokenCall).not.toHaveBeenCalled();
+  });
+
+  it("cancels remove, inspect, and validate before reading project files", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const context = { signal: controller.signal };
+
+    const remove = await client.removeWorkerAgent(
+      { projectPath, reference: { type: "id", id: "worker-id" } },
+      context
+    );
+    const inspect = await client.inspectWorkerAgents({ projectPath }, context);
+    const validate = await client.validateWorkerAgents({ projectPath }, context);
+
+    for (const result of [remove, inspect, validate]) {
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) expect(result.error.name).toBe("UserCancel");
+    }
   });
 
   it("WORKER-VALIDATE-01: returns no diagnostics without worker_agents", async () => {
@@ -614,6 +907,210 @@ describe("Worker agent lifecycle", () => {
         expect.objectContaining({ code: "WORKER_FILE_INVALID_JSON" })
       );
     }
+  });
+
+  it("WORKER-VALIDATE-01: an allowed missing root returns an empty valid graph", async () => {
+    await fs.remove(rootManifestPath);
+
+    const result = await validateWorkerAgentGraph({ projectPath, allowMissingRoot: true });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value).toEqual({ valid: true, diagnostics: [], localManifests: [] });
+    }
+  });
+
+  it("WORKER-VALIDATE-01: an allowed missing appPackage returns an empty valid graph", async () => {
+    await fs.remove(appPackagePath);
+
+    const result = await validateWorkerAgentGraph({ projectPath, allowMissingRoot: true });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value).toEqual({ valid: true, diagnostics: [], localManifests: [] });
+    }
+  });
+
+  it("WORKER-VALIDATE-02: validates explicit invalid roots and worker collections", async () => {
+    const invalidRoot = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument: [],
+    });
+    const invalidEntries = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument: { ...manifest(), worker_agents: {} },
+    });
+    const unsupportedSchema = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument: manifest({ version: "v1.5", worker_agents: [{ id: "worker-id" }] }),
+    });
+
+    for (const result of [invalidRoot, invalidEntries, unsupportedSchema]) {
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) expect(result.value.valid).toBe(false);
+    }
+    if (invalidEntries.isOk()) {
+      expect(invalidEntries.value.diagnostics).toContainEqual(
+        expect.objectContaining({ code: "WORKER_ENTRIES_INVALID" })
+      );
+    }
+    if (unsupportedSchema.isOk()) {
+      expect(unsupportedSchema.value.diagnostics).toContainEqual(
+        expect.objectContaining({ code: "WORKER_SCHEMA_UNSUPPORTED" })
+      );
+    }
+  });
+
+  it("WORKER-VALIDATE-02: rejects non-object roots and non-string DA versions", async () => {
+    await fs.writeJson(rootManifestPath, []);
+    const nonObject = await client.validateWorkerAgents({ projectPath });
+    expect(nonObject.isErr()).toBe(true);
+    if (nonObject.isErr()) expect(nonObject.error.name).toBe("WORKER_MANIFEST_INVALID");
+
+    for (const worker_agents of [[{ id: "worker-id" }], [{ file: "worker.json" }]]) {
+      const result = await validateWorkerAgentGraph({
+        projectPath,
+        rootManifestPath,
+        rootDocument: { ...manifest(), version: 1, worker_agents },
+      });
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.diagnostics).toContainEqual(
+          expect.objectContaining({ code: "WORKER_FILE_NOT_DECLARATIVE_AGENT" })
+        );
+      }
+    }
+  });
+
+  it("WORKER-VALIDATE-04: preserves loader and nested filesystem failures", async () => {
+    const workerPath = path.join(appPackagePath, "worker.json");
+    const rootDocument = manifest({ worker_agents: [{ file: "worker.json" }] });
+    await fs.writeJson(workerPath, manifest());
+    const loaderError = new UserError({
+      source: "test",
+      name: "WorkerLoaderFailed",
+      message: "Worker loader failed",
+    });
+    const loadFailure = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument,
+      loadManifest: async () => err(loaderError),
+    });
+    expect(loadFailure.isErr()).toBe(true);
+    if (loadFailure.isErr()) expect(loadFailure.error).toBe(loaderError);
+
+    const nonAgent = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument,
+      loadManifest: async () => ok({ content: "{}", document: {} }),
+    });
+    expect(nonAgent.isOk()).toBe(true);
+    if (nonAgent.isOk()) {
+      expect(nonAgent.value.diagnostics).toContainEqual(
+        expect.objectContaining({ code: "WORKER_FILE_NOT_DECLARATIVE_AGENT" })
+      );
+    }
+
+    vi.spyOn(fs, "realpath")
+      .mockResolvedValueOnce(appPackagePath)
+      .mockResolvedValueOnce(rootManifestPath)
+      .mockRejectedValueOnce(new Error("worker canonicalization failed"));
+    const canonicalFailure = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument,
+    });
+    expect(canonicalFailure.isOk()).toBe(true);
+    if (canonicalFailure.isOk()) {
+      expect(canonicalFailure.value.diagnostics).toContainEqual(
+        expect.objectContaining({ code: "WORKER_FILE_STAT_FAILED" })
+      );
+    }
+  });
+
+  it("WORKER-VALIDATE-04: preserves the first error when multiple custom loads fail", async () => {
+    const firstPath = path.join(appPackagePath, "first.json");
+    const secondPath = path.join(appPackagePath, "second.json");
+    await fs.writeJson(firstPath, manifest());
+    await fs.writeJson(secondPath, manifest());
+    const firstError = new UserError({
+      source: "test",
+      name: "FirstLoaderFailed",
+      message: "First loader failed",
+    });
+    const secondError = new UserError({
+      source: "test",
+      name: "SecondLoaderFailed",
+      message: "Second loader failed",
+    });
+
+    const result = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument: manifest({
+        worker_agents: [{ file: "first.json" }, { file: "second.json" }],
+      }),
+      loadManifest: async (target) => err(target === firstPath ? firstError : secondError),
+    });
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect(result.error).toBe(firstError);
+  });
+
+  it("WORKER-VALIDATE-04: diagnoses nested stat and read failures", async () => {
+    const workerPath = path.join(appPackagePath, "worker.json");
+    const rootDocument = manifest({ worker_agents: [{ file: "worker.json" }] });
+    await fs.writeJson(workerPath, manifest());
+
+    vi.spyOn(fs, "stat").mockRejectedValueOnce(
+      Object.assign(new Error("stat failed"), { code: "EACCES" })
+    );
+    const statFailure = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument,
+    });
+    expect(statFailure.isOk()).toBe(true);
+    if (statFailure.isOk()) {
+      expect(statFailure.value.diagnostics).toContainEqual(
+        expect.objectContaining({ code: "WORKER_FILE_STAT_FAILED" })
+      );
+    }
+
+    vi.restoreAllMocks();
+    const readFile = fs.readFile;
+    vi.spyOn(fs, "readFile").mockImplementation(async (...args) => {
+      if (path.resolve(String(args[0])) === workerPath) throw new Error("read failed");
+      return readFile(...args);
+    });
+    const readFailure = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument,
+    });
+    expect(readFailure.isOk()).toBe(true);
+    if (readFailure.isOk()) {
+      expect(readFailure.value.diagnostics).toContainEqual(
+        expect.objectContaining({ code: "WORKER_FILE_READ_FAILED" })
+      );
+    }
+  });
+
+  it("maps validation diagnostics to an optional blocking FxError", () => {
+    expect(workerValidationError({ valid: true, diagnostics: [] })).toBeUndefined();
+    const error = workerValidationError({
+      valid: false,
+      diagnostics: [
+        { severity: "warning", code: "warning", message: "warning" },
+        { severity: "error", code: "blocking", message: "blocking" },
+      ],
+    });
+    expect(error?.name).toBe("blocking");
   });
 
   it("WORKER-VALIDATE-11: published IDs are opaque leaves with no network call", async () => {
@@ -688,6 +1185,29 @@ describe("Worker agent lifecycle", () => {
           }),
         ])
       );
+    }
+  });
+
+  it("WORKER-VALIDATE-02: handles malformed probes and file entry values", async () => {
+    await fs.writeJson(rootManifestPath, []);
+    const skipped = await validateWorkerAgentGraph({
+      projectPath,
+      validateOnlyIfWorkerAgentsConfigured: true,
+    });
+    expect(skipped.isOk()).toBe(true);
+    if (skipped.isOk()) expect(skipped.value.valid).toBe(true);
+
+    const invalidFiles = await validateWorkerAgentGraph({
+      projectPath,
+      rootManifestPath,
+      rootDocument: manifest({ worker_agents: [{ file: 1 }, { file: "" }] }),
+    });
+    expect(invalidFiles.isOk()).toBe(true);
+    if (invalidFiles.isOk()) {
+      expect(invalidFiles.value.diagnostics).toEqual([
+        expect.objectContaining({ code: "WORKER_REFERENCE_EMPTY" }),
+        expect.objectContaining({ code: "WORKER_REFERENCE_EMPTY" }),
+      ]);
     }
   });
 
@@ -827,6 +1347,33 @@ describe("Worker agent lifecycle", () => {
       expect(result.value.valid).toBe(false);
       expect(result.value.diagnostics.map((diagnostic) => diagnostic.code)).toContain(
         "WORKER_CYCLE"
+      );
+    }
+  });
+
+  it("WORKER-VALIDATE-06: diagnoses a Worker shared by two graph branches", async () => {
+    const workersPath = path.join(appPackagePath, "workers");
+    await fs.ensureDir(workersPath);
+    await fs.writeJson(
+      rootManifestPath,
+      manifest({ worker_agents: [{ file: "workers/one.json" }, { file: "workers/two.json" }] })
+    );
+    await fs.writeJson(
+      path.join(workersPath, "one.json"),
+      manifest({ worker_agents: [{ file: "shared.json" }] })
+    );
+    await fs.writeJson(
+      path.join(workersPath, "two.json"),
+      manifest({ worker_agents: [{ file: "shared.json" }] })
+    );
+    await fs.writeJson(path.join(workersPath, "shared.json"), manifest());
+
+    const result = await client.validateWorkerAgents({ projectPath });
+
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value.diagnostics).toContainEqual(
+        expect.objectContaining({ code: "WORKER_DUPLICATE_REFERENCE" })
       );
     }
   });
