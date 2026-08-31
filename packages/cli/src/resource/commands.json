@@ -57,13 +57,13 @@
     "description": "Import an external agent plugin into a Microsoft 365 Agents Toolkit project."
   },
   "import.openplugin": {
-    "description": "Import an Open Plugin / Claude Code plugin / Cursor plugin directory into a scaffolded Microsoft 365 Agents Toolkit project (agentSkills + agentConnectors, vDevPreview manifest)."
+    "description": "Import an Agent Plugins v1.0.0 directory (agent-plugins.org) into a scaffolded Microsoft 365 Agents Toolkit project (agentSkills + agentConnectors, devPreview manifest). Pre-1.0.0 Open Plugin / Claude Code / Cursor layouts are also accepted. Alias: 'agentplugin'."
   },
   "export": {
     "description": "Export a Microsoft 365 Agents Toolkit project to an external agent plugin format."
   },
   "export.openplugin": {
-    "description": "Export a Microsoft 365 Agents Toolkit project to an Open Plugin Spec v1.0 directory. Round-trips losslessly with 'atk import openplugin'."
+    "description": "Export a Microsoft 365 Agents Toolkit project to an Agent Plugins v1.0.0 directory (agent-plugins.org). Round-trips losslessly with 'atk import agentplugin'. Alias: 'agentplugin'."
   },
   "add.spfx-web-part": {
     "description": "Auto-hosted SPFx web part tightly integrated with Microsoft 365."

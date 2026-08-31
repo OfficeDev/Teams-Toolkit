@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 /**
- * Truncate `text` to at most `maxLength` characters, preferring a word
+ * Truncate `text` to at most `maxLength` Unicode code points, preferring a word
  * boundary when the cut would land mid-word. If no usable boundary exists
  * within the first 50% of the limit, falls back to a hard cut.
  */
@@ -10,18 +10,19 @@ export function truncateAtWordBoundary(text: string | undefined, maxLength: numb
   if (!text) {
     return "";
   }
-  if (text.length <= maxLength) {
+  const codePoints = [...text];
+  if (codePoints.length <= maxLength) {
     return text;
   }
-  const truncated = text.substring(0, maxLength);
-  if (/\s/.test(text.charAt(maxLength))) {
-    return truncated.trimEnd();
+  const truncated = codePoints.slice(0, maxLength);
+  if (/\s/.test(codePoints[maxLength])) {
+    return truncated.join("").trimEnd();
   }
   const lastSpace = truncated.lastIndexOf(" ");
   if (lastSpace > Math.floor(maxLength * 0.5)) {
-    return truncated.substring(0, lastSpace).trimEnd();
+    return truncated.slice(0, lastSpace).join("").trimEnd();
   }
-  return truncated.trimEnd();
+  return truncated.join("").trimEnd();
 }
 
 /**

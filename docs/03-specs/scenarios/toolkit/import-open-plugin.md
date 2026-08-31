@@ -19,6 +19,8 @@ operation rather than restating its evidence rules.
 | SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-03 | L1      | scenario | per-PR   | TempDirRuntime with network fakes                         | the selected destination is non-empty                                                                          | the fx-core importer runs                      | it returns `OutputDirectoryNotEmpty` before auth discovery and preserves the destination                                                                                                                             |
 | SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-04 | L1      | scenario | per-PR   | TempDirRuntime with network fakes                         | the source declares more than ten URL-based MCP servers                                                        | the fx-core importer runs                      | it rejects the manifest-limit violation before auth discovery or scaffolding                                                                                                                                         |
 | SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-05 | L1      | scenario | per-PR   | TempDirRuntime with MCP/OAuth and template-provider fakes | Auto receives a confirmed auth challenge but OAuth metadata cannot be resolved                                 | the fx-core importer runs                      | the destination is scaffolded with an `OAuthPluginVault` connector and deterministic placeholder reference; the result warns that the fallback type must be verified and registered                                  |
+| SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-06 | L1      | scenario | per-PR   | TempDirRuntime with network fakes                         | the selected destination or an existing ancestor is a symbolic link or junction                                | the fx-core importer runs                      | it returns `InvalidOutputPath` before auth discovery or scaffolding and writes nothing through the linked path                                                                                                       |
+| SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-07 | L1      | scenario | per-PR   | TempDirRuntime with MCP/OAuth and template-provider fakes | the source declares one remote MCP server with fixed headers and one representable remote MCP server           | the fx-core importer completes                 | it skips the fixed-header server with an explicit warning, does not probe it, and emits only the representable connector                                                                                             |
 
 ## Composed operations
 
@@ -42,7 +44,7 @@ warning.
   [`importer.test.ts`](../../../../packages/fx-core/tests/component/generator/openPlugin/importer.test.ts)
   uses temporary source/destination directories, the production parser/importer/mapper/writers, a
   static template-provider fake, and fakes only the MCP/OAuth network boundary.
-- **Traceability:** the four required L1 rows map 1:1 to scenario-tier tests in that file.
+- **Traceability:** the six required L1 rows map to scenario-tier tests in that file.
 - **Deferred surface:** `SCN-TOOLKIT-IMPORT-OPEN-PLUGIN-02` records the L2 CLI E2E intent and is not a
   current per-PR gate.
 
@@ -70,3 +72,5 @@ This scenario does not assert:
 - A confirmed auth challenge with unresolved metadata writes an OAuth placeholder and a visible
   verification warning.
 - Explicit or preserved authentication remains authoritative for each connector.
+- Linked destination paths are rejected before network access or writes.
+- Remote MCP servers with fixed headers are skipped rather than converted lossily.

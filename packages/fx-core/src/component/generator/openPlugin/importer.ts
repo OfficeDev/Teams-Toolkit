@@ -1,24 +1,51 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { err, FxError, ok, Result, SystemError, UserError } from "@microsoft/teamsfx-api";
+import {
+  AppManifestUtils,
+  err,
+  FxError,
+  ok,
+  Result,
+  SystemError,
+  TeamsManifestConverter,
+  UserError,
+} from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import yaml from "js-yaml";
 import * as path from "path";
+import { getDefaultString, getLocalizedString } from "../../../common/localizeUtils";
 import { createContext } from "../../../common/globalVars";
 import { Generator } from "../generator";
 import { TemplateNames } from "../templates/templateNames";
 import { resolveOpenPluginMcpAuth } from "./authResolver";
+import { OpenPluginInputError } from "./errors";
+import {
+  copyDirectoryWithoutSymbolicLinks,
+  inspectPathWithinRoot,
+  hasLinkedPathSegment,
+} from "./fileSystem";
 import { applyIcons } from "./iconStrategy";
-import { mapToTtkProject, validateMcpServerCount } from "./mapper";
+import { mapToTtkProject, validateImportInputs } from "./mapper";
 import { readOpenPluginDir } from "./parser";
+import { normalizePluginName } from "./spec";
 import { ImportInputs } from "./types";
+import { isRecord } from "./validation";
 
 export const OPEN_PLUGIN_IMPORT_SOURCE = "OpenPluginImport";
 
 export interface ImportResult {
   projectPath: string;
   warnings: string[];
+}
+
+function localizedImportUserError(name: string, key: string, ...params: string[]): UserError {
+  return new UserError({
+    source: OPEN_PLUGIN_IMPORT_SOURCE,
+    name,
+    message: getDefaultString(key, ...params),
+    displayMessage: getLocalizedString(key, ...params),
+  });
 }
 
 /**
@@ -39,26 +66,52 @@ export async function importOpenPlugin(
   try {
     if (!inputs.path) {
       return err(
-        new UserError(OPEN_PLUGIN_IMPORT_SOURCE, "MissingPluginPath", "--path is required.")
+        localizedImportUserError("MissingPluginPath", "core.openPluginImport.missingPluginPath")
       );
     }
     const parsed = await readOpenPluginDir(inputs.path);
-    const defaultOutput = path.join(process.cwd(), parsed.manifest.name);
+    const defaultOutput = path.join(process.cwd(), normalizePluginName(parsed.manifest.name));
     const projectPath = path.resolve(inputs.output ?? defaultOutput);
 
+    if (await hasLinkedPathSegment(projectPath)) {
+      return err(
+        localizedImportUserError(
+          "InvalidOutputPath",
+          "core.openPluginImport.invalidOutputPath",
+          projectPath
+        )
+      );
+    }
     if (await fs.pathExists(projectPath)) {
       const entries = await fs.readdir(projectPath);
       if (entries.length > 0) {
         return err(
-          new UserError(
-            OPEN_PLUGIN_IMPORT_SOURCE,
+          localizedImportUserError(
             "OutputDirectoryNotEmpty",
-            `Output directory is not empty: ${projectPath}. Choose a different --output path or empty the directory.`
+            "core.openPluginImport.outputDirectoryNotEmpty",
+            projectPath
           )
         );
       }
     }
-    validateMcpServerCount(parsed.mcpServers);
+    validateImportInputs(parsed, inputs);
+    const preflightManifest = mapToTtkProject(parsed, {
+      ...inputs,
+      defaultAuthType:
+        inputs.defaultAuthType === undefined || inputs.defaultAuthType === "Auto"
+          ? "None"
+          : inputs.defaultAuthType,
+    }).manifest;
+    const preflightError = await getMappedManifestValidationError(preflightManifest);
+    if (preflightError) {
+      return err(
+        localizedImportUserError(
+          "InvalidManifest",
+          "core.openPluginImport.invalidManifest",
+          preflightError
+        )
+      );
+    }
 
     const authResolution = await resolveOpenPluginMcpAuth(parsed, inputs.defaultAuthType ?? "Auto");
     if (authResolution.isErr()) {
@@ -70,6 +123,16 @@ export async function importOpenPlugin(
       authResolution.value.authTypes
     );
     warnings.push(...authResolution.value.warnings);
+    const manifestValidationError = await getMappedManifestValidationError(manifest);
+    if (manifestValidationError) {
+      return err(
+        localizedImportUserError(
+          "InvalidManifest",
+          "core.openPluginImport.invalidManifest",
+          manifestValidationError
+        )
+      );
+    }
 
     // 1. Scaffold the static baseline from the open-plugin-import template.
     const ctx = createContext();
@@ -86,13 +149,46 @@ export async function importOpenPlugin(
     const appPackageDir = path.join(projectPath, "appPackage");
     await fs.ensureDir(appPackageDir);
 
-    // Manifest (vDevPreview agentSkills/agentConnectors are variable-length).
-    await fs.writeJSON(path.join(appPackageDir, "manifest.json"), manifest, { spaces: 4 });
-
     // Copy skill folders and (when present) the commands folder.
     for (const op of copyOps) {
-      await fs.copy(op.src, path.join(projectPath, op.destRelative));
+      const destination = path.join(projectPath, op.destRelative);
+      if (op.kind === "contents") {
+        await fs.ensureDir(path.dirname(destination));
+        await fs.writeFile(destination, op.contents);
+        continue;
+      }
+      const source = await inspectPathWithinRoot(
+        parsed.pluginRoot,
+        path.relative(parsed.pluginRoot, op.src),
+        op.kind
+      );
+      if (source.status !== "ok") {
+        const componentType = op.kind === "file" ? "command" : "skill";
+        warnings.push(
+          `Skipped ${componentType} '${path.basename(op.src)}': source is no longer safe.`
+        );
+        continue;
+      }
+      if (op.kind === "file") {
+        await fs.ensureDir(path.dirname(destination));
+        await fs.copyFile(source.path, destination);
+      } else {
+        await copyDirectoryWithoutSymbolicLinks(
+          source.path,
+          destination,
+          (relativePath, resolvesOutside) => {
+            warnings.push(
+              `Skipped symbolic link '${relativePath}' while copying '${op.destRelative}'${
+                resolvesOutside ? " because it resolves outside the component root" : ""
+              }.`
+            );
+          }
+        );
+      }
     }
+
+    // Manifest (vDevPreview agentSkills/agentConnectors are variable-length).
+    await fs.writeJSON(path.join(appPackageDir, "manifest.json"), manifest, { spaces: 4 });
 
     // Strip SKILL.md frontmatter fields that Teams Developer Portal rejects.
     // Allowed: name, description, license, metadata, compatibility.
@@ -106,16 +202,34 @@ export async function importOpenPlugin(
     if (e instanceof UserError || e instanceof SystemError) {
       return err(e);
     }
+    if (e instanceof OpenPluginInputError) {
+      return err(
+        localizedImportUserError("InvalidPlugin", "core.openPluginImport.invalidPlugin", e.message)
+      );
+    }
     const message = e instanceof Error ? e.message : String(e);
     return err(
       new SystemError({
         source: OPEN_PLUGIN_IMPORT_SOURCE,
         name: "ImportOpenPluginFailed",
         message,
-        displayMessage: message,
+        displayMessage: getLocalizedString("core.openPluginImport.failed"),
       })
     );
   }
+}
+
+async function getMappedManifestValidationError(
+  manifest: Record<string, unknown>
+): Promise<string | undefined> {
+  let typedManifest;
+  try {
+    typedManifest = TeamsManifestConverter.jsonToManifest(JSON.stringify(manifest));
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error);
+  }
+  const errors = await AppManifestUtils.validateAgainstSchema(typedManifest);
+  return errors.length > 0 ? errors.join(" ") : undefined;
 }
 
 // Teams Developer Portal accepts only these SKILL.md frontmatter keys.
@@ -160,15 +274,14 @@ export function stripDisallowedFrontmatter(source: string): {
   const match = /^---\r?\n([\s\S]*?)\r?\n---(\r?\n|$)/.exec(source);
   if (!match) return { content: source, removedKeys: [] };
   const parsed = yaml.load(match[1]);
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+  if (!isRecord(parsed)) {
     return { content: source, removedKeys: [] };
   }
-  const obj = parsed as Record<string, unknown>;
   const removedKeys: string[] = [];
   const kept: Record<string, unknown> = {};
-  for (const key of Object.keys(obj)) {
+  for (const key of Object.keys(parsed)) {
     if (ALLOWED_SKILL_FRONTMATTER_KEYS.has(key)) {
-      kept[key] = obj[key];
+      kept[key] = parsed[key];
     } else {
       removedKeys.push(key);
     }

@@ -9,7 +9,7 @@ export const ImportOpenPluginOptions: CLICommandOption[] = [
     type: "string",
     shortName: "p",
     description:
-      "Open Plugin directory containing .plugin/plugin.json, .claude-plugin/plugin.json, or .cursor-plugin/plugin.json.",
+      "Agent Plugin directory containing plugin.json in its root. Pre-1.0.0 layouts (.plugin/, .claude-plugin/, .cursor-plugin/) are also accepted with a deprecation warning.",
     required: true,
   },
   {
@@ -22,13 +22,13 @@ export const ImportOpenPluginOptions: CLICommandOption[] = [
     name: "privacy-url",
     type: "string",
     description:
-      "developer.privacyUrl for the generated manifest. Required unless the source plugin.json carries an x-microsoft-365-agents-toolkit extension block from a previous 'atk export openplugin'.",
+      "developer.privacyUrl for the generated manifest. Required unless the source plugin.json carries a com.microsoft.agents-toolkit extension block from a previous 'atk export agentplugin'.",
   },
   {
     name: "terms-url",
     type: "string",
     description:
-      "developer.termsOfUseUrl for the generated manifest. Required unless the source plugin.json carries an x-microsoft-365-agents-toolkit extension block from a previous 'atk export openplugin'.",
+      "developer.termsOfUseUrl for the generated manifest. Required unless the source plugin.json carries a com.microsoft.agents-toolkit extension block from a previous 'atk export agentplugin'.",
   },
   {
     name: "website-url",
@@ -45,7 +45,7 @@ export const ImportOpenPluginOptions: CLICommandOption[] = [
     name: "default-auth-type",
     type: "string",
     description:
-      "Default auth type for MCP connectors discovered in .mcp.json. 'Auto' probes remote HTTPS MCP endpoints and OAuth metadata, warns on inferred choices, and requires an explicit type when auth is unresolved.",
+      "Default auth type for MCP connectors discovered in mcp.json. 'Auto' probes remote HTTPS MCP endpoints and OAuth metadata, warns on inferred choices, and requires an explicit type when auth is unresolved.",
     default: "Auto",
     choices: ["Auto", "None", "OAuthPluginVault", "ApiKeyPluginVault"],
   },

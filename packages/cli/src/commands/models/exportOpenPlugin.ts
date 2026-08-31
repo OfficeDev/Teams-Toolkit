@@ -8,7 +8,11 @@ import { commands } from "../../resource";
 import { TelemetryEvent } from "../../telemetry/cliTelemetryEvents";
 
 export const exportOpenPluginCommand: CLICommand = {
+  // The spec was renamed from "Open Plugin" to "Agent Plugins" (open-plugins.com
+  // now redirects to agent-plugins.org). `agentplugin` is the preferred spelling;
+  // `openplugin` stays as the command name so existing scripts keep working.
   name: "openplugin",
+  aliases: ["agentplugin"],
   description: commands["export.openplugin"].description,
   options: [...ExportOpenPluginOptions],
   telemetry: {
@@ -22,7 +26,7 @@ export const exportOpenPluginCommand: CLICommand = {
     if (res.isErr()) {
       return err(res.error);
     }
-    logger.info(`Open Plugin written to: ${res.value.outputPath}`);
+    logger.info(`Agent Plugin written to: ${res.value.outputPath}`);
     for (const warning of res.value.warnings ?? []) {
       logger.warning(warning.content);
     }

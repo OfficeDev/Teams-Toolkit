@@ -8,24 +8,50 @@ export interface OpenPluginAuthorObject {
 }
 
 export interface OpenPluginManifest {
+  /**
+   * Required by Agent Plugins 1.0.0; identifies the targeted spec version.
+   * Optional here because pre-1.0.0 manifests omit it and are still imported.
+   */
+  $schema?: string;
   name: string;
   version?: string;
   description?: string;
+  /** 1.0.0 permits only the object form; the string form is legacy. */
   author?: string | OpenPluginAuthorObject;
   homepage?: string;
   repository?: string;
   license?: string;
-  logo?: string;
   keywords?: string[];
-  // Component-path overrides per Open Plugin Spec v1.0. Only string form is
-  // supported in this converter; array/object forms throw.
+  /**
+   * Agent Plugins 1.0.0 client-specific data, keyed by reverse-domain
+   * namespace. The toolkit reads and writes `com.microsoft.agents-toolkit`.
+   */
+  extensions?: Record<string, unknown>;
+  /** Raw pre-1.0.0 toolkit extension block, retained only during legacy import. */
+  legacyAtkExtension?: unknown;
+
+  // ---- Pre-1.0.0 fields, tolerated on import only ----
+  // Agent Plugins 1.0.0 closes the manifest schema and fixes component
+  // locations: a manifest can no longer relocate components or declare them
+  // inline. These are still parsed so older plugin directories keep importing,
+  // but they are never emitted by `atk export`.
+  /** @deprecated Not in Agent Plugins 1.0.0. */
+  logo?: string;
+  /** @deprecated Component relocation was removed in Agent Plugins 1.0.0. */
   skills?: string | string[] | Record<string, unknown>;
+  /** @deprecated Component relocation was removed in Agent Plugins 1.0.0. */
   commands?: string | string[] | Record<string, unknown>;
+  /** @deprecated Component relocation was removed in Agent Plugins 1.0.0. */
   agents?: string | string[] | Record<string, unknown>;
+  /** @deprecated Component relocation was removed in Agent Plugins 1.0.0. */
   hooks?: string | string[] | Record<string, unknown>;
+  /** @deprecated Component relocation was removed in Agent Plugins 1.0.0. */
   mcpServers?: string | string[] | Record<string, unknown>;
+  /** @deprecated Component relocation was removed in Agent Plugins 1.0.0. */
   lspServers?: string | string[] | Record<string, unknown>;
+  /** @deprecated Component relocation was removed in Agent Plugins 1.0.0. */
   rules?: string | string[] | Record<string, unknown>;
+  /** @deprecated Component relocation was removed in Agent Plugins 1.0.0. */
   outputStyles?: string | string[];
 }
 
@@ -36,8 +62,16 @@ export interface ParsedAuthor {
 }
 
 export interface OpenPluginMcpServerEntry {
-  url?: string;
+  /** Required by mcp.schema.json: "stdio" | "streamable-http" | "sse". */
   type?: string;
+  /** Required for the streamable-http and sse transports. */
+  url?: string;
+  /** Required for the stdio transport. */
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  cwd?: string;
+  headers?: Record<string, string>;
   description?: string;
   // Other fields tolerated but not used.
   [key: string]: unknown;
@@ -49,12 +83,23 @@ export interface OpenPluginMcpJson {
   [key: string]: unknown;
 }
 
+export type ParsedManifestKind =
+  /** Agent Plugins 1.0.0: plugin.json in the plugin root. */
+  | "agent-plugin"
+  /** Pre-1.0.0 layouts, accepted on import only. */
+  | "open-plugin"
+  | "claude-plugin"
+  | "cursor-plugin";
+
 export interface ParsedOpenPlugin {
   pluginRoot: string;
   manifest: OpenPluginManifest;
   manifestPath: string;
-  manifestKind: "open-plugin" | "claude-plugin" | "cursor-plugin";
+  manifestKind: ParsedManifestKind;
+  /** True when the directory used a pre-1.0.0 layout. */
+  isLegacyLayout: boolean;
   mcpServers: Record<string, OpenPluginMcpServerEntry>;
+  invalidRemoteMcpServers?: string[];
   skills: string[];
   skillsRoot?: string;
   commands: string[];
@@ -67,14 +112,20 @@ export interface ParsedOpenPlugin {
 }
 
 export type AuthorizationType = "None" | "OAuthPluginVault" | "ApiKeyPluginVault";
+export type ConnectorAuthorizationType =
+  AuthorizationType | "DynamicClientRegistration" | "AzureKeyVault";
 export type DefaultAuthOption = "Auto" | AuthorizationType;
 
 /**
- * Extension block embedded under `x-microsoft-365-agents-toolkit` in plugin.json
- * by `atk export openplugin`. Carries every field that the Open Plugin Spec
- * cannot natively represent so that re-importing reconstructs the original
- * project losslessly. All fields are optional — the importer treats missing
- * keys the same way it treats a plugin.json without this extension at all.
+ * Extension block embedded under `extensions["com.microsoft.agents-toolkit"]`
+ * in plugin.json by `atk export agentplugin`. Carries every field that the
+ * Agent Plugins spec cannot natively represent so that re-importing
+ * reconstructs the original project losslessly. All fields are optional — the
+ * importer treats missing keys the same way it treats a plugin.json without
+ * this extension at all.
+ *
+ * Pre-1.0.0 exports wrote this block to a top-level
+ * `x-microsoft-365-agents-toolkit` key, which the importer still reads.
  */
 export interface AtkExtensionBlock {
   manifestVersion?: string;
@@ -92,7 +143,8 @@ export interface AtkExtensionBlock {
   /**
    * Per-agentConnector overrides preserved verbatim: the keys are the
    * connector ids (matching the .mcp.json server name). Values store the
-   * fields .mcp.json cannot carry: displayName, description, authorization.
+   * fields .mcp.json cannot carry: displayName, description, reusable,
+   * authorization, and MCP tool-description metadata.
    */
   agentConnectors?: Record<string, AtkAgentConnectorExt>;
 }
@@ -100,9 +152,18 @@ export interface AtkExtensionBlock {
 export interface AtkAgentConnectorExt {
   displayName?: string;
   description?: string;
+  reusable?: boolean;
   authorization?: {
-    type: AuthorizationType;
+    type: ConnectorAuthorizationType;
     referenceId?: string;
+  };
+  mcpToolDescription?: {
+    /** Original path relative to the Toolkit appPackage directory. */
+    file?: string;
+    /** Path to the preserved file copy relative to the Agent Plugin root. */
+    source?: string;
+    /** Validated file snapshot used only while importing. */
+    contents?: Buffer;
   };
 }
 
@@ -122,16 +183,19 @@ export interface ImportInputs {
 export interface ExportInputs {
   /** Path to the existing ATK project (folder that contains appPackage/manifest.json). */
   path: string;
-  /** Destination open-plugin directory. Defaults to ./<plugin-name>-openplugin. */
+  /** Destination plugin directory. Defaults to ./<plugin-name>-agentplugin. */
   output?: string;
-  /** Manifest kind to emit. Defaults to 'open-plugin' (.plugin/plugin.json). */
+  /**
+   * @deprecated Ignored since Agent Plugins 1.0.0, which mandates plugin.json
+   * in the plugin root. Accepted so existing scripts keep running; passing a
+   * value emits a warning.
+   */
   manifestKind?: "open-plugin" | "claude-plugin" | "cursor-plugin";
 }
 
-export interface CopyOp {
-  src: string;
-  destRelative: string;
-}
+export type CopyOp =
+  | { src: string; destRelative: string; kind: "file" | "directory" }
+  | { contents: Buffer; destRelative: string; kind: "contents" };
 
 export interface MappedManifest {
   manifest: Record<string, unknown>;

@@ -3,26 +3,50 @@
 
 import fs from "fs-extra";
 import * as path from "path";
+import { OpenPluginInputError } from "./errors";
+import { inspectPathWithinRoot, readFileWithinRoot, resolvePluginRoot } from "./fileSystem";
+import { getAgentSkillValidationError } from "./skillValidation";
+import {
+  ATK_EXTENSION_NAMESPACE,
+  LEGACY_ATK_EXTENSION_KEY,
+  LEGACY_MANIFEST_LOCATIONS,
+  LEGACY_MCP_CONFIG_FILE,
+  MCP_CONFIG_FILE,
+  PLUGIN_MANIFEST_FILE,
+  normalizePortableRelativePath,
+  resolveWithinRoot,
+  setRecordValue,
+} from "./spec";
 import {
   AtkExtensionBlock,
   OpenPluginManifest,
-  OpenPluginMcpJson,
   OpenPluginMcpServerEntry,
+  ParsedManifestKind,
   ParsedOpenPlugin,
 } from "./types";
+import {
+  getRemoteMcpUrlError,
+  isRecord,
+  parseAtkExtension,
+  parseAgentPluginManifest,
+  parseAgentPluginMcpJson,
+  parseLegacyOpenPluginManifest,
+} from "./validation";
 
 interface ManifestLocation {
   relPath: string;
-  kind: "open-plugin" | "claude-plugin" | "cursor-plugin";
+  kind: ParsedManifestKind;
+  legacy: boolean;
 }
 
+/**
+ * Agent Plugins 1.0.0 mandates plugin.json in the plugin root. The pre-1.0.0
+ * locations are probed afterwards so older directories keep importing.
+ */
 const MANIFEST_LOCATIONS: ManifestLocation[] = [
-  { relPath: ".plugin/plugin.json", kind: "open-plugin" },
-  { relPath: ".claude-plugin/plugin.json", kind: "claude-plugin" },
-  { relPath: ".cursor-plugin/plugin.json", kind: "cursor-plugin" },
+  { relPath: PLUGIN_MANIFEST_FILE, kind: "agent-plugin", legacy: false },
+  ...LEGACY_MANIFEST_LOCATIONS.map((l) => ({ ...l, legacy: true })),
 ];
-
-const SKILL_NAME_RE = /^[a-z0-9][a-z0-9-_]*$/;
 
 const UNMAPPED_FIELDS: Array<keyof OpenPluginManifest> = [
   "agents",
@@ -39,130 +63,279 @@ function requireStringPathOverride(value: unknown, field: string): string | unde
   if (typeof value === "string") {
     return value;
   }
-  throw new Error(
-    `Open Plugin '${field}' override is set to a non-string value. Only the single-string form ` +
+  throw new OpenPluginInputError(
+    `Plugin manifest '${field}' override is set to a non-string value. Only the single-string form ` +
       `(e.g. \"${field}\": \"./custom/path\") is supported by this converter today.`
   );
 }
 
+/**
+ * Resolve a component location. Agent Plugins 1.0.0 fixes component paths, so
+ * manifest overrides are ignored (with a warning) for 1.0.0 layouts. Either
+ * way the result must stay inside the plugin root.
+ */
+function resolveComponentPath(
+  absRoot: string,
+  override: string | undefined,
+  fixedRel: string,
+  field: string,
+  isLegacyLayout: boolean,
+  warnings: string[]
+): string | undefined {
+  let rel = fixedRel;
+  if (override !== undefined) {
+    if (isLegacyLayout) {
+      rel = override;
+    } else {
+      warnings.push(
+        `plugin.json '${field}' relocates a component, which Agent Plugins 1.0.0 no longer permits. ` +
+          `Using the fixed location '${fixedRel}' instead.`
+      );
+    }
+  }
+  const resolved = resolveWithinRoot(absRoot, rel);
+  if (!resolved) {
+    warnings.push(
+      `'${field}' path '${rel}' resolves outside the plugin root and was rejected for safety.`
+    );
+    return undefined;
+  }
+  return resolved;
+}
+
 export async function readOpenPluginDir(root: string): Promise<ParsedOpenPlugin> {
   const warnings: string[] = [];
-  const absRoot = path.resolve(root);
-  if (!(await fs.pathExists(absRoot))) {
-    throw new Error(`Plugin directory not found: ${absRoot}`);
-  }
+  const absRoot = await resolvePluginRoot(root);
 
-  // 1. Probe manifest locations.
+  // 1. Probe manifest locations: spec location first, then pre-1.0.0 layouts.
   let manifestPath: string | undefined;
-  let manifestKind: ManifestLocation["kind"] | undefined;
+  let manifestKind: ParsedManifestKind | undefined;
+  let isLegacyLayout = false;
   for (const loc of MANIFEST_LOCATIONS) {
-    const candidate = path.join(absRoot, loc.relPath);
-    if (await fs.pathExists(candidate)) {
-      manifestPath = candidate;
-      manifestKind = loc.kind;
-      break;
+    const inspected = await inspectPathWithinRoot(absRoot, loc.relPath, "file");
+    if (inspected.status === "missing") continue;
+    if (inspected.status === "outside") {
+      throw new OpenPluginInputError(
+        `Plugin manifest '${loc.relPath}' resolves outside the plugin root.`
+      );
     }
+    if (inspected.status === "wrong-kind") {
+      throw new OpenPluginInputError(`Plugin manifest '${loc.relPath}' must be a regular file.`);
+    }
+    manifestPath = inspected.path;
+    manifestKind = loc.kind;
+    isLegacyLayout = loc.legacy;
+    break;
   }
   if (!manifestPath || !manifestKind) {
-    throw new Error(
-      `No Open Plugin manifest found in ${absRoot}. Looked for: ` +
-        MANIFEST_LOCATIONS.map((l) => l.relPath).join(", ")
+    throw new OpenPluginInputError(
+      `No plugin manifest found in ${absRoot}. Agent Plugins 1.0.0 requires '${PLUGIN_MANIFEST_FILE}' ` +
+        `in the plugin root. Also looked for: ` +
+        LEGACY_MANIFEST_LOCATIONS.map((l) => l.relPath).join(", ")
     );
   }
-  const manifest = (await fs.readJSON(manifestPath)) as OpenPluginManifest;
-  if (!manifest.name || typeof manifest.name !== "string") {
-    throw new Error(`plugin.json is missing required 'name' field at ${manifestPath}`);
+  if (isLegacyLayout) {
+    warnings.push(
+      `Manifest found at '${path.relative(absRoot, manifestPath)}'. Agent Plugins 1.0.0 requires ` +
+        `'${PLUGIN_MANIFEST_FILE}' in the plugin root; this location is deprecated. ` +
+        `Run 'atk export agentplugin' to emit a 1.0.0-compliant directory.`
+    );
   }
 
-  // 2. MCP servers (with optional path override).
-  const mcpRel = requireStringPathOverride(manifest.mcpServers, "mcpServers") ?? ".mcp.json";
-  const mcpAbs = path.resolve(absRoot, mcpRel);
+  let manifestJson: unknown;
+  try {
+    manifestJson = await fs.readJSON(manifestPath);
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+    throw new OpenPluginInputError("plugin.json contains invalid JSON.");
+  }
+  const parsedManifest = isLegacyLayout
+    ? { manifest: parseLegacyOpenPluginManifest(manifestJson), warnings: [] }
+    : parseAgentPluginManifest(manifestJson);
+  const manifest = parsedManifest.manifest;
+  warnings.push(...parsedManifest.warnings);
+
+  // 2. MCP servers. 1.0.0 uses mcp.json; pre-1.0.0 used .mcp.json.
+  const mcpOverride = isLegacyLayout
+    ? requireStringPathOverride(manifest.mcpServers, "mcpServers")
+    : undefined;
   const mcpServers: Record<string, OpenPluginMcpServerEntry> = {};
-  if (await fs.pathExists(mcpAbs)) {
-    const mcpJson = (await fs.readJSON(mcpAbs)) as OpenPluginMcpJson;
-    const source =
-      mcpJson &&
-      typeof mcpJson === "object" &&
-      mcpJson.mcpServers &&
-      typeof mcpJson.mcpServers === "object"
-        ? mcpJson.mcpServers
-        : mcpJson;
-    if (source && typeof source === "object") {
-      for (const [name, value] of Object.entries(source)) {
-        if (value && typeof value === "object" && !Array.isArray(value)) {
-          mcpServers[name] = value as OpenPluginMcpServerEntry;
-        }
-      }
+  const invalidRemoteMcpServers: string[] = [];
+  const requestedMcp = mcpOverride
+    ? resolveComponentPath(
+        absRoot,
+        mcpOverride,
+        MCP_CONFIG_FILE,
+        "mcpServers",
+        isLegacyLayout,
+        warnings
+      )
+    : resolveWithinRoot(absRoot, MCP_CONFIG_FILE);
+  let inspectedMcp = requestedMcp
+    ? await inspectPathWithinRoot(absRoot, path.relative(absRoot, requestedMcp), "file")
+    : undefined;
+  if (isLegacyLayout && inspectedMcp?.status === "missing") {
+    const legacyMcp = await inspectPathWithinRoot(absRoot, LEGACY_MCP_CONFIG_FILE, "file");
+    if (legacyMcp.status === "ok") {
+      warnings.push(
+        `Found '${LEGACY_MCP_CONFIG_FILE}'. Agent Plugins 1.0.0 renamed this to '${MCP_CONFIG_FILE}'; ` +
+          `the dotted name is deprecated.`
+      );
+      inspectedMcp = legacyMcp;
     }
   }
+  if (inspectedMcp?.status === "outside") {
+    warnings.push(`'mcp.json' resolves outside the plugin root and was rejected for safety.`);
+  } else if (inspectedMcp?.status === "wrong-kind") {
+    warnings.push(`'mcp.json' must be a regular file; MCP was disabled for this plugin.`);
+  } else if (inspectedMcp?.status === "ok") {
+    let mcpJson: unknown;
+    try {
+      mcpJson = await fs.readJSON(inspectedMcp.path);
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      warnings.push(`mcp.json is invalid JSON; MCP was disabled for this plugin.`);
+    }
+    if (mcpJson === undefined) {
+      // A malformed document is isolated above; filesystem failures still propagate.
+    } else if (isLegacyLayout) {
+      readLegacyMcpServers(mcpJson, mcpServers, invalidRemoteMcpServers, warnings);
+    } else {
+      const parsedMcp = parseAgentPluginMcpJson(mcpJson);
+      for (const [name, server] of Object.entries(parsedMcp.mcpServers)) {
+        setRecordValue(mcpServers, name, server);
+      }
+      invalidRemoteMcpServers.push(...parsedMcp.invalidRemoteMcpServers);
+      warnings.push(...parsedMcp.warnings);
+    }
+  }
+  removeMcpServersWithFixedHeaders(mcpServers, warnings);
 
   // 3. Skills.
-  const skillsRel = requireStringPathOverride(manifest.skills, "skills") ?? "skills";
-  const skillsAbs = path.resolve(absRoot, skillsRel);
+  const skillsAbs = resolveComponentPath(
+    absRoot,
+    isLegacyLayout ? requireStringPathOverride(manifest.skills, "skills") : undefined,
+    "skills",
+    "skills",
+    isLegacyLayout,
+    warnings
+  );
   const skills: string[] = [];
   let skillsRoot: string | undefined;
-  if (await fs.pathExists(skillsAbs)) {
-    skillsRoot = skillsAbs;
-    const entries = await fs.readdir(skillsAbs, { withFileTypes: true });
+  const inspectedSkills = skillsAbs
+    ? await inspectPathWithinRoot(absRoot, path.relative(absRoot, skillsAbs), "directory")
+    : undefined;
+  if (inspectedSkills?.status === "outside") {
+    warnings.push(`'skills' path resolves outside the plugin root and was rejected for safety.`);
+  } else if (inspectedSkills?.status === "wrong-kind") {
+    warnings.push(`'skills' must resolve to a directory; this component type was ignored.`);
+  } else if (inspectedSkills?.status === "ok") {
+    skillsRoot = inspectedSkills.path;
+    const entries = await fs.readdir(inspectedSkills.path, { withFileTypes: true });
     for (const entry of entries) {
-      if (!entry.isDirectory()) {
-        continue;
-      }
-      if (!SKILL_NAME_RE.test(entry.name)) {
+      const skillDirectory = await inspectPathWithinRoot(
+        absRoot,
+        path.relative(absRoot, path.join(inspectedSkills.path, entry.name)),
+        "directory"
+      );
+      if (skillDirectory.status === "outside") {
         warnings.push(
-          `Skipping skill folder '${entry.name}': name does not match ${SKILL_NAME_RE.source}.`
+          `Skipping skill folder '${entry.name}': it resolves outside the plugin root.`
         );
         continue;
       }
-      const skillMd = path.join(skillsAbs, entry.name, "SKILL.md");
-      if (await fs.pathExists(skillMd)) {
-        skills.push(entry.name);
+      if (skillDirectory.status !== "ok") continue;
+      const skillMd = await inspectPathWithinRoot(
+        absRoot,
+        path.relative(absRoot, path.join(skillDirectory.path, "SKILL.md")),
+        "file"
+      );
+      if (skillMd.status === "outside") {
+        warnings.push(`Skipping skill '${entry.name}': SKILL.md resolves outside the plugin root.`);
+        continue;
       }
+      if (skillMd.status !== "ok") continue;
+      const validationError = await getAgentSkillValidationError(entry.name, skillMd.path);
+      if (validationError) {
+        warnings.push(`Skipping skill '${entry.name}': ${validationError}.`);
+        continue;
+      }
+      skills.push(entry.name);
     }
     skills.sort();
   }
 
-  // 4. Commands.
-  const commandsRel = requireStringPathOverride(manifest.commands, "commands") ?? "commands";
-  const commandsAbs = path.resolve(absRoot, commandsRel);
+  // 4. Commands. Not an Agent Plugins 1.0.0 component; still copied through so
+  // pre-1.0.0 directories round-trip.
+  const commandsAbs = resolveComponentPath(
+    absRoot,
+    isLegacyLayout ? requireStringPathOverride(manifest.commands, "commands") : undefined,
+    "commands",
+    "commands",
+    isLegacyLayout,
+    warnings
+  );
   const commands: string[] = [];
   let commandsRoot: string | undefined;
-  if (await fs.pathExists(commandsAbs)) {
-    commandsRoot = commandsAbs;
-    const entries = await fs.readdir(commandsAbs, { withFileTypes: true });
+  const inspectedCommands = commandsAbs
+    ? await inspectPathWithinRoot(absRoot, path.relative(absRoot, commandsAbs), "directory")
+    : undefined;
+  if (inspectedCommands?.status === "outside") {
+    warnings.push(`'commands' path resolves outside the plugin root and was rejected for safety.`);
+  } else if (inspectedCommands?.status === "wrong-kind") {
+    warnings.push(`'commands' must resolve to a directory and was ignored.`);
+  } else if (inspectedCommands?.status === "ok") {
+    commandsRoot = inspectedCommands.path;
+    const entries = await fs.readdir(inspectedCommands.path, { withFileTypes: true });
     for (const entry of entries) {
-      if (entry.isFile() && entry.name.toLowerCase().endsWith(".md")) {
+      if (!entry.name.toLowerCase().endsWith(".md")) continue;
+      if (entry.isSymbolicLink()) {
+        warnings.push(`Skipping command '${entry.name}': symbolic links are not permitted.`);
+        continue;
+      }
+      if (!entry.isFile()) continue;
+      const command = await inspectPathWithinRoot(
+        absRoot,
+        path.relative(absRoot, path.join(inspectedCommands.path, entry.name)),
+        "file"
+      );
+      if (command.status === "outside") {
+        warnings.push(`Skipping command '${entry.name}': it resolves outside the plugin root.`);
+      } else if (command.status === "ok") {
         commands.push(entry.name);
       }
     }
     commands.sort();
   }
 
-  // 5. Unmapped Open Plugin fields → emit a warning so the caller knows we
-  // dropped them. We do not throw — the spec says hosts may ignore unknown
-  // component types.
-  const manifestRecord = manifest as unknown as Record<string, unknown>;
+  // 5. Unmapped component fields → emit a warning so the caller knows we
+  // dropped them. We do not throw — the spec says clients report and ignore
+  // unknown members rather than rejecting an otherwise valid plugin.
   for (const field of UNMAPPED_FIELDS) {
-    if (manifestRecord[field] !== undefined) {
-      warnings.push(
-        `Open Plugin '${field}' field is present but not supported by MOS3 today; dropped.`
-      );
+    if (manifest[field] !== undefined) {
+      warnings.push(`'${field}' field is present but not supported by MOS3 today; dropped.`);
     }
   }
 
   // 6. Icons.
-  const hasColorPng = await fs.pathExists(path.join(absRoot, "color.png"));
-  const hasOutlinePng = await fs.pathExists(path.join(absRoot, "outline.png"));
+  const hasColorPng = (await inspectPathWithinRoot(absRoot, "color.png", "file")).status === "ok";
+  const hasOutlinePng =
+    (await inspectPathWithinRoot(absRoot, "outline.png", "file")).status === "ok";
 
-  // 7. Round-trip extension block (written by `atk export openplugin`).
-  const atkExtension = readAtkExtensionBlock(manifest);
+  // 7. Round-trip extension block (written by `atk export agentplugin`).
+  const atkExtension = readAtkExtensionBlock(manifest, warnings);
+  if (atkExtension) {
+    await validateAtkExtensionFiles(absRoot, atkExtension, warnings);
+  }
 
   return {
     pluginRoot: absRoot,
     manifest,
     manifestPath,
     manifestKind,
+    isLegacyLayout,
     mcpServers,
+    invalidRemoteMcpServers,
     skills,
     skillsRoot,
     commands,
@@ -174,12 +347,102 @@ export async function readOpenPluginDir(root: string): Promise<ParsedOpenPlugin>
   };
 }
 
-const ATK_EXTENSION_KEY = "x-microsoft-365-agents-toolkit";
-
-function readAtkExtensionBlock(manifest: OpenPluginManifest): AtkExtensionBlock | undefined {
-  const raw = (manifest as unknown as Record<string, unknown>)[ATK_EXTENSION_KEY];
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-    return undefined;
+async function validateAtkExtensionFiles(
+  pluginRoot: string,
+  extension: AtkExtensionBlock,
+  warnings: string[]
+): Promise<void> {
+  for (const [serverName, connector] of Object.entries(extension.agentConnectors ?? {})) {
+    const description = connector.mcpToolDescription;
+    if (!description) continue;
+    if (description.file === undefined) {
+      delete description.source;
+      continue;
+    }
+    const normalizedFile = normalizePortableRelativePath(description.file);
+    const normalizedSource = description.source
+      ? normalizePortableRelativePath(description.source)
+      : undefined;
+    const destination = normalizedFile ? resolveWithinRoot(pluginRoot, normalizedFile) : undefined;
+    const source =
+      normalizedSource !== undefined
+        ? await readFileWithinRoot(pluginRoot, normalizedSource)
+        : undefined;
+    if (!destination || source?.status !== "ok") {
+      delete connector.mcpToolDescription;
+      warnings.push(
+        `Toolkit extension connector '${serverName}' has an unsafe or missing MCP tool-description file and it was ignored.`
+      );
+    } else {
+      description.file = normalizedFile;
+      description.source = normalizedSource;
+      description.contents = source.contents;
+    }
   }
-  return raw as AtkExtensionBlock;
+}
+
+/**
+ * Read the toolkit round-trip block. Agent Plugins 1.0.0 places it at
+ * `extensions["com.microsoft.agents-toolkit"]`; pre-1.0.0 exports wrote it to a
+ * top-level `x-microsoft-365-agents-toolkit` key, which is still honoured.
+ */
+function readAtkExtensionBlock(
+  manifest: OpenPluginManifest,
+  warnings: string[]
+): AtkExtensionBlock | undefined {
+  const namespaced = manifest.extensions?.[ATK_EXTENSION_NAMESPACE];
+  if (namespaced !== undefined) return parseAtkExtension(namespaced, warnings);
+  const legacy = manifest.legacyAtkExtension;
+  if (legacy !== undefined) {
+    warnings.push(
+      `Found the toolkit block at top-level '${LEGACY_ATK_EXTENSION_KEY}'. Agent Plugins 1.0.0 ` +
+        `requires client data under 'extensions["${ATK_EXTENSION_NAMESPACE}"]'; the top-level key ` +
+        `is deprecated and re-exporting will move it.`
+    );
+    return parseAtkExtension(legacy, warnings);
+  }
+  return undefined;
+}
+
+function readLegacyMcpServers(
+  value: unknown,
+  mcpServers: Record<string, OpenPluginMcpServerEntry>,
+  invalidRemoteMcpServers: string[],
+  warnings: string[]
+): void {
+  if (!isRecord(value)) return;
+  const source = isRecord(value.mcpServers) ? value.mcpServers : value;
+  for (const [name, server] of Object.entries(source)) {
+    if (name === "$schema" || !isRecord(server)) continue;
+    const entry: OpenPluginMcpServerEntry = {};
+    for (const [field, fieldValue] of Object.entries(server)) {
+      setRecordValue(entry, field, fieldValue);
+    }
+    if (entry.url !== undefined) {
+      const urlError = getRemoteMcpUrlError(entry.url);
+      if (urlError) {
+        invalidRemoteMcpServers.push(name);
+        warnings.push(`MCP server '${name}' is invalid and was skipped: ${urlError}`);
+        continue;
+      }
+    }
+    setRecordValue(mcpServers, name, entry);
+  }
+}
+
+function removeMcpServersWithFixedHeaders(
+  mcpServers: Record<string, OpenPluginMcpServerEntry>,
+  warnings: string[]
+): void {
+  for (const [name, server] of Object.entries(mcpServers)) {
+    if (
+      server.headers !== undefined &&
+      (!isRecord(server.headers) || Object.keys(server.headers).length > 0)
+    ) {
+      delete mcpServers[name];
+      warnings.push(
+        `MCP server '${name}' declares fixed headers, which Teams agent connectors cannot represent, and was skipped.`
+      );
+    }
+  }
 }

@@ -1,7 +1,8 @@
 ﻿name: PR VscUse Test Plan Selector
 
-# Triggered automatically on every PR open/sync/reopen/ready_for_review,
-# OR manually via workflow_dispatch with a pr_number input.
+# Triggered automatically on same-repository PR open/sync/reopen/ready_for_review,
+# OR manually via workflow_dispatch with a pr_number input. Automatic fork PR
+# events are skipped because pull_request tokens are read-only.
 #
 # IMPORTANT: this workflow is INFORMATIONAL ONLY — it must NEVER block merge.
 #   * The job always exits with success, regardless of UI test outcome.
@@ -44,10 +45,12 @@ permissions:
 
 jobs:
   select-plans-and-run:
-    # Run for: automatic PR events (skip drafts) or manual dispatch.
+    # Automatic fork runs cannot post comments or dispatch workflows with their read-only token.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.draft == false &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
 
     steps:
@@ -122,7 +125,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.pr-context.outputs.head_ref }}
+          ref: refs/pull/${{ steps.pr-context.outputs.pr_number }}/head
           fetch-depth: 0
           sparse-checkout: |
             packages/tests/vscuse/vscode-test-cases/plans
@@ -265,11 +268,9 @@ jobs:
         if: steps.code-check.outputs.skip_dispatch != 'true' && steps.code-check.outputs.has_code_files == 'true'
         env:
           BASE_REF: ${{ steps.pr-context.outputs.base_ref }}
-          HEAD_REF: ${{ steps.pr-context.outputs.head_ref }}
         run: |
           git fetch origin "$BASE_REF" --depth=50 2>/dev/null || true
-          git fetch origin "$HEAD_REF" --depth=50 2>/dev/null || true
-          DIFF_STAT=$(git diff "origin/${BASE_REF}...origin/${HEAD_REF}" --stat --no-color 2>/dev/null \
+          DIFF_STAT=$(git diff "origin/${BASE_REF}...HEAD" --stat --no-color 2>/dev/null \
             | tail -5 || echo "(diff unavailable)")
           echo "diff_stat<<EOF" >> "$GITHUB_OUTPUT"
           echo "$DIFF_STAT"     >> "$GITHUB_OUTPUT"

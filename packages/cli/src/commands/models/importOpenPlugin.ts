@@ -8,7 +8,11 @@ import { commands } from "../../resource";
 import { TelemetryEvent } from "../../telemetry/cliTelemetryEvents";
 
 export const importOpenPluginCommand: CLICommand = {
+  // The spec was renamed from "Open Plugin" to "Agent Plugins" (open-plugins.com
+  // now redirects to agent-plugins.org). `agentplugin` is the preferred spelling;
+  // `openplugin` stays as the command name so existing scripts keep working.
   name: "openplugin",
+  aliases: ["agentplugin"],
   description: commands["import.openplugin"].description,
   options: [...ImportOpenPluginOptions],
   telemetry: {

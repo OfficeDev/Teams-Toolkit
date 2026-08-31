@@ -4,31 +4,71 @@
 import { err, FxError, ok, Result, SystemError, UserError } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import * as path from "path";
-import { AtkAgentConnectorExt, AtkExtensionBlock, AuthorizationType, ExportInputs } from "./types";
+import { getDefaultString, getLocalizedString } from "../../../common/localizeUtils";
+import { isValidHttpUrl } from "../../../common/stringUtils";
+import {
+  copyDirectoryWithoutSymbolicLinks,
+  hasLinkedPathSegment,
+  inspectPathWithinRoot,
+  readFileWithinRoot,
+  resolvePluginRoot,
+} from "./fileSystem";
+import { OpenPluginInputError } from "./errors";
+import { getAgentSkillValidationError } from "./skillValidation";
+import {
+  ATK_EXTENSION_NAMESPACE,
+  DEFAULT_REMOTE_MCP_TYPE,
+  MCP_CONFIG_FILE,
+  MCP_SCHEMA_URL,
+  normalizePortableRelativePath,
+  normalizePluginName,
+  portablePathsConflict,
+  PLUGIN_MANIFEST_FILE,
+  PLUGIN_SCHEMA_URL,
+  setRecordValue,
+} from "./spec";
+import {
+  AtkAgentConnectorExt,
+  AtkExtensionBlock,
+  ConnectorAuthorizationType,
+  ExportInputs,
+} from "./types";
+import { getRemoteMcpUrlError, isRecord, parseAgentPluginManifest } from "./validation";
 
 export const OPEN_PLUGIN_EXPORT_SOURCE = "OpenPluginExport";
 
 export interface ExportResult {
-  /** Absolute path to the generated Open Plugin directory. */
+  /** Absolute path to the generated Agent Plugin directory. */
   outputPath: string;
   warnings: string[];
 }
 
-const ATK_EXTENSION_KEY = "x-microsoft-365-agents-toolkit";
+interface PreparedMcpToolDescription {
+  extension: NonNullable<AtkAgentConnectorExt["mcpToolDescription"]>;
+  contents?: Buffer;
+}
 
-const MANIFEST_LOCATIONS: Record<NonNullable<ExportInputs["manifestKind"]>, string> = {
-  "open-plugin": ".plugin/plugin.json",
-  "claude-plugin": ".claude-plugin/plugin.json",
-  "cursor-plugin": ".cursor-plugin/plugin.json",
-};
+const ATK_MCP_TOOL_DESCRIPTIONS_DIR = ".microsoft-agents-toolkit/mcp-tool-descriptions";
+
+function localizedExportUserError(name: string, key: string, message?: string): UserError {
+  return new UserError({
+    source: OPEN_PLUGIN_EXPORT_SOURCE,
+    name,
+    message: message ?? getDefaultString(key),
+    displayMessage: getLocalizedString(key),
+  });
+}
 
 /**
  * Export an ATK project (folder containing appPackage/manifest.json plus the
- * usual agentSkills/agentConnectors layout) into an Open Plugin Spec v1.0
- * directory. The output is structured so that `atk import openplugin --path
- * <output>` reconstructs an equivalent ATK project; fields with no native
- * Open Plugin equivalent are preserved verbatim under the
- * `x-microsoft-365-agents-toolkit` extension key in plugin.json.
+ * usual agentSkills/agentConnectors layout) into an Agent Plugins v1.0.0
+ * directory (https://agent-plugins.org/). The output is structured so that
+ * `atk import agentplugin --path <output>` reconstructs an equivalent ATK
+ * project; fields with no native Agent Plugins equivalent are preserved
+ * verbatim under `extensions["com.microsoft.agents-toolkit"]` in plugin.json.
+ *
+ * Output is always spec-compliant 1.0.0: plugin.json in the plugin root, and
+ * mcp.json (not .mcp.json) for MCP servers.
  */
 export async function exportOpenPlugin(
   inputs: ExportInputs
@@ -36,47 +76,142 @@ export async function exportOpenPlugin(
   try {
     if (!inputs.path) {
       return err(
-        new UserError(OPEN_PLUGIN_EXPORT_SOURCE, "MissingProjectPath", "--path is required.")
+        localizedExportUserError("MissingProjectPath", "core.openPluginExport.missingProjectPath")
       );
     }
-    const projectRoot = path.resolve(inputs.path);
-    const appPackageDir = path.join(projectRoot, "appPackage");
-    const manifestPath = path.join(appPackageDir, "manifest.json");
-    if (!(await fs.pathExists(manifestPath))) {
+    const projectRoot = await resolvePluginRoot(inputs.path);
+    const inspectedAppPackage = await inspectPathWithinRoot(projectRoot, "appPackage", "directory");
+    if (inspectedAppPackage.status === "outside" || inspectedAppPackage.status === "wrong-kind") {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
+          "InvalidProjectStructure",
+          "core.openPluginExport.invalidProjectStructure",
+          "appPackage must be a directory contained within the project root."
+        )
+      );
+    }
+    if (inspectedAppPackage.status === "missing") {
+      return err(
+        localizedExportUserError(
           "ManifestNotFound",
+          "core.openPluginExport.manifestNotFound",
           `appPackage/manifest.json not found under ${projectRoot}.`
         )
       );
     }
-
-    const manifestRaw = await fs.readJSON(manifestPath);
-    if (!manifestRaw || typeof manifestRaw !== "object" || Array.isArray(manifestRaw)) {
+    const appPackageDir = inspectedAppPackage.path;
+    const inspectedManifest = await inspectPathWithinRoot(
+      projectRoot,
+      path.relative(projectRoot, path.join(appPackageDir, "manifest.json")),
+      "file"
+    );
+    if (inspectedManifest.status === "outside" || inspectedManifest.status === "wrong-kind") {
       return err(
-        new UserError(
-          OPEN_PLUGIN_EXPORT_SOURCE,
+        localizedExportUserError(
+          "InvalidProjectStructure",
+          "core.openPluginExport.invalidProjectStructure",
+          "appPackage/manifest.json must be a regular file contained within the project root."
+        )
+      );
+    }
+    if (inspectedManifest.status === "missing") {
+      return err(
+        localizedExportUserError(
+          "ManifestNotFound",
+          "core.openPluginExport.manifestNotFound",
+          `appPackage/manifest.json not found under ${projectRoot}.`
+        )
+      );
+    }
+    const manifestPath = inspectedManifest.path;
+
+    const manifestRaw: unknown = await fs.readJSON(manifestPath);
+    if (!isRecord(manifestRaw)) {
+      return err(
+        localizedExportUserError(
           "InvalidManifest",
+          "core.openPluginExport.invalidManifest",
           `appPackage/manifest.json is not a JSON object: ${manifestPath}.`
         )
       );
     }
-    const manifest = manifestRaw as TeamsLikeManifest;
+    if (manifestRaw.version !== undefined && typeof manifestRaw.version !== "string") {
+      return err(
+        localizedExportUserError(
+          "InvalidAgentPluginManifest",
+          "core.openPluginExport.invalidAgentPluginManifest",
+          "Cannot export an Agent Plugins 1.0.0 manifest: version must be a string."
+        )
+      );
+    }
+    const parsedManifest = parseTeamsLikeManifest(manifestRaw);
+    if (typeof parsedManifest === "string") {
+      return err(
+        localizedExportUserError(
+          "InvalidManifest",
+          "core.openPluginExport.invalidManifest",
+          parsedManifest
+        )
+      );
+    }
+    const manifest = parsedManifest;
     const warnings: string[] = [];
-    const kind = inputs.manifestKind ?? "open-plugin";
+    if (inputs.manifestKind && inputs.manifestKind !== "open-plugin") {
+      warnings.push(
+        `--manifest-kind '${inputs.manifestKind}' is ignored. Agent Plugins 1.0.0 mandates ` +
+          `'${PLUGIN_MANIFEST_FILE}' in the plugin root, so alternate manifest locations are no ` +
+          `longer emitted.`
+      );
+    }
 
     const pluginName = derivePluginName(manifest);
-    const defaultOutput = path.join(process.cwd(), `${pluginName}-openplugin`);
+    const defaultOutput = path.join(process.cwd(), `${pluginName}-agentplugin`);
     const outputPath = path.resolve(inputs.output ?? defaultOutput);
+
+    if (await hasLinkedPathSegment(outputPath)) {
+      return err(
+        localizedExportUserError(
+          "InvalidOutputPath",
+          "core.openPluginExport.invalidOutputPath",
+          `Output path must not be a symbolic link or junction: ${outputPath}.`
+        )
+      );
+    }
+
+    const invalidDeveloperUrl = validateDeveloperUrls(manifest);
+    if (invalidDeveloperUrl) return err(invalidDeveloperUrl);
+    const mcpToolDescriptions = await prepareMcpToolDescriptions(appPackageDir, manifest, warnings);
+    const commandNames = await prepareCommands(appPackageDir, warnings);
+    const preflightPluginJson = buildPluginJson(manifest, pluginName, mcpToolDescriptions);
+    try {
+      parseAgentPluginManifest(preflightPluginJson);
+    } catch (error) {
+      if (!(error instanceof OpenPluginInputError)) throw error;
+      const detail = error instanceof Error ? error.message : String(error);
+      return err(
+        localizedExportUserError(
+          "InvalidAgentPluginManifest",
+          "core.openPluginExport.invalidAgentPluginManifest",
+          `Cannot export an Agent Plugins 1.0.0 manifest: ${detail}`
+        )
+      );
+    }
+    const invalidMcpUrl = validateRemoteMcpUrls(manifest);
+    if (invalidMcpUrl) return err(invalidMcpUrl);
+    const destinationCollision = validateExportDestinationKeys(
+      manifest,
+      mcpToolDescriptions,
+      commandNames
+    );
+    if (destinationCollision) return err(destinationCollision);
 
     if (await fs.pathExists(outputPath)) {
       const entries = await fs.readdir(outputPath);
       if (entries.length > 0) {
         return err(
-          new UserError(
-            OPEN_PLUGIN_EXPORT_SOURCE,
+          localizedExportUserError(
             "OutputDirectoryNotEmpty",
+            "core.openPluginExport.outputDirectoryNotEmpty",
             `Output directory is not empty: ${outputPath}. Choose a different --output path or empty the directory.`
           )
         );
@@ -84,15 +219,14 @@ export async function exportOpenPlugin(
     }
     await fs.ensureDir(outputPath);
 
-    const pluginJson = buildPluginJson(manifest, pluginName);
-    const manifestRel = MANIFEST_LOCATIONS[kind];
-    const manifestOut = path.join(outputPath, manifestRel);
-    await fs.ensureDir(path.dirname(manifestOut));
+    await copyMcpToolDescriptions(outputPath, mcpToolDescriptions);
+    const pluginJson = buildPluginJson(manifest, pluginName, mcpToolDescriptions);
+    const manifestOut = path.join(outputPath, PLUGIN_MANIFEST_FILE);
     await fs.writeJSON(manifestOut, pluginJson, { spaces: 2 });
 
     await writeMcpJson(outputPath, manifest, warnings);
     await copySkills(outputPath, appPackageDir, manifest, warnings);
-    await copyCommands(outputPath, appPackageDir, warnings);
+    await copyCommands(outputPath, appPackageDir, commandNames, warnings);
     await copyIcons(outputPath, appPackageDir, warnings);
 
     return ok({ outputPath, warnings });
@@ -100,13 +234,22 @@ export async function exportOpenPlugin(
     if (e instanceof UserError || e instanceof SystemError) {
       return err(e);
     }
+    if (e instanceof OpenPluginInputError) {
+      return err(
+        localizedExportUserError(
+          "InvalidProjectPath",
+          "core.openPluginExport.invalidProjectPath",
+          e.message
+        )
+      );
+    }
     const message = e instanceof Error ? e.message : String(e);
     return err(
       new SystemError({
         source: OPEN_PLUGIN_EXPORT_SOURCE,
         name: "ExportOpenPluginFailed",
         message,
-        displayMessage: message,
+        displayMessage: getLocalizedString("core.openPluginExport.failed"),
       })
     );
   }
@@ -131,36 +274,224 @@ interface TeamsLikeManifest {
   agentSkills?: Array<{ folder?: string }>;
   agentConnectors?: Array<{
     id?: string;
+    reusable?: boolean;
     displayName?: string;
     description?: string;
     toolSource?: {
       remoteMcpServer?: {
         mcpServerUrl?: string;
+        mcpToolDescription?: { file?: string };
         authorization?: { type?: string; referenceId?: string };
       };
     };
   }>;
 }
 
+function parseTeamsLikeManifest(value: Record<string, unknown>): TeamsLikeManifest | string {
+  const manifest: TeamsLikeManifest = {};
+  const schema = readOptionalString(value, "$schema");
+  const manifestVersion = readOptionalString(value, "manifestVersion");
+  const version = readOptionalString(value, "version");
+  const id = readOptionalString(value, "id");
+  const packageName = readOptionalString(value, "packageName");
+  const accentColor = readOptionalString(value, "accentColor");
+  for (const parsed of [schema, manifestVersion, version, id, packageName, accentColor]) {
+    if (parsed && typeof parsed !== "string") return parsed.message;
+  }
+  if (typeof schema === "string") manifest.$schema = schema;
+  if (typeof manifestVersion === "string") manifest.manifestVersion = manifestVersion;
+  if (typeof version === "string") manifest.version = version;
+  if (typeof id === "string") manifest.id = id;
+  if (typeof packageName === "string") manifest.packageName = packageName;
+  if (typeof accentColor === "string") manifest.accentColor = accentColor;
+
+  const developer = parseStringObject(value.developer, "developer", [
+    "name",
+    "websiteUrl",
+    "privacyUrl",
+    "termsOfUseUrl",
+  ]);
+  if (typeof developer === "string") return developer;
+  if (developer) manifest.developer = developer;
+
+  const name = parseTextPair(value.name, "name");
+  if (typeof name === "string") return name;
+  if (name) manifest.name = name;
+
+  const description = parseTextPair(value.description, "description");
+  if (typeof description === "string") return description;
+  if (description) manifest.description = description;
+
+  if (value.agentSkills !== undefined) {
+    if (!Array.isArray(value.agentSkills)) return "manifest 'agentSkills' must be an array.";
+    const agentSkills: Array<{ folder?: string }> = [];
+    for (const [index, rawSkill] of value.agentSkills.entries()) {
+      if (!isRecord(rawSkill)) return `manifest 'agentSkills[${index}]' must be an object.`;
+      const folder = readOptionalString(rawSkill, "folder");
+      if (folder && typeof folder !== "string") return folder.message;
+      agentSkills.push(folder ? { folder } : {});
+    }
+    manifest.agentSkills = agentSkills;
+  }
+
+  if (value.agentConnectors !== undefined) {
+    if (!Array.isArray(value.agentConnectors)) {
+      return "manifest 'agentConnectors' must be an array.";
+    }
+    const agentConnectors: NonNullable<TeamsLikeManifest["agentConnectors"]> = [];
+    for (const [index, rawConnector] of value.agentConnectors.entries()) {
+      const parsedConnector = parseAgentConnector(rawConnector, index);
+      if (typeof parsedConnector === "string") return parsedConnector;
+      agentConnectors.push(parsedConnector);
+    }
+    manifest.agentConnectors = agentConnectors;
+  }
+  return manifest;
+}
+
+interface InvalidStringField {
+  message: string;
+}
+
+function readOptionalString(
+  record: Record<string, unknown>,
+  field: string
+): string | InvalidStringField | undefined {
+  const value = record[field];
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") return { message: `manifest '${field}' must be a string.` };
+  return value;
+}
+
+function parseStringObject<T extends string>(
+  value: unknown,
+  field: string,
+  fields: readonly T[]
+): Partial<Record<T, string>> | string | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) return `manifest '${field}' must be an object.`;
+  const parsed: Partial<Record<T, string>> = {};
+  for (const item of fields) {
+    const result = readOptionalString(value, item);
+    if (result && typeof result !== "string") {
+      return `manifest '${field}.${item}' must be a string.`;
+    }
+    if (typeof result === "string") parsed[item] = result;
+  }
+  return parsed;
+}
+
+function parseTextPair(
+  value: unknown,
+  field: "name" | "description"
+): { short?: string; full?: string } | string | undefined {
+  if (value === undefined) return undefined;
+  if (!isRecord(value)) return `manifest '${field}' must be an object.`;
+  const pair: { short?: string; full?: string } = {};
+  const short = readOptionalString(value, "short");
+  const full = readOptionalString(value, "full");
+  if (short && typeof short !== "string") return `manifest '${field}.short' must be a string.`;
+  if (full && typeof full !== "string") return `manifest '${field}.full' must be a string.`;
+  if (typeof short === "string") pair.short = short;
+  if (typeof full === "string") pair.full = full;
+  return pair;
+}
+
+function parseAgentConnector(
+  value: unknown,
+  index: number
+): NonNullable<TeamsLikeManifest["agentConnectors"]>[number] | string {
+  if (!isRecord(value)) return `manifest 'agentConnectors[${index}]' must be an object.`;
+  const connector: NonNullable<TeamsLikeManifest["agentConnectors"]>[number] = {};
+  const id = readOptionalString(value, "id");
+  const displayName = readOptionalString(value, "displayName");
+  const description = readOptionalString(value, "description");
+  for (const parsed of [id, displayName, description]) {
+    if (parsed && typeof parsed !== "string") return parsed.message;
+  }
+  if (typeof id === "string") connector.id = id;
+  if (value.reusable !== undefined) {
+    if (typeof value.reusable !== "boolean") {
+      return `manifest 'agentConnectors[${index}].reusable' must be a boolean.`;
+    }
+    connector.reusable = value.reusable;
+  }
+  if (typeof displayName === "string") connector.displayName = displayName;
+  if (typeof description === "string") connector.description = description;
+  if (value.toolSource === undefined) return connector;
+  if (!isRecord(value.toolSource))
+    return `manifest 'agentConnectors[${index}].toolSource' must be an object.`;
+  connector.toolSource = {};
+  if (value.toolSource.remoteMcpServer === undefined) return connector;
+  if (!isRecord(value.toolSource.remoteMcpServer)) {
+    return `manifest 'agentConnectors[${index}].toolSource.remoteMcpServer' must be an object.`;
+  }
+  const remote: NonNullable<NonNullable<typeof connector.toolSource>["remoteMcpServer"]> = {};
+  const serverUrl = readOptionalString(value.toolSource.remoteMcpServer, "mcpServerUrl");
+  if (serverUrl && typeof serverUrl !== "string") return serverUrl.message;
+  if (typeof serverUrl === "string") remote.mcpServerUrl = serverUrl;
+  const rawMcpToolDescription = value.toolSource.remoteMcpServer.mcpToolDescription;
+  if (rawMcpToolDescription !== undefined) {
+    if (!isRecord(rawMcpToolDescription)) {
+      return `manifest 'agentConnectors[${index}].toolSource.remoteMcpServer.mcpToolDescription' must be an object.`;
+    }
+    const file = readOptionalString(rawMcpToolDescription, "file");
+    if (file && typeof file !== "string") return file.message;
+    const normalizedFile =
+      typeof file === "string" ? normalizePortableRelativePath(file) : undefined;
+    if (typeof file === "string" && normalizedFile === undefined) {
+      return `manifest 'agentConnectors[${index}].toolSource.remoteMcpServer.mcpToolDescription.file' must be a relative path.`;
+    }
+    remote.mcpToolDescription = {};
+    if (normalizedFile !== undefined) remote.mcpToolDescription.file = normalizedFile;
+  }
+  const rawAuthorization = value.toolSource.remoteMcpServer.authorization;
+  if (rawAuthorization !== undefined) {
+    if (!isRecord(rawAuthorization)) {
+      return `manifest 'agentConnectors[${index}].toolSource.remoteMcpServer.authorization' must be an object.`;
+    }
+    const type = readOptionalString(rawAuthorization, "type");
+    const referenceId = readOptionalString(rawAuthorization, "referenceId");
+    if (type && typeof type !== "string") return type.message;
+    if (referenceId && typeof referenceId !== "string") return referenceId.message;
+    remote.authorization = {};
+    if (typeof type === "string") remote.authorization.type = type;
+    if (typeof referenceId === "string") remote.authorization.referenceId = referenceId;
+  }
+  connector.toolSource.remoteMcpServer = remote;
+  return connector;
+}
+
+/**
+ * Derive a plugin name that satisfies the Agent Plugins 1.0.0 `name`
+ * constraint (1-64 chars, `^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$`).
+ */
 function derivePluginName(manifest: TeamsLikeManifest): string {
   const short = manifest.name?.short?.trim();
   const full = manifest.name?.full?.trim();
-  const fromName = (short ?? full ?? "").toLowerCase();
-  const slug = fromName.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const fromName = short ?? full ?? "";
+  const slug = normalizePluginName(fromName, "");
   if (slug) return slug;
   if (manifest.packageName) {
     const last = manifest.packageName.split(".").pop();
-    if (last) return last;
+    const fromPackage = normalizePluginName(last ?? "", "");
+    if (fromPackage) return fromPackage;
   }
   return "exported-plugin";
 }
 
-function buildPluginJson(manifest: TeamsLikeManifest, pluginName: string): Record<string, unknown> {
+function buildPluginJson(
+  manifest: TeamsLikeManifest,
+  pluginName: string,
+  mcpToolDescriptions: ReadonlyMap<string, PreparedMcpToolDescription>
+): Record<string, unknown> {
   const author: Record<string, unknown> = {};
   if (manifest.developer?.name) author.name = manifest.developer.name;
   if (manifest.developer?.websiteUrl) author.url = manifest.developer.websiteUrl;
 
+  // Key order mirrors the published schema: $schema and name first.
   const pluginJson: Record<string, unknown> = {
+    $schema: PLUGIN_SCHEMA_URL,
     name: pluginName,
     version: manifest.version ?? "1.0.0",
     description: manifest.description?.full ?? manifest.description?.short ?? pluginName,
@@ -202,27 +533,196 @@ function buildPluginJson(manifest: TeamsLikeManifest, pluginName: string): Recor
     const override: AtkAgentConnectorExt = {};
     if (connector.displayName) override.displayName = connector.displayName;
     if (connector.description) override.description = connector.description;
+    if (connector.reusable !== undefined) override.reusable = connector.reusable;
+    const mcpToolDescription = mcpToolDescriptions.get(connector.id);
+    if (mcpToolDescription) {
+      override.mcpToolDescription = { ...mcpToolDescription.extension };
+    }
     const auth = connector.toolSource?.remoteMcpServer?.authorization;
     if (auth?.type && isAuthorizationType(auth.type)) {
       override.authorization = { type: auth.type };
       if (auth.referenceId) override.authorization.referenceId = auth.referenceId;
     }
     if (Object.keys(override).length > 0) {
-      connectorOverrides[connector.id] = override;
+      setRecordValue(connectorOverrides, connector.id, override);
     }
   }
   if (Object.keys(connectorOverrides).length > 0) {
     extension.agentConnectors = connectorOverrides;
   }
 
+  // Agent Plugins 1.0.0 closes the manifest schema (additionalProperties:
+  // false), so client data must be namespaced under `extensions` rather than
+  // written to a top-level `x-...` key.
   if (Object.keys(extension).length > 0) {
-    pluginJson[ATK_EXTENSION_KEY] = extension;
+    pluginJson.extensions = { [ATK_EXTENSION_NAMESPACE]: extension };
   }
   return pluginJson;
 }
 
-function isAuthorizationType(value: string): value is AuthorizationType {
-  return value === "None" || value === "OAuthPluginVault" || value === "ApiKeyPluginVault";
+async function prepareMcpToolDescriptions(
+  appPackageDir: string,
+  manifest: TeamsLikeManifest,
+  warnings: string[]
+): Promise<Map<string, PreparedMcpToolDescription>> {
+  const prepared = new Map<string, PreparedMcpToolDescription>();
+  for (const [index, connector] of (manifest.agentConnectors ?? []).entries()) {
+    const id = connector.id;
+    const description = connector.toolSource?.remoteMcpServer?.mcpToolDescription;
+    if (!id || description === undefined) continue;
+    if (description.file === undefined) {
+      prepared.set(id, { extension: {} });
+      continue;
+    }
+    const sourceFile = await readFileWithinRoot(appPackageDir, description.file);
+    if (sourceFile.status !== "ok") {
+      warnings.push(
+        `Connector '${id}' MCP tool-description file '${description.file}' is not a safe regular file and was skipped.`
+      );
+      continue;
+    }
+    const source = path.posix.join(ATK_MCP_TOOL_DESCRIPTIONS_DIR, `${index}.json`);
+    prepared.set(id, {
+      extension: { file: description.file, source },
+      contents: sourceFile.contents,
+    });
+  }
+  return prepared;
+}
+
+async function copyMcpToolDescriptions(
+  outputPath: string,
+  prepared: ReadonlyMap<string, PreparedMcpToolDescription>
+): Promise<void> {
+  for (const description of prepared.values()) {
+    if (!description.contents || !description.extension.source) continue;
+    const destination = path.join(outputPath, description.extension.source);
+    await fs.ensureDir(path.dirname(destination));
+    await fs.writeFile(destination, description.contents);
+  }
+}
+
+function isAuthorizationType(value: string): value is ConnectorAuthorizationType {
+  return (
+    value === "None" ||
+    value === "OAuthPluginVault" ||
+    value === "ApiKeyPluginVault" ||
+    value === "DynamicClientRegistration" ||
+    value === "AzureKeyVault"
+  );
+}
+
+function validateExportDestinationKeys(
+  manifest: TeamsLikeManifest,
+  mcpToolDescriptions: ReadonlyMap<string, PreparedMcpToolDescription>,
+  commandNames: readonly string[]
+): UserError | undefined {
+  const connectorIds = new Set<string>();
+  for (const connector of manifest.agentConnectors ?? []) {
+    if (!connector.id) continue;
+    if (connectorIds.has(connector.id)) {
+      return localizedExportUserError(
+        "InvalidManifest",
+        "core.openPluginExport.invalidManifest",
+        `Duplicate connector id '${connector.id}' cannot be exported.`
+      );
+    }
+    connectorIds.add(connector.id);
+  }
+
+  const skillNames = new Set<string>();
+  for (const skill of manifest.agentSkills ?? []) {
+    if (!skill.folder) continue;
+    const name = path.basename(skill.folder.replace(/^\.\//, "")).toLowerCase();
+    if (skillNames.has(name)) {
+      return localizedExportUserError(
+        "InvalidManifest",
+        "core.openPluginExport.invalidManifest",
+        `Multiple Agent Skills resolve to the export destination '${name}'.`
+      );
+    }
+    skillNames.add(name);
+  }
+
+  const reservedPaths = [
+    "manifest.json",
+    "color.png",
+    "outline.png",
+    "skills",
+    ...[...skillNames].map((name) => path.posix.join("skills", name)),
+    ...commandNames.map((name) => path.posix.join("commands", name)),
+  ];
+  const destinations = new Map<string, { path: string; contents: Buffer }>();
+  for (const description of mcpToolDescriptions.values()) {
+    const file = description.extension.file;
+    if (!file || !description.contents) continue;
+    const reservedPath = reservedPaths.find((candidate) => portablePathsConflict(file, candidate));
+    if (reservedPath) {
+      return localizedExportUserError(
+        "InvalidManifest",
+        "core.openPluginExport.invalidManifest",
+        `MCP tool-description path '${file}' collides with generated output '${reservedPath}'.`
+      );
+    }
+
+    const destinationKey = file.toLowerCase();
+    const existing = destinations.get(destinationKey);
+    if (existing) {
+      if (existing.path !== file || !existing.contents.equals(description.contents)) {
+        return localizedExportUserError(
+          "InvalidManifest",
+          "core.openPluginExport.invalidManifest",
+          `MCP tool-description paths '${existing.path}' and '${file}' collide.`
+        );
+      }
+      continue;
+    }
+    for (const destination of destinations.values()) {
+      if (portablePathsConflict(file, destination.path)) {
+        return localizedExportUserError(
+          "InvalidManifest",
+          "core.openPluginExport.invalidManifest",
+          `MCP tool-description paths '${destination.path}' and '${file}' collide.`
+        );
+      }
+    }
+    destinations.set(destinationKey, { path: file, contents: description.contents });
+  }
+  return undefined;
+}
+
+function validateRemoteMcpUrls(manifest: TeamsLikeManifest): UserError | undefined {
+  for (const connector of manifest.agentConnectors ?? []) {
+    const url = connector.toolSource?.remoteMcpServer?.mcpServerUrl;
+    if (url === undefined) continue;
+    const validationError = getRemoteMcpUrlError(url);
+    if (validationError) {
+      return localizedExportUserError(
+        "InvalidMcpServerUrl",
+        "core.openPluginExport.invalidMcpServerUrl",
+        `Connector '${connector.id ?? "(unnamed)"}' cannot be exported: ${validationError}`
+      );
+    }
+  }
+  return undefined;
+}
+
+function validateDeveloperUrls(manifest: TeamsLikeManifest): UserError | undefined {
+  const urls: Array<[string, string | undefined]> = [
+    ["websiteUrl", manifest.developer?.websiteUrl],
+    ["privacyUrl", manifest.developer?.privacyUrl],
+    ["termsOfUseUrl", manifest.developer?.termsOfUseUrl],
+  ];
+  for (const [field, value] of urls) {
+    if (value !== undefined && !isValidHttpUrl(value)) {
+      return localizedExportUserError(
+        "InvalidManifest",
+        "core.openPluginExport.invalidManifest",
+        `Developer '${field}' must be a valid HTTP(S) URL.`
+      );
+    }
+  }
+  return undefined;
 }
 
 async function writeMcpJson(
@@ -242,12 +742,18 @@ async function writeMcpJson(
       );
       continue;
     }
-    servers[id] = { type: "http", url: remote.mcpServerUrl };
+    // "http" is not an Agent Plugins transport; 1.0.0 defines stdio,
+    // streamable-http and (legacy) sse.
+    setRecordValue(servers, id, { type: DEFAULT_REMOTE_MCP_TYPE, url: remote.mcpServerUrl });
   }
   if (Object.keys(servers).length === 0) {
     return;
   }
-  await fs.writeJSON(path.join(outputPath, ".mcp.json"), { mcpServers: servers }, { spaces: 2 });
+  await fs.writeJSON(
+    path.join(outputPath, MCP_CONFIG_FILE),
+    { $schema: MCP_SCHEMA_URL, mcpServers: servers },
+    { spaces: 2 }
+  );
 }
 
 async function copySkills(
@@ -262,32 +768,119 @@ async function copySkills(
   }
   const destRoot = path.join(outputPath, "skills");
   await fs.ensureDir(destRoot);
+  const trustedAppPackageDir = appPackageDir;
   for (const skill of skillsRefs) {
     if (!skill.folder) continue;
     const rel = skill.folder.replace(/^\.\//, "");
-    const src = path.resolve(appPackageDir, rel);
-    const relativeToPackage = path.relative(appPackageDir, src);
-    if (relativeToPackage.startsWith("..") || path.isAbsolute(relativeToPackage)) {
+    const inspectedSkill = await inspectPathWithinRoot(trustedAppPackageDir, rel, "directory");
+    if (inspectedSkill.status === "outside") {
       warnings.push(`Skill folder '${skill.folder}' resolves outside appPackage; skipped.`);
       continue;
     }
-    if (!(await fs.pathExists(src))) {
+    if (inspectedSkill.status === "missing") {
       warnings.push(`Skill folder referenced by manifest not found on disk: ${skill.folder}`);
       continue;
     }
+    if (inspectedSkill.status === "wrong-kind") {
+      warnings.push(`Skill folder '${skill.folder}' is not a directory; skipped.`);
+      continue;
+    }
     const name = path.basename(rel);
-    await fs.copy(src, path.join(destRoot, name));
+    const skillMd = await inspectPathWithinRoot(
+      trustedAppPackageDir,
+      path.relative(trustedAppPackageDir, path.join(inspectedSkill.path, "SKILL.md")),
+      "file"
+    );
+    if (skillMd.status !== "ok") {
+      warnings.push(`Skill folder '${skill.folder}' does not contain a safe SKILL.md; skipped.`);
+      continue;
+    }
+    const validationError = await getAgentSkillValidationError(name, skillMd.path);
+    if (validationError) {
+      warnings.push(`Skill folder '${skill.folder}' is invalid: ${validationError}; skipped.`);
+      continue;
+    }
+    await copyDirectoryWithoutSymbolicLinks(
+      inspectedSkill.path,
+      path.join(destRoot, name),
+      (relativePath, resolvesOutside) => {
+        warnings.push(
+          `Skipped symbolic link '${relativePath}' while exporting skill '${name}'${
+            resolvesOutside ? " because it resolves outside the skill root" : ""
+          }.`
+        );
+      }
+    );
   }
+}
+
+async function prepareCommands(appPackageDir: string, warnings: string[]): Promise<string[]> {
+  const trustedAppPackageDir = appPackageDir;
+  const inspectedCommands = await inspectPathWithinRoot(
+    trustedAppPackageDir,
+    "commands",
+    "directory"
+  );
+  if (inspectedCommands.status === "outside") {
+    warnings.push("Commands directory resolves outside appPackage; skipped.");
+    return [];
+  }
+  if (inspectedCommands.status === "wrong-kind") {
+    warnings.push("Commands path is not a directory; skipped.");
+    return [];
+  }
+  if (inspectedCommands.status === "missing") return [];
+  const commandNames: string[] = [];
+  const entries = await fs.readdir(inspectedCommands.path, { withFileTypes: true });
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) {
+      const linkedCommand = await inspectPathWithinRoot(
+        trustedAppPackageDir,
+        path.relative(trustedAppPackageDir, path.join(inspectedCommands.path, entry.name)),
+        "file"
+      );
+      warnings.push(
+        linkedCommand.status === "outside"
+          ? `Command '${entry.name}' resolves outside appPackage; skipped.`
+          : `Command '${entry.name}' is a symbolic link; skipped.`
+      );
+      continue;
+    }
+    if (!entry.name.toLowerCase().endsWith(".md")) continue;
+    const command = await inspectPathWithinRoot(
+      trustedAppPackageDir,
+      path.relative(trustedAppPackageDir, path.join(inspectedCommands.path, entry.name)),
+      "file"
+    );
+    if (command.status === "outside") {
+      warnings.push(`Command '${entry.name}' resolves outside appPackage; skipped.`);
+    } else if (command.status === "ok") {
+      commandNames.push(entry.name);
+    }
+  }
+  return commandNames;
 }
 
 async function copyCommands(
   outputPath: string,
   appPackageDir: string,
-  _warnings: string[]
+  commandNames: readonly string[],
+  warnings: string[]
 ): Promise<void> {
-  const src = path.join(appPackageDir, "commands");
-  if (!(await fs.pathExists(src))) return;
-  await fs.copy(src, path.join(outputPath, "commands"));
+  for (const commandName of commandNames) {
+    const command = await inspectPathWithinRoot(
+      appPackageDir,
+      path.join("commands", commandName),
+      "file"
+    );
+    if (command.status !== "ok") {
+      warnings.push(`Command '${commandName}' is no longer a safe regular file; skipped.`);
+      continue;
+    }
+    const destination = path.join(outputPath, "commands", commandName);
+    await fs.ensureDir(path.dirname(destination));
+    await fs.copy(command.path, destination);
+  }
 }
 
 async function copyIcons(
@@ -295,12 +888,17 @@ async function copyIcons(
   appPackageDir: string,
   warnings: string[]
 ): Promise<void> {
+  const trustedAppPackageDir = appPackageDir;
   for (const icon of ["color.png", "outline.png"]) {
-    const src = path.join(appPackageDir, icon);
-    if (await fs.pathExists(src)) {
-      await fs.copy(src, path.join(outputPath, icon));
-    } else {
+    const inspectedIcon = await inspectPathWithinRoot(trustedAppPackageDir, icon, "file");
+    if (inspectedIcon.status === "ok") {
+      await fs.copy(inspectedIcon.path, path.join(outputPath, icon));
+    } else if (inspectedIcon.status === "missing") {
       warnings.push(`Icon file not found in appPackage: ${icon}`);
+    } else if (inspectedIcon.status === "outside") {
+      warnings.push(`Icon file '${icon}' resolves outside appPackage; skipped.`);
+    } else {
+      warnings.push(`Icon path '${icon}' is not a regular file; skipped.`);
     }
   }
 }

@@ -5,16 +5,17 @@ import { FxError, UserError } from "@microsoft/teamsfx-api";
 import { err, ok, Result } from "neverthrow";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import * as mcpToolFetcher from "../../../common/mcpToolFetcher";
-import { AuthorizationType, DefaultAuthOption, ParsedOpenPlugin } from "./types";
+import { setRecordValue } from "./spec";
+import { ConnectorAuthorizationType, DefaultAuthOption, ParsedOpenPlugin } from "./types";
 
 const SOURCE = "OpenPluginImport";
 
 export interface OpenPluginMcpAuthResolution {
-  authTypes: Readonly<Record<string, AuthorizationType>>;
+  authTypes: Readonly<Record<string, ConnectorAuthorizationType>>;
   warnings: string[];
 }
 
-type AuthProbeTarget = "invalid" | "noProbe" | "remote";
+type AuthProbeTarget = "invalid" | "unsupported" | "noProbe" | "remote";
 
 function isLocalHostname(hostname: string): boolean {
   if (
@@ -33,8 +34,11 @@ function isLocalHostname(hostname: string): boolean {
 function classifyAuthProbeTarget(serverUrl: string): AuthProbeTarget {
   try {
     const parsed = new URL(serverUrl);
+    if (parsed.protocol !== "https:") {
+      return "unsupported";
+    }
     const hostname = parsed.hostname.toLowerCase().replace(/\.$/, "");
-    return parsed.protocol === "https:" && !isLocalHostname(hostname) ? "remote" : "noProbe";
+    return isLocalHostname(hostname) ? "noProbe" : "remote";
   } catch {
     return "invalid";
   }
@@ -56,8 +60,12 @@ export async function resolveOpenPluginMcpAuth(
   parsed: ParsedOpenPlugin,
   defaultAuth: DefaultAuthOption
 ): Promise<Result<OpenPluginMcpAuthResolution, FxError>> {
-  const authTypes: Record<string, AuthorizationType> = {};
+  const authTypes: Record<string, ConnectorAuthorizationType> = {};
   const warnings: string[] = [];
+
+  if (defaultAuth === "Auto" && parsed.invalidRemoteMcpServers?.length) {
+    return err(unresolvedAuth([...parsed.invalidRemoteMcpServers].sort()[0]));
+  }
 
   for (const serverName of Object.keys(parsed.mcpServers).sort()) {
     const server = parsed.mcpServers[serverName];
@@ -68,19 +76,22 @@ export async function resolveOpenPluginMcpAuth(
 
     const override = parsed.atkExtension?.agentConnectors?.[serverName]?.authorization?.type;
     if (override) {
-      authTypes[serverName] = override;
+      setRecordValue(authTypes, serverName, override);
       continue;
     }
     if (defaultAuth !== "Auto") {
-      authTypes[serverName] = defaultAuth;
+      setRecordValue(authTypes, serverName, defaultAuth);
       continue;
     }
     const probeTarget = classifyAuthProbeTarget(serverUrl);
     if (probeTarget === "invalid") {
       return err(unresolvedAuth(serverName));
     }
+    if (probeTarget === "unsupported") {
+      continue;
+    }
     if (probeTarget === "noProbe") {
-      authTypes[serverName] = "None";
+      setRecordValue(authTypes, serverName, "None");
       warnings.push(getLocalizedString("core.openPluginImport.autoAuthNone", serverName));
       continue;
     }
@@ -97,15 +108,15 @@ export async function resolveOpenPluginMcpAuth(
 
     try {
       await mcpToolFetcher.resolveMCPOAuthMetadata(probe.authMetadataUrl, undefined, serverUrl);
-      authTypes[serverName] = "OAuthPluginVault";
+      setRecordValue(authTypes, serverName, "OAuthPluginVault");
       warnings.push(getLocalizedString("core.openPluginImport.autoAuthOAuth", serverName));
     } catch {
       if (probe.requiresAuth) {
-        authTypes[serverName] = "OAuthPluginVault";
+        setRecordValue(authTypes, serverName, "OAuthPluginVault");
         warnings.push(getLocalizedString("core.openPluginImport.authFallback", serverName));
         continue;
       }
-      authTypes[serverName] = "None";
+      setRecordValue(authTypes, serverName, "None");
       warnings.push(getLocalizedString("core.openPluginImport.autoAuthNone", serverName));
     }
   }

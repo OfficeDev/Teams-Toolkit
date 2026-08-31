@@ -852,6 +852,11 @@ describe("CLI commands", () => {
   });
 
   describe("importOpenPluginCommand", async () => {
+    it("exposes the 'agentplugin' alias", () => {
+      assert.include(importOpenPluginCommand.aliases ?? [], "agentplugin");
+      assert.equal(importOpenPluginCommand.name, "openplugin");
+    });
+
     it("success", async () => {
       vi.spyOn(FxCore.prototype, "importOpenPlugin").mockResolvedValue(
         ok({ projectPath: "/tmp/imported", warnings: [] })
@@ -902,6 +907,11 @@ describe("CLI commands", () => {
   });
 
   describe("exportOpenPluginCommand", async () => {
+    it("exposes the 'agentplugin' alias", () => {
+      assert.include(exportOpenPluginCommand.aliases ?? [], "agentplugin");
+      assert.equal(exportOpenPluginCommand.name, "openplugin");
+    });
+
     it("success", async () => {
       vi.spyOn(FxCore.prototype, "exportOpenPlugin").mockResolvedValue(
         ok({ outputPath: "/tmp/exported", warnings: [] })
