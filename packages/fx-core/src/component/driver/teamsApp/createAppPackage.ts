@@ -4,6 +4,7 @@
 import { hooks } from "@feathersjs/hooks/lib";
 import {
   Colors,
+  DeclarativeCopilotManifestSchema,
   DeclarativeCopilotCapabilityName,
   err,
   FunctionObject,
@@ -26,6 +27,7 @@ import * as uuid from "uuid";
 import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
 import { ErrorContextMW } from "../../../common/globalVars";
 import { getLocalizedString } from "../../../common/localizeUtils";
+import * as workerAgents from "../../../core/workerAgents";
 import { FileNotFoundError, InvalidActionInputError, JSONSyntaxError } from "../../../error/common";
 import {
   AppPackageFileSystemError,
@@ -309,6 +311,25 @@ export class CreateAppPackageDriver implements StepDriver {
       );
       if (getCopilotGptRes.isOk()) {
         const manifest = getCopilotGptRes.value;
+        const workerManifestSnapshots = new Map<string, DeclarativeCopilotManifestSchema>();
+        const graphResult = await workerAgents.validateWorkerAgentGraph({
+          projectPath: context.projectPath,
+          packageRootPath: hasTTKGeneratedFolder ? generatedFolder : appDirectory,
+          rootManifestPath: declarativeAgentManifestFile,
+          rootDocument: manifest,
+          loadManifest: async (manifestPath) => {
+            const result = await copilotGptManifestUtils.getManifest(manifestPath, context);
+            if (result.isErr()) return err(result.error);
+            workerManifestSnapshots.set(manifestPath, result.value);
+            return ok({
+              content: JSON.stringify(result.value, undefined, 4),
+              document: result.value,
+            });
+          },
+        });
+        if (graphResult.isErr()) return err(graphResult.error);
+        const graphError = workerAgents.workerValidationError(graphResult.value);
+        if (graphError) return err(graphError);
 
         if (manifest.actions !== undefined && !Array.isArray(manifest.actions)) {
           return err(
@@ -435,6 +456,40 @@ export class CreateAppPackageDriver implements StepDriver {
             }
           }
         }
+
+        for (const worker of graphResult.value.localManifests) {
+          const addWorkerResult = await this.addResolvedManifestSnapshot(
+            zip,
+            normalizePath(worker.packagePath, true),
+            worker.absolutePath,
+            worker.content,
+            shouldwriteAllManifest ? path.join(jsonFileDir, worker.packagePath) : undefined,
+            resolvedJsonFiles
+          );
+          if (addWorkerResult.isErr()) return err(addWorkerResult.error);
+          const workerManifest = workerManifestSnapshots.get(worker.absolutePath);
+          if (!workerManifest) {
+            return err(
+              new InvalidActionInputError(
+                actionName,
+                [worker.packagePath],
+                "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
+              )
+            );
+          }
+          const workerDependencyResult = await this.addWorkerAgentDependencies(
+            zip,
+            workerManifest,
+            worker.lexicalPath,
+            worker.packagePath,
+            appDirectory,
+            hasTTKGeneratedFolder ? generatedFolder : appDirectory,
+            context,
+            !shouldwriteAllManifest ? undefined : jsonFileDir,
+            resolvedJsonFiles
+          );
+          if (workerDependencyResult.isErr()) return err(workerDependencyResult.error);
+        }
       } else {
         return err(getCopilotGptRes.error);
       }
@@ -544,6 +599,100 @@ export class CreateAppPackageDriver implements StepDriver {
     return ok(new Map());
   }
 
+  private async addWorkerAgentDependencies(
+    zip: AdmZip,
+    manifest: DeclarativeCopilotManifestSchema,
+    manifestPath: string,
+    manifestReference: string,
+    appDirectory: string,
+    packageRootDirectory: string,
+    context: WrapDriverContext,
+    outputDirectory?: string,
+    resolvedJsonFiles?: Map<string, string>
+  ): Promise<Result<undefined, FxError>> {
+    if (manifest.actions !== undefined && !Array.isArray(manifest.actions)) {
+      return err(
+        new InvalidActionInputError(
+          actionName,
+          [`actions (in ${path.basename(manifestPath)}) must be an array`],
+          "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
+        )
+      );
+    }
+    if (manifest.capabilities !== undefined && !Array.isArray(manifest.capabilities)) {
+      return err(
+        new InvalidActionInputError(
+          actionName,
+          [`capabilities (in ${path.basename(manifestPath)}) must be an array`],
+          "https://aka.ms/teamsfx-actions/teamsapp-zipAppPackage"
+        )
+      );
+    }
+    if (Array.isArray(manifest.actions)) {
+      for (const pluginFile of manifest.actions.map((action) => action.file)) {
+        const pluginFileAbsolutePath = path.resolve(path.dirname(manifestPath), pluginFile);
+        const pluginFileRelativePath = path.relative(packageRootDirectory, pluginFileAbsolutePath);
+        const addPluginResult = await this.addPlugin(
+          zip,
+          normalizePath(pluginFileRelativePath, manifestReference.concat(pluginFile).includes("/")),
+          packageRootDirectory,
+          context,
+          outputDirectory,
+          undefined,
+          resolvedJsonFiles,
+          pluginFile
+        );
+        if (addPluginResult.isErr()) return err(addPluginResult.error);
+      }
+    }
+    if (Array.isArray(manifest.capabilities)) {
+      const files = new Set<string>();
+      for (const capability of manifest.capabilities.filter(
+        (item) => item.name === DeclarativeCopilotCapabilityName.EmbeddedKnowledge
+      )) {
+        for (const file of capability.files ?? []) {
+          if (file.file) files.add(file.file);
+        }
+      }
+      for (const file of files) {
+        const absolutePath = path.resolve(path.dirname(manifestPath), file);
+        const validationResult = await this.validateReferencedFile(
+          absolutePath,
+          appDirectory,
+          file
+        );
+        if (validationResult.isErr()) return err(validationResult.error);
+        this.addFileInZip(
+          zip,
+          path.dirname(path.relative(packageRootDirectory, absolutePath)),
+          absolutePath
+        );
+      }
+    }
+    if (featureFlagManager.getBooleanValue(FeatureFlags.AgentSkillsManifest)) {
+      const legacySkills = Reflect.get(manifest, "x-agent_skills");
+      const agentSkills = manifest.agent_skills ?? legacySkills;
+      if (Array.isArray(agentSkills)) {
+        const folders: { folder: string }[] = [];
+        for (const skill of agentSkills) {
+          if (typeof skill === "object" && skill !== null) {
+            const folder = Reflect.get(skill, "folder");
+            if (typeof folder === "string") folders.push({ folder });
+          }
+        }
+        const addSkillsResult = await this.addAgentSkillFolders(
+          zip,
+          folders,
+          appDirectory,
+          path.dirname(manifestPath),
+          packageRootDirectory
+        );
+        if (addSkillsResult.isErr()) return err(addSkillsResult.error);
+      }
+    }
+    return ok(undefined);
+  }
+
   private static async expandEnvVars(
     filePath: string,
     ctx: WrapDriverContext,
@@ -631,10 +780,12 @@ export class CreateAppPackageDriver implements StepDriver {
   private async addAgentSkillFolders(
     zip: AdmZip,
     agentSkills: { folder: string }[],
-    appDirectory: string
+    appDirectory: string,
+    referenceDirectory = appDirectory,
+    packageRootDirectory = appDirectory
   ): Promise<Result<undefined, FxError>> {
     for (const skill of agentSkills) {
-      const skillFolderAbs = path.resolve(appDirectory, skill.folder);
+      const skillFolderAbs = path.resolve(referenceDirectory, skill.folder);
       const validationResult = await this.validateReferencedFile(
         skillFolderAbs,
         appDirectory,
@@ -653,7 +804,7 @@ export class CreateAppPackageDriver implements StepDriver {
           )
         );
       }
-      await this.addLocalFolderRecursive(zip, skillFolderAbs, appDirectory);
+      await this.addLocalFolderRecursive(zip, skillFolderAbs, appDirectory, packageRootDirectory);
     }
     return ok(undefined);
   }
@@ -687,7 +838,8 @@ export class CreateAppPackageDriver implements StepDriver {
   private async addLocalFolderRecursive(
     zip: AdmZip,
     folderAbs: string,
-    appDirectory: string
+    appDirectory: string,
+    packageRootDirectory = appDirectory
   ): Promise<void> {
     const entries = await fs.readdir(folderAbs, { withFileTypes: true });
     const realAppDirectory = await fs.realpath(appDirectory);
@@ -697,13 +849,13 @@ export class CreateAppPackageDriver implements StepDriver {
         continue;
       }
       if (entry.isDirectory()) {
-        await this.addLocalFolderRecursive(zip, entryAbs, appDirectory);
+        await this.addLocalFolderRecursive(zip, entryAbs, appDirectory, packageRootDirectory);
       } else if (entry.isFile()) {
         const realEntryAbs = await fs.realpath(entryAbs);
         if (!this.isPathContained(realAppDirectory, realEntryAbs)) {
           continue;
         }
-        const relDir = path.dirname(path.relative(appDirectory, entryAbs));
+        const relDir = path.dirname(path.relative(packageRootDirectory, entryAbs));
         zip.addLocalFile(entryAbs, normalizePath(relDir, true));
       }
     }
@@ -949,6 +1101,24 @@ export class CreateAppPackageDriver implements StepDriver {
     }
     const content = expandedEnvVarResult.value;
 
+    return this.addResolvedManifestSnapshot(
+      zip,
+      entryName,
+      filePath,
+      content,
+      outputPath,
+      resolvedJsonFiles
+    );
+  }
+
+  private async addResolvedManifestSnapshot(
+    zip: AdmZip,
+    entryName: string,
+    filePath: string,
+    content: string,
+    outputPath?: string,
+    resolvedJsonFiles?: Map<string, string>
+  ): Promise<Result<undefined, FxError>> {
     const attr = await fs.stat(filePath);
     zip.addFile(entryName, Buffer.from(content), "", attr.mode);
 

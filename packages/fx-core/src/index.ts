@@ -134,6 +134,12 @@ export { environmentManager } from "./core/environment";
 export { environmentNameManager } from "./core/environmentName";
 export { FxCore } from "./core/FxCore";
 export * from "./core/FxCoreClient";
+export {
+  addWorkerAgent,
+  inspectWorkerAgents,
+  removeWorkerAgent,
+  validateWorkerAgents,
+} from "./core/workerAgents";
 export { PreProvisionResForVS, VersionCheckRes } from "./core/types";
 export * from "./error/index";
 export * from "./question/constants";
