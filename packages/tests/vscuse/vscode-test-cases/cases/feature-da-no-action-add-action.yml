@@ -12,6 +12,17 @@ cases:
         check-openapi-action,
       ]
 
+  - id: da-no-action-add-mcp-bearer-action
+    scenarioId: SCN-DA-ADD-MCP-ACTION-TO-DA
+    workItemIds: [99999999] # TODO: replace with the Azure DevOps test case ID.
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-mcp-bearer-action,
+        check-mcp-bearer-action,
+      ]
+
 steps:
   scaffold-da-no-action:
     type: scaffold
@@ -63,3 +74,49 @@ steps:
         path: appPackage/declarativeAgent.json
         expect:
           contains: ['"actions"', '"id": "action_1"']
+
+  add-mcp-bearer-action:
+    type: addDaAction
+    with:
+      source: mcp
+      url: https://example.com/mcp
+      authType: bearer-token
+
+  check-mcp-bearer-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "RemoteMCPServer"'
+            - '"url": "https://example.com/mcp"'
+            - '"type": "ApiKeyPluginVault"'
+            - '"reference_id": "${{MCP_DA_AUTH_ID_EXAMPLECOM}}"'
+          notContains:
+            ["OAuthPluginVault", "client_id", "client_secret", "scopes"]
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains:
+            ['"actions"', '"id": "action_1"', '"file": "ai-plugin.json"']
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "name: examplecom"
+            - "baseUrl: https://example.com/mcp"
+            - "registrationId: MCP_DA_AUTH_ID_EXAMPLECOM"
+          notContains:
+            ["oauth/register", "dcr/register", "clientId:", "clientSecret:"]
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: apiKey/register"
+            - "name: examplecom"
+            - "baseUrl: https://example.com/mcp"
+            - "registrationId: MCP_DA_AUTH_ID_EXAMPLECOM"
+          notContains:
+            ["oauth/register", "dcr/register", "clientId:", "clientSecret:"]

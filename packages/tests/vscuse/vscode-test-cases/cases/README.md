@@ -50,7 +50,7 @@ Authoring these fixtures exposed six gaps in the first contract draft:
    proves capability outcomes.
 
 The default setup parses, validates, and expands these sources, then resolves their semantic steps
-through the compiler-owned adapter and reusable components into ninety-two independent runnable VScUse
+through the compiler-owned adapter and reusable components into ninety-three independent runnable VScUse
 plans. The case YAML is the only authored template/scenario source. Setup prints the generated-plan
 diff before transactionally updating only manifest-owned files. A custom semantic-step adapter may
 still be injected by focused compiler and writer tests.
