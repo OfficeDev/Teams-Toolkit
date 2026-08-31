@@ -341,6 +341,56 @@ export class ActionInjector {
     }
   }
 
+  static async injectCreateAPIKeyActionForMCP(
+    ymlPath: string,
+    authName: string,
+    registrationId: string,
+    mcpServerUrl: string
+  ): Promise<AuthActionInjectResult | undefined> {
+    const ymlContent = await fs.readFile(ymlPath, "utf-8");
+    const document = parseDocument(ymlContent);
+    const provisionNode = document.get("provision") as any;
+    if (!provisionNode) {
+      throw new InjectAPIKeyActionFailedError();
+    }
+
+    const alreadyRegistered = provisionNode.items.some(
+      (item: any) =>
+        item.get("uses") === "apiKey/register" &&
+        !!item.get("writeToEnvironmentFile") &&
+        item.get("writeToEnvironmentFile").get("registrationId") === registrationId
+    );
+    if (alreadyRegistered) {
+      return undefined;
+    }
+
+    provisionNode.items = provisionNode.items.filter((item: any) => item.get("uses"));
+    const teamsAppIdEnvName = ActionInjector.getTeamsAppIdEnvName(provisionNode);
+    if (!teamsAppIdEnvName) {
+      throw new InjectAPIKeyActionFailedError();
+    }
+
+    const teamsAppIndex = provisionNode.items.findIndex(
+      (item: any) => item.get("uses") === "teamsApp/create"
+    );
+    provisionNode.items.splice(teamsAppIndex + 1, 0, {
+      uses: "apiKey/register",
+      with: {
+        name: authName,
+        appId: `\${{${teamsAppIdEnvName}}}`,
+        baseUrl: mcpServerUrl,
+      },
+      writeToEnvironmentFile: {
+        registrationId,
+      },
+    });
+    await fs.writeFile(ymlPath, document.toString(), "utf8");
+    return {
+      defaultRegistrationIdEnvName: registrationId,
+      registrationIdEnvName: registrationId,
+    };
+  }
+
   /**
    * Inject a `dcr/register` action for MCP `oauth-dynamic` flow. Idempotent on
    * (action name + configurationId). Writes a single configurationId env var.

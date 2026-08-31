@@ -341,18 +341,8 @@
                     }
                 },
                 "spec": {
-                    "description": "Runtime-specific configuration object.",
-                    "oneOf": [
-                        {
-                            "$ref": "#/$defs/open-api-spec"
-                        },
-                        {
-                            "$ref": "#/$defs/local-plugin-spec"
-                        },
-                        {
-                            "$ref": "#/$defs/mcp-execution-spec"
-                        }
-                    ]
+                    "type": "object",
+                    "description": "Runtime-specific configuration object. Its exact shape is determined by the sibling `type` member (see the `oneOf` on this runtime object): `OpenApi` uses `open-api-spec`, `LocalPlugin` uses `local-plugin-spec`, and `RemoteMCPServer` uses `mcp-execution-spec`."
                 },
                 "output_template": {
                     "type": "string",
@@ -362,7 +352,46 @@
             "additionalProperties": false,
             "patternProperties": {
                 "^x-": {}
-            }
+            },
+            "oneOf": [
+                {
+                    "$comment": "Discriminate `spec` by the sibling `type`. draft-04 has no if/then, so this is expressed as a `oneOf` where each branch pins `type` and the matching `spec` schema. Without this, a bare RemoteMCPServer spec of `{ \"url\": \"...\" }` (dynamic tool discovery) matches BOTH `open-api-spec` and `mcp-execution-spec` and fails a `oneOf` placed directly on `spec`.",
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "OpenApi"
+                            ]
+                        },
+                        "spec": {
+                            "$ref": "#/$defs/open-api-spec"
+                        }
+                    }
+                },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "LocalPlugin"
+                            ]
+                        },
+                        "spec": {
+                            "$ref": "#/$defs/local-plugin-spec"
+                        }
+                    }
+                },
+                {
+                    "properties": {
+                        "type": {
+                            "enum": [
+                                "RemoteMCPServer"
+                            ]
+                        },
+                        "spec": {
+                            "$ref": "#/$defs/mcp-execution-spec"
+                        }
+                    }
+                }
+            ]
         },
         "auth-object": {
             "type": "object",
@@ -551,7 +580,13 @@
         "mcp-tool-inline": {
             "type": "object",
             "title": "MCP Tool Inline Definitions",
-            "description": "Inline tool definitions matching the format returned by the MCP server's tools/list method."
+            "description": "Inline tool definitions matching the format returned by the MCP server's tools/list method.",
+            "$comment": "Excludes a top-level `file` key so this branch is mutually exclusive with `mcp-tool-file-reference` under `mcp_tool_description`'s `oneOf`. Without it, this open object also matches the file-reference form, so `{ \"file\": \"...\" }` matches both branches and fails the `oneOf`.",
+            "not": {
+                "required": [
+                    "file"
+                ]
+            }
         },
         "function-parameters": {
             "type": "object",

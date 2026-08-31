@@ -518,6 +518,15 @@ export function MCPForDAAuthTypeStaticOptions(): OptionItem[] {
   return options;
 }
 
+export function MCPForDAAddAuthTypeStaticOptions(): OptionItem[] {
+  const options = MCPForDAAuthTypeStaticOptions();
+  options.splice(options.length - 1, 0, {
+    ...ApiAuthOptions.bearerToken(),
+    detail: getLocalizedString("core.createProjectQuestion.mcpForDa.Auth.BearerToken.Detail"),
+  });
+  return options;
+}
+
 export function MCPForDAFetchAuthTypeStaticOptions(): OptionItem[] {
   const options: OptionItem[] = [];
   if (featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADCR)) {

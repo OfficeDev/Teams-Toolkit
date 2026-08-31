@@ -247,6 +247,13 @@ describe("CLI commands", () => {
       assert.isDefined(addinProjectFolder);
     });
 
+    it("does not expose bearer-token authentication to atk new", () => {
+      const command = getCreateCommand();
+      const authType = command.options?.find((option) => option.name === "mcp-da-auth-type");
+
+      assert.notInclude(authType?.choices, "bearer-token");
+    });
+
     it("normalizes legacy create flags to neutral keys before calling the front door", async () => {
       vi.spyOn(activate, "getFxCore").mockReturnValue(new FxCore({} as any));
       const createProjectFrontDoorStub = vi
@@ -822,6 +829,14 @@ describe("CLI commands", () => {
   });
 
   describe("addPluginCommand", async () => {
+    it("SCN-ADD-MCP-14: exposes bearer-token authentication to atk add action", () => {
+      const authType = addPluginCommand.options?.find(
+        (option) => option.name === "mcp-da-auth-type"
+      );
+
+      assert.include(authType?.choices, "bearer-token");
+    });
+
     it("success", async () => {
       vi.spyOn(FxCore.prototype, "addPlugin").mockResolvedValue(ok(undefined));
       const ctx: CLIContext = {

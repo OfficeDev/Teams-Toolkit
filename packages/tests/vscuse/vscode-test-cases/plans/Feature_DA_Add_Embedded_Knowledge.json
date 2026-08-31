@@ -603,7 +603,7 @@
         "x": 260,
         "y": 109
       },
-      "description": "Click on the \"addtional-files\" folder entry in the file picker dialog under the \"Home\" directory, within the application’s open file interface.",
+      "description": "Click on the \"addtional-files\" folder entry in the file picker dialog under the \"Home\" directory, within the application\u2019s open file interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -671,11 +671,13 @@
     {
       "step_id": "step_08dc097f",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "key": "enter"
+        "button": "left",
+        "x": 974,
+        "y": 745
       },
-      "description": "Press the Enter key to open the selected file \"azure.json\" in the Linux file chooser dialog.",
+      "description": "Click the \"Open\" button in the bottom-right corner of the Linux file chooser dialog to confirm opening the selected file \"azure.json\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -777,7 +779,7 @@
         "x": 331,
         "y": 78
       },
-      "description": "Click the “dev” environment option in the “Select an environment” dropdown within the Microsoft Visual Studio Code interface, targeting the Microsoft 365 Agents extension.",
+      "description": "Click the \u201cdev\u201d environment option in the \u201cSelect an environment\u201d dropdown within the Microsoft Visual Studio Code interface, targeting the Microsoft 365 Agents extension.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1058,9 +1060,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:275:105:16:5:d1aa323aa8a2b399",
-        "dhash:275:105:96:5:00606a9919040000",
-        "dhash:275:105:0:10:300080c0c0c0c0c0"
+        "dhash:275:105:16:5:1671adc5555d5c4e",
+        "dhash:275:105:96:5:00909126e6000000",
+        "dhash:275:105:0:10:30a1c0c0c0c0c0c0"
       ],
       "postconditions": [],
       "tags": [],
@@ -1071,11 +1073,13 @@
     {
       "step_id": "step_ec67a74c",
       "agent": "interaction",
-      "tool": "key_press",
+      "tool": "click",
       "parameters": {
-        "key": "enter"
+        "button": "left",
+        "x": 974,
+        "y": 745
       },
-      "description": "Press the Enter key to select and open the highlighted file \"azure.parameters.test.json\" in the Linux file picker dialog within a vscode workspace directory.",
+      "description": "Click the \"Open\" button in the bottom-right corner of the Linux file chooser dialog to confirm opening the selected file \"azure.parameters.test.json\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

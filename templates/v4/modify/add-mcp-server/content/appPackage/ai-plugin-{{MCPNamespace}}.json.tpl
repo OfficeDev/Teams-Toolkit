@@ -18,8 +18,14 @@
         "type": "None"
 {{/IsNoAuth}}
 {{^IsNoAuth}}
+{{#IsBearerToken}}
+        "type": "ApiKeyPluginVault",
+        "reference_id": "{{MCPAuthRefId}}"
+{{/IsBearerToken}}
+{{^IsBearerToken}}
         "type": "OAuthPluginVault",
         "reference_id": "{{MCPAuthRefId}}"
+{{/IsBearerToken}}
 {{/IsNoAuth}}
       }
     }

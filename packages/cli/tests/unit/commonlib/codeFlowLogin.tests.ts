@@ -6,6 +6,84 @@ import { CodeFlowLogin } from "../../../src/commonlib/codeFlowLogin";
 import CliTelemetry from "../../../src/telemetry/cliTelemetry";
 import { expect } from "../utils";
 import { vi } from "vitest";
+
+const expressMocks = vi.hoisted(() => ({
+  app: {
+    listen: vi.fn(() => ({
+      address: vi.fn(() => ({ port: 12345 })),
+      close: vi.fn(),
+      on: vi.fn(),
+    })),
+    post: vi.fn(),
+    use: vi.fn(),
+  },
+  urlencoded: vi.fn(() => vi.fn()),
+}));
+
+vi.mock("express", () => ({
+  default: Object.assign(
+    vi.fn(() => expressMocks.app),
+    {
+      urlencoded: expressMocks.urlencoded,
+    }
+  ),
+}));
+
+vi.mock("open", () => ({ default: vi.fn() }));
+
+describe("CodeFlowLogin.loginWithBrowser", function () {
+  const config = {
+    auth: {
+      clientId: "fake-client-id",
+      authority: "https://login.microsoftonline.com/common",
+    },
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    expressMocks.app.post.mockReset();
+    expressMocks.app.use.mockReset();
+  });
+
+  it("should request form_post and acquire the token from the posted code", async () => {
+    const codeFlowLogin = new CodeFlowLogin([], config, 0, "appStudio");
+    const response = {
+      writeHead: vi.fn(),
+      end: vi.fn((_body, callback: () => void) => callback()),
+    };
+    let authorizationRequest: any;
+    let tokenRequest: any;
+
+    vi.spyOn(codeFlowLogin, "startServer").mockResolvedValue("listening");
+    vi.spyOn(codeFlowLogin as any, "saveAccountIdToCache").mockResolvedValue(undefined);
+    vi.spyOn(codeFlowLogin.pca, "getAuthCodeUrl").mockImplementation(async (request: any) => {
+      authorizationRequest = request;
+      const callback = expressMocks.app.post.mock.calls[0][1];
+      void callback({ body: { code: "auth-code" } }, response);
+      return "https://login.microsoftonline.com/authorize";
+    });
+    vi.spyOn(codeFlowLogin.pca, "acquireTokenByCode").mockImplementation(async (request: any) => {
+      tokenRequest = request;
+      return {
+        account: {
+          homeAccountId: "fake-id",
+        },
+        accessToken:
+          "eyJ0eXAiOiJKV1QifQ." +
+          Buffer.from(JSON.stringify({ oid: "fake-oid" })).toString("base64") +
+          ".signature",
+      } as any;
+    });
+
+    const accessToken = await codeFlowLogin.loginWithBrowser(["scope1"]);
+
+    expect(accessToken).to.be.a("string");
+    expect(authorizationRequest.responseMode).to.equal("form_post");
+    expect(tokenRequest.code).to.equal("auth-code");
+    expect(expressMocks.urlencoded).to.have.been.calledWith({ extended: false });
+  });
+});
+
 describe("CodeFlowLogin.loginWithBroker", function () {
   const sandbox = vi;
 

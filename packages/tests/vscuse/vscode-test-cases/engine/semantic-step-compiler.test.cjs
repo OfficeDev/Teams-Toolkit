@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 176 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 177 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 176 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 176);
+  assert.equal(first.value.files.length, 177);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 176);
+  assert.equal(generatedFiles.length, 177);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -825,6 +825,11 @@ test("VCB-85: existing API registration credentials are prompted only during pro
     }
     assert.match(
       plan.steps[targetSelectionIndex + 1].step_id,
+      /step_browserM365SignIn_refreshPage/,
+      caseId,
+    );
+    assert.match(
+      plan.steps[targetSelectionIndex + 2].step_id,
       /step_browserM365SignIn_assertAccount/,
       caseId,
     );
@@ -872,8 +877,14 @@ test("VCB-86: Copilot browser authentication preserves the launch deep link", as
 
   assert.equal(result.ok, true);
   for (const generated of result.value) {
+    const confirmationIndex = generated.plan.steps.findIndex((step) =>
+      step.step_id.startsWith("step_browserM365SignIn_confirmStaySignedIn_"),
+    );
+    assert.equal(confirmationIndex >= 0, true, generated.caseId);
     assert.equal(
-      generated.plan.steps.some((step) => step.parameters.key === "f5"),
+      generated.plan.steps
+        .slice(confirmationIndex + 1)
+        .some((step) => step.parameters.key === "f5"),
       false,
       generated.caseId,
     );
@@ -7449,13 +7460,18 @@ test("VCB-169: Feature-derived cases use feature-prefixed descriptor filenames",
   assert.equal(typeSpec.ok, true, typeSpec.diagnostics?.[0]?.code);
   const noActionCaseIds = noAction.value.map(({ caseId }) => caseId);
   assert.equal(noActionCaseIds[0], "da-no-action-add-openapi-action");
-  for (const expectedCaseId of [
+  assert.equal(
+    noActionCaseIds.includes("da-no-action-add-mcp-bearer-action"),
+    true,
+  );
+  const expectedFeatureCaseIds = [
     "feature-da-two-openapi-actions-personal-provision",
     "feature-da-no-action-api-key-auth-provision",
     "feature-da-no-action-bearer-auth-provision",
     "feature-da-no-action-entra-auth-remote-preview",
     "feature-da-no-action-oauth-auth-remote-preview",
-  ]) {
+  ];
+  for (const expectedCaseId of expectedFeatureCaseIds) {
     assert.equal(
       noActionCaseIds.includes(expectedCaseId),
       true,
@@ -7463,8 +7479,8 @@ test("VCB-169: Feature-derived cases use feature-prefixed descriptor filenames",
     );
   }
   assert.equal(
-    noActionCaseIds.slice(1).every((caseId) => caseId.startsWith("feature-")),
-    true,
+    noActionCaseIds.filter((caseId) => caseId.startsWith("feature-")).length,
+    expectedFeatureCaseIds.length,
   );
   assert.deepEqual(
     typeSpec.value.map(({ caseId }) => caseId),
@@ -7473,7 +7489,10 @@ test("VCB-169: Feature-derived cases use feature-prefixed descriptor filenames",
       "feature-da-typespec-package-action-remote-preview",
     ],
   );
-  for (const generated of [...noAction.value.slice(1), typeSpec.value[1]]) {
+  for (const generated of [
+    ...noAction.value.filter(({ caseId }) => caseId.startsWith("feature-")),
+    typeSpec.value[1],
+  ]) {
     assert.equal(generated.caseId.startsWith("feature-"), true);
     assert.equal(generated.fileName, `${generated.caseId}.json`);
   }

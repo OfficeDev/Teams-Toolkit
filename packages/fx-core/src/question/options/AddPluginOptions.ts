@@ -62,7 +62,7 @@ export const AddPluginOptions: CLICommandOption[] = [
     type: "string",
     description: "Select Authentication Type",
     default: "oauth",
-    choices: ["oauth", "oauth-dynamic", "entra-sso", "none"],
+    choices: ["oauth", "oauth-dynamic", "entra-sso", "bearer-token", "none"],
   },
   {
     name: "mcp-da-client-id",

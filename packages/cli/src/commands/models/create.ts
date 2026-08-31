@@ -152,7 +152,8 @@ function legacyCreateOptions(): CLICommandOption[] {
     adjustOptions([
       ...CreateProjectOptions.map(cloneOption),
       ...MIGRATION_CREATE_OPTIONS.map(cloneOption),
-    ])
+    ]),
+    false
   );
 }
 
