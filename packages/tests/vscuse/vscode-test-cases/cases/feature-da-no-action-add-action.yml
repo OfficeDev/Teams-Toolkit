@@ -67,7 +67,7 @@ cases:
         add-bearer-auth,
         check-bearer-auth,
         login-m365,
-        provision-api-key,
+        provision-bearer,
       ]
 
   - id: feature-da-no-action-entra-auth-remote-preview
@@ -438,9 +438,8 @@ steps:
             - "isPKCEEnabled: true"
 
   set-personal-scope:
-    type: userEnvironment
+    type: projectEnvironment
     with:
-      target: dev
       variables:
         AGENT_SCOPE: personal
 
@@ -458,6 +457,11 @@ steps:
     type: provision
     with:
       apiKey: "${{secret:EXISTING_API_KEY}}"
+
+  provision-bearer:
+    type: provision
+    with:
+      apiKey: "${{secret:EXISTING_API_BEARER_TOKEN}}"
 
   provision-entra:
     type: provision

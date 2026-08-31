@@ -83,6 +83,33 @@ const userEnvironmentMutationScriptBase64 = Buffer.from(
   userEnvironmentMutationScript,
   "utf8",
 ).toString("base64");
+const projectEnvironmentMutationScript = String.raw`import os
+from pathlib import Path
+
+project_dir = Path(os.environ["PROJECT_DIR"]).resolve()
+environment_file = project_dir / "env" / ".env.dev"
+if not environment_file.is_file():
+  raise AssertionError("The project environment file must already exist")
+name = os.environ["VARIABLE_NAME"]
+value = os.environ["VARIABLE_VALUE"]
+if not value:
+  raise AssertionError("The variable value resolved to nothing")
+lines = environment_file.read_text(encoding="utf-8").splitlines()
+prefix = name + "="
+matches = [index for index, line in enumerate(lines) if line.startswith(prefix)]
+if len(matches) != 1:
+  raise AssertionError("The project environment variable must already exist exactly once")
+expected = name + "='" + value + "'"
+lines[matches[0]] = expected
+environment_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+written = [line for line in environment_file.read_text(encoding="utf-8").splitlines() if line.startswith(prefix)]
+if written != [expected]:
+  raise AssertionError("The project environment variable was not written exactly once with its value")
+`;
+const projectEnvironmentMutationScriptBase64 = Buffer.from(
+  projectEnvironmentMutationScript,
+  "utf8",
+).toString("base64");
 const typeSpecGitHubIssuesMutationScript = String.raw`import os
 from pathlib import Path
 
@@ -1548,6 +1575,45 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileProjectEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const variables = inputs.variables ?? {};
+    const names = isRecord(variables) ? Object.keys(variables).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["variables"])) ||
+      !isRecord(variables) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof variables[name] !== "string" ||
+          variables[name].length === 0 ||
+          !localEnvironmentValuePattern.test(
+            variables[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_PROJECT_ENVIRONMENT_INPUT_INVALID",
+        "The project environment operation requires shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/project-environment-variable.json.tpl", {
+          mutationScriptBase64: projectEnvironmentMutationScriptBase64,
+          variableName: name,
+          variableValue: variables[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
   function compileRemoveWorkspaceFile(state, definition) {
     const inputs = definition.with ?? {};
     if (
@@ -2000,6 +2066,8 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
+    const successNotificationText =
+      "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
     if (isMicrosoftEntraConfiguration) {
       error = append(
         output,
@@ -2012,11 +2080,23 @@ function createSemanticStepCompiler() {
       if (error) return error;
       error = append(
         output,
-        render(state, "notifications/assert-contains.json.tpl", {
-          notificationText:
-            "Microsoft 365 Agents Toolkit has successfully added Microsoft Entra authentication to the selected APIs. Please: 1. Find the application id uri with placeholder AADAUTHCODE_APPLICATION_ID_URI in .env files and update it to the Microsoft Entra app. 2. Add https://teams.microsoft.com/api/platform/v1.0/oAuthConsentRedirect to redirect uri of the Mcirosoft Entra app.",
-          retryTimeout: "60",
+        render(state, "command-palette/execute-command.json.tpl", {
+          commandTitle: commandTitles.notifications,
         }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(
+          state,
+          "notifications/assert-collapsed-prefix-and-contains.json.tpl",
+          {
+            collapsedNotificationPrefix:
+              "Microsoft 365 Agents Toolkit has successfully ad",
+            notificationText: successNotificationText,
+            retryTimeout: "60",
+          },
+        ),
       );
       if (error) return error;
     }
@@ -2059,15 +2139,16 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
-    error = append(
-      output,
-      render(state, "notifications/assert-contains.json.tpl", {
-        notificationText:
-          "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.",
-        retryTimeout: "60",
-      }),
-    );
-    if (error) return error;
+    if (!isMicrosoftEntraConfiguration) {
+      error = append(
+        output,
+        render(state, "notifications/assert-contains.json.tpl", {
+          notificationText: successNotificationText,
+          retryTimeout: "60",
+        }),
+      );
+      if (error) return error;
+    }
     state.completed.add(`addApiAuthConfiguration:${inputs.authType}`);
     return { ok: true, value: output };
   }
@@ -2934,6 +3015,8 @@ function createSemanticStepCompiler() {
         return compileLocalUserEnvironment(state, definition);
       case "userEnvironment":
         return compileUserEnvironment(state, definition);
+      case "projectEnvironment":
+        return compileProjectEnvironment(state, definition);
       case "removeWorkspaceFile":
         return compileRemoveWorkspaceFile(state, definition);
       case "workflowVersion":

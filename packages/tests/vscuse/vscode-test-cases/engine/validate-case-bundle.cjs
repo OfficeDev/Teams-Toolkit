@@ -28,6 +28,7 @@ const allowedStepTypes = new Set([
   "openAIModel",
   "localUserEnvironment",
   "userEnvironment",
+  "projectEnvironment",
   "removeWorkspaceFile",
   "workflowVersion",
   "configureTypeSpecAction",

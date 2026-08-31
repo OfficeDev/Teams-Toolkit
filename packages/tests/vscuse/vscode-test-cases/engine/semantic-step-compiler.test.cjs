@@ -2753,6 +2753,119 @@ ${validBlock}`;
   }
 });
 
+test("VCB-172: project environment replaces existing dev variables with closed shell-safe inputs", async () => {
+  const validBlock = `      variables:
+        SECOND_VALUE: "alpha-value"
+        AGENT_SCOPE: personal
+`;
+  const sourceText = `version: 1
+cases:
+  - id: project-environment
+    scenarioId: VCB-172
+    workItemIds: [171]
+    steps: [scaffold, check, set-project-environment]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: env/.env.dev
+        expect:
+          exists: true
+  set-project-environment:
+    type: projectEnvironment
+    with:
+${validBlock}`;
+  const compile = (replacement = validBlock) =>
+    compileCaseBundle({
+      compileStep: createSemanticStepCompiler(),
+      sourcePath: "cases/project-environment.yml",
+      sourceText: sourceText.replace(validBlock, replacement),
+    });
+
+  const result = await compile();
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const mutation = result.value[0].plan.steps.filter((step) =>
+    step.step_id.startsWith("step_setProjectEnvironmentVariable_"),
+  );
+  assert.notEqual(mutation.length, 0);
+  const commands = mutation.filter(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text.includes("read -rs"),
+  );
+  assert.equal(commands.length, 2);
+  assert.equal(
+    commands[0].parameters.text.includes('VARIABLE_NAME="AGENT_SCOPE"'),
+    true,
+  );
+  assert.equal(
+    commands[1].parameters.text.includes('VARIABLE_NAME="SECOND_VALUE"'),
+    true,
+  );
+  const encodedScript = commands[0].parameters.text.match(
+    /base64\.b64decode\("([^"]+)"\)/,
+  )?.[1];
+  assert.equal(typeof encodedScript, "string");
+  const mutationScript = Buffer.from(encodedScript, "base64").toString("utf8");
+  assert.equal(
+    mutationScript.includes('project_dir / "env" / ".env.dev"'),
+    true,
+  );
+  assert.equal(mutationScript.includes(".env.dev.user"), false);
+  assert.equal(mutationScript.includes("touch("), false);
+  assert.equal(mutationScript.includes("if len(matches) != 1:"), true);
+  assert.equal(mutationScript.includes("if written != [expected]:"), true);
+  assert.equal(
+    mutation.some((step) => step.description.includes("personal")),
+    false,
+  );
+
+  for (const [label, replacement] of [
+    [
+      "extra field",
+      `      path: env/.env.dev
+      variables:
+        AGENT_SCOPE: personal
+`,
+    ],
+    ["empty variables", "      variables: {}\n"],
+    [
+      "invalid variable name",
+      `      variables:
+        agent_scope: personal
+`,
+    ],
+    [
+      "unsafe value",
+      `      variables:
+        AGENT_SCOPE: "$(id)"
+`,
+    ],
+  ]) {
+    const invalid = await compile(replacement);
+    assert.equal(invalid.ok, false, label);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_PROJECT_ENVIRONMENT_INPUT_INVALID",
+      label,
+    );
+  }
+});
+
 test("VCB-123: TypeSpec GitHub issues action uses a deterministic terminal mutation", async () => {
   const sourceText = `version: 1
 cases:
@@ -6962,7 +7075,7 @@ steps:
   );
 });
 
-test("VCB-167: no-action Bearer configuration reuses API-key provision without API-key fields", async () => {
+test("VCB-167: no-action Bearer configuration provisions with the bearer token secret", async () => {
   const sourceText = `version: 1
 cases:
   - id: no-action-bearer
@@ -7016,7 +7129,7 @@ steps:
   provision:
     type: provision
     with:
-      apiKey: "\${{secret:EXISTING_API_KEY}}"
+      apiKey: "\${{secret:EXISTING_API_BEARER_TOKEN}}"
 `;
   const result = compileInlineSource(sourceText, "vscuse-vcb-167.yml");
   assert.equal(
@@ -7137,6 +7250,22 @@ steps:
   assert.notEqual(provisionIndex, -1);
   assert.equal(authSuccessIndex < loginIndex, true);
   assert.equal(loginIndex < provisionIndex, true);
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "${{secret:EXISTING_API_BEARER_TOKEN}}",
+    ),
+    true,
+  );
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "${{secret:EXISTING_API_KEY}}",
+    ),
+    false,
+  );
   const fileAssertions = readFileAssertions(migrated.plan);
   assert.deepEqual(
     fileAssertions.map((assertion) => assertion.path),
@@ -7169,7 +7298,7 @@ steps:
   }
 });
 
-test("VCB-168: no-action Microsoft Entra configuration provisions an existing client ID", async () => {
+test("VCB-168: no-action Microsoft Entra configuration verifies persistent notifications", async () => {
   const scope =
     "api://plugincb4aae.azurewebsites.net/4cfde729-32e4-4862-a409-07e14dbfd296/readpairs_read: Read repair records";
   const sourceText = `version: 1
@@ -7262,26 +7391,46 @@ steps:
     (step) =>
       step.tool === "type_text" && step.parameters.text === commandTitle,
   );
-  const guidanceText =
-    "Microsoft 365 Agents Toolkit has successfully added Microsoft Entra authentication to the selected APIs. Please: 1. Find the application id uri with placeholder AADAUTHCODE_APPLICATION_ID_URI in .env files and update it to the Microsoft Entra app. 2. Add https://teams.microsoft.com/api/platform/v1.0/oAuthConsentRedirect to redirect uri of the Mcirosoft Entra app.";
+  const guidancePrefix = "Microsoft 365 Agents Toolkit has successfully ad";
   const successText =
     "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
-  const guidanceIndex = steps.findIndex((step) =>
-    step.description.includes(guidanceText),
-  );
-  const successIndex = steps.findIndex((step) =>
-    step.description.includes(successText),
+  const notificationAssertions = steps.filter(
+    (step) =>
+      step.agent === "assertion" &&
+      (step.description.includes(guidancePrefix) ||
+        step.description.includes(successText)),
   );
   assert.notEqual(commandIndex, -1);
-  assert.notEqual(guidanceIndex, -1);
-  assert.notEqual(successIndex, -1);
-  assert.equal(guidanceIndex < successIndex, true);
-  const configurationSteps = steps.slice(commandIndex, successIndex + 1);
+  assert.equal(notificationAssertions.length, 1);
+  assert.equal(
+    notificationAssertions[0].description.includes(guidancePrefix),
+    true,
+  );
+  assert.match(notificationAssertions[0].description, /yellow warning/);
+  assert.equal(
+    notificationAssertions[0].description.includes(successText),
+    true,
+  );
+  const notificationIndex = steps.indexOf(notificationAssertions[0]);
+  const notificationCenterIndex = steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Show Notifications",
+  );
+  assert.notEqual(notificationCenterIndex, -1);
+  assert.equal(notificationCenterIndex < notificationIndex, true);
+  const configurationSteps = steps.slice(commandIndex, notificationIndex + 1);
   assert.deepEqual(
     configurationSteps
       .filter((step) => step.tool === "type_text")
       .map((step) => step.parameters.text),
-    [commandTitle, "aadAuthCode", "Microsoft Entra", scope],
+    [
+      commandTitle,
+      "aadAuthCode",
+      "Microsoft Entra",
+      scope,
+      "Notifications: Show Notifications",
+    ],
   );
   assert.equal(
     configurationSteps.some((step) => step.tool === "click"),
@@ -8219,7 +8368,7 @@ test("VCB-164: repeated OpenAPI actions provision a personal-scope declarative a
   );
 
   const environmentIndex = plan.steps.findIndex((step) =>
-    step.step_id.startsWith("step_setUserEnvironmentVariable_"),
+    step.step_id.startsWith("step_setProjectEnvironmentVariable_"),
   );
   const loginIndex = plan.steps.findIndex((step) =>
     step.description.startsWith(

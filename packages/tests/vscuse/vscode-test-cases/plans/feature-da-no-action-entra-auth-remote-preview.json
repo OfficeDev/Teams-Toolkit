@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 153,
+    "total_steps": 157,
     "name": "feature-da-no-action-entra-auth-remote-preview",
     "description": {
       "owner": "",
@@ -97,8 +97,12 @@
       "step_textInput_assertQuestion_ccf982c7f_5_5",
       "step_textInput_input_ccf982c7f_5_5",
       "step_textInput_confirm_ccf982c7f_5_5",
-      "step_assertNotificationContains_assert_ccf982c7f_5_6",
-      "step_assertNotificationContains_assert_ccf982c7f_5_7",
+      "step_executeCommand_open_ccf982c7f_5_6",
+      "step_executeCommand_assertPalette_ccf982c7f_5_6",
+      "step_executeCommand_filter_ccf982c7f_5_6",
+      "step_executeCommand_assertCommand_ccf982c7f_5_6",
+      "step_executeCommand_execute_ccf982c7f_5_6",
+      "step_assertNotifications_assert_ccf982c7f_5_7",
       "step_checkWorkspaceFiles_verify_ccf982c7f_6_1",
       "step_checkWorkspaceFiles_verify_ccf982c7f_6_2",
       "step_checkWorkspaceFiles_verify_ccf982c7f_6_3",
@@ -1969,11 +1973,13 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_ccf982c7f_5_6",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains the literal text Microsoft 365 Agents Toolkit has successfully added Microsoft Entra authentication to the selected APIs. Please: 1. Find the application id uri with placeholder AADAUTHCODE_APPLICATION_ID_URI in .env files and update it to the Microsoft Entra app. 2. Add https://teams.microsoft.com/api/platform/v1.0/oAuthConsentRedirect to redirect uri of the Mcirosoft Entra app.. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
+      "step_id": "step_executeCommand_open_ccf982c7f_5_6",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1984,29 +1990,114 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:notifications",
-        "action:assert-contains",
-        "step_retry_timeout: 60"
+        "component:command-palette",
+        "action:execute-command"
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_ccf982c7f_5_7",
+      "step_id": "step_executeCommand_assertPalette_ccf982c7f_5_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains the literal text Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_ccf982c7f_5_6"
+        "step_executeCommand_open_ccf982c7f_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_ccf982c7f_5_6",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Notifications: Show Notifications"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_ccf982c7f_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_ccf982c7f_5_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_ccf982c7f_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_ccf982c7f_5_6",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_ccf982c7f_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_assertNotifications_assert_ccf982c7f_5_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the visible Visual Studio Code Notification Center contains both of these notifications: (1) a collapsed yellow warning notification whose visible text begins with the literal prefix Microsoft 365 Agents Toolkit has successfully ad and is truncated with an ellipsis; (2) an information notification containing the complete literal text Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision. Notifications with different text, including in-progress notifications, do not satisfy this assertion.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_ccf982c7f_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:notifications",
-        "action:assert-contains",
+        "action:assert-collapsed-prefix-and-contains",
         "step_retry_timeout: 60"
       ]
     },
@@ -2023,7 +2114,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_ccf982c7f_5_7"
+        "step_assertNotifications_assert_ccf982c7f_5_7"
       ],
       "preconditions": [],
       "postconditions": [],

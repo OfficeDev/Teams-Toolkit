@@ -106,15 +106,15 @@
       "step_checkWorkspaceFiles_verify_c73c7cfcf_5_3",
       "step_checkWorkspaceFiles_verify_c73c7cfcf_5_4",
       "step_checkWorkspaceFiles_verify_c73c7cfcf_5_5",
-      "step_setUserEnvironmentVariable_openTerminal_c73c7cfcf_6_1",
-      "step_setUserEnvironmentVariable_assertTerminal_c73c7cfcf_6_1",
-      "step_setUserEnvironmentVariable_typeCommand_c73c7cfcf_6_1",
-      "step_setUserEnvironmentVariable_runCommand_c73c7cfcf_6_1",
-      "step_setUserEnvironmentVariable_typeValue_c73c7cfcf_6_1",
-      "step_setUserEnvironmentVariable_submitValue_c73c7cfcf_6_1",
-      "step_setUserEnvironmentVariable_assertUpdated_c73c7cfcf_6_1",
-      "step_setUserEnvironmentVariable_closeTerminal_c73c7cfcf_6_1",
-      "step_setUserEnvironmentVariable_assertClosed_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_openTerminal_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_assertTerminal_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_typeCommand_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_runCommand_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_typeValue_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_submitValue_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_assertUpdated_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_closeTerminal_c73c7cfcf_6_1",
+      "step_setProjectEnvironmentVariable_assertClosed_c73c7cfcf_6_1",
       "step_executeCommand_open_c73c7cfcf_7_1",
       "step_executeCommand_assertPalette_c73c7cfcf_7_1",
       "step_executeCommand_filter_c73c7cfcf_7_1",
@@ -2166,7 +2166,7 @@
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_openTerminal_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_openTerminal_c73c7cfcf_6_1",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -2184,11 +2184,11 @@
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment"
+        "operation:project-environment"
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_assertTerminal_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_assertTerminal_c73c7cfcf_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2198,40 +2198,40 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_openTerminal_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_openTerminal_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment",
+        "operation:project-environment",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_typeCommand_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_typeCommand_c73c7cfcf_6_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "read -rs VARIABLE_VALUE && PROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" TARGET_KEY=\"dev\" VARIABLE_NAME=\"AGENT_SCOPE\" VARIABLE_VALUE=\"$VARIABLE_VALUE\" python3 -c 'import base64;exec(base64.b64decode(\"aW1wb3J0IG9zCmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAoKcHJvamVjdF9kaXIgPSBQYXRoKG9zLmVudmlyb25bIlBST0pFQ1RfRElSIl0pLnJlc29sdmUoKQp0YXJnZXRfa2V5ID0gb3MuZW52aXJvblsiVEFSR0VUX0tFWSJdCnRhcmdldHMgPSB7CiAgImRldiI6IHByb2plY3RfZGlyIC8gImVudiIgLyAiLmVudi5kZXYudXNlciIsCiAgInBsYXlncm91bmQiOiBwcm9qZWN0X2RpciAvICJlbnYiIC8gIi5lbnYucGxheWdyb3VuZC51c2VyIiwKfQplbnZpcm9ubWVudF9maWxlID0gdGFyZ2V0cy5nZXQodGFyZ2V0X2tleSkKaWYgZW52aXJvbm1lbnRfZmlsZSBpcyBOb25lOgogIHJhaXNlIEFzc2VydGlvbkVycm9yKCJUaGUgdXNlciBlbnZpcm9ubWVudCB0YXJnZXQgaXMgbm90IHN1cHBvcnRlZCIpCmVudmlyb25tZW50X2ZpbGUucGFyZW50Lm1rZGlyKHBhcmVudHM9VHJ1ZSwgZXhpc3Rfb2s9VHJ1ZSkKZW52aXJvbm1lbnRfZmlsZS50b3VjaChleGlzdF9vaz1UcnVlKQpuYW1lID0gb3MuZW52aXJvblsiVkFSSUFCTEVfTkFNRSJdCnZhbHVlID0gb3MuZW52aXJvblsiVkFSSUFCTEVfVkFMVUUiXQppZiBub3QgdmFsdWU6CiAgcmFpc2UgQXNzZXJ0aW9uRXJyb3IoIlRoZSB2YXJpYWJsZSB2YWx1ZSByZXNvbHZlZCB0byBub3RoaW5nIikKbGluZXMgPSBlbnZpcm9ubWVudF9maWxlLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKS5zcGxpdGxpbmVzKCkKcHJlZml4ID0gbmFtZSArICI9IgpleHBlY3RlZCA9IG5hbWUgKyAiPSciICsgdmFsdWUgKyAiJyIKa2VwdCA9IFtsaW5lIGZvciBsaW5lIGluIGxpbmVzIGlmIG5vdCBsaW5lLnN0YXJ0c3dpdGgocHJlZml4KV0Ka2VwdC5hcHBlbmQoZXhwZWN0ZWQpCmVudmlyb25tZW50X2ZpbGUud3JpdGVfdGV4dCgiXG4iLmpvaW4oa2VwdCkgKyAiXG4iLCBlbmNvZGluZz0idXRmLTgiKQp3cml0dGVuID0gW2xpbmUgZm9yIGxpbmUgaW4gZW52aXJvbm1lbnRfZmlsZS5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04Iikuc3BsaXRsaW5lcygpIGlmIGxpbmUuc3RhcnRzd2l0aChwcmVmaXgpXQppZiB3cml0dGVuICE9IFtleHBlY3RlZF06CiAgcmFpc2UgQXNzZXJ0aW9uRXJyb3IoIlRoZSB1c2VyIGVudmlyb25tZW50IHZhcmlhYmxlIHdhcyBub3Qgd3JpdHRlbiBleGFjdGx5IG9uY2Ugd2l0aCBpdHMgdmFsdWUiKQo=\"))' && printf '\\nVSCUSE_USER_ENVIRONMENT_%s\\n' UPDATED"
+        "text": "read -rs VARIABLE_VALUE && PROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" VARIABLE_NAME=\"AGENT_SCOPE\" VARIABLE_VALUE=\"$VARIABLE_VALUE\" python3 -c 'import base64;exec(base64.b64decode(\"aW1wb3J0IG9zCmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAoKcHJvamVjdF9kaXIgPSBQYXRoKG9zLmVudmlyb25bIlBST0pFQ1RfRElSIl0pLnJlc29sdmUoKQplbnZpcm9ubWVudF9maWxlID0gcHJvamVjdF9kaXIgLyAiZW52IiAvICIuZW52LmRldiIKaWYgbm90IGVudmlyb25tZW50X2ZpbGUuaXNfZmlsZSgpOgogIHJhaXNlIEFzc2VydGlvbkVycm9yKCJUaGUgcHJvamVjdCBlbnZpcm9ubWVudCBmaWxlIG11c3QgYWxyZWFkeSBleGlzdCIpCm5hbWUgPSBvcy5lbnZpcm9uWyJWQVJJQUJMRV9OQU1FIl0KdmFsdWUgPSBvcy5lbnZpcm9uWyJWQVJJQUJMRV9WQUxVRSJdCmlmIG5vdCB2YWx1ZToKICByYWlzZSBBc3NlcnRpb25FcnJvcigiVGhlIHZhcmlhYmxlIHZhbHVlIHJlc29sdmVkIHRvIG5vdGhpbmciKQpsaW5lcyA9IGVudmlyb25tZW50X2ZpbGUucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpLnNwbGl0bGluZXMoKQpwcmVmaXggPSBuYW1lICsgIj0iCm1hdGNoZXMgPSBbaW5kZXggZm9yIGluZGV4LCBsaW5lIGluIGVudW1lcmF0ZShsaW5lcykgaWYgbGluZS5zdGFydHN3aXRoKHByZWZpeCldCmlmIGxlbihtYXRjaGVzKSAhPSAxOgogIHJhaXNlIEFzc2VydGlvbkVycm9yKCJUaGUgcHJvamVjdCBlbnZpcm9ubWVudCB2YXJpYWJsZSBtdXN0IGFscmVhZHkgZXhpc3QgZXhhY3RseSBvbmNlIikKZXhwZWN0ZWQgPSBuYW1lICsgIj0nIiArIHZhbHVlICsgIiciCmxpbmVzW21hdGNoZXNbMF1dID0gZXhwZWN0ZWQKZW52aXJvbm1lbnRfZmlsZS53cml0ZV90ZXh0KCJcbiIuam9pbihsaW5lcykgKyAiXG4iLCBlbmNvZGluZz0idXRmLTgiKQp3cml0dGVuID0gW2xpbmUgZm9yIGxpbmUgaW4gZW52aXJvbm1lbnRfZmlsZS5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04Iikuc3BsaXRsaW5lcygpIGlmIGxpbmUuc3RhcnRzd2l0aChwcmVmaXgpXQppZiB3cml0dGVuICE9IFtleHBlY3RlZF06CiAgcmFpc2UgQXNzZXJ0aW9uRXJyb3IoIlRoZSBwcm9qZWN0IGVudmlyb25tZW50IHZhcmlhYmxlIHdhcyBub3Qgd3JpdHRlbiBleGFjdGx5IG9uY2Ugd2l0aCBpdHMgdmFsdWUiKQo=\"))' && printf '\\nVSCUSE_PROJECT_ENVIRONMENT_%s\\n' UPDATED"
       },
-      "description": "Type the compiler-owned AGENT_SCOPE mutation command for the dev user environment into the active integrated terminal.",
+      "description": "Type the compiler-owned AGENT_SCOPE mutation command for the dev project environment into the active integrated terminal.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_assertTerminal_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_assertTerminal_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment"
+        "operation:project-environment"
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_runCommand_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_runCommand_c73c7cfcf_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2243,17 +2243,17 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_typeCommand_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_typeCommand_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment"
+        "operation:project-environment"
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_typeValue_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_typeValue_c73c7cfcf_6_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2265,17 +2265,17 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_runCommand_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_runCommand_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment"
+        "operation:project-environment"
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_submitValue_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_submitValue_c73c7cfcf_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2287,38 +2287,38 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_typeValue_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_typeValue_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment"
+        "operation:project-environment"
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_assertUpdated_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_assertUpdated_c73c7cfcf_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the VS Code integrated terminal visibly shows the exact text VSCUSE_USER_ENVIRONMENT_UPDATED on a standalone line, followed by a Bash shell prompt.",
+      "description": "@assertion the VS Code integrated terminal visibly shows the exact text VSCUSE_PROJECT_ENVIRONMENT_UPDATED on a standalone line, followed by a Bash shell prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_submitValue_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_submitValue_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment",
+        "operation:project-environment",
         "step_retry_timeout: 120"
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_closeTerminal_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_closeTerminal_c73c7cfcf_6_1",
       "agent": "interaction",
       "tool": "keyboard_shortcut",
       "parameters": {
@@ -2330,17 +2330,17 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_assertUpdated_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_assertUpdated_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment"
+        "operation:project-environment"
       ]
     },
     {
-      "step_id": "step_setUserEnvironmentVariable_assertClosed_c73c7cfcf_6_1",
+      "step_id": "step_setProjectEnvironmentVariable_assertClosed_c73c7cfcf_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2350,13 +2350,13 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_closeTerminal_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_closeTerminal_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:workspace",
-        "operation:user-environment",
+        "operation:project-environment",
         "step_retry_timeout: 30"
       ]
     },
@@ -2373,7 +2373,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_setUserEnvironmentVariable_assertClosed_c73c7cfcf_6_1"
+        "step_setProjectEnvironmentVariable_assertClosed_c73c7cfcf_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
