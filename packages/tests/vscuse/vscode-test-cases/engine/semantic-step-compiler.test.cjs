@@ -7474,7 +7474,7 @@ steps:
     [
       "literal client ID",
       sourceText.replace(
-        "\${{env:EXISTING_ENTRA_CLIENT_ID}}",
+        "${{env:EXISTING_ENTRA_CLIENT_ID}}",
         "4cfde729-32e4-4862-a409-07e14dbfd296",
       ),
       "VCB_ACCOUNT_EXPRESSION_REQUIRED",
@@ -7818,7 +7818,7 @@ steps:
     [
       "literal client ID",
       sourceText.replace(
-        "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}",
+        "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}",
         "fakefakefakefakeid1",
       ),
       "VCB_ACCOUNT_EXPRESSION_REQUIRED",
@@ -7826,7 +7826,7 @@ steps:
     [
       "literal client secret",
       sourceText.replace(
-        "\${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}",
+        "${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}",
         "fakefakefakefakefakefakefakefakefakefake",
       ),
       "VCB_ACCOUNT_EXPRESSION_REQUIRED",
