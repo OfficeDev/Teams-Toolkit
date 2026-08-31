@@ -25,7 +25,6 @@ import { FxCore } from "./FxCore";
 import {
   WorkerInspectionResult,
   WorkerMutationResult,
-  WorkerOperationContext,
   WorkerOperationOptions,
   WorkerProjectOptions,
   WorkerValidationResult,
