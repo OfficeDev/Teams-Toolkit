@@ -201,12 +201,6 @@ jobs:
       EXISTING_API_OAUTH_CLIENT_ID: ${{ secrets.EXISTING_API_OAUTH_CLIENT_ID || 'fake_client_id' }}
       EXISTING_API_OAUTH_CLIENT_SECRET: ${{ secrets.EXISTING_API_OAUTH_CLIENT_SECRET || 'fake_clientsecret' }}
 
-      # Fixtures retained by the migrated feature DA auth plans. These values
-      # match the public/fake literals from the retired recordings.
-      EXISTING_ENTRA_CLIENT_ID: ${{ secrets.EXISTING_ENTRA_CLIENT_ID || '4cfde729-32e4-4862-a409-07e14dbfd296' }}
-      EXISTING_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.EXISTING_GITHUB_OAUTH_CLIENT_ID || 'fakefakefakefakeid1' }}
-      EXISTING_GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.EXISTING_GITHUB_OAUTH_CLIENT_SECRET || 'fakefakefakefakefakefakefakefakefakefake' }}
-
       # OpenAI (openai.com). No test subscription exists, so this falls back to the
       # same fake key the existing UI tests use. Cases using this path must not
       # assert a real model completion.

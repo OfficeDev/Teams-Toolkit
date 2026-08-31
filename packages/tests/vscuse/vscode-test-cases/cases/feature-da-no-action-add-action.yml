@@ -56,7 +56,7 @@ cases:
         add-bearer-auth,
         check-bearer-auth,
         login-m365,
-        provision-bearer,
+        provision-api-key,
       ]
 
   - id: feature-da-no-action-entra-auth-remote-preview
@@ -401,11 +401,6 @@ steps:
     type: provision
     with:
       apiKey: "${{secret:EXISTING_API_KEY}}"
-
-  provision-bearer:
-    type: provision
-    with:
-      apiKey: "${{secret:EXISTING_API_BEARER_TOKEN}}"
 
   provision-entra:
     type: provision

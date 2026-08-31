@@ -1967,8 +1967,6 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
-    const successNotificationText =
-      "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
     if (isMicrosoftEntraConfiguration) {
       error = append(
         output,
@@ -1981,23 +1979,11 @@ function createSemanticStepCompiler() {
       if (error) return error;
       error = append(
         output,
-        render(state, "command-palette/execute-command.json.tpl", {
-          commandTitle: commandTitles.notifications,
+        render(state, "notifications/assert-contains.json.tpl", {
+          notificationText:
+            "Microsoft 365 Agents Toolkit has successfully added Microsoft Entra authentication to the selected APIs. Please: 1. Find the application id uri with placeholder AADAUTHCODE_APPLICATION_ID_URI in .env files and update it to the Microsoft Entra app. 2. Add https://teams.microsoft.com/api/platform/v1.0/oAuthConsentRedirect to redirect uri of the Mcirosoft Entra app.",
+          retryTimeout: "60",
         }),
-      );
-      if (error) return error;
-      error = append(
-        output,
-        render(
-          state,
-          "notifications/assert-collapsed-prefix-and-contains.json.tpl",
-          {
-            collapsedNotificationPrefix:
-              "Microsoft 365 Agents Toolkit has successfully ad",
-            notificationText: successNotificationText,
-            retryTimeout: "60",
-          },
-        ),
       );
       if (error) return error;
     }
@@ -2040,16 +2026,15 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
-    if (!isMicrosoftEntraConfiguration) {
-      error = append(
-        output,
-        render(state, "notifications/assert-contains.json.tpl", {
-          notificationText: successNotificationText,
-          retryTimeout: "60",
-        }),
-      );
-      if (error) return error;
-    }
+    error = append(
+      output,
+      render(state, "notifications/assert-contains.json.tpl", {
+        notificationText:
+          "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.",
+        retryTimeout: "60",
+      }),
+    );
+    if (error) return error;
     state.completed.add(`addApiAuthConfiguration:${inputs.authType}`);
     return { ok: true, value: output };
   }
