@@ -1,48 +1,65 @@
-name: FunctionExtension CI
+name: FunctionExtension CI by @QueenFi703
 
 on:
-  push:
-    paths:
-      - "packages/function-extension/**"
-    branches: [main]
-  pull_request:
-    paths:
-      - "packages/function-extension/**"
-  workflow_dispatch:
-
-defaults:
-  run:
-    working-directory: packages/function-extension/
+  workflow_call:
+    secrets:
+      FUNCTION_EXTENSION_CLIENT_SECRET:
+        required: true
+      FUNCTION_EXTENSION_UNAUTHORIZED_AAD_APP_CLIENT_SECRET:
+        required: true
+      FUNCTION_EXTENSION_ALLOWED_APP_SECRET:
+        required: true
 
 jobs:
-  Function-Extension:
-    runs-on: ubuntu-20.04
+  function-extension-ci:
+    name: Function Extension CI
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: packages/function-extension
+
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup node
-        uses: actions/setup-node@v3
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 14
+          node-version: 18
+
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 3.1.x
-      - name: Install Func CLI
-        run:
-          wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb && sudo dpkg -i packages-microsoft-prod.deb &&
-          sudo apt-get update && sudo apt-get install azure-functions-core-tools-3
+
+      - name: Install Azure Functions Core Tools
+        run: |
+          wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y azure-functions-core-tools-3
+
+      - name: Restore dependencies
+        run: dotnet restore Microsoft.Azure.WebJobs.Extensions.TeamsFx.sln
+
       - name: Build
-        run: dotnet build -c Release Microsoft.Azure.WebJobs.Extensions.TeamsFx.sln
+        run: dotnet build Microsoft.Azure.WebJobs.Extensions.TeamsFx.sln -c Release --no-restore
+
       - name: Pack
-        run: dotnet pack -c Release ./src/Microsoft.Azure.WebJobs.Extensions.TeamsFx.csproj
-      - name: Test
+        run: dotnet pack ./src/Microsoft.Azure.WebJobs.Extensions.TeamsFx.csproj -c Release --no-build
+
+      - name: Run tests
         env:
           TeamsFx_BINDING_IntegrationTestSettings__ClientId: 4c7c4582-ac3d-4097-97bb-f818a91b60d9
-          TeamsFx_BINDING_IntegrationTestSettings__ClientSecret: ${{secrets.FUNCTION_EXTENSION_CLIENT_SECRET}}
+          TeamsFx_BINDING_IntegrationTestSettings__ClientSecret: ${{ secrets.FUNCTION_EXTENSION_CLIENT_SECRET }}
           TeamsFx_BINDING_IntegrationTestSettings__UnauthorizedAadAppClientId: 079ba771-5807-4eb9-bb7a-51e6e2f088f3
-          TeamsFx_BINDING_IntegrationTestSettings__UnauthorizedAadAppClientSecret: ${{secrets.FUNCTION_EXTENSION_UNAUTHORIZED_AAD_APP_CLIENT_SECRET}}
+          TeamsFx_BINDING_IntegrationTestSettings__UnauthorizedAadAppClientSecret: ${{ secrets.FUNCTION_EXTENSION_UNAUTHORIZED_AAD_APP_CLIENT_SECRET }}
           TeamsFx_BINDING_IntegrationTestSettings__AllowedAppClientId: 6c7b6e6f-242a-42d0-ae07-823434beb336
-          TeamsFx_BINDING_IntegrationTestSettings__AllowedAppClientSecret: ${{secrets.FUNCTION_EXTENSION_ALLOWED_APP_SECRET}}
+          TeamsFx_BINDING_IntegrationTestSettings__AllowedAppClientSecret: ${{ secrets.FUNCTION_EXTENSION_ALLOWED_APP_SECRET }}
           TeamsFx_BINDING_IntegrationTestSettings__AuthorityHost: https://login.microsoftonline.com
           TeamsFx_BINDING_IntegrationTestSettings__TenantId: 546a2d59-2038-4a68-acff-f0239a409516
-        run: chmod +x "scripts/test.sh" && chmod +x "scripts/start_js_function.sh" && "scripts/test.sh"
+        run: |
+          chmod +x scripts/test.sh
+          chmod +x scripts/start_js_function.sh
+          ./scripts/test.sh
