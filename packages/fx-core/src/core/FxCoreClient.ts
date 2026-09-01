@@ -44,6 +44,7 @@ export type {
   WorkerOperationOptions,
   WorkerProjectOptions,
   WorkerReferenceInput,
+  WorkerReferenceType,
   WorkerValidationResult,
 } from "./workerAgents";
 

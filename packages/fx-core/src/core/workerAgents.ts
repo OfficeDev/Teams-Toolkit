@@ -24,6 +24,8 @@ const rootManifestRelativePath = path.join("appPackage", "declarativeAgent.json"
 const minimumWorkerAgentVersion = "1.6.0";
 const minimumLocalWorkerAgentVersion = "1.7.0";
 
+export type WorkerReferenceType = "id" | "file";
+
 export type WorkerReferenceInput = { type: "id"; id: string } | { type: "file"; file: string };
 
 export interface WorkerOperationOptions {
@@ -41,7 +43,7 @@ export interface WorkerOperationContext {
 
 export interface WorkerMutationResult {
   changed: boolean;
-  type: WorkerReferenceInput["type"];
+  type: WorkerReferenceType;
   reference: string;
   manifestPath: string;
 }
