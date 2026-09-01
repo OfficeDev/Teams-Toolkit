@@ -59,6 +59,7 @@ docker:
     # Test AAD App info
     TEST_AAD_APP_ID: "${TEST_AAD_APP_ID}"
     TEST_AAD_APP_PASSWORD: "${TEST_AAD_APP_PASSWORD}"
+    TEMPLATE_VERSION: "0.0.0-rc"
 execution:
   delay_between_steps: 0.5 # Default: 0.5 (seconds between steps)
   stop_on_error: true # Default: true (stop execution on first error)
