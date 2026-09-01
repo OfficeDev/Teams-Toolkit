@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 25,
+    "total_steps": 27,
     "created_at": "2026-06-17T00:08:47.447852",
     "name": "DA With EK Happy Path",
     "description": {
@@ -43,6 +43,8 @@
       "step_8dbb76fc",
       "plan_r_0929_040401",
       "plan_df4aaebb",
+      "step_d4f8a1c2",
+      "step_91b7e4a6",
       "step_c6ca43c3",
       "step_6a3082e5",
       "step_18feb473",
@@ -153,7 +155,7 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/bin/bash\n\nTARGET_DIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_XfRJT\"\nFILE_URL=\"https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\"\nFILE_NAME=\"Document.docx\"\n\n# Create target directory if it doesn't exist\nmkdir -p \"$TARGET_DIR\"\n\n# Download file with timeout\ncurl -L --max-time 120 \"$FILE_URL\" -o \"$TARGET_DIR/$FILE_NAME\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDERR ===\n% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0\n 11  695k   11 81911    0     0   138k      0  0:00:05 --:--:--  0:00:05  137k\n100  695k  100  695k    0     0   612k      0  0:00:01  0:00:01 --:--:--  612k\n\n\u2713 Script executed successfully"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\n#!/bin/bash\n\nTARGET_DIR=\"/home/vscode/AgentsToolkitProjects/vscuse_app_XfRJT\"\nFILE_URL=\"https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\"\nFILE_NAME=\"Document.docx\"\n\n# Create target directory if it doesn't exist\nmkdir -p \"$TARGET_DIR\"\n\n# Download file with timeout\ncurl -L --max-time 120 \"$FILE_URL\" -o \"$TARGET_DIR/$FILE_NAME\"\n```\n\n=== Execution Results ===\nExit Code: 0\n\n=== STDERR ===\n% Total    % Received % Xferd  Average Speed   Time    Time     Time  Current\n                                 Dload  Upload   Total   Spent    Left  Speed\n\n  0     0    0     0    0     0      0      0 --:--:-- --:--:--     0\n 11  695k   11 81911    0     0   138k      0  0:00:05 --:--:--  0:00:05  137k\n100  695k  100  695k    0     0   612k      0  0:00:01  0:00:01 --:--:--  612k\n\n\u2713 Script executed successfully"
       },
       "description": "@code download file: https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/refs/heads/main/DA-EK/Document.docx\nsave to the path: /home/vscode/AgentsToolkitProjects/${{var:app_name}}",
       "content_refs": [],
@@ -544,6 +546,50 @@
       "plan_id": "plan_13457846"
     },
     {
+      "step_id": "step_d4f8a1c2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 716,
+        "y": 461
+      },
+      "description": "Close the \"This agent is not installed\" dialog in Microsoft 365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-21T03:33:21.453000",
+      "plan_id": "plan_13457846"
+    },
+    {
+      "step_id": "step_91b7e4a6",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 110,
+        "y": 355
+      },
+      "description": "Select the provisioned ${{var:app_name}} agent from the Agents list in Microsoft 365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-21T03:33:21.453000",
+      "plan_id": "plan_13457846"
+    },
+    {
       "step_id": "step_c6ca43c3",
       "agent": "interaction",
       "tool": "click",
@@ -559,9 +605,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:351:376:16:5:b2b3e96402408080",
-        "dhash:351:376:96:5:00108593120080a0",
-        "dhash:351:376:0:10:1b95c3f0f0c0e0e0"
+        "dhash:351:376:16:5:0000000000000000",
+        "dhash:351:376:96:5:0000800028002e25",
+        "dhash:351:376:0:10:13f0e0e898d6c6f0"
       ],
       "postconditions": [],
       "tags": [
@@ -585,7 +631,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:15d0c3f0e0c1e0e0"
+        "dhash:512:384:16:5:0000000000000000",
+        "dhash:512:384:96:5:00000000040076b6",
+        "dhash:512:384:0:10:13e080c2d3dcc6e0"
       ],
       "postconditions": [],
       "tags": [],
@@ -607,7 +655,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:05f5cbe2d6d7dec8"
+        "dhash:512:384:16:5:0000000000000000",
+        "dhash:512:384:96:5:00000000000066b4",
+        "dhash:512:384:0:10:13e080d2c3d4c6e0"
       ],
       "postconditions": [],
       "tags": [],
@@ -629,7 +679,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:1ddcd2dedcc1f1e6"
+        "dhash:512:384:16:5:0000000000000000",
+        "dhash:512:384:96:5:e235300000000000",
+        "dhash:512:384:0:10:0be098cfd5c1d096"
       ],
       "postconditions": [],
       "tags": [
@@ -653,7 +705,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:384:0:20:1ddcd2dedce1d8d6"
+        "dhash:512:384:16:5:0000000000000000",
+        "dhash:512:384:96:5:e235300000000000",
+        "dhash:512:384:0:10:0be098cfd5c1d096"
       ],
       "postconditions": [],
       "tags": [],
@@ -677,9 +731,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:1002:604:16:5:d0d0d0d0d0d0d0d0",
-        "dhash:1002:604:96:5:0c0c0c0c12120602",
-        "dhash:1002:604:0:10:1ddcd2ded4d9dae6"
+        "dhash:1002:604:16:5:0000000000000000",
+        "dhash:1002:604:96:5:0505050505050505",
+        "dhash:1002:604:0:10:07e189dbd8c1d096"
       ],
       "postconditions": [],
       "tags": [
