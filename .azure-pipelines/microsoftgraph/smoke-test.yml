@@ -6,12 +6,14 @@ trigger: none
 pr: none
 
 parameters:
+  # Sentinel rather than '': Azure DevOps flags a string parameter whose default
+  # is empty as Required, which blocks the queue form.
   - name: poolName
-    displayName: Agent pool (leave empty to use a Microsoft-hosted agent)
+    displayName: Agent pool (keep "hosted" to use a Microsoft-hosted agent)
     type: string
-    default: ''
+    default: hosted
   - name: vmImage
-    displayName: Hosted image (used only when no pool is given)
+    displayName: Hosted image (used only when poolName is "hosted")
     type: string
     default: ubuntu-latest
 
@@ -22,7 +24,7 @@ variables:
     value: '8.6.12'
 
 pool:
-  ${{ if ne(parameters.poolName, '') }}:
+  ${{ if ne(parameters.poolName, 'hosted') }}:
     name: ${{ parameters.poolName }}
   ${{ else }}:
     vmImage: ${{ parameters.vmImage }}
