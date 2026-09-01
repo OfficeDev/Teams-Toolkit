@@ -1,6 +1,6 @@
 name: uitest-vscuse-template
 #
-# Caller that runs the non-Feature / non-Sample / non-Regular template plans via the shared reusable workflow.
+# Caller that runs plans outside the legacy Feature_*, generated feature-*, Sample_*, and Regular_* groups.
 # Also triggers ui-test-vscuse-features.yml after the report finishes when invoked by schedule.
 on:
   workflow_dispatch:
@@ -64,7 +64,7 @@ jobs:
       max_retries: ${{ fromJson(github.event.inputs.max_retries || '7') }}
       schedule_trigger: ${{ github.event.inputs.schedule_trigger == 'true' }}
       # Pipeline-specific knobs
-      plan_find_args: '-name "*.json" ! -name "Feature_*" ! -name "Sample_*" ! -name "Regular_*"'
+      plan_find_args: '-name "*.json" ! -name "Feature_*" ! -name "feature-*" ! -name "Sample_*" ! -name "Regular_*"'
       main_timeout_minutes: 50
       max_parallel: 50
       no_failed_step_text: " "

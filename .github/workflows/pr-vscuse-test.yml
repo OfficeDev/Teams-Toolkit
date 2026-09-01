@@ -28,7 +28,7 @@ on:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'PR number to analyze and run tests for'
+        description: "PR number to analyze and run tests for"
         required: true
         type: number
 
@@ -242,8 +242,8 @@ jobs:
         uses: actions/github-script@v6
         env:
           PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
-          HEAD_REF:  ${{ steps.pr-context.outputs.head_ref }}
-          BASE_REF:  ${{ steps.pr-context.outputs.base_ref }}
+          HEAD_REF: ${{ steps.pr-context.outputs.head_ref }}
+          BASE_REF: ${{ steps.pr-context.outputs.base_ref }}
         with:
           script: |
             const prNumber = parseInt(process.env.PR_NUMBER);
@@ -280,7 +280,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.code-check.outputs.skip_dispatch != 'true' && steps.code-check.outputs.has_code_files == 'true'
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Install Copilot CLI
         if: steps.code-check.outputs.skip_dispatch != 'true' && steps.code-check.outputs.has_code_files == 'true'
@@ -293,16 +293,16 @@ jobs:
         if: steps.code-check.outputs.skip_dispatch != 'true'
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_CLI_RUNNER_TOKEN }}
-          PR_TITLE:             ${{ steps.pr-context.outputs.pr_title }}
-          PR_BODY:              ${{ steps.pr-context.outputs.pr_body }}
-          CHANGED_FILES:        ${{ steps.changed-files.outputs.files }}
-          DIFF_STAT:            ${{ steps.diff-summary.outputs.diff_stat }}
-          BASE_BRANCH:          ${{ steps.pr-context.outputs.base_ref }}
-          HEAD_BRANCH:          ${{ steps.pr-context.outputs.head_ref }}
-          USER_HINT:            ${{ steps.user-hint.outputs.hint }}
-          CHANGED_PLANS_JSON:   ${{ steps.code-check.outputs.changed_plans_json }}
-          CHANGED_GROUPS_JSON:  ${{ steps.code-check.outputs.changed_groups_json }}
-          HAS_CODE_FILES:       ${{ steps.code-check.outputs.has_code_files }}
+          PR_TITLE: ${{ steps.pr-context.outputs.pr_title }}
+          PR_BODY: ${{ steps.pr-context.outputs.pr_body }}
+          CHANGED_FILES: ${{ steps.changed-files.outputs.files }}
+          DIFF_STAT: ${{ steps.diff-summary.outputs.diff_stat }}
+          BASE_BRANCH: ${{ steps.pr-context.outputs.base_ref }}
+          HEAD_BRANCH: ${{ steps.pr-context.outputs.head_ref }}
+          USER_HINT: ${{ steps.user-hint.outputs.hint }}
+          CHANGED_PLANS_JSON: ${{ steps.code-check.outputs.changed_plans_json }}
+          CHANGED_GROUPS_JSON: ${{ steps.code-check.outputs.changed_groups_json }}
+          HAS_CODE_FILES: ${{ steps.code-check.outputs.has_code_files }}
         run: |
           set -euo pipefail
 
@@ -429,6 +429,8 @@ jobs:
 
           SYSTEM_PROMPT='You are a test plan selector for the Microsoft 365 Agents Toolkit (ATK) VS Code extension. Select the most relevant VscUse UI test plans for a given PR based on the changed files and PR description. IMPORTANT: If a USER HINT is provided below, treat it as AUTHORITATIVE guidance from a human reviewer — it overrides your own heuristics. The hint may name specific plans to include or exclude, or describe which feature area to focus on; honour it as long as the requested plans actually exist in the available list. IMPORTANT CONTEXT: VscUse tests only test the VS Code extension. The plan files are all for VS Code templates. There are NO C# plan files. FILE PATH MAPPING (apply in order, stop at first match): 1) templates/vs/** (Visual Studio C# templates, NOT VS Code) -> These have no VscUse test plans; return only 1-2 smoke plans (Basic_Custom_Engine_Azure_OpenAI_ts_Copilot_Remote_Debug or General_Teams_Agent_OpenAI_py_Remote_Debug) as a basic sanity check. 2) templates/vscode/ts/custom-copilot-** -> Basic_Custom_Engine_*_ts_* Remote_Debug plans only. 3) templates/vscode/js/** -> *_js_* Remote_Debug plans only. 4) templates/vscode/py/** -> *_py_* Remote_Debug plans only. 5) templates/vscode/**declarative** or **da-** -> DA_*. 6) templates/vscode/**message-extension** -> Message_Extension_*. 7) templates/vscode/**tab** -> Basic_Tab_*. 8) templates/vscode/**bot** -> Simple_Bot_*. 9) packages/vscode-extension/src/treeview/** -> Feature_TreeView_*. 10) packages/vscode-extension/** -> Feature_*. 11) trivial/infra changes (remove pkg, typo, readme, CI yml) -> 1-2 smoke plans only. LANGUAGE RULES (for vscode templates only): _ts_=TypeScript plans; _js_=JavaScript plans; _py_=Python plans. ALL plans have a language suffix (_ts_, _js_, or _py_) - never invent a plan name without one. PLAN PREFIXES: DA_*=Declarative Agent; Basic_Custom_Engine_*=Custom Engine AI bot; General_Teams_Agent_*=Teams agent; Teams_Agent_With_Data_*=AI Search/RAG; Weather_Agent_*=Weather bot; Simple_Bot_*=Simple bot; Message_Extension_*=Message extension; Basic_Tab_*=Tab app; Feature_*=VS Code UI features. Keep total 1-5 plans (or whatever the user hint asks for). Output ONLY a JSON object: {"plans": ["PlanName1"], "reason": "one sentence (mention if a user hint was applied)"}'
 
+          SYSTEM_PROMPT="${SYSTEM_PROMPT} GENERATED FEATURE PLAN RULE (overrides conflicting legacy naming guidance above): feature-* plans are valid generated feature regression plans. In particular, feature-da-* plans cover Declarative Agent behavior and must be considered for relevant Declarative Agent changes. Select these plans whenever their described behavior is relevant; they do not require uppercase Feature_ or DA_ prefixes, or _ts, _js, or _py language suffixes. Never reject a listed feature-* plan solely because of its prefix or lack of a language suffix."
+
           if [ -n "${USER_HINT:-}" ]; then
             HINT_BLOCK=$(printf 'USER HINT (authoritative — overrides heuristics):\n%s\n\n' "$USER_HINT")
           else
@@ -521,13 +523,13 @@ jobs:
         if: steps.code-check.outputs.skip_dispatch != 'true'
         uses: actions/github-script@v6
         env:
-          TEST_PLANS:   ${{ steps.ai-select.outputs.test_plans }}
-          REASON:       ${{ steps.ai-select.outputs.reason }}
-          AI_SOURCE:    ${{ steps.ai-select.outputs.ai_source }}
-          IS_FALLBACK:  ${{ steps.ai-select.outputs.is_fallback }}
-          PR_NUMBER:    ${{ steps.pr-context.outputs.pr_number }}
-          HEAD_REF:     ${{ steps.pr-context.outputs.head_ref }}
-          BASE_REF:     ${{ steps.pr-context.outputs.base_ref }}
+          TEST_PLANS: ${{ steps.ai-select.outputs.test_plans }}
+          REASON: ${{ steps.ai-select.outputs.reason }}
+          AI_SOURCE: ${{ steps.ai-select.outputs.ai_source }}
+          IS_FALLBACK: ${{ steps.ai-select.outputs.is_fallback }}
+          PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
+          HEAD_REF: ${{ steps.pr-context.outputs.head_ref }}
+          BASE_REF: ${{ steps.pr-context.outputs.base_ref }}
         with:
           script: |
             const plans    = process.env.TEST_PLANS.split(',').filter(Boolean);
@@ -579,7 +581,7 @@ jobs:
         if: steps.code-check.outputs.skip_dispatch != 'true'
         uses: actions/github-script@v6
         env:
-          TEST_PLANS:  ${{ steps.ai-select.outputs.test_plans }}
+          TEST_PLANS: ${{ steps.ai-select.outputs.test_plans }}
           HEAD_BRANCH: ${{ steps.pr-context.outputs.head_ref }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -650,11 +652,11 @@ jobs:
         env:
           COMMENT_ID: ${{ steps.post-comment.outputs.comment_id }}
           TEST_PLANS: ${{ steps.ai-select.outputs.test_plans }}
-          REASON:     ${{ steps.ai-select.outputs.reason }}
-          RUN_URL:    ${{ steps.dispatch.outputs.smoke_run_url }}
-          PR_NUMBER:  ${{ steps.pr-context.outputs.pr_number }}
-          HEAD_REF:   ${{ steps.pr-context.outputs.head_ref }}
-          BASE_REF:   ${{ steps.pr-context.outputs.base_ref }}
+          REASON: ${{ steps.ai-select.outputs.reason }}
+          RUN_URL: ${{ steps.dispatch.outputs.smoke_run_url }}
+          PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
+          HEAD_REF: ${{ steps.pr-context.outputs.head_ref }}
+          BASE_REF: ${{ steps.pr-context.outputs.base_ref }}
         with:
           script: |
             const commentId = parseInt(process.env.COMMENT_ID);
@@ -845,19 +847,19 @@ jobs:
         if: always() && steps.code-check.outputs.skip_dispatch != 'true'
         uses: actions/github-script@v6
         env:
-          COMMENT_ID:  ${{ steps.post-comment.outputs.comment_id }}
-          TEST_PLANS:  ${{ steps.ai-select.outputs.test_plans }}
-          REASON:      ${{ steps.ai-select.outputs.reason }}
-          CONCLUSION:  ${{ steps.wait-smoke.outputs.conclusion }}
-          SMOKE_URL:   ${{ steps.wait-smoke.outputs.run_url }}
+          COMMENT_ID: ${{ steps.post-comment.outputs.comment_id }}
+          TEST_PLANS: ${{ steps.ai-select.outputs.test_plans }}
+          REASON: ${{ steps.ai-select.outputs.reason }}
+          CONCLUSION: ${{ steps.wait-smoke.outputs.conclusion }}
+          SMOKE_URL: ${{ steps.wait-smoke.outputs.run_url }}
           UI_TEST_URL: ${{ steps.wait-smoke.outputs.ui_test_url }}
-          REPORT_URL:  ${{ steps.wait-smoke.outputs.report_url }}
+          REPORT_URL: ${{ steps.wait-smoke.outputs.report_url }}
           PASSED_COUNT: ${{ steps.wait-smoke.outputs.passed_count }}
           FAILED_COUNT: ${{ steps.wait-smoke.outputs.failed_count }}
-          TOTAL_COUNT:  ${{ steps.wait-smoke.outputs.total_count }}
-          PR_NUMBER:   ${{ steps.pr-context.outputs.pr_number }}
-          HEAD_REF:    ${{ steps.pr-context.outputs.head_ref }}
-          BASE_REF:    ${{ steps.pr-context.outputs.base_ref }}
+          TOTAL_COUNT: ${{ steps.wait-smoke.outputs.total_count }}
+          PR_NUMBER: ${{ steps.pr-context.outputs.pr_number }}
+          HEAD_REF: ${{ steps.pr-context.outputs.head_ref }}
+          BASE_REF: ${{ steps.pr-context.outputs.base_ref }}
         with:
           script: |
             const commentId  = parseInt(process.env.COMMENT_ID);

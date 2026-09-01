@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 171 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 177 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 171 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 171);
+  assert.equal(first.value.files.length, 177);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 171);
+  assert.equal(generatedFiles.length, 177);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -825,6 +825,11 @@ test("VCB-85: existing API registration credentials are prompted only during pro
     }
     assert.match(
       plan.steps[targetSelectionIndex + 1].step_id,
+      /step_browserM365SignIn_refreshPage/,
+      caseId,
+    );
+    assert.match(
+      plan.steps[targetSelectionIndex + 2].step_id,
       /step_browserM365SignIn_assertAccount/,
       caseId,
     );
@@ -872,8 +877,14 @@ test("VCB-86: Copilot browser authentication preserves the launch deep link", as
 
   assert.equal(result.ok, true);
   for (const generated of result.value) {
+    const confirmationIndex = generated.plan.steps.findIndex((step) =>
+      step.step_id.startsWith("step_browserM365SignIn_confirmStaySignedIn_"),
+    );
+    assert.equal(confirmationIndex >= 0, true, generated.caseId);
     assert.equal(
-      generated.plan.steps.some((step) => step.parameters.key === "f5"),
+      generated.plan.steps
+        .slice(confirmationIndex + 1)
+        .some((step) => step.parameters.key === "f5"),
       false,
       generated.caseId,
     );
@@ -2737,6 +2748,119 @@ ${validBlock}`;
     assert.equal(
       invalid.diagnostics[0].code,
       "VCB_USER_ENVIRONMENT_INPUT_INVALID",
+      label,
+    );
+  }
+});
+
+test("VCB-172: project environment replaces existing dev variables with closed shell-safe inputs", async () => {
+  const validBlock = `      variables:
+        SECOND_VALUE: "alpha-value"
+        AGENT_SCOPE: personal
+`;
+  const sourceText = `version: 1
+cases:
+  - id: project-environment
+    scenarioId: VCB-172
+    workItemIds: [171]
+    steps: [scaffold, check, set-project-environment]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: env/.env.dev
+        expect:
+          exists: true
+  set-project-environment:
+    type: projectEnvironment
+    with:
+${validBlock}`;
+  const compile = (replacement = validBlock) =>
+    compileCaseBundle({
+      compileStep: createSemanticStepCompiler(),
+      sourcePath: "cases/project-environment.yml",
+      sourceText: sourceText.replace(validBlock, replacement),
+    });
+
+  const result = await compile();
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const mutation = result.value[0].plan.steps.filter((step) =>
+    step.step_id.startsWith("step_setProjectEnvironmentVariable_"),
+  );
+  assert.notEqual(mutation.length, 0);
+  const commands = mutation.filter(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text.includes("read -rs"),
+  );
+  assert.equal(commands.length, 2);
+  assert.equal(
+    commands[0].parameters.text.includes('VARIABLE_NAME="AGENT_SCOPE"'),
+    true,
+  );
+  assert.equal(
+    commands[1].parameters.text.includes('VARIABLE_NAME="SECOND_VALUE"'),
+    true,
+  );
+  const encodedScript = commands[0].parameters.text.match(
+    /base64\.b64decode\("([^"]+)"\)/,
+  )?.[1];
+  assert.equal(typeof encodedScript, "string");
+  const mutationScript = Buffer.from(encodedScript, "base64").toString("utf8");
+  assert.equal(
+    mutationScript.includes('project_dir / "env" / ".env.dev"'),
+    true,
+  );
+  assert.equal(mutationScript.includes(".env.dev.user"), false);
+  assert.equal(mutationScript.includes("touch("), false);
+  assert.equal(mutationScript.includes("if len(matches) != 1:"), true);
+  assert.equal(mutationScript.includes("if written != [expected]:"), true);
+  assert.equal(
+    mutation.some((step) => step.description.includes("personal")),
+    false,
+  );
+
+  for (const [label, replacement] of [
+    [
+      "extra field",
+      `      path: env/.env.dev
+      variables:
+        AGENT_SCOPE: personal
+`,
+    ],
+    ["empty variables", "      variables: {}\n"],
+    [
+      "invalid variable name",
+      `      variables:
+        agent_scope: personal
+`,
+    ],
+    [
+      "unsafe value",
+      `      variables:
+        AGENT_SCOPE: "$(id)"
+`,
+    ],
+  ]) {
+    const invalid = await compile(replacement);
+    assert.equal(invalid.ok, false, label);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_PROJECT_ENVIRONMENT_INPUT_INVALID",
       label,
     );
   }
@@ -6255,146 +6379,6 @@ steps:
   }
 });
 
-test("VCB-165: addDaAction adds an MCP action with bearer-token authentication", () => {
-  const sourceText = `version: 1
-cases:
-  - id: add-mcp-bearer-action
-    scenarioId: SCN-DA-ADD-MCP-ACTION-TO-DA
-    workItemIds: [165]
-    steps: [scaffold, check, add-action, verify]
-steps:
-  scaffold:
-    type: scaffold
-    with:
-      template: da/no-action
-      answers:
-        - question: appName
-          type: text
-          value: "\${{var:app_name:vscuse_app_#####}}"
-  check:
-    type: checks
-    with:
-      - type: file
-        path: appPackage/declarativeAgent.json
-        expect: { exists: true }
-  add-action:
-    type: addDaAction
-    with:
-      source: mcp
-      url: https://example.com/mcp
-      authType: bearer-token
-  verify:
-    type: checks
-    with:
-      - type: file
-        path: appPackage/ai-plugin-examplecom.json
-        expect:
-          contains: ['"type": "ApiKeyPluginVault"', '"reference_id": "\${{MCP_DA_AUTH_ID_EXAMPLECOM}}"']
-      - type: file
-        path: m365agents.yml
-        expect:
-          contains: ["uses: apiKey/register", "baseUrl: https://example.com/mcp", "registrationId: MCP_DA_AUTH_ID_EXAMPLECOM"]
-          notContains: ["oauth/register", "clientId:", "clientSecret:"]
-      - type: file
-        path: m365agents.local.yml
-        expect:
-          contains: ["uses: apiKey/register", "baseUrl: https://example.com/mcp", "registrationId: MCP_DA_AUTH_ID_EXAMPLECOM"]
-          notContains: ["oauth/register", "clientId:", "clientSecret:"]
-`;
-  const result = compileInlineSource(sourceText, "vscuse-vcb-165.yml");
-  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
-  const plan = result.value[0].plan;
-  const typedValues = plan.steps
-    .filter((step) => step.tool === "type_text")
-    .map((step) => step.parameters.text);
-  assert.equal(typedValues.includes("Microsoft 365 Agents: Add Action"), true);
-  assert.equal(typedValues.includes("Start with a MCP server"), true);
-  assert.equal(typedValues.includes("https://example.com/mcp"), true);
-  assert.equal(typedValues.includes("API Key (Bearer Token Auth)"), true);
-  assert.equal(
-    plan.steps.some((step) =>
-      step.description.includes("Enter OpenAPI Document URL"),
-    ),
-    false,
-  );
-  const addActionCommandIndex = plan.steps.findIndex(
-    (step) =>
-      step.tool === "type_text" &&
-      step.parameters.text === "Microsoft 365 Agents: Add Action",
-  );
-  const firstFileCheckIndex = plan.steps.findIndex(
-    (step, index) =>
-      index > addActionCommandIndex && step.tags.includes("assertion:file"),
-  );
-  const authConfirmationIndex = plan.steps.findIndex(
-    (step) => step.step_id === plan.steps[firstFileCheckIndex].depends_on[0],
-  );
-  assert.equal(addActionCommandIndex >= 0, true);
-  assert.equal(authConfirmationIndex > addActionCommandIndex, true);
-  assert.equal(firstFileCheckIndex > authConfirmationIndex, true);
-  assert.equal(plan.steps[authConfirmationIndex].tool, "key_press");
-  assert.equal(plan.steps[authConfirmationIndex].parameters.key, "enter");
-  assert.equal(
-    plan.steps[authConfirmationIndex].tags.includes("answer_type:singleSelect"),
-    true,
-  );
-  assert.equal(
-    plan.steps
-      .slice(addActionCommandIndex, authConfirmationIndex + 1)
-      .some((step) => step.tool === "click"),
-    false,
-  );
-  assert.equal(
-    plan.steps
-      .slice(addActionCommandIndex, firstFileCheckIndex)
-      .some((step) => step.tags.includes("component:notifications")),
-    false,
-  );
-  assert.equal(
-    plan.steps[firstFileCheckIndex].tags.includes("step_retry_timeout:120"),
-    true,
-  );
-  const assertionByPath = new Map(
-    readFileAssertions(plan).map((assertion) => [assertion.path, assertion]),
-  );
-  assert.equal(
-    assertionByPath.has("appPackage/ai-plugin-examplecom.json"),
-    true,
-  );
-  assert.equal(assertionByPath.has("m365agents.yml"), true);
-  assert.equal(assertionByPath.has("m365agents.local.yml"), true);
-
-  for (const [label, invalidSource] of [
-    [
-      "unsupported auth type",
-      sourceText.replace("authType: bearer-token", "authType: oauth"),
-    ],
-    ["non-HTTPS URL", sourceText.replace("https://example", "http://example")],
-    [
-      "missing auth type",
-      sourceText.replace("\n      authType: bearer-token", ""),
-    ],
-    [
-      "extra field",
-      sourceText.replace(
-        "      authType: bearer-token",
-        "      authType: bearer-token\n      operations: all",
-      ),
-    ],
-  ]) {
-    const invalid = compileInlineSource(
-      invalidSource,
-      `vscuse-vcb-165-${label}.yml`,
-    );
-    assert.equal(invalid.ok, false, label);
-    assert.equal(
-      invalid.diagnostics[0].code,
-      "VCB_ADD_DA_ACTION_INPUT_INVALID",
-      label,
-    );
-  }
-});
-
 test("VCB-151: regenerateDaAction selects a supported operation without pointer coordinates", () => {
   const sourceText = `version: 1
 cases:
@@ -6768,6 +6752,1194 @@ test("VCB-152: packageApp preserves the recorded local package flow and rejects 
       invalid.diagnostics[0].code,
       "VCB_PACKAGE_APP_INPUT_INVALID",
       label,
+    );
+  }
+});
+
+test("VCB-165: packageApp packages a configured TypeSpec action before provision", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: typespec-package
+    scenarioId: VCB-165
+    workItemIds: [33517192]
+    steps: [scaffold, check, configure-action, package-app]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/typespec
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: typespec
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect: { exists: true }
+  configure-action:
+    type: configureTypeSpecAction
+    with:
+      action: github-issues
+  package-app:
+    type: packageApp
+    with:
+      environment: dev
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-165.yml");
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    typedValues.includes("Microsoft 365 Agents: Zip App Package"),
+    true,
+  );
+  assert.equal(typedValues.includes("dev"), true);
+  assert.equal(typedValues.includes("npm run generate:env"), false);
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes("App package successfully built at"),
+    ),
+    true,
+  );
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.tool === "click" &&
+        step.parameters.x === 1002 &&
+        step.parameters.y === 16,
+    ),
+    false,
+  );
+  assertRecordedClick(plan, 442, 81, [
+    "dhash:442:81:16:5:0c736a0aaafb608c",
+    "dhash:442:81:96:5:000028d2d128121c",
+    "dhash:442:81:0:10:d0712230b022a00d",
+  ]);
+
+  for (const [label, invalidSource] of [
+    [
+      "missing configured action",
+      sourceText.replace(
+        "check, configure-action, package-app",
+        "check, package-app",
+      ),
+    ],
+    [
+      "unsupported environment",
+      sourceText.replace("environment: dev", "environment: local"),
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-165-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_PACKAGE_APP_INPUT_INVALID",
+      label,
+    );
+  }
+
+  const fixture = await compileFixture(
+    "da-typespec-with-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  const migrated = fixture.value.find(
+    ({ caseId }) =>
+      caseId === "feature-da-typespec-package-action-remote-preview",
+  );
+  assert.notEqual(migrated, undefined);
+  assert.equal(migrated.plan.plan_metadata.description.workitem, "33517192");
+  const migratedSteps = migrated.plan.steps;
+  const packageIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Zip App Package",
+  );
+  const loginIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(
+      "ACCOUNTS section of the side bar lists an entry whose label begins with Sign in to Microsoft",
+    ),
+  );
+  const provisionIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Provision",
+  );
+  assert.notEqual(packageIndex, -1);
+  assert.notEqual(loginIndex, -1);
+  assert.notEqual(provisionIndex, -1);
+  assert.equal(packageIndex < loginIndex, true);
+  assert.equal(loginIndex < provisionIndex, true);
+});
+
+test("VCB-166: no-action API-key configuration uses coordinate-free prompts before provision", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: no-action-api-key
+    scenarioId: VCB-166
+    workItemIds: [31543255]
+    steps: [scaffold, check, add-action, add-auth, check-auth, login, provision]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { exists: true }
+  add-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_apikey.yaml
+      operations: all
+  add-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: api-key
+      authName: apiKey
+      location: header
+      keyName: X-API-KEY
+  check-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect: { contains: ['"type": "ApiKeyPluginVault"'] }
+  login:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  provision:
+    type: provision
+    with:
+      apiKey: "\${{secret:EXISTING_API_KEY}}"
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-166.yml");
+  assert.equal(
+    result.ok,
+    true,
+    `${result.diagnostics?.[0]?.code}: ${result.diagnostics?.[0]?.message}`,
+  );
+  const steps = result.value[0].plan.steps;
+  const commandTitle =
+    "Microsoft 365 Agents: Add Configurations to Support Actions with Authentication in Declarative Agent";
+  const commandIndex = steps.findIndex(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text === commandTitle,
+  );
+  const successText =
+    "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
+  const successIndex = steps.findIndex((step) =>
+    step.description.includes(successText),
+  );
+  assert.notEqual(commandIndex, -1);
+  assert.notEqual(successIndex, -1);
+  const configurationSteps = steps.slice(commandIndex, successIndex + 1);
+  assert.deepEqual(
+    configurationSteps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text),
+    [commandTitle, "apiKey", "API Key", "Header", "X-API-KEY"],
+  );
+  assert.equal(
+    configurationSteps.some((step) => step.tool === "click"),
+    false,
+  );
+  assert.equal(
+    configurationSteps.some((step) =>
+      step.description.includes(
+        "the active prompt titled Import Manifest File is visible and the option ai-plugin.json is focused",
+      ),
+    ),
+    true,
+  );
+  assert.equal(
+    steps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "Microsoft 365 Agents: Provision",
+    ),
+    true,
+  );
+
+  for (const [label, invalidSource, expectedCode] of [
+    [
+      "missing action",
+      sourceText.replace("check, add-action, add-auth", "check, add-auth"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "unconfigured provision",
+      sourceText.replace("add-action, add-auth, check-auth", "add-action"),
+      "VCB_PROVISION_INPUT_REDUNDANT",
+    ],
+    [
+      "unsupported auth type",
+      sourceText.replace("authType: api-key", "authType: oauth"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "unsupported location",
+      sourceText.replace("location: header", "location: query"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-166-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(invalid.diagnostics[0].code, expectedCode, label);
+  }
+
+  const fixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  const migrated = fixture.value.find(
+    ({ caseId }) => caseId === "feature-da-no-action-api-key-auth-provision",
+  );
+  assert.notEqual(migrated, undefined);
+  assert.equal(migrated.plan.plan_metadata.description.workitem, "31543255");
+  const migratedSteps = migrated.plan.steps;
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text ===
+          "https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_apikey.yaml",
+    ),
+    true,
+  );
+  const authSuccessIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(successText),
+  );
+  const loginIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(
+      "ACCOUNTS section of the side bar lists an entry whose label begins with Sign in to Microsoft",
+    ),
+  );
+  const provisionIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Provision",
+  );
+  assert.notEqual(authSuccessIndex, -1);
+  assert.notEqual(loginIndex, -1);
+  assert.notEqual(provisionIndex, -1);
+  assert.equal(authSuccessIndex < loginIndex, true);
+  assert.equal(loginIndex < provisionIndex, true);
+  assert.deepEqual(
+    readFileAssertions(migrated.plan).map((assertion) => assertion.path),
+    [
+      "appPackage/declarativeAgent.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/apiSpecificationFile/openapi.yaml",
+      "appPackage/declarativeAgent.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/apiSpecificationFile/openapi.yaml",
+      "m365agents.yml",
+      "m365agents.local.yml",
+    ],
+  );
+});
+
+test("VCB-167: no-action Bearer configuration provisions with the bearer token secret", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: no-action-bearer
+    scenarioId: VCB-167
+    workItemIds: [31043015]
+    steps: [scaffold, check, add-action, add-auth, check-auth, login, provision]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { exists: true }
+  add-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_bearer.yaml
+      operations: all
+  add-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: bearer-token
+      authName: apiKey
+  check-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect: { contains: ["type: http", "scheme: bearer"] }
+  login:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  provision:
+    type: provision
+    with:
+      apiKey: "\${{secret:EXISTING_API_BEARER_TOKEN}}"
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-167.yml");
+  assert.equal(
+    result.ok,
+    true,
+    `${result.diagnostics?.[0]?.code}: ${result.diagnostics?.[0]?.message}`,
+  );
+  const steps = result.value[0].plan.steps;
+  const commandTitle =
+    "Microsoft 365 Agents: Add Configurations to Support Actions with Authentication in Declarative Agent";
+  const commandIndex = steps.findIndex(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text === commandTitle,
+  );
+  const successText =
+    "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
+  const successIndex = steps.findIndex((step) =>
+    step.description.includes(successText),
+  );
+  assert.notEqual(commandIndex, -1);
+  assert.notEqual(successIndex, -1);
+  const configurationSteps = steps.slice(commandIndex, successIndex + 1);
+  assert.deepEqual(
+    configurationSteps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text),
+    [commandTitle, "apiKey", "API Key (Bearer Token Auth)"],
+  );
+  assert.equal(
+    configurationSteps.some((step) => step.tool === "click"),
+    false,
+  );
+  assert.equal(
+    steps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "Microsoft 365 Agents: Provision",
+    ),
+    true,
+  );
+
+  for (const [label, invalidSource, expectedCode] of [
+    [
+      "missing action",
+      sourceText.replace("check, add-action, add-auth", "check, add-auth"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "unconfigured provision",
+      sourceText.replace("add-action, add-auth, check-auth", "add-action"),
+      "VCB_PROVISION_INPUT_REDUNDANT",
+    ],
+    [
+      "unsupported auth type",
+      sourceText.replace("authType: bearer-token", "authType: oauth"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "API-key location field",
+      sourceText.replace(
+        "authName: apiKey",
+        "authName: apiKey\n      location: header",
+      ),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "API-key name field",
+      sourceText.replace(
+        "authName: apiKey",
+        "authName: apiKey\n      keyName: X-API-KEY",
+      ),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-167-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(invalid.diagnostics[0].code, expectedCode, label);
+  }
+
+  const fixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  const migrated = fixture.value.find(
+    ({ caseId }) => caseId === "feature-da-no-action-bearer-auth-provision",
+  );
+  assert.notEqual(migrated, undefined);
+  assert.equal(migrated.plan.plan_metadata.description.workitem, "31043015");
+  const migratedSteps = migrated.plan.steps;
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text ===
+          "https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_bearer.yaml",
+    ),
+    true,
+  );
+  const authSuccessIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(successText),
+  );
+  const loginIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(
+      "ACCOUNTS section of the side bar lists an entry whose label begins with Sign in to Microsoft",
+    ),
+  );
+  const provisionIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Provision",
+  );
+  assert.notEqual(authSuccessIndex, -1);
+  assert.notEqual(loginIndex, -1);
+  assert.notEqual(provisionIndex, -1);
+  assert.equal(authSuccessIndex < loginIndex, true);
+  assert.equal(loginIndex < provisionIndex, true);
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "${{secret:EXISTING_API_BEARER_TOKEN}}",
+    ),
+    true,
+  );
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "${{secret:EXISTING_API_KEY}}",
+    ),
+    false,
+  );
+  const fileAssertions = readFileAssertions(migrated.plan);
+  assert.deepEqual(
+    fileAssertions.map((assertion) => assertion.path),
+    [
+      "appPackage/declarativeAgent.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/apiSpecificationFile/openapi.yaml",
+      "appPackage/declarativeAgent.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/apiSpecificationFile/openapi.yaml",
+      "m365agents.yml",
+      "m365agents.local.yml",
+    ],
+  );
+  for (const [path, expectedText] of [
+    ["appPackage/ai-plugin.json", '"type": "ApiKeyPluginVault"'],
+    ["appPackage/apiSpecificationFile/openapi.yaml", "scheme: bearer"],
+    ["m365agents.yml", "uses: apiKey/register"],
+    ["m365agents.local.yml", "uses: apiKey/register"],
+  ]) {
+    assert.equal(
+      fileAssertions.some(
+        (assertion) =>
+          assertion.path === path && assertion.contains?.includes(expectedText),
+      ),
+      true,
+      `${path}: ${expectedText}`,
+    );
+  }
+});
+
+test("VCB-168: no-action Microsoft Entra configuration verifies persistent notifications", async () => {
+  const scope =
+    "api://plugincb4aae.azurewebsites.net/4cfde729-32e4-4862-a409-07e14dbfd296/readpairs_read: Read repair records";
+  const sourceText = `version: 1
+cases:
+  - id: no-action-entra
+    scenarioId: VCB-168
+    workItemIds: [31538607]
+    steps: [scaffold, check, add-action, add-auth, check-auth, login, provision, target, open, check-sign-in]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { exists: true }
+  add-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_aad_tmp.yaml
+      operations: all
+  add-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: microsoft-entra
+      authName: aadAuthCode
+      scope: "${scope}"
+  check-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect: { contains: ['"type": "OAuthPluginVault"'] }
+  login:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  provision:
+    type: provision
+    with:
+      entra:
+        clientId: "\${{env:EXISTING_ENTRA_CLIENT_ID}}"
+  target:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+  open:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+  check-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: show repair records assigned to karin blair
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          namePrefix: Sign in to
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-168.yml");
+  assert.equal(
+    result.ok,
+    true,
+    `${result.diagnostics?.[0]?.code}: ${result.diagnostics?.[0]?.message}`,
+  );
+  const steps = result.value[0].plan.steps;
+  const commandTitle =
+    "Microsoft 365 Agents: Add Configurations to Support Actions with Authentication in Declarative Agent";
+  const commandIndex = steps.findIndex(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text === commandTitle,
+  );
+  const guidancePrefix = "Microsoft 365 Agents Toolkit has successfully ad";
+  const successText =
+    "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
+  const notificationAssertions = steps.filter(
+    (step) =>
+      step.agent === "assertion" &&
+      (step.description.includes(guidancePrefix) ||
+        step.description.includes(successText)),
+  );
+  assert.notEqual(commandIndex, -1);
+  assert.equal(notificationAssertions.length, 1);
+  assert.equal(
+    notificationAssertions[0].description.includes(guidancePrefix),
+    true,
+  );
+  assert.match(notificationAssertions[0].description, /yellow warning/);
+  assert.equal(
+    notificationAssertions[0].description.includes(successText),
+    true,
+  );
+  const notificationIndex = steps.indexOf(notificationAssertions[0]);
+  const notificationCenterIndex = steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Show Notifications",
+  );
+  assert.notEqual(notificationCenterIndex, -1);
+  assert.equal(notificationCenterIndex < notificationIndex, true);
+  const configurationSteps = steps.slice(commandIndex, notificationIndex + 1);
+  assert.deepEqual(
+    configurationSteps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text),
+    [
+      commandTitle,
+      "aadAuthCode",
+      "Microsoft Entra",
+      scope,
+      "Notifications: Show Notifications",
+    ],
+  );
+  assert.equal(
+    configurationSteps.some((step) => step.tool === "click"),
+    false,
+  );
+  assert.equal(
+    steps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "${{env:EXISTING_ENTRA_CLIENT_ID}}",
+    ),
+    true,
+  );
+
+  for (const [label, invalidSource, expectedCode] of [
+    [
+      "missing action",
+      sourceText.replace("check, add-action, add-auth", "check, add-auth"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "unconfigured provision",
+      sourceText.replace("add-action, add-auth, check-auth", "add-action"),
+      "VCB_PROVISION_INPUT_REDUNDANT",
+    ],
+    [
+      "unsupported auth type",
+      sourceText.replace("authType: microsoft-entra", "authType: oauth"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "unsupported auth name",
+      sourceText.replace("authName: aadAuthCode", "authName: otherAuth"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "unsupported scope",
+      sourceText.replace(scope, "api://other/scope: Other scope"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "literal client ID",
+      sourceText.replace(
+        "${{env:EXISTING_ENTRA_CLIENT_ID}}",
+        "4cfde729-32e4-4862-a409-07e14dbfd296",
+      ),
+      "VCB_ACCOUNT_EXPRESSION_REQUIRED",
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-168-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(invalid.diagnostics[0].code, expectedCode, label);
+  }
+
+  const fixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  const migrated = fixture.value.find(
+    ({ caseId }) => caseId === "feature-da-no-action-entra-auth-remote-preview",
+  );
+  assert.notEqual(migrated, undefined);
+  assert.equal(migrated.plan.plan_metadata.description.workitem, "31538607");
+  const migratedSteps = migrated.plan.steps;
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text ===
+          "https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_aad_tmp.yaml",
+    ),
+    true,
+  );
+  const authSuccessIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(successText),
+  );
+  const loginIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(
+      "ACCOUNTS section of the side bar lists an entry whose label begins with Sign in to Microsoft",
+    ),
+  );
+  const provisionIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Provision",
+  );
+  const targetIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Debug: Select and Start Debugging",
+  );
+  const chatIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "show repair records assigned to karin blair",
+  );
+  const signInIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(
+      "a visible browser element has role button and an accessible name that starts with Sign in to",
+    ),
+  );
+  for (const index of [
+    authSuccessIndex,
+    loginIndex,
+    provisionIndex,
+    targetIndex,
+    chatIndex,
+    signInIndex,
+  ]) {
+    assert.notEqual(index, -1);
+  }
+  assert.equal(authSuccessIndex < loginIndex, true);
+  assert.equal(loginIndex < provisionIndex, true);
+  assert.equal(provisionIndex < targetIndex, true);
+  assert.equal(targetIndex < chatIndex, true);
+  assert.equal(chatIndex < signInIndex, true);
+  const fileAssertions = readFileAssertions(migrated.plan);
+  assert.deepEqual(
+    fileAssertions.map((assertion) => assertion.path),
+    [
+      "appPackage/declarativeAgent.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/apiSpecificationFile/openapi.yaml",
+      "appPackage/declarativeAgent.json",
+      "appPackage/ai-plugin.json",
+      "appPackage/apiSpecificationFile/openapi.yaml",
+      "m365agents.yml",
+      "m365agents.local.yml",
+    ],
+  );
+  for (const [path, expectedText] of [
+    ["appPackage/ai-plugin.json", '"type": "OAuthPluginVault"'],
+    [
+      "appPackage/ai-plugin.json",
+      '"reference_id": "${{AADAUTHCODE_REGISTRATION_ID}}"',
+    ],
+    ["appPackage/apiSpecificationFile/openapi.yaml", "aadAuthCode:"],
+    ["appPackage/apiSpecificationFile/openapi.yaml", "type: oauth2"],
+    [
+      "appPackage/apiSpecificationFile/openapi.yaml",
+      "https://login.microsoftonline.com/${{TEAMS_APP_TENANT_ID}}/oauth2/v2.0/authorize",
+    ],
+    ["m365agents.yml", "uses: oauth/register"],
+    ["m365agents.yml", "identityProvider: MicrosoftEntra"],
+    ["m365agents.yml", "configurationId: AADAUTHCODE_REGISTRATION_ID"],
+    ["m365agents.yml", "applicationIdUri: AADAUTHCODE_APPLICATION_ID_URI"],
+    ["m365agents.local.yml", "uses: oauth/register"],
+    ["m365agents.local.yml", "identityProvider: MicrosoftEntra"],
+  ]) {
+    assert.equal(
+      fileAssertions.some(
+        (assertion) =>
+          assertion.path === path && assertion.contains?.includes(expectedText),
+      ),
+      true,
+      `${path}: ${expectedText}`,
+    );
+  }
+});
+
+test("VCB-169: Feature-derived cases use feature-prefixed descriptor filenames", async () => {
+  const noAction = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (sourceText) => sourceText,
+  );
+  const typeSpec = await compileFixture(
+    "da-typespec-with-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(noAction.ok, true, noAction.diagnostics?.[0]?.code);
+  assert.equal(typeSpec.ok, true, typeSpec.diagnostics?.[0]?.code);
+  const noActionCaseIds = noAction.value.map(({ caseId }) => caseId);
+  assert.equal(noActionCaseIds[0], "da-no-action-add-openapi-action");
+  assert.equal(
+    noActionCaseIds.includes("da-no-action-add-mcp-bearer-action"),
+    true,
+  );
+  const expectedFeatureCaseIds = [
+    "feature-da-two-openapi-actions-personal-provision",
+    "feature-da-no-action-api-key-auth-provision",
+    "feature-da-no-action-bearer-auth-provision",
+    "feature-da-no-action-entra-auth-remote-preview",
+    "feature-da-no-action-oauth-auth-remote-preview",
+  ];
+  for (const expectedCaseId of expectedFeatureCaseIds) {
+    assert.equal(
+      noActionCaseIds.includes(expectedCaseId),
+      true,
+      expectedCaseId,
+    );
+  }
+  assert.equal(
+    noActionCaseIds.filter((caseId) => caseId.startsWith("feature-")).length,
+    expectedFeatureCaseIds.length,
+  );
+  assert.deepEqual(
+    typeSpec.value.map(({ caseId }) => caseId),
+    [
+      "da-typespec-with-action-remote-preview",
+      "feature-da-typespec-package-action-remote-preview",
+    ],
+  );
+  for (const generated of [
+    ...noAction.value.filter(({ caseId }) => caseId.startsWith("feature-")),
+    typeSpec.value[1],
+  ]) {
+    assert.equal(generated.caseId.startsWith("feature-"), true);
+    assert.equal(generated.fileName, `${generated.caseId}.json`);
+  }
+});
+
+test("VCB-170: no-action OAuth configuration provisions protected credentials", async () => {
+  const authorizationUrl = "https://github.com/login/oauth/authorize";
+  const tokenUrl = "https://github.com/login/oauth/access_token";
+  const scope = "repo: Read repos";
+  const sourceText = `version: 1
+cases:
+  - id: feature-no-action-oauth
+    scenarioId: VCB-170
+    workItemIds: [31043030]
+    steps: [scaffold, check, add-action, add-auth, check-auth, login, provision, target, open, check-sign-in]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { exists: true }
+  add-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_github.yaml
+      operations: all
+  add-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: oauth
+      authName: oauth2
+      authorizationUrl: ${authorizationUrl}
+      tokenUrl: ${tokenUrl}
+      refreshUrl: ""
+      scope: "${scope}"
+      pkce: false
+  check-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect: { contains: ['"type": "OAuthPluginVault"'] }
+  login:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  provision:
+    type: provision
+    with:
+      oauth:
+        clientId: "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
+        clientSecret: "\${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"
+  target:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+  open:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+  check-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: List repositories for the authenticated user
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          name: Sign in to GitHub v3 REST API
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-170.yml");
+  assert.equal(
+    result.ok,
+    true,
+    `${result.diagnostics?.[0]?.code}: ${result.diagnostics?.[0]?.message}`,
+  );
+  const steps = result.value[0].plan.steps;
+  const commandTitle =
+    "Microsoft 365 Agents: Add Configurations to Support Actions with Authentication in Declarative Agent";
+  const successText =
+    "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
+  const commandIndex = steps.findIndex(
+    (step) =>
+      step.tool === "type_text" && step.parameters.text === commandTitle,
+  );
+  const successIndex = steps.findIndex((step) =>
+    step.description.includes(successText),
+  );
+  assert.notEqual(commandIndex, -1);
+  assert.notEqual(successIndex, -1);
+  const configurationSteps = steps.slice(commandIndex, successIndex + 1);
+  assert.deepEqual(
+    configurationSteps
+      .filter((step) => step.tool === "type_text")
+      .map((step) => step.parameters.text),
+    [commandTitle, "oauth2", "OAuth", authorizationUrl, tokenUrl, scope, "No"],
+  );
+  assert.equal(
+    configurationSteps.some((step) => step.tool === "click"),
+    false,
+  );
+  const refreshAssertionIndex = configurationSteps.findIndex((step) =>
+    step.description.includes(
+      "the active prompt titled Enter the OAuth Refresh URL is visible and its text input is empty",
+    ),
+  );
+  assert.notEqual(refreshAssertionIndex, -1);
+  assert.equal(configurationSteps[refreshAssertionIndex + 1].tool, "key_press");
+  assert.equal(
+    configurationSteps[refreshAssertionIndex + 1].parameters.key,
+    "enter",
+  );
+  for (const credential of [
+    "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}",
+    "${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}",
+  ]) {
+    assert.equal(
+      steps.some(
+        (step) =>
+          step.tool === "type_text" && step.parameters.text === credential,
+      ),
+      true,
+      credential,
+    );
+  }
+
+  for (const [label, invalidSource, expectedCode] of [
+    [
+      "missing action",
+      sourceText.replace("check, add-action, add-auth", "check, add-auth"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "unconfigured provision",
+      sourceText.replace("add-action, add-auth, check-auth", "add-action"),
+      "VCB_PROVISION_INPUT_REDUNDANT",
+    ],
+    [
+      "nonempty refresh URL",
+      sourceText.replace('refreshUrl: ""', `refreshUrl: ${tokenUrl}`),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "PKCE enabled",
+      sourceText.replace("pkce: false", "pkce: true"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "unsupported scope",
+      sourceText.replace(scope, "gist: Read gists"),
+      "VCB_ADD_API_AUTH_INPUT_INVALID",
+    ],
+    [
+      "literal client ID",
+      sourceText.replace(
+        "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}",
+        "fakefakefakefakeid1",
+      ),
+      "VCB_ACCOUNT_EXPRESSION_REQUIRED",
+    ],
+    [
+      "literal client secret",
+      sourceText.replace(
+        "${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}",
+        "fakefakefakefakefakefakefakefakefakefake",
+      ),
+      "VCB_ACCOUNT_EXPRESSION_REQUIRED",
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-170-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(invalid.diagnostics[0].code, expectedCode, label);
+  }
+
+  const fixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  const migrated = fixture.value.find(
+    ({ caseId }) => caseId === "feature-da-no-action-oauth-auth-remote-preview",
+  );
+  assert.notEqual(migrated, undefined);
+  assert.equal(migrated.plan.plan_metadata.description.workitem, "31043030");
+  const migratedSteps = migrated.plan.steps;
+  assert.equal(
+    migratedSteps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text ===
+          "https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_github.yaml",
+    ),
+    true,
+  );
+  const authSuccessIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(successText),
+  );
+  const loginIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(
+      "ACCOUNTS section of the side bar lists an entry whose label begins with Sign in to Microsoft",
+    ),
+  );
+  const provisionIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Provision",
+  );
+  const targetIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Debug: Select and Start Debugging",
+  );
+  const chatIndex = migratedSteps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "List repositories for the authenticated user",
+  );
+  const signInIndex = migratedSteps.findIndex((step) =>
+    step.description.includes(
+      "a visible browser element has role button and accessible name Sign in to GitHub v3 REST API",
+    ),
+  );
+  for (const index of [
+    authSuccessIndex,
+    loginIndex,
+    provisionIndex,
+    targetIndex,
+    chatIndex,
+    signInIndex,
+  ]) {
+    assert.notEqual(index, -1);
+  }
+  assert.equal(authSuccessIndex < loginIndex, true);
+  assert.equal(loginIndex < provisionIndex, true);
+  assert.equal(provisionIndex < targetIndex, true);
+  assert.equal(targetIndex < chatIndex, true);
+  assert.equal(chatIndex < signInIndex, true);
+  const fileAssertions = readFileAssertions(migrated.plan);
+  for (const [path, expectedText] of [
+    ["appPackage/ai-plugin.json", '"type": "OAuthPluginVault"'],
+    [
+      "appPackage/ai-plugin.json",
+      '"reference_id": "${{OAUTH2_REGISTRATION_ID}}"',
+    ],
+    ["appPackage/apiSpecificationFile/openapi.yaml", "oauth2:"],
+    ["appPackage/apiSpecificationFile/openapi.yaml", "type: oauth2"],
+    ["appPackage/apiSpecificationFile/openapi.yaml", authorizationUrl],
+    ["appPackage/apiSpecificationFile/openapi.yaml", tokenUrl],
+    ["appPackage/apiSpecificationFile/openapi.yaml", scope],
+    ["m365agents.yml", "uses: oauth/register"],
+    ["m365agents.yml", "name: oauth2"],
+    ["m365agents.yml", "flow: authorizationCode"],
+    ["m365agents.yml", "configurationId: OAUTH2_REGISTRATION_ID"],
+    ["m365agents.local.yml", "uses: oauth/register"],
+    ["m365agents.local.yml", "configurationId: OAUTH2_REGISTRATION_ID"],
+  ]) {
+    assert.equal(
+      fileAssertions.some(
+        (assertion) =>
+          assertion.path === path && assertion.contains?.includes(expectedText),
+      ),
+      true,
+      `${path}: ${expectedText}`,
+    );
+  }
+  for (const path of ["m365agents.yml", "m365agents.local.yml"]) {
+    assert.equal(
+      fileAssertions.some(
+        (assertion) =>
+          assertion.path === path &&
+          assertion.notContains?.includes("isPKCEEnabled: true"),
+      ),
+      true,
+      `${path}: PKCE disabled`,
     );
   }
 });
@@ -7164,7 +8336,76 @@ steps:
   }
 });
 
-test("VCB-154: seven legacy plans are replaced, two are retired, and five remain", async () => {
+test("VCB-164: repeated OpenAPI actions provision a personal-scope declarative agent", async () => {
+  const result = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const generated = result.value.find(
+    ({ caseId }) =>
+      caseId === "feature-da-two-openapi-actions-personal-provision",
+  );
+  assert.notEqual(generated, undefined);
+  assert.equal(generated.plan.plan_metadata.description.workitem, "29293016");
+
+  const plan = generated.plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    typedValues.filter((value) => value === "Microsoft 365 Agents: Add Action")
+      .length,
+    2,
+  );
+  assert.equal(
+    typedValues.filter(
+      (value) =>
+        value ===
+        "https://raw.githubusercontent.com/huimiu/api-spec-example/229f757740f3d0ca22de8e79478062bd56bc4cbe/repair-service.yml",
+    ).length,
+    2,
+  );
+
+  const environmentIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_setProjectEnvironmentVariable_"),
+  );
+  const loginIndex = plan.steps.findIndex((step) =>
+    step.description.startsWith(
+      "@assertion the ACCOUNTS section of the side bar lists an entry",
+    ),
+  );
+  const provisionIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Provision",
+  );
+  assert.equal(
+    environmentIndex >= 0 &&
+      loginIndex > environmentIndex &&
+      provisionIndex > loginIndex,
+    true,
+  );
+  assert.equal(typedValues.includes("personal"), true);
+
+  const assertionByPath = new Map(
+    readFileAssertions(plan).map((assertion) => [assertion.path, assertion]),
+  );
+  for (const path of [
+    "appPackage/ai-plugin.json",
+    "appPackage/ai-plugin_1.json",
+    "appPackage/apiSpecificationFile/openapi.yaml",
+    "appPackage/apiSpecificationFile/openapi_1.yaml",
+  ]) {
+    assert.equal(assertionByPath.get(path)?.exists, true, path);
+  }
+  assert.deepEqual(
+    assertionByPath.get("appPackage/declarativeAgent.json").contains,
+    ['"actions"', '"id": "action_1"', '"id": "action_2"'],
+  );
+});
+
+test("VCB-154: thirteen legacy plans are replaced, three are retired, and five remain", async () => {
   const migrations = [
     {
       source: "feature-basic-tab-local-debug.yml",
@@ -7189,6 +8430,43 @@ test("VCB-154: seven legacy plans are replaced, two are retired, and five remain
       caseId: "da-no-action-add-openapi-action",
       generated: "da-no-action--da-no-action-add-openapi-action.json",
       legacy: "DA_No_Action_Add_Action.json",
+    },
+    {
+      source: "feature-da-no-action-add-action.yml",
+      caseId: "feature-da-two-openapi-actions-personal-provision",
+      generated: "feature-da-two-openapi-actions-personal-provision.json",
+      legacy: "Feature_DA_Add_Action_From_OpenAPI_Spec.json",
+    },
+    {
+      source: "da-typespec-with-action.yml",
+      caseId: "feature-da-typespec-package-action-remote-preview",
+      generated: "feature-da-typespec-package-action-remote-preview.json",
+      legacy: "Feature_DA_Package_TypeSpec_Template_With_Action.json",
+    },
+    {
+      source: "feature-da-no-action-add-action.yml",
+      caseId: "feature-da-no-action-api-key-auth-provision",
+      generated: "feature-da-no-action-api-key-auth-provision.json",
+      legacy: "Feature_DA_No_Action_Add_ApiKey_Auth_Configurations.json",
+    },
+    {
+      source: "feature-da-no-action-add-action.yml",
+      caseId: "feature-da-no-action-bearer-auth-provision",
+      generated: "feature-da-no-action-bearer-auth-provision.json",
+      legacy: "Feature_DA_No_Action_Add_Bearer_Auth_Configurations.json",
+    },
+    {
+      source: "feature-da-no-action-add-action.yml",
+      caseId: "feature-da-no-action-entra-auth-remote-preview",
+      generated: "feature-da-no-action-entra-auth-remote-preview.json",
+      legacy:
+        "Feature_DA_No_Action_Add_Microsoft_Entra_Auth_Configurations.json",
+    },
+    {
+      source: "feature-da-no-action-add-action.yml",
+      caseId: "feature-da-no-action-oauth-auth-remote-preview",
+      generated: "feature-da-no-action-oauth-auth-remote-preview.json",
+      legacy: "Feature_DA_No_Action_Add_OAuth_Auth_Configurations.json",
     },
     {
       source: "feature-da-regenerate-action.yml",
@@ -7238,6 +8516,7 @@ test("VCB-154: seven legacy plans are replaced, two are retired, and five remain
       migration.legacy,
     );
   }
+
   const envRecreated = await compileFixture(
     "non-sso-tab.yml",
     (sourceText) => sourceText,
@@ -7289,6 +8568,10 @@ test("VCB-154: seven legacy plans are replaced, two are retired, and five remain
       "DA_Add_Action_Import_Existing_API.json",
       "four authentication variants provide the retained coverage",
     ],
+    [
+      "Feature_DA_Advanced_Personal_Scope_Provision_with_Copilot_License.json",
+      "only assertion is `AGENT_SCOPE=personal`",
+    ],
   ];
   const mapping = await fs.readFile(
     path.join(casesDirectory, "legacy-case-mapping.md"),
@@ -7301,7 +8584,7 @@ test("VCB-154: seven legacy plans are replaced, two are retired, and five remain
   for (const [status, expectedCount] of [
     ["Partial", 1],
     ["Not Mapped", 4],
-    ["Retired", 2],
+    ["Retired", 3],
   ]) {
     assert.equal(
       mapping.match(new RegExp(`^\\|[^\\n]*\\|\\s*${status}\\s*\\|`, "gmu"))
