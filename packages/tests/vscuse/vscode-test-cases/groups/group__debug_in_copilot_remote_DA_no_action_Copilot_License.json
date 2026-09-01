@@ -9,7 +9,7 @@
    "precondition_retry_interval": 2,
    "step_retry_count": 0
   },
-  "total_steps": 12,
+  "total_steps": 15,
   "created_at": "2026-05-20T03:43:01.198447",
   "name": "group  debug in copilot remote DA no action Copilot License",
   "description": {
@@ -25,7 +25,10 @@
    "step_969dc7e1",
    "step_5211ced2",
    "step_a5893dc9",
+   "step_b26741ad",
+   "step_7d2ab804",
    "step_41fdae73",
+   "step_5f4c921a",
    "step_ceb13b5f",
    "step_5d691940",
    "step_063b5973",
@@ -35,7 +38,7 @@
   "tags": [
    "group"
   ],
-  "updated_at": "2026-05-20T05:34:17.798632"
+  "updated_at": "2026-08-22T03:19:35.304+00:00"
  },
  "steps": [
   {
@@ -155,23 +158,87 @@
    "parameters": {
     "button": "left",
     "x": 455,
-    "y": 351
+    "y": 285
    },
-   "description": "Click the red plus icon next to the \"Email or phone\" field in the Microsoft login form.",
+   "description": "Click inside the \"Email or phone\" field in the Microsoft login form to focus it before entering the account email.",
    "content_refs": [],
    "timeout": 30,
    "retry_count": 0,
    "continue_on_error": "false",
    "depends_on": [],
-   "preconditions": [
-    "dhash:455:351:0:10:0b28d0d9e7e6dae4"
-   ],
+   "preconditions": [],
    "postconditions": [],
    "tags": [
-    "precondition_wait_timeout: 60"
+    "delay: 15",
+    "force_run:true"
    ],
    "screenshot": "step_a5893dc9",
    "created_at": "2026-05-20T03:43:01.246637",
+   "plan_id": "plan_df4aaebb"
+  },
+  {
+   "step_id": "step_b26741ad",
+   "agent": "interaction",
+   "tool": "click",
+   "parameters": {
+    "button": "left",
+    "x": 455,
+    "y": 285
+   },
+   "description": "After Chrome finishes loading the Microsoft sign-in page, click inside the \"Email or phone\" field again so the account email replaces the field value instead of the browser address.",
+   "content_refs": [],
+   "timeout": 30,
+   "retry_count": 0,
+   "continue_on_error": "false",
+   "depends_on": [],
+   "preconditions": [],
+   "postconditions": [],
+   "tags": [
+    "delay: 5",
+    "force_run:true"
+   ],
+   "screenshot": null,
+   "created_at": "2026-08-22T03:19:35.304+00:00",
+   "plan_id": "plan_df4aaebb"
+  },
+  {
+   "step_id": "step_5f4c921a",
+   "agent": "interaction",
+   "tool": "key_press",
+   "parameters": {
+    "key": "esc"
+   },
+   "description": "Press Escape after replacing the autofilled email address to dismiss the passkey suggestion popup without losing input focus.",
+   "content_refs": [],
+   "timeout": 30,
+   "retry_count": 0,
+   "continue_on_error": "false",
+   "depends_on": [],
+   "preconditions": [],
+   "postconditions": [],
+   "tags": [],
+   "screenshot": null,
+   "created_at": "2026-08-22T02:22:42.627+00:00",
+   "plan_id": "plan_df4aaebb"
+  },
+  {
+   "step_id": "step_7d2ab804",
+   "agent": "interaction",
+   "tool": "keyboard_shortcut",
+   "parameters": {
+    "keys": "ctrl+a"
+   },
+   "description": "Select the autofilled email address so the configured Microsoft 365 account replaces it.",
+   "content_refs": [],
+   "timeout": 30,
+   "retry_count": 0,
+   "continue_on_error": "false",
+   "depends_on": [],
+   "preconditions": [],
+   "postconditions": [],
+   "tags": [],
+   "screenshot": null,
+   "created_at": "2026-08-22T02:22:42.627+00:00",
    "plan_id": "plan_df4aaebb"
   },
   {
@@ -202,8 +269,8 @@
    "tool": "click",
    "parameters": {
     "button": "left",
-    "x": 638,
-    "y": 486
+    "x": 634,
+    "y": 418
    },
    "description": "Click the \"Next\" button on the Microsoft login screen after entering the email address, within the Chrome browser during the authentication workflow.",
    "content_refs": [],
@@ -211,11 +278,7 @@
    "retry_count": 0,
    "continue_on_error": "false",
    "depends_on": [],
-   "preconditions": [
-    "dhash:638:486:16:5:d799299d942bd400",
-    "dhash:638:486:96:5:00000c62720c0000",
-    "dhash:638:486:0:10:1b28f0cbc6f6dae4"
-   ],
+   "preconditions": [],
    "postconditions": [],
    "tags": [],
    "screenshot": "step_ceb13b5f",
