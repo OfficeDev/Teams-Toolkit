@@ -92,7 +92,7 @@
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
-      "continue_on_error": "false",
+      "continue_on_error": "true",
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
