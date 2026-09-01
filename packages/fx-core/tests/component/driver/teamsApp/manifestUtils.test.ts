@@ -528,13 +528,18 @@ describe("trimManifestShortName", () => {
 describe("resolveLocFile", () => {
   const sandbox = vi;
   let mockedEnvRestore: RestoreFn;
+  let tmpDir: string | undefined;
 
-  afterEach(() => {
+  afterEach(async () => {
     if (mockedEnvRestore) {
       mockedEnvRestore();
     }
     vi.restoreAllMocks();
     vi.restoreAllMocks();
+    if (tmpDir) {
+      await fs.remove(tmpDir);
+      tmpDir = undefined;
+    }
   });
 
   it("returns error when loc file doesn't exist", async () => {
@@ -583,40 +588,36 @@ describe("resolveLocFile", () => {
   });
 
   it("resolves $[file(...)] when context is provided", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "resolve-loc-file-"));
-    try {
-      const locFilePath = path.join(root, "loc.json");
-      await fs.writeFile(
-        locFilePath,
-        JSON.stringify({
-          name: {
-            short: "$[file('instruction.txt')]",
-          },
-        })
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "resolveloc-"));
+    const locFilePath = path.join(tmpDir, "loc_file.json");
+    await fs.writeFile(
+      locFilePath,
+      JSON.stringify({
+        name: {
+          short: "$[file('instruction.txt')]",
+        },
+      })
+    );
+    await fs.writeFile(path.join(tmpDir, "instruction.txt"), "localized short name");
+
+    const context: any = {
+      platform: Platform.VSCode,
+      logProvider: {
+        error: () => {},
+      },
+      telemetryReporter: {
+        sendTelemetryEvent: () => {},
+      },
+    };
+
+    const locFile = await manifestUtils.resolveLocFile(locFilePath, context);
+
+    assert.isTrue(locFile.isOk());
+    if (locFile.isOk()) {
+      assert.equal(
+        (JSON.parse(locFile.value) as TeamsAppManifest).name.short,
+        "localized short name"
       );
-      await fs.writeFile(path.join(root, "instruction.txt"), "localized short name");
-
-      const context: any = {
-        platform: Platform.VSCode,
-        logProvider: {
-          error: () => {},
-        },
-        telemetryReporter: {
-          sendTelemetryEvent: () => {},
-        },
-      };
-
-      const locFile = await manifestUtils.resolveLocFile(locFilePath, context);
-
-      assert.isTrue(locFile.isOk());
-      if (locFile.isOk()) {
-        assert.equal(
-          (JSON.parse(locFile.value) as TeamsAppManifest).name.short,
-          "localized short name"
-        );
-      }
-    } finally {
-      await fs.remove(root);
     }
   });
 

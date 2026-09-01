@@ -21,6 +21,7 @@ import { PluginManifestSchema } from "./pluginManifest";
 export * from "./declarativeCopilotManifest";
 export * from "./generated-types";
 export * from "./manifest";
+export * from "./manifestTemplate";
 export * from "./pluginManifest";
 export * from "./wrappers";
 
@@ -89,11 +90,8 @@ export class ManifestUtil {
    * @returns An empty array if it passes validation, or an array of error string otherwise.
    */
   static validateManifestAgainstSchema<
-    T extends
-      | Manifest
-      | DeclarativeCopilotManifestSchema
-      | PluginManifestSchema
-      | TeamsManifest = TeamsAppManifest,
+    T extends Manifest | DeclarativeCopilotManifestSchema | PluginManifestSchema | TeamsManifest =
+      TeamsAppManifest,
   >(manifest: T, schema: JSONSchemaType<T>): Promise<string[]> {
     let validate;
     if (schema.$schema?.includes("2020-12")) {
@@ -134,11 +132,8 @@ export class ManifestUtil {
    * @returns
    */
   static async fetchSchema<
-    T extends
-      | Manifest
-      | DeclarativeCopilotManifestSchema
-      | PluginManifestSchema
-      | TeamsManifest = TeamsAppManifest,
+    T extends Manifest | DeclarativeCopilotManifestSchema | PluginManifestSchema | TeamsManifest =
+      TeamsAppManifest,
   >(manifest: T): Promise<JSONSchemaType<T>> {
     const schemaUrl = ((manifest as any).$schema || (manifest as any).schema) as string;
     if (!schemaUrl) {
@@ -172,11 +167,8 @@ export class ManifestUtil {
    * @returns An empty array if schema validation passes, or an array of error string otherwise.
    */
   static async validateManifest<
-    T extends
-      | Manifest
-      | DeclarativeCopilotManifestSchema
-      | PluginManifestSchema
-      | TeamsManifest = TeamsAppManifest,
+    T extends Manifest | DeclarativeCopilotManifestSchema | PluginManifestSchema | TeamsManifest =
+      TeamsAppManifest,
   >(manifest: T): Promise<string[]> {
     const schema = await this.fetchSchema(manifest);
     return ManifestUtil.validateManifestAgainstSchema(manifest, schema);
