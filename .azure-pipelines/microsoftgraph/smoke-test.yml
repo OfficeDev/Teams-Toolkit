@@ -1,0 +1,63 @@
+name: smoke_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+# Manual-only: registering this definition cannot disturb existing CI.
+# Flip to a `pr:` / `trigger:` block once a run has been verified green.
+trigger: none
+pr: none
+
+parameters:
+  - name: poolName
+    displayName: Agent pool (leave empty to use a Microsoft-hosted agent)
+    type: string
+    default: ''
+  - name: vmImage
+    displayName: Hosted image (used only when no pool is given)
+    type: string
+    default: ubuntu-latest
+
+variables:
+  - name: nodeVersion
+    value: '22.17'
+  - name: pnpmVersion
+    value: '8.6.12'
+
+pool:
+  ${{ if ne(parameters.poolName, '') }}:
+    name: ${{ parameters.poolName }}
+  ${{ else }}:
+    vmImage: ${{ parameters.vmImage }}
+
+steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 1
+
+  - script: |
+      echo "Agent.Name=$(Agent.Name)"
+      echo "Agent.OS=$(Agent.OS)"
+      echo "Build.SourceBranch=$(Build.SourceBranch)"
+      echo "Build.SourceVersion=$(Build.SourceVersion)"
+      git --version
+    displayName: Report agent context
+
+  - task: NodeTool@0
+    displayName: Install Node.js
+    inputs:
+      versionSpec: $(nodeVersion)
+
+  - script: |
+      corepack enable
+      corepack prepare pnpm@$(pnpmVersion) --activate
+      pnpm --version
+    displayName: Activate pnpm
+
+  # Filtered install keeps the smoke run fast; a full workspace install is not
+  # needed to prove the agent can restore this repo's dependency graph.
+  - script: pnpm install --frozen-lockfile --filter @microsoft/app-manifest...
+    displayName: Install dependencies (manifest slice)
+
+  - script: pnpm --filter @microsoft/app-manifest build
+    displayName: Build @microsoft/app-manifest
+
+  - script: pnpm --filter @microsoft/app-manifest test:unit
+    displayName: Unit test @microsoft/app-manifest
