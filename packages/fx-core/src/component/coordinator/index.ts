@@ -383,6 +383,7 @@ class Coordinator {
       projectPath: ctx.projectPath,
       allowMissingRoot: true,
       validateOnlyIfWorkerAgentsConfigured: true,
+      signal: ctx.signal,
       resolveAgentFile: async (authoredFile, manifestPath) =>
         getResolvedManifest(authoredFile, manifestPath, ManifestType.TeamsManifest, ctx),
     });

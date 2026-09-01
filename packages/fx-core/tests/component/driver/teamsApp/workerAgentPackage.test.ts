@@ -304,6 +304,95 @@ describe("worker agent package integration", () => {
     expect(content).not.toContain("changed-after-validation");
   });
 
+  it("WORKER-PACKAGE-06: packages a shared Worker and its dependency once", async () => {
+    stubTeamsManifest();
+    const workersPath = path.join(appPackagePath, "workers");
+    await fs.ensureDir(workersPath);
+    await fs.writeJson(
+      path.join(appPackagePath, "declarativeAgent.json"),
+      declarativeAgent([{ file: "workers/one.json" }, { file: "workers/two.json" }])
+    );
+    await fs.writeJson(
+      path.join(workersPath, "one.json"),
+      declarativeAgent([{ file: "shared.json" }])
+    );
+    await fs.writeJson(
+      path.join(workersPath, "two.json"),
+      declarativeAgent([{ file: "shared.json" }])
+    );
+    await fs.writeJson(
+      path.join(workersPath, "shared.json"),
+      declarativeAgent(undefined, [
+        { name: "EmbeddedKnowledge", files: [{ file: "knowledge.txt" }] },
+      ])
+    );
+    await fs.writeFile(path.join(workersPath, "knowledge.txt"), "shared knowledge");
+
+    const execution = await new CreateAppPackageDriver().execute(
+      {
+        manifestPath: path.join(appPackagePath, "manifest.json"),
+        outputZipPath: outputPath,
+        outputFolder: path.join(appPackagePath, "build"),
+      },
+      context
+    );
+
+    expect(execution.result.isOk()).toBe(true);
+    const names = new AdmZip(outputPath).getEntries().map((entry) => entry.entryName);
+    expect(names.filter((name) => name === "workers/shared.json")).toHaveLength(1);
+    expect(names.filter((name) => name === "workers/knowledge.txt")).toHaveLength(1);
+  });
+
+  it("WORKER-PACKAGE-07: cancellation during graph loading stops before ZIP publication", async () => {
+    stubTeamsManifest();
+    const firstWorkerPath = path.join(appPackagePath, "first.json");
+    const secondWorkerPath = path.join(appPackagePath, "second.json");
+    await fs.writeJson(
+      path.join(appPackagePath, "declarativeAgent.json"),
+      declarativeAgent([{ file: "first.json" }, { file: "second.json" }])
+    );
+    await fs.writeJson(firstWorkerPath, declarativeAgent());
+    await fs.writeJson(secondWorkerPath, declarativeAgent());
+    const controller = new AbortController();
+    context.signal = controller.signal;
+    let releaseLoad: (() => void) | undefined;
+    let signalLoadStarted: (() => void) | undefined;
+    const loadStarted = new Promise<void>((resolve) => (signalLoadStarted = resolve));
+    const blocked = new Promise<void>((resolve) => (releaseLoad = resolve));
+    const getManifest = copilotGptManifestUtils.getManifest.bind(copilotGptManifestUtils);
+    const workerLoads: string[] = [];
+    vi.spyOn(copilotGptManifestUtils, "getManifest").mockImplementation(
+      async (manifestPath, workerContext) => {
+        if (manifestPath === firstWorkerPath || manifestPath === secondWorkerPath) {
+          workerLoads.push(manifestPath);
+        }
+        if (manifestPath === firstWorkerPath) {
+          signalLoadStarted?.();
+          await blocked;
+        }
+        return getManifest(manifestPath, workerContext);
+      }
+    );
+
+    const executionPromise = new CreateAppPackageDriver().execute(
+      {
+        manifestPath: path.join(appPackagePath, "manifest.json"),
+        outputZipPath: outputPath,
+        outputFolder: path.join(appPackagePath, "build"),
+      },
+      context
+    );
+    await loadStarted;
+    controller.abort();
+    releaseLoad?.();
+    const execution = await executionPromise;
+
+    expect(execution.result.isErr()).toBe(true);
+    if (execution.result.isErr()) expect(execution.result.error.name).toBe("UserCancel");
+    expect(workerLoads).toEqual([firstWorkerPath]);
+    expect(await fs.pathExists(outputPath)).toBe(false);
+  });
+
   it("WORKER-PACKAGE-03: blocking validation prevents final ZIP publication", async () => {
     stubTeamsManifest();
     await fs.writeJson(

@@ -36,8 +36,9 @@ references them: https://learn.microsoft.com/office/dev/add-ins/overview/app-pac
 
 The canonical `appPackage` directory is the containment boundary at every depth. On Windows,
 canonical path identity and containment comparisons are case-insensitive; on case-sensitive
-platforms they are case-sensitive. Two different lexical references that resolve to the same
-canonical target are aliases and diagnose as a duplicate target. A missing target has no
+platforms they are case-sensitive. Equivalent references declared directly by one manifest are
+duplicates. A target reached through separate non-cyclic graph branches is a shared DAG node and
+is validated and packaged once without a duplicate diagnostic. A missing target has no
 `ResolvedTarget`, so repair operations compare it by `ReferenceKey` only.
 
 ## Shared Model
@@ -45,9 +46,9 @@ canonical target are aliases and diagnose as a duplicate target. A missing targe
 All operations use one internal parser, reference normalizer, and graph walker. The parser retains
 the authored JSON object shape for Worker diagnostics and routes the non-Worker DA document through
 the generated manifest converter for base type validation. Published IDs are trimmed at the public
-input boundary and are otherwise opaque, case-sensitive leaves. File references preserve their
-authored spelling in manifests and package content; normalized keys and canonical targets are
-internal comparison identities only.
+input boundary and are otherwise opaque, case-sensitive leaves. Add stores new file references as
+slash-separated ReferenceKeys with redundant `.` segments removed. Existing authored references
+are not rewritten by inspect, validate, package, or provision.
 
 The graph walker validates each existing local manifest as a declarative-agent JSON document,
 walks local worker references recursively, and never resolves an ID over the network. Graph depth
@@ -59,21 +60,45 @@ references require v1.7 or later.
 
 ## Diagnostics
 
-Diagnostics have this stable shape:
+Diagnostics use one public machine-readable vocabulary:
 
 ```typescript
+type WorkerDiagnosticCode =
+  | "WORKER_ENTRIES_INVALID"
+  | "WORKER_SCHEMA_UNSUPPORTED"
+  | "WORKER_REFERENCE_INVALID"
+  | "WORKER_REFERENCE_UNSUPPORTED_PROPERTY"
+  | "WORKER_REFERENCE_CONFLICTING"
+  | "WORKER_REFERENCE_EMPTY"
+  | "WORKER_FILE_ABSOLUTE"
+  | "WORKER_FILE_OUTSIDE_PACKAGE"
+  | "WORKER_FILE_MISSING"
+  | "WORKER_FILE_NOT_REGULAR"
+  | "WORKER_FILE_STAT_FAILED"
+  | "WORKER_FILE_CANONICAL_OUTSIDE_PACKAGE"
+  | "WORKER_FILE_READ_FAILED"
+  | "WORKER_FILE_INVALID_JSON"
+  | "WORKER_FILE_NOT_DECLARATIVE_AGENT"
+  | "WORKER_DUPLICATE_REFERENCE"
+  | "WORKER_SELF_REFERENCE"
+  | "WORKER_CYCLE"
+  | "WORKER_DEPTH_RECOMMENDED";
+
 interface WorkerDiagnostic {
   severity: "error" | "warning" | "info";
-  code: string;
+  code: WorkerDiagnosticCode;
   message: string;
-  file?: string;
+  manifestPath?: string;
   path?: string;
+  reference?: string;
+  relatedManifestPath?: string;
 }
 ```
 
 Local deterministic failures use stable `WORKER_*` codes. Diagnostics are sorted by
-project-relative `file`, JSON `path`, severity (`error`, `warning`, `info`), then `code`, using
-ordinal comparison.
+project-relative `manifestPath`, JSON `path`, severity (`error`, `warning`, `info`), then `code`,
+using ordinal comparison. Project-relative paths and file references use `/`. Callers identify
+failures from `code` and structured fields, never by parsing localized `message` text.
 
 ## Operations
 
@@ -95,8 +120,12 @@ delete, publish, unpublish, share, clone, or update a worker resource.
 1. fx-core is the single owner of worker-agent domain behavior.
 2. Reference DTO validation, normalization, graph traversal, and diagnostics are shared by every
    operation and lifecycle integration.
-3. Unknown manifest properties and authored worker reference values are preserved unless the
-   requested mutation removes the containing entry.
+3. Unknown manifest properties and existing authored worker reference values are preserved unless
+   the requested mutation removes the containing entry.
 4. Local file content outside canonical `appPackage` is never read or packaged.
 5. Offline operations make no network calls for published IDs.
 6. Windows aliases differing only by filesystem case have one canonical identity.
+7. Schema capability checks prevent unsupported additions and invalid existing configuration, but
+   do not prevent inspection or repair removal.
+8. Traversal checks cooperative cancellation around asynchronous I/O and recursive descent.
+9. Generic downstream platform errors are preserved without text-based Worker classification.

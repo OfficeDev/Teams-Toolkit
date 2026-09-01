@@ -28,6 +28,7 @@ import { featureFlagManager, FeatureFlags } from "../../../common/featureFlags";
 import { ErrorContextMW } from "../../../common/globalVars";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import * as workerAgents from "../../../core/workerAgents";
+import { UserCancelError } from "../../../error";
 import { FileNotFoundError, InvalidActionInputError, JSONSyntaxError } from "../../../error/common";
 import {
   AppPackageFileSystemError,
@@ -317,6 +318,7 @@ export class CreateAppPackageDriver implements StepDriver {
           packageRootPath: hasTTKGeneratedFolder ? generatedFolder : appDirectory,
           rootManifestPath: declarativeAgentManifestFile,
           rootDocument: manifest,
+          signal: context.signal,
           loadManifest: async (manifestPath) => {
             const result = await copilotGptManifestUtils.getManifest(manifestPath, context);
             if (result.isErr()) return err(result.error);
@@ -458,6 +460,7 @@ export class CreateAppPackageDriver implements StepDriver {
         }
 
         for (const worker of graphResult.value.localManifests) {
+          if (context.signal?.aborted) return err(new UserCancelError(actionName));
           const addWorkerResult = await this.addResolvedManifestSnapshot(
             zip,
             normalizePath(worker.packagePath, true),
@@ -466,6 +469,7 @@ export class CreateAppPackageDriver implements StepDriver {
             shouldwriteAllManifest ? path.join(jsonFileDir, worker.packagePath) : undefined,
             resolvedJsonFiles
           );
+          if (context.signal?.aborted) return err(new UserCancelError(actionName));
           if (addWorkerResult.isErr()) return err(addWorkerResult.error);
           const workerManifest = workerManifestSnapshots.get(worker.absolutePath);
           if (!workerManifest) {
@@ -501,7 +505,10 @@ export class CreateAppPackageDriver implements StepDriver {
       const addSkillsRes = await this.addAgentSkillFolders(
         zip,
         teamsManifestAgentSkills,
-        appDirectory
+        appDirectory,
+        appDirectory,
+        appDirectory,
+        context.signal
       );
       if (addSkillsRes.isErr()) {
         return err(addSkillsRes.error);
@@ -630,6 +637,7 @@ export class CreateAppPackageDriver implements StepDriver {
     }
     if (Array.isArray(manifest.actions)) {
       for (const pluginFile of manifest.actions.map((action) => action.file)) {
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
         const pluginFileAbsolutePath = path.resolve(path.dirname(manifestPath), pluginFile);
         const pluginFileRelativePath = path.relative(packageRootDirectory, pluginFileAbsolutePath);
         const addPluginResult = await this.addPlugin(
@@ -642,6 +650,7 @@ export class CreateAppPackageDriver implements StepDriver {
           resolvedJsonFiles,
           pluginFile
         );
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
         if (addPluginResult.isErr()) return err(addPluginResult.error);
       }
     }
@@ -655,12 +664,14 @@ export class CreateAppPackageDriver implements StepDriver {
         }
       }
       for (const file of files) {
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
         const absolutePath = path.resolve(path.dirname(manifestPath), file);
         const validationResult = await this.validateReferencedFile(
           absolutePath,
           appDirectory,
           file
         );
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
         if (validationResult.isErr()) return err(validationResult.error);
         this.addFileInZip(
           zip,
@@ -685,8 +696,10 @@ export class CreateAppPackageDriver implements StepDriver {
           folders,
           appDirectory,
           path.dirname(manifestPath),
-          packageRootDirectory
+          packageRootDirectory,
+          context.signal
         );
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
         if (addSkillsResult.isErr()) return err(addSkillsResult.error);
       }
     }
@@ -782,20 +795,25 @@ export class CreateAppPackageDriver implements StepDriver {
     agentSkills: { folder: string }[],
     appDirectory: string,
     referenceDirectory = appDirectory,
-    packageRootDirectory = appDirectory
+    packageRootDirectory = appDirectory,
+    signal?: AbortSignal
   ): Promise<Result<undefined, FxError>> {
     for (const skill of agentSkills) {
+      if (signal?.aborted) return err(new UserCancelError(actionName));
       const skillFolderAbs = path.resolve(referenceDirectory, skill.folder);
       const validationResult = await this.validateReferencedFile(
         skillFolderAbs,
         appDirectory,
         skill.folder
       );
+      if (signal?.aborted) return err(new UserCancelError(actionName));
       if (validationResult.isErr()) {
         return err(validationResult.error);
       }
       const skillMdPath = path.join(skillFolderAbs, "SKILL.md");
-      if (!(await fs.pathExists(skillMdPath))) {
+      const skillExists = await fs.pathExists(skillMdPath);
+      if (signal?.aborted) return err(new UserCancelError(actionName));
+      if (!skillExists) {
         return err(
           new FileNotFoundError(
             actionName,
@@ -804,7 +822,14 @@ export class CreateAppPackageDriver implements StepDriver {
           )
         );
       }
-      await this.addLocalFolderRecursive(zip, skillFolderAbs, appDirectory, packageRootDirectory);
+      const addFolderResult = await this.addLocalFolderRecursive(
+        zip,
+        skillFolderAbs,
+        appDirectory,
+        packageRootDirectory,
+        signal
+      );
+      if (addFolderResult.isErr()) return err(addFolderResult.error);
     }
     return ok(undefined);
   }
@@ -839,19 +864,32 @@ export class CreateAppPackageDriver implements StepDriver {
     zip: AdmZip,
     folderAbs: string,
     appDirectory: string,
-    packageRootDirectory = appDirectory
-  ): Promise<void> {
+    packageRootDirectory = appDirectory,
+    signal?: AbortSignal
+  ): Promise<Result<undefined, FxError>> {
+    if (signal?.aborted) return err(new UserCancelError(actionName));
     const entries = await fs.readdir(folderAbs, { withFileTypes: true });
+    if (signal?.aborted) return err(new UserCancelError(actionName));
     const realAppDirectory = await fs.realpath(appDirectory);
+    if (signal?.aborted) return err(new UserCancelError(actionName));
     for (const entry of entries) {
+      if (signal?.aborted) return err(new UserCancelError(actionName));
       const entryAbs = path.join(folderAbs, entry.name);
       if (entry.isSymbolicLink()) {
         continue;
       }
       if (entry.isDirectory()) {
-        await this.addLocalFolderRecursive(zip, entryAbs, appDirectory, packageRootDirectory);
+        const addFolderResult = await this.addLocalFolderRecursive(
+          zip,
+          entryAbs,
+          appDirectory,
+          packageRootDirectory,
+          signal
+        );
+        if (addFolderResult.isErr()) return err(addFolderResult.error);
       } else if (entry.isFile()) {
         const realEntryAbs = await fs.realpath(entryAbs);
+        if (signal?.aborted) return err(new UserCancelError(actionName));
         if (!this.isPathContained(realAppDirectory, realEntryAbs)) {
           continue;
         }
@@ -859,6 +897,7 @@ export class CreateAppPackageDriver implements StepDriver {
         zip.addLocalFile(entryAbs, normalizePath(relDir, true));
       }
     }
+    return ok(undefined);
   }
 
   /**
@@ -886,6 +925,7 @@ export class CreateAppPackageDriver implements StepDriver {
       appDirectory,
       originalReference ?? pluginRelativePath
     );
+    if (context.signal?.aborted) return err(new UserCancelError(actionName));
     if (checkExistenceRes.isErr()) {
       return err(checkExistenceRes.error);
     }
@@ -893,6 +933,7 @@ export class CreateAppPackageDriver implements StepDriver {
     let pluginFileContent;
     try {
       pluginFileContent = (await fs.readJSON(pluginFile)) as PluginManifestSchema;
+      if (context.signal?.aborted) return err(new UserCancelError(actionName));
     } catch (e) {
       return err(new JSONSyntaxError(pluginFile, e, actionName));
     }
@@ -908,6 +949,7 @@ export class CreateAppPackageDriver implements StepDriver {
             appDirectory,
             defaultAppDirectry
           );
+          if (context.signal?.aborted) return err(new UserCancelError(actionName));
           if (staticTemplateFileResult.isErr()) {
             return err(staticTemplateFileResult.error);
           }
@@ -927,6 +969,7 @@ export class CreateAppPackageDriver implements StepDriver {
           }
 
           const staticTemplateFileContent = await fs.readJSON(staticTemplateFile);
+          if (context.signal?.aborted) return err(new UserCancelError(actionName));
           func.capabilities.response_semantics.static_template = staticTemplateFileContent;
 
           containExternalAdaptiveCard = true;
@@ -951,6 +994,7 @@ export class CreateAppPackageDriver implements StepDriver {
 
     if (containExternalAdaptiveCard) {
       await updateVersionForTeamsAppYamlFile(context.projectPath);
+      if (context.signal?.aborted) return err(new UserCancelError(actionName));
     }
 
     let addFileWithVariableRes: Result<undefined, FxError>;
@@ -964,17 +1008,21 @@ export class CreateAppPackageDriver implements StepDriver {
           ManifestType.PluginManifest,
           pluginFile
         );
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
         if (processedFunctionRes.isErr()) {
           return err(processedFunctionRes.error);
         }
         pluginFileContent = JSON.parse(processedFunctionRes.value);
         tempFolder = await fs.mkdtemp(path.join(appDirectory, ".tmp-"));
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
         const tempFolderValidation = await this.validateReferencedFile(tempFolder, appDirectory);
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
         if (tempFolderValidation.isErr()) {
           return err(tempFolderValidation.error);
         }
         tmpPluginFile = path.join(tempFolder, `tmp-ai-plugin-${uuid.v4().slice(0, 6)}.json`);
         await fs.writeJSON(tmpPluginFile, pluginFileContent, { spaces: 4 });
+        if (context.signal?.aborted) return err(new UserCancelError(actionName));
       }
 
       addFileWithVariableRes = await this.addFileWithVariable(
@@ -988,6 +1036,7 @@ export class CreateAppPackageDriver implements StepDriver {
           : path.join(outputDirectory, path.relative(appDirectory, pluginFile)),
         resolvedJsonFiles
       );
+      if (context.signal?.aborted) return err(new UserCancelError(actionName));
     } finally {
       if (tempFolder) {
         await fs.remove(tempFolder);
@@ -1004,6 +1053,7 @@ export class CreateAppPackageDriver implements StepDriver {
       appDirectory,
       context
     );
+    if (context.signal?.aborted) return err(new UserCancelError(actionName));
     if (addFilesRes.isErr()) {
       return err(addFilesRes.error);
     } else {

@@ -41,6 +41,9 @@ export interface WorkerOperationContext {
 
 export interface WorkerMutationResult {
   changed: boolean;
+  type: WorkerReferenceInput["type"];
+  reference: string;
+  manifestPath: string;
 }
 
 export type WorkerInspectionItem =
@@ -48,16 +51,40 @@ export type WorkerInspectionItem =
 
 export interface WorkerInspectionResult {
   items: WorkerInspectionItem[];
+  diagnostics: WorkerDiagnostic[];
 }
 
 export type WorkerDiagnosticSeverity = "error" | "warning" | "info";
 
+export type WorkerDiagnosticCode =
+  | "WORKER_ENTRIES_INVALID"
+  | "WORKER_SCHEMA_UNSUPPORTED"
+  | "WORKER_REFERENCE_INVALID"
+  | "WORKER_REFERENCE_UNSUPPORTED_PROPERTY"
+  | "WORKER_REFERENCE_CONFLICTING"
+  | "WORKER_REFERENCE_EMPTY"
+  | "WORKER_FILE_ABSOLUTE"
+  | "WORKER_FILE_OUTSIDE_PACKAGE"
+  | "WORKER_FILE_MISSING"
+  | "WORKER_FILE_NOT_REGULAR"
+  | "WORKER_FILE_STAT_FAILED"
+  | "WORKER_FILE_CANONICAL_OUTSIDE_PACKAGE"
+  | "WORKER_FILE_READ_FAILED"
+  | "WORKER_FILE_INVALID_JSON"
+  | "WORKER_FILE_NOT_DECLARATIVE_AGENT"
+  | "WORKER_DUPLICATE_REFERENCE"
+  | "WORKER_SELF_REFERENCE"
+  | "WORKER_CYCLE"
+  | "WORKER_DEPTH_RECOMMENDED";
+
 export interface WorkerDiagnostic {
   severity: WorkerDiagnosticSeverity;
-  code: string;
+  code: WorkerDiagnosticCode;
   message: string;
-  file?: string;
+  manifestPath?: string;
   path?: string;
+  reference?: string;
+  relatedManifestPath?: string;
 }
 
 export interface WorkerValidationResult {
@@ -92,6 +119,7 @@ interface GraphOptions {
   rootDocument?: unknown;
   allowMissingRoot?: boolean;
   validateOnlyIfWorkerAgentsConfigured?: boolean;
+  signal?: AbortSignal;
   loadManifest?: (
     manifestPath: string
   ) => Promise<Result<{ content: string; document: Record<string, unknown> }, FxError>>;
@@ -114,10 +142,12 @@ interface GraphState {
   diagnostics: WorkerDiagnostic[];
   localManifests: WorkerLocalManifest[];
   visited: Set<string>;
-  stack: string[];
-  referencedTargets: Set<string>;
+  activeStack: string[];
+  manifestPaths: Map<string, string>;
   loadManifest?: GraphOptions["loadManifest"];
   loadError?: FxError;
+  cancellationError?: FxError;
+  signal?: AbortSignal;
 }
 
 interface DiscoveredRoot {
@@ -159,18 +189,26 @@ function userError(name: string): FxError {
 }
 
 function diagnostic(
-  code: string,
-  file: string | undefined,
+  code: WorkerDiagnosticCode,
+  manifestPath: string | undefined,
   jsonPath: string | undefined,
-  severity: WorkerDiagnosticSeverity = "error"
+  severity: WorkerDiagnosticSeverity = "error",
+  reference?: string,
+  relatedManifestPath?: string
 ): WorkerDiagnostic {
   return {
     severity,
     code,
     message: getLocalizedString("error.workerAgents.diagnostic", code),
-    file,
+    manifestPath,
     path: jsonPath,
+    reference,
+    relatedManifestPath,
   };
+}
+
+function cancellationError(signal?: AbortSignal): FxError | undefined {
+  return signal?.aborted ? new UserCancelError(source) : undefined;
 }
 
 function normalizeIdentity(target: string): string {
@@ -189,6 +227,10 @@ function isAbsoluteOnAnyPlatform(value: string): boolean {
   return path.isAbsolute(value) || path.posix.isAbsolute(value) || path.win32.isAbsolute(value);
 }
 
+function normalizeReferenceKey(authored: string): string {
+  return path.posix.normalize(authored.replace(/\\/g, "/"));
+}
+
 function createFileReference(
   authored: string,
   containingManifestPath: string,
@@ -196,7 +238,7 @@ function createFileReference(
 ): Result<FileReference, FxError> {
   if (authored.trim().length === 0) return err(userError("WORKER_REFERENCE_EMPTY"));
   if (isAbsoluteOnAnyPlatform(authored)) return err(userError("WORKER_FILE_ABSOLUTE"));
-  const key = path.posix.normalize(authored.replace(/\\/g, "/"));
+  const key = normalizeReferenceKey(authored);
   const lexicalTarget = path.resolve(path.dirname(containingManifestPath), ...key.split("/"));
   if (!isContained(appPackagePath, lexicalTarget)) {
     return err(userError("WORKER_FILE_OUTSIDE_PACKAGE"));
@@ -223,13 +265,20 @@ function parseReferenceInput(reference: unknown): Result<WorkerReferenceInput, F
   return ok({ type: "file", file: reference.file });
 }
 
-async function readDocument(filePath: string): Promise<Result<Record<string, unknown>, FxError>> {
+async function readDocument(
+  filePath: string,
+  signal?: AbortSignal
+): Promise<Result<Record<string, unknown>, FxError>> {
+  const beforeRead = cancellationError(signal);
+  if (beforeRead) return err(beforeRead);
   let content: string;
   try {
     content = await fs.readFile(filePath, "utf8");
   } catch (error) {
     return err(systemError("WORKER_MANIFEST_READ_FAILED", error));
   }
+  const afterRead = cancellationError(signal);
+  if (afterRead) return err(afterRead);
   return parseDocument(content);
 }
 
@@ -278,11 +327,14 @@ function firstDeclaredAgentFile(manifest: unknown): string | undefined {
 
 async function discoverProjectRoot(
   projectPath: string,
-  resolveAgentFile?: GraphOptions["resolveAgentFile"]
+  resolveAgentFile?: GraphOptions["resolveAgentFile"],
+  signal?: AbortSignal
 ): Promise<Result<DiscoveredRoot, FxError>> {
   const defaultPath = path.resolve(projectPath, rootManifestRelativePath);
   const appPackagePath = path.resolve(projectPath, "appPackage");
   const teamsManifestPath = path.join(appPackagePath, "manifest.json");
+  const beforeRead = cancellationError(signal);
+  if (beforeRead) return err(beforeRead);
   let content: string;
   try {
     content = await fs.readFile(teamsManifestPath, "utf8");
@@ -291,6 +343,8 @@ async function discoverProjectRoot(
       ? ok({ path: defaultPath, allowMissing: true })
       : err(systemError("WORKER_MANIFEST_READ_FAILED", error));
   }
+  const afterRead = cancellationError(signal);
+  if (afterRead) return err(afterRead);
   let manifest: unknown;
   try {
     manifest = commentJson.parse(content);
@@ -300,7 +354,11 @@ async function discoverProjectRoot(
   let declaredFile = firstDeclaredAgentFile(manifest);
   if (!declaredFile) return ok({ allowMissing: true });
   if (resolveAgentFile) {
+    const beforeResolve = cancellationError(signal);
+    if (beforeResolve) return err(beforeResolve);
     const resolved = await resolveAgentFile(declaredFile, teamsManifestPath);
+    const afterResolve = cancellationError(signal);
+    if (afterResolve) return err(afterResolve);
     if (resolved.isErr()) return err(resolved.error);
     declaredFile = resolved.value;
   } else {
@@ -321,16 +379,12 @@ function isDeclarativeAgent(document: Record<string, unknown>): boolean {
   );
 }
 
-function supportsWorkerAgents(version: unknown): boolean {
-  if (typeof version !== "string") return false;
-  const parsedVersion = semver.coerce(version);
-  return parsedVersion !== null && semver.gte(parsedVersion, minimumWorkerAgentVersion);
-}
-
-function supportsLocalWorkerAgents(version: unknown): boolean {
-  if (typeof version !== "string") return false;
-  const parsedVersion = semver.coerce(version);
-  return parsedVersion !== null && semver.gte(parsedVersion, minimumLocalWorkerAgentVersion);
+function workerCapabilities(version: unknown): { id: boolean; file: boolean } {
+  const parsedVersion = typeof version === "string" ? semver.coerce(version) : null;
+  return {
+    id: parsedVersion !== null && semver.gte(parsedVersion, minimumWorkerAgentVersion),
+    file: parsedVersion !== null && semver.gte(parsedVersion, minimumLocalWorkerAgentVersion),
+  };
 }
 
 function hasConfiguredWorkerAgents(document: unknown): boolean {
@@ -339,12 +393,18 @@ function hasConfiguredWorkerAgents(document: unknown): boolean {
   return entries !== undefined && (!Array.isArray(entries) || entries.length > 0);
 }
 
-async function shouldValidateWorkerAgents(rootManifestPath: string): Promise<boolean> {
+async function shouldValidateWorkerAgents(
+  rootManifestPath: string,
+  signal?: AbortSignal
+): Promise<Result<boolean, FxError>> {
+  const beforeRead = cancellationError(signal);
+  if (beforeRead) return err(beforeRead);
   try {
     const content = await fs.readFile(rootManifestPath, "utf8");
-    return hasConfiguredWorkerAgents(commentJson.parse(content));
+    const afterRead = cancellationError(signal);
+    return afterRead ? err(afterRead) : ok(hasConfiguredWorkerAgents(commentJson.parse(content)));
   } catch {
-    return true;
+    return ok(true);
   }
 }
 
@@ -362,7 +422,7 @@ function workerEntries(
     state.diagnostics.push(diagnostic("WORKER_ENTRIES_INVALID", manifestFile, "$.worker_agents"));
     return [];
   }
-  if (!supportsWorkerAgents(document.version)) {
+  if (!workerCapabilities(document.version).id) {
     state.diagnostics.push(
       diagnostic("WORKER_SCHEMA_UNSUPPORTED", manifestFile, "$.worker_agents")
     );
@@ -381,9 +441,9 @@ function validateEntryShape(
   return isRecord(entry) && !errors.includes("WORKER_REFERENCE_CONFLICTING");
 }
 
-function entryShapeErrors(entry: unknown): string[] {
+function entryShapeErrors(entry: unknown): WorkerDiagnosticCode[] {
   if (!isRecord(entry)) return ["WORKER_REFERENCE_INVALID"];
-  const errors: string[] = [];
+  const errors: WorkerDiagnosticCode[] = [];
   if (Object.keys(entry).some((key) => key !== "id" && key !== "file")) {
     errors.push("WORKER_REFERENCE_UNSUPPORTED_PROPERTY");
   }
@@ -399,6 +459,10 @@ async function canonicalRegularFile(
   jsonPath: string,
   state: GraphState
 ): Promise<string | undefined> {
+  if (state.signal?.aborted) {
+    state.cancellationError = new UserCancelError(source);
+    return undefined;
+  }
   let stats;
   try {
     stats = await fs.stat(reference.lexicalTarget);
@@ -412,6 +476,10 @@ async function canonicalRegularFile(
     );
     return undefined;
   }
+  if (state.signal?.aborted) {
+    state.cancellationError = new UserCancelError(source);
+    return undefined;
+  }
   if (!stats.isFile()) {
     state.diagnostics.push(diagnostic("WORKER_FILE_NOT_REGULAR", manifestFile, jsonPath));
     return undefined;
@@ -421,6 +489,10 @@ async function canonicalRegularFile(
     canonicalTarget = await fs.realpath(reference.lexicalTarget);
   } catch {
     state.diagnostics.push(diagnostic("WORKER_FILE_STAT_FAILED", manifestFile, jsonPath));
+    return undefined;
+  }
+  if (state.signal?.aborted) {
+    state.cancellationError = new UserCancelError(source);
     return undefined;
   }
   if (!isContained(state.canonicalAppPackagePath, canonicalTarget)) {
@@ -438,8 +510,16 @@ async function parseNestedManifest(
   jsonPath: string,
   state: GraphState
 ): Promise<{ content: string; document: Record<string, unknown> } | undefined> {
+  if (state.signal?.aborted) {
+    state.cancellationError = new UserCancelError(source);
+    return undefined;
+  }
   if (state.loadManifest) {
     const loaded = await state.loadManifest(target);
+    if (state.signal?.aborted) {
+      state.cancellationError = new UserCancelError(source);
+      return undefined;
+    }
     if (loaded.isErr()) {
       if (!state.loadError) state.loadError = loaded.error;
       return undefined;
@@ -457,6 +537,10 @@ async function parseNestedManifest(
     content = await fs.readFile(target, "utf8");
   } catch {
     state.diagnostics.push(diagnostic("WORKER_FILE_READ_FAILED", manifestFile, jsonPath));
+    return undefined;
+  }
+  if (state.signal?.aborted) {
+    state.cancellationError = new UserCancelError(source);
     return undefined;
   }
   const parsed = parseDocument(content);
@@ -486,6 +570,10 @@ async function walkManifest(
   depth: number,
   state: GraphState
 ): Promise<void> {
+  if (state.signal?.aborted) {
+    state.cancellationError = new UserCancelError(source);
+    return;
+  }
   const manifestFile = projectRelative(path.dirname(state.appPackagePath), manifestPath);
   const entries = workerEntries(document, manifestFile, state);
   const ids = new Set<string>();
@@ -493,16 +581,24 @@ async function walkManifest(
   const targets = new Set<string>();
 
   for (const [index, entry] of entries.entries()) {
+    if (state.signal?.aborted) {
+      state.cancellationError = new UserCancelError(source);
+      return;
+    }
     const jsonPath = `$.worker_agents[${index}]`;
     if (!validateEntryShape(entry, manifestFile, jsonPath, state)) continue;
     if (Object.prototype.hasOwnProperty.call(entry, "id")) {
       if (typeof entry.id !== "string" || entry.id.trim().length === 0) {
-        state.diagnostics.push(diagnostic("WORKER_REFERENCE_EMPTY", manifestFile, jsonPath));
+        state.diagnostics.push(
+          diagnostic("WORKER_REFERENCE_EMPTY", manifestFile, jsonPath, "error", String(entry.id))
+        );
         continue;
       }
       const id = entry.id.trim();
       if (ids.has(id)) {
-        state.diagnostics.push(diagnostic("WORKER_DUPLICATE_REFERENCE", manifestFile, jsonPath));
+        state.diagnostics.push(
+          diagnostic("WORKER_DUPLICATE_REFERENCE", manifestFile, jsonPath, "error", id)
+        );
       }
       ids.add(id);
       continue;
@@ -511,66 +607,104 @@ async function walkManifest(
       state.diagnostics.push(diagnostic("WORKER_REFERENCE_EMPTY", manifestFile, jsonPath));
       continue;
     }
-    if (!supportsLocalWorkerAgents(document.version)) {
-      state.diagnostics.push(diagnostic("WORKER_SCHEMA_UNSUPPORTED", manifestFile, jsonPath));
+    if (!workerCapabilities(document.version).file) {
+      state.diagnostics.push(
+        diagnostic("WORKER_SCHEMA_UNSUPPORTED", manifestFile, jsonPath, "error", entry.file)
+      );
       continue;
     }
     const referenceResult = createFileReference(entry.file, manifestPath, state.appPackagePath);
     if (referenceResult.isErr()) {
-      state.diagnostics.push(diagnostic(referenceResult.error.name, manifestFile, jsonPath));
+      const code: WorkerDiagnosticCode =
+        referenceResult.error.name === "WORKER_REFERENCE_EMPTY" ||
+        referenceResult.error.name === "WORKER_FILE_ABSOLUTE" ||
+        referenceResult.error.name === "WORKER_FILE_OUTSIDE_PACKAGE"
+          ? referenceResult.error.name
+          : "WORKER_REFERENCE_INVALID";
+      state.diagnostics.push(diagnostic(code, manifestFile, jsonPath, "error", entry.file));
       continue;
     }
     const reference = referenceResult.value;
     if (!isContained(state.packageRootPath, reference.lexicalTarget)) {
-      state.diagnostics.push(diagnostic("WORKER_FILE_OUTSIDE_PACKAGE", manifestFile, jsonPath));
+      state.diagnostics.push(
+        diagnostic("WORKER_FILE_OUTSIDE_PACKAGE", manifestFile, jsonPath, "error", entry.file)
+      );
       continue;
     }
     if (keys.has(reference.key)) {
-      state.diagnostics.push(diagnostic("WORKER_DUPLICATE_REFERENCE", manifestFile, jsonPath));
+      state.diagnostics.push(
+        diagnostic("WORKER_DUPLICATE_REFERENCE", manifestFile, jsonPath, "error", entry.file)
+      );
       continue;
     }
     keys.add(reference.key);
     const canonicalTarget = await canonicalRegularFile(reference, manifestFile, jsonPath, state);
+    if (state.cancellationError) return;
     if (!canonicalTarget) continue;
     const identity = normalizeIdentity(canonicalTarget);
     if (targets.has(identity)) {
-      state.diagnostics.push(diagnostic("WORKER_DUPLICATE_REFERENCE", manifestFile, jsonPath));
+      state.diagnostics.push(
+        diagnostic("WORKER_DUPLICATE_REFERENCE", manifestFile, jsonPath, "error", entry.file)
+      );
       continue;
     }
     targets.add(identity);
     if (identity === manifestIdentity) {
-      state.diagnostics.push(diagnostic("WORKER_SELF_REFERENCE", manifestFile, jsonPath));
+      state.diagnostics.push(
+        diagnostic(
+          "WORKER_SELF_REFERENCE",
+          manifestFile,
+          jsonPath,
+          "error",
+          entry.file,
+          manifestFile
+        )
+      );
       continue;
     }
-    if (state.stack.includes(identity)) {
-      state.diagnostics.push(diagnostic("WORKER_CYCLE", manifestFile, jsonPath));
+    if (state.activeStack.includes(identity)) {
+      state.diagnostics.push(
+        diagnostic(
+          "WORKER_CYCLE",
+          manifestFile,
+          jsonPath,
+          "error",
+          entry.file,
+          state.manifestPaths.get(identity)
+        )
+      );
       continue;
     }
-    if (state.referencedTargets.has(identity)) {
-      state.diagnostics.push(diagnostic("WORKER_DUPLICATE_REFERENCE", manifestFile, jsonPath));
-      continue;
-    }
-    state.referencedTargets.add(identity);
     if (depth + 1 > 2) {
       state.diagnostics.push(
-        diagnostic("WORKER_DEPTH_RECOMMENDED", manifestFile, jsonPath, "warning")
+        diagnostic("WORKER_DEPTH_RECOMMENDED", manifestFile, jsonPath, "warning", entry.file)
       );
     }
+    if (state.visited.has(identity)) continue;
     const snapshot = await parseNestedManifest(canonicalTarget, manifestFile, jsonPath, state);
+    if (state.cancellationError) return;
     if (!snapshot) continue;
-    if (!state.visited.has(identity)) {
-      state.visited.add(identity);
-      state.localManifests.push({
-        absolutePath: canonicalTarget,
-        lexicalPath: reference.lexicalTarget,
-        packagePath: projectRelative(state.packageRootPath, reference.lexicalTarget),
-        content: snapshot.content,
-        document: snapshot.document,
-      });
-      state.stack.push(identity);
-      await walkManifest(snapshot.document, reference.lexicalTarget, identity, depth + 1, state);
-      state.stack.pop();
+    state.visited.add(identity);
+    state.manifestPaths.set(
+      identity,
+      projectRelative(path.dirname(state.appPackagePath), reference.lexicalTarget)
+    );
+    state.localManifests.push({
+      absolutePath: canonicalTarget,
+      lexicalPath: reference.lexicalTarget,
+      packagePath: projectRelative(state.packageRootPath, reference.lexicalTarget),
+      content: snapshot.content,
+      document: snapshot.document,
+    });
+    state.activeStack.push(identity);
+    if (state.signal?.aborted) {
+      state.cancellationError = new UserCancelError(source);
+      state.activeStack.pop();
+      return;
     }
+    await walkManifest(snapshot.document, reference.lexicalTarget, identity, depth + 1, state);
+    state.activeStack.pop();
+    if (state.cancellationError) return;
   }
 }
 
@@ -578,7 +712,7 @@ function sortDiagnostics(diagnostics: WorkerDiagnostic[]): WorkerDiagnostic[] {
   const severityOrder: Record<WorkerDiagnosticSeverity, number> = { error: 0, warning: 1, info: 2 };
   return diagnostics.sort(
     (left, right) =>
-      compareOrdinal(left.file ?? "", right.file ?? "") ||
+      compareOrdinal(left.manifestPath ?? "", right.manifestPath ?? "") ||
       compareOrdinal(left.path ?? "", right.path ?? "") ||
       severityOrder[left.severity] - severityOrder[right.severity] ||
       compareOrdinal(left.code, right.code)
@@ -592,6 +726,8 @@ function compareOrdinal(left: string, right: string): number {
 export async function validateWorkerAgentGraph(
   options: GraphOptions
 ): Promise<Result<WorkerGraphResult, FxError>> {
+  const initialCancellation = cancellationError(options.signal);
+  if (initialCancellation) return err(initialCancellation);
   if (
     options.rootDocument !== undefined &&
     isRecord(options.rootDocument) &&
@@ -603,7 +739,11 @@ export async function validateWorkerAgentGraph(
   let allowMissingRoot = options.allowMissingRoot ?? false;
   let rootManifestPath: string;
   if (options.rootManifestPath === undefined) {
-    const discoveredRoot = await discoverProjectRoot(options.projectPath, options.resolveAgentFile);
+    const discoveredRoot = await discoverProjectRoot(
+      options.projectPath,
+      options.resolveAgentFile,
+      options.signal
+    );
     if (discoveredRoot.isErr()) return err(discoveredRoot.error);
     if (!discoveredRoot.value.path) {
       if (allowMissingRoot) {
@@ -617,12 +757,13 @@ export async function validateWorkerAgentGraph(
   } else {
     rootManifestPath = path.resolve(options.rootManifestPath);
   }
-  if (
-    options.validateOnlyIfWorkerAgentsConfigured &&
-    !(await shouldValidateWorkerAgents(rootManifestPath))
-  ) {
-    return ok({ valid: true, diagnostics: [], localManifests: [] });
+  if (options.validateOnlyIfWorkerAgentsConfigured) {
+    const shouldValidate = await shouldValidateWorkerAgents(rootManifestPath, options.signal);
+    if (shouldValidate.isErr()) return err(shouldValidate.error);
+    if (!shouldValidate.value) return ok({ valid: true, diagnostics: [], localManifests: [] });
   }
+  const beforeAppPackage = cancellationError(options.signal);
+  if (beforeAppPackage) return err(beforeAppPackage);
   let canonicalAppPackagePath: string;
   try {
     canonicalAppPackagePath = await fs.realpath(appPackagePath);
@@ -632,6 +773,8 @@ export async function validateWorkerAgentGraph(
     }
     return err(systemError("WORKER_APP_PACKAGE_READ_FAILED", error));
   }
+  const afterAppPackage = cancellationError(options.signal);
+  if (afterAppPackage) return err(afterAppPackage);
   let rootDocument: Record<string, unknown> | undefined;
   if (options.rootDocument !== undefined) {
     if (!isRecord(options.rootDocument)) {
@@ -649,7 +792,7 @@ export async function validateWorkerAgentGraph(
     }
     rootDocument = options.rootDocument;
   } else {
-    const readResult = await readDocument(rootManifestPath);
+    const readResult = await readDocument(rootManifestPath, options.signal);
     if (readResult.isErr()) {
       if (allowMissingRoot && nestedErrorCode(readResult.error) === "ENOENT") {
         return ok({ valid: true, diagnostics: [], localManifests: [] });
@@ -689,11 +832,15 @@ export async function validateWorkerAgentGraph(
     return ok(result);
   }
   let canonicalRootManifestPath: string;
+  const beforeRoot = cancellationError(options.signal);
+  if (beforeRoot) return err(beforeRoot);
   try {
     canonicalRootManifestPath = await fs.realpath(rootManifestPath);
   } catch (error) {
     return err(systemError("WORKER_MANIFEST_READ_FAILED", error));
   }
+  const afterRoot = cancellationError(options.signal);
+  if (afterRoot) return err(afterRoot);
   if (!isContained(canonicalAppPackagePath, canonicalRootManifestPath)) {
     return ok({
       valid: false,
@@ -715,11 +862,15 @@ export async function validateWorkerAgentGraph(
     diagnostics: [],
     localManifests: [],
     visited: new Set([rootIdentity]),
-    stack: [rootIdentity],
-    referencedTargets: new Set(),
+    activeStack: [rootIdentity],
+    manifestPaths: new Map([
+      [rootIdentity, projectRelative(path.dirname(appPackagePath), rootManifestPath)],
+    ]),
     loadManifest: options.loadManifest,
+    signal: options.signal,
   };
   await walkManifest(rootDocument, rootManifestPath, rootIdentity, 0, state);
+  if (state.cancellationError) return err(state.cancellationError);
   if (state.loadError) return err(state.loadError);
   const diagnostics = sortDiagnostics(state.diagnostics);
   return ok({
@@ -757,21 +908,33 @@ async function atomicWrite(
   }
 }
 
-async function readRootForMutation(
-  projectPath: string
+async function readRootManifest(
+  projectPath: string,
+  signal?: AbortSignal
 ): Promise<Result<{ path: string; document: Record<string, unknown> }, FxError>> {
-  const discoveredRoot = await discoverProjectRoot(projectPath);
+  const discoveredRoot = await discoverProjectRoot(projectPath, undefined, signal);
   if (discoveredRoot.isErr()) return err(discoveredRoot.error);
   const rootPath = discoveredRoot.value.path ?? path.resolve(projectPath, rootManifestRelativePath);
-  const readResult = await readDocument(rootPath);
+  const readResult = await readDocument(rootPath, signal);
   if (readResult.isErr()) return err(readResult.error);
-  if (!supportsWorkerAgents(readResult.value.version)) {
-    return err(userError("WORKER_SCHEMA_UNSUPPORTED"));
-  }
   if (!isDeclarativeAgent(readResult.value)) {
     return err(userError("WORKER_MANIFEST_INVALID"));
   }
   return ok({ path: rootPath, document: readResult.value });
+}
+
+function mutationResult(
+  changed: boolean,
+  reference: WorkerReferenceInput,
+  projectPath: string,
+  manifestPath: string
+): WorkerMutationResult {
+  return {
+    changed,
+    type: reference.type,
+    reference: reference.type === "id" ? reference.id : normalizeReferenceKey(reference.file),
+    manifestPath: projectRelative(projectPath, manifestPath),
+  };
 }
 
 async function canonicalTargetIfPresent(reference: FileReference): Promise<string | undefined> {
@@ -816,12 +979,16 @@ export async function addWorkerAgent(
   }
   const referenceResult = parseReferenceInput(options.reference);
   if (referenceResult.isErr()) return err(referenceResult.error);
-  const rootResult = await readRootForMutation(options.projectPath);
+  const rootResult = await readRootManifest(options.projectPath, context?.signal);
   if (rootResult.isErr()) return err(rootResult.error);
   const { document, path: rootPath } = rootResult.value;
   const entries = document.worker_agents === undefined ? [] : document.worker_agents;
   if (!Array.isArray(entries)) return err(userError("WORKER_ENTRIES_INVALID"));
   const reference = referenceResult.value;
+  const capabilities = workerCapabilities(document.version);
+  if (reference.type === "id" ? !capabilities.id : !capabilities.file) {
+    return err(userError("WORKER_SCHEMA_UNSUPPORTED"));
+  }
   const appPackagePath = path.resolve(options.projectPath, "appPackage");
   let newEntry: Record<string, unknown>;
   if (reference.type === "id") {
@@ -831,26 +998,38 @@ export async function addWorkerAgent(
           isRecord(entry) && typeof entry.id === "string" && entry.id.trim() === reference.id
       )
     ) {
-      return ok({ changed: false });
+      return ok(mutationResult(false, reference, options.projectPath, rootPath));
     }
     newEntry = { id: reference.id };
   } else {
     const fileResult = createFileReference(reference.file, rootPath, appPackagePath);
     if (fileResult.isErr()) return err(fileResult.error);
     const target = await canonicalTargetIfPresent(fileResult.value);
+    const cancelledAfterTarget = cancellationError(context?.signal);
+    if (cancelledAfterTarget) return err(cancelledAfterTarget);
     if (!target) return err(userError("WORKER_FILE_MISSING_OR_NOT_REGULAR"));
     for (const entry of entries) {
-      if (await equivalentFileEntry(entry, fileResult.value, rootPath, appPackagePath, target)) {
-        return ok({ changed: false });
+      const equivalent = await equivalentFileEntry(
+        entry,
+        fileResult.value,
+        rootPath,
+        appPackagePath,
+        target
+      );
+      const cancelledAfterIdentity = cancellationError(context?.signal);
+      if (cancelledAfterIdentity) return err(cancelledAfterIdentity);
+      if (equivalent) {
+        return ok(mutationResult(false, reference, options.projectPath, rootPath));
       }
     }
-    newEntry = { file: reference.file };
+    newEntry = { file: fileResult.value.key };
   }
   const candidate: Record<string, unknown> = { ...document, worker_agents: [...entries, newEntry] };
   const validationResult = await validateWorkerAgentGraph({
     projectPath: options.projectPath,
     rootManifestPath: rootPath,
     rootDocument: candidate,
+    signal: context?.signal,
   });
   if (validationResult.isErr()) return err(validationResult.error);
   const blocking = validationResult.value.diagnostics.find(
@@ -862,7 +1041,9 @@ export async function addWorkerAgent(
     `${JSON.stringify(candidate, undefined, 2)}\n`,
     context?.signal
   );
-  return writeResult.isErr() ? err(writeResult.error) : ok({ changed: true });
+  return writeResult.isErr()
+    ? err(writeResult.error)
+    : ok(mutationResult(true, reference, options.projectPath, rootPath));
 }
 
 export async function removeWorkerAgent(
@@ -879,7 +1060,7 @@ export async function removeWorkerAgent(
   }
   const referenceResult = parseReferenceInput(options.reference);
   if (referenceResult.isErr()) return err(referenceResult.error);
-  const rootResult = await readRootForMutation(options.projectPath);
+  const rootResult = await readRootManifest(options.projectPath, context?.signal);
   if (rootResult.isErr()) return err(rootResult.error);
   const { document, path: rootPath } = rootResult.value;
   const appPackagePath = path.resolve(options.projectPath, "appPackage");
@@ -891,32 +1072,45 @@ export async function removeWorkerAgent(
     if (fileResult.isErr()) return err(fileResult.error);
     requestedFile = fileResult.value;
     requestedTarget = await canonicalTargetIfPresent(fileResult.value);
+    const cancelledAfterTarget = cancellationError(context?.signal);
+    if (cancelledAfterTarget) return err(cancelledAfterTarget);
   }
-  if (document.worker_agents === undefined) return ok({ changed: false });
+  if (document.worker_agents === undefined) {
+    return ok(mutationResult(false, requested, options.projectPath, rootPath));
+  }
   if (!Array.isArray(document.worker_agents)) return err(userError("WORKER_ENTRIES_INVALID"));
   const remaining: unknown[] = [];
   for (const entry of document.worker_agents) {
-    const matches =
-      requested.type === "id"
-        ? isRecord(entry) && typeof entry.id === "string" && entry.id.trim() === requested.id
-        : requestedFile !== undefined &&
-          (await equivalentFileEntry(
-            entry,
-            requestedFile,
-            rootPath,
-            appPackagePath,
-            requestedTarget
-          ));
+    let matches: boolean;
+    if (requested.type === "id") {
+      matches = isRecord(entry) && typeof entry.id === "string" && entry.id.trim() === requested.id;
+    } else {
+      matches =
+        requestedFile !== undefined &&
+        (await equivalentFileEntry(
+          entry,
+          requestedFile,
+          rootPath,
+          appPackagePath,
+          requestedTarget
+        ));
+      const cancelledAfterIdentity = cancellationError(context?.signal);
+      if (cancelledAfterIdentity) return err(cancelledAfterIdentity);
+    }
     if (!matches) remaining.push(entry);
   }
-  if (remaining.length === document.worker_agents.length) return ok({ changed: false });
+  if (remaining.length === document.worker_agents.length) {
+    return ok(mutationResult(false, requested, options.projectPath, rootPath));
+  }
   const candidate: Record<string, unknown> = { ...document, worker_agents: remaining };
   const writeResult = await atomicWrite(
     rootPath,
     `${JSON.stringify(candidate, undefined, 2)}\n`,
     context?.signal
   );
-  return writeResult.isErr() ? err(writeResult.error) : ok({ changed: true });
+  return writeResult.isErr()
+    ? err(writeResult.error)
+    : ok(mutationResult(true, requested, options.projectPath, rootPath));
 }
 
 export async function inspectWorkerAgents(
@@ -931,16 +1125,27 @@ export async function inspectWorkerAgents(
   ) {
     return err(userError("WORKER_OPTIONS_INVALID"));
   }
-  const rootResult = await readRootForMutation(options.projectPath);
+  const rootResult = await readRootManifest(options.projectPath, context?.signal);
   if (rootResult.isErr()) return err(rootResult.error);
   const entries = rootResult.value.document.worker_agents;
-  if (entries === undefined) return ok({ items: [] });
-  if (!Array.isArray(entries)) return err(userError("WORKER_ENTRIES_INVALID"));
+  if (entries === undefined) return ok({ items: [], diagnostics: [] });
+  const manifestPath = projectRelative(options.projectPath, rootResult.value.path);
+  if (!Array.isArray(entries)) {
+    return ok({
+      items: [],
+      diagnostics: [diagnostic("WORKER_ENTRIES_INVALID", manifestPath, "$.worker_agents")],
+    });
+  }
   const items: WorkerInspectionItem[] = [];
-  for (const entry of entries) {
+  const diagnostics: WorkerDiagnostic[] = [];
+  for (const [index, entry] of entries.entries()) {
+    const jsonPath = `$.worker_agents[${index}]`;
     const shapeErrors = entryShapeErrors(entry);
-    if (shapeErrors.length > 0) return err(userError(shapeErrors[0]));
-    if (!isRecord(entry)) return err(userError("WORKER_REFERENCE_INVALID"));
+    if (shapeErrors.length > 0) {
+      diagnostics.push(...shapeErrors.map((code) => diagnostic(code, manifestPath, jsonPath)));
+      continue;
+    }
+    if (!isRecord(entry)) continue;
     if (typeof entry.id === "string") {
       items.push({ type: "id", id: entry.id });
     } else if (typeof entry.file === "string") {
@@ -951,18 +1156,22 @@ export async function inspectWorkerAgents(
       );
       let exists = false;
       if (fileResult.isOk()) {
+        const beforeStat = cancellationError(context?.signal);
+        if (beforeStat) return err(beforeStat);
         try {
           exists = (await fs.stat(fileResult.value.lexicalTarget)).isFile();
         } catch {
           exists = false;
         }
+        const afterStat = cancellationError(context?.signal);
+        if (afterStat) return err(afterStat);
       }
       items.push({ type: "file", file: entry.file, exists });
     } else {
-      return err(userError("WORKER_REFERENCE_INVALID"));
+      diagnostics.push(diagnostic("WORKER_REFERENCE_INVALID", manifestPath, jsonPath));
     }
   }
-  return ok({ items });
+  return ok({ items, diagnostics: sortDiagnostics(diagnostics) });
 }
 
 export async function validateWorkerAgents(
@@ -977,7 +1186,10 @@ export async function validateWorkerAgents(
   ) {
     return err(userError("WORKER_OPTIONS_INVALID"));
   }
-  const result = await validateWorkerAgentGraph({ projectPath: options.projectPath });
+  const result = await validateWorkerAgentGraph({
+    projectPath: options.projectPath,
+    signal: context?.signal,
+  });
   if (result.isErr()) return err(result.error);
   return ok({ valid: result.value.valid, diagnostics: result.value.diagnostics });
 }

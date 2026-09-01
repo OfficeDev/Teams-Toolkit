@@ -36,6 +36,7 @@ import {
 
 export type {
   WorkerDiagnostic,
+  WorkerDiagnosticCode,
   WorkerDiagnosticSeverity,
   WorkerInspectionItem,
   WorkerInspectionResult,

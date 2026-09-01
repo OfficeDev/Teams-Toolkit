@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { InputsWithProjectPath, Platform, ok } from "@microsoft/teamsfx-api";
+import { InputsWithProjectPath, Platform, err, ok } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import os from "os";
 import path from "path";
@@ -12,6 +12,7 @@ import { DriverContext } from "../../../src/component/driver/interface/commonArg
 import { provisionUtils } from "../../../src/component/provisionUtils";
 import { metadataUtil } from "../../../src/component/utils/metadataUtil";
 import * as workerAgents from "../../../src/core/workerAgents";
+import { UserCancelError } from "../../../src/error";
 import { MockTools } from "../../core/utils";
 
 describe("worker agent provision integration", () => {
@@ -41,7 +42,7 @@ describe("worker agent provision integration", () => {
             severity: "error",
             code: "WORKER_FILE_MISSING",
             message: "missing worker",
-            file: "appPackage/declarativeAgent.json",
+            manifestPath: "appPackage/declarativeAgent.json",
             path: "$.worker_agents[0]",
           },
         ],
@@ -205,6 +206,54 @@ describe("worker agent provision integration", () => {
     expect(execute).toHaveBeenCalledOnce();
   });
 
+  it("WORKER-PROVISION-05: passes cancellation to graph validation before lifecycle execution", async () => {
+    const execute = vi.fn().mockResolvedValue({ result: ok(new Map()), summaries: [] });
+    vi.spyOn(metadataUtil, "parse").mockResolvedValue(
+      ok({
+        version: "1.0.0",
+        provision: {
+          name: "provision",
+          driverDefs: [],
+          resolvePlaceholders: () => [],
+          execute,
+          resolveDriverInstances: () => ok([]),
+        },
+        environmentFolderPath: "./envs",
+      })
+    );
+    const controller = new AbortController();
+    const validate = vi
+      .spyOn(workerAgents, "validateWorkerAgentGraph")
+      .mockImplementation(async (options) => {
+        expect(options.signal).toBe(controller.signal);
+        return err(new UserCancelError("WorkerAgents"));
+      });
+    const tools = new MockTools();
+    const context: DriverContext = {
+      azureAccountProvider: tools.tokenProvider.azureAccountProvider,
+      m365TokenProvider: tools.tokenProvider.m365TokenProvider,
+      ui: tools.ui,
+      progressBar: undefined,
+      logProvider: tools.logProvider,
+      telemetryReporter: tools.telemetryReporter,
+      projectPath: "project",
+      platform: Platform.CLI,
+      signal: controller.signal,
+    };
+
+    const result = await coordinator.provision(context, {
+      projectPath: "project",
+      platform: Platform.CLI,
+      env: "dev",
+      workflowFilePath: "project/m365agents.yml",
+    });
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) expect(result.error.name).toBe("UserCancel");
+    expect(validate).toHaveBeenCalledOnce();
+    expect(execute).not.toHaveBeenCalled();
+  });
+
   it("WORKER-PROVISION-03: a project without workers preserves lifecycle execution", async () => {
     const execute = vi
       .fn()
@@ -312,7 +361,7 @@ describe("worker agent provision integration", () => {
     }
   });
 
-  it("WORKER-PROVISION-03: a DA without workers skips Worker schema validation", async () => {
+  it("WORKER-PROVISION-04: a v1.5 DA without workers skips Worker schema validation", async () => {
     const projectPath = await fs.mkdtemp(path.join(os.tmpdir(), "fx-worker-env-compat-"));
     const previousDaFile = process.env.DA_FILE;
     process.env.DA_FILE = "repairDeclarativeAgent.json";
@@ -338,7 +387,7 @@ describe("worker agent provision integration", () => {
         },
       });
       await fs.writeJson(path.join(appPackagePath, "repairDeclarativeAgent.json"), {
-        version: "v1.8",
+        version: "v1.5",
         worker_agents: [],
       });
       const execute = vi
