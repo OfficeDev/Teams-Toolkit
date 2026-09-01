@@ -2,20 +2,17 @@ name: smoke_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 
 # Manual-only: registering this definition cannot disturb existing CI.
 # Flip to a `pr:` / `trigger:` block once a run has been verified green.
+# A PR trigger additionally requires extending 1ES.Unofficial.PipelineTemplate.
 trigger: none
 pr: none
 
 parameters:
-  # Sentinel rather than '': Azure DevOps flags a string parameter whose default
-  # is empty as Required, which blocks the queue form.
+  # A default is mandatory and must be non-empty: Azure DevOps marks every
+  # string parameter Required in the queue form and rejects a blank value.
   - name: poolName
-    displayName: Agent pool (keep "hosted" to use a Microsoft-hosted agent)
+    displayName: Agent pool
     type: string
-    default: hosted
-  - name: vmImage
-    displayName: Hosted image (used only when poolName is "hosted")
-    type: string
-    default: ubuntu-latest
+    default: AzurePipelines-EO
 
 variables:
   - name: nodeVersion
@@ -23,43 +20,41 @@ variables:
   - name: pnpmVersion
     value: '8.6.12'
 
-pool:
-  ${{ if ne(parameters.poolName, 'hosted') }}:
-    name: ${{ parameters.poolName }}
-  ${{ else }}:
-    vmImage: ${{ parameters.vmImage }}
+jobs:
+  - job: smoke
+    displayName: Build and test @microsoft/app-manifest
+    pool:
+      name: ${{ parameters.poolName }}
+    steps:
+      - checkout: self
+        clean: true
+        fetchDepth: 1
 
-steps:
-  - checkout: self
-    clean: true
-    fetchDepth: 1
+      - pwsh: |
+          Write-Host "Agent.Name=$(Agent.Name)"
+          Write-Host "Agent.OS=$(Agent.OS)"
+          Write-Host "Build.SourceBranch=$(Build.SourceBranch)"
+          Write-Host "Build.SourceVersion=$(Build.SourceVersion)"
+          git --version
+        displayName: Report agent context
 
-  - script: |
-      echo "Agent.Name=$(Agent.Name)"
-      echo "Agent.OS=$(Agent.OS)"
-      echo "Build.SourceBranch=$(Build.SourceBranch)"
-      echo "Build.SourceVersion=$(Build.SourceVersion)"
-      git --version
-    displayName: Report agent context
+      - task: UseNode@1
+        displayName: Install Node.js
+        inputs:
+          version: $(nodeVersion)
 
-  - task: NodeTool@0
-    displayName: Install Node.js
-    inputs:
-      versionSpec: $(nodeVersion)
+      # Corepack is avoided on purpose: activating pnpm through it contacts
+      # Corepack's public version-metadata endpoint, which 1ES agents block.
+      - script: npm install -g pnpm@$(pnpmVersion)
+        displayName: Install pnpm
 
-  - script: |
-      corepack enable
-      corepack prepare pnpm@$(pnpmVersion) --activate
-      pnpm --version
-    displayName: Activate pnpm
+      # Filtered install keeps the smoke run fast; a full workspace install is
+      # not needed to prove the agent can restore this repo's dependency graph.
+      - script: pnpm install --frozen-lockfile --filter @microsoft/app-manifest...
+        displayName: Install dependencies (manifest slice)
 
-  # Filtered install keeps the smoke run fast; a full workspace install is not
-  # needed to prove the agent can restore this repo's dependency graph.
-  - script: pnpm install --frozen-lockfile --filter @microsoft/app-manifest...
-    displayName: Install dependencies (manifest slice)
+      - script: pnpm --filter @microsoft/app-manifest build
+        displayName: Build @microsoft/app-manifest
 
-  - script: pnpm --filter @microsoft/app-manifest build
-    displayName: Build @microsoft/app-manifest
-
-  - script: pnpm --filter @microsoft/app-manifest test:unit
-    displayName: Unit test @microsoft/app-manifest
+      - script: pnpm --filter @microsoft/app-manifest test:unit
+        displayName: Unit test @microsoft/app-manifest
