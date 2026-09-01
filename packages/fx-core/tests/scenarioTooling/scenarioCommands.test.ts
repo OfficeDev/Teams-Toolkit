@@ -879,7 +879,7 @@ describe("scenario artifact commands", () => {
       );
       assert.include(defaultHtml, askCopilotLabel);
       assert.include(defaultHtml, "environment: vscode-shipped");
-      assert.notInclude(defaultHtml, v4Label);
+      assert.include(defaultHtml, v4Label);
 
       const previewFixture = await createFixture();
       await fs.writeFile(
