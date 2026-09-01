@@ -50,6 +50,7 @@ cases:
         check-openapi-action,
         add-api-key-auth,
         check-api-key-auth,
+        set-personal-scope,
         login-m365,
         provision-api-key,
       ]
@@ -66,6 +67,7 @@ cases:
         check-openapi-action,
         add-bearer-auth,
         check-bearer-auth,
+        set-personal-scope,
         login-m365,
         provision-bearer,
       ]
@@ -82,6 +84,7 @@ cases:
         check-openapi-action,
         add-entra-auth,
         check-entra-auth,
+        set-personal-scope,
         login-m365,
         provision-entra,
         f5-copilot-remote,
@@ -101,6 +104,7 @@ cases:
         check-openapi-action,
         add-oauth-auth,
         check-oauth-auth,
+        set-personal-scope,
         login-m365,
         provision-oauth,
         f5-copilot-remote,

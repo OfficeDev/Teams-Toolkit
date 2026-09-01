@@ -7944,6 +7944,50 @@ steps:
   }
 });
 
+test("VCB-173: advanced DA authentication cases use personal scope before provision", async () => {
+  const fixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+
+  for (const caseId of [
+    "feature-da-no-action-api-key-auth-provision",
+    "feature-da-no-action-bearer-auth-provision",
+    "feature-da-no-action-entra-auth-remote-preview",
+    "feature-da-no-action-oauth-auth-remote-preview",
+  ]) {
+    const migrated = fixture.value.find(
+      ({ caseId: compiledCaseId }) => compiledCaseId === caseId,
+    );
+    assert.notEqual(migrated, undefined, caseId);
+    const steps = migrated.plan.steps;
+    const scopeSteps = steps.filter(
+      (step) =>
+        step.step_id.startsWith(
+          "step_setProjectEnvironmentVariable_typeCommand_",
+        ) && step.parameters.text.includes('VARIABLE_NAME="AGENT_SCOPE"'),
+    );
+    const scopeIndex = steps.indexOf(scopeSteps[0]);
+    const loginIndex = steps.findIndex((step) =>
+      step.description.includes(
+        "ACCOUNTS section of the side bar lists an entry whose label begins with Sign in to Microsoft",
+      ),
+    );
+    const provisionIndex = steps.findIndex(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "Microsoft 365 Agents: Provision",
+    );
+
+    assert.equal(scopeSteps.length, 1, caseId);
+    assert.notEqual(loginIndex, -1, caseId);
+    assert.notEqual(provisionIndex, -1, caseId);
+    assert.equal(scopeIndex < loginIndex, true, caseId);
+    assert.equal(loginIndex < provisionIndex, true, caseId);
+  }
+});
+
 test("VCB-153: publishDeveloperPortal preserves every remaining recorded pointer precondition", () => {
   const sourceText = createPackageSource({ includePublish: true });
   const result = compileInlineSource(sourceText, "vscuse-vcb-153.yml");
