@@ -20,7 +20,7 @@
       "upstreamRepo": "OfficeDev/Excel-Custom-Functions",
       "upstreamBranch": "release",
       "upstreamManifestVersion": "1.17",
-      "upstreamCommitSha": "64358fbcef881d2438bd5a18618cd855d8693ce2",
+      "upstreamCommitSha": "2de09edcd0bade30d8eaab407be50bd862798962",
       "upstreamDepHash": "cab63a23898af62f"
     },
     "office-addin-excel-cfshortcut": {
