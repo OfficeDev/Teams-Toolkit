@@ -11,6 +11,11 @@ variables:
     value: '22.17'
   - name: pnpmVersion
     value: '8.6.12'
+  # 1ES network isolation sinkholes registry.npmjs.org to 192.0.2.x, so restores
+  # must go through the feed proxy. Passed per-step rather than added to the
+  # root .npmrc, which GitHub Actions and local dev also read.
+  - name: npmRegistry
+    value: 'https://packagefeedproxy.microsoft.io/npm/'
 
 resources:
   repositories:
@@ -64,13 +69,13 @@ extends:
               # Corepack is avoided on purpose: activating pnpm through it
               # contacts Corepack's public version-metadata endpoint, which
               # 1ES agents block.
-              - script: npm install -g pnpm@$(pnpmVersion)
+              - script: npm install -g pnpm@$(pnpmVersion) --registry=$(npmRegistry)
                 displayName: Install pnpm
 
               # Filtered install keeps the smoke run fast; a full workspace
               # install is not needed to prove the agent can restore this
               # repo's dependency graph.
-              - script: pnpm install --frozen-lockfile --filter @microsoft/app-manifest...
+              - script: pnpm install --frozen-lockfile --registry=$(npmRegistry) --filter @microsoft/app-manifest...
                 displayName: Install dependencies (manifest slice)
 
               - script: pnpm --filter @microsoft/app-manifest build
