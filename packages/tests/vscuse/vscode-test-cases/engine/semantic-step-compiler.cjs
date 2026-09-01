@@ -25,8 +25,8 @@ const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
 const regenerateDaActionApiSpecLocation =
   "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml";
-const unsupportedWorkflowVersionShareError =
-  "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
+const invalidYamlSchemaShareError =
+  "[ConfigManager.InvalidYamlSchemaError]: Unable to parse yaml file";
 const localUserEnvironmentMutationScript = String.raw`import os
 from pathlib import Path
 
@@ -132,7 +132,6 @@ const commandTitles = {
     "Microsoft 365 Agents: Publish to Store in Developer Portal",
   provision: "Microsoft 365 Agents: Provision",
   regenerateDaAction: "Microsoft 365 Agents: Regenerate Action",
-  share: "Microsoft 365 Agents: Share",
   // VS Code generates one show command per view container, so this title exists
   // in both windows, and the container renders every view the current
   // `fx-extension.isTeamsFx` value allows, ACCOUNTS first.
@@ -1545,15 +1544,19 @@ function createSemanticStepCompiler() {
     if (
       state.template !== "da/no-action" ||
       !isRecord(inputs) ||
-      !hasOnlyFields(inputs, new Set(["scope", "email", "expectError"])) ||
+      !hasOnlyFields(
+        inputs,
+        new Set(["scope", "environment", "email", "expectError"]),
+      ) ||
       inputs.scope !== "users" ||
+      inputs.environment !== "dev" ||
       typeof inputs.email !== "string" ||
       !environmentExpressionPattern.test(inputs.email) ||
-      inputs.expectError !== "unsupportedWorkflowVersion"
+      inputs.expectError !== "invalidYamlSchema"
     ) {
       return failure(
         "VCB_SHARE_INPUT_INVALID",
-        "The Share operation requires the supported scope, environment-backed email, and error expectation.",
+        "The Share operation requires the supported scope, dev environment, environment-backed email, and error expectation.",
       );
     }
     if (
@@ -1567,19 +1570,18 @@ function createSemanticStepCompiler() {
     }
 
     const output = [];
-    for (const commandTitle of [
-      commandTitles.clearNotifications,
-      commandTitles.notifications,
-      commandTitles.share,
-    ]) {
-      const error = append(
-        output,
-        render(state, "command-palette/execute-command.json.tpl", {
-          commandTitle,
-        }),
-      );
-      if (error) return error;
-    }
+    const clearNotificationsError = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.clearNotifications,
+      }),
+    );
+    if (clearNotificationsError) return clearNotificationsError;
+    const shareCommandError = append(
+      output,
+      render(state, "tree-view/share.json.tpl", {}),
+    );
+    if (shareCommandError) return shareCommandError;
     for (const answer of [
       {
         component: "quick-input/single-select.json.tpl",
@@ -1602,6 +1604,13 @@ function createSemanticStepCompiler() {
           inputValue: inputs.email,
         },
       },
+      {
+        component: "quick-input/single-select.json.tpl",
+        values: {
+          questionTitle: "Select an environment",
+          optionLabel: inputs.environment,
+        },
+      },
     ]) {
       const error = append(
         output,
@@ -1612,7 +1621,7 @@ function createSemanticStepCompiler() {
     const error = append(
       output,
       render(state, "notifications/assert-contains.json.tpl", {
-        notificationText: unsupportedWorkflowVersionShareError,
+        notificationText: invalidYamlSchemaShareError,
         retryTimeout: "60",
       }),
     );

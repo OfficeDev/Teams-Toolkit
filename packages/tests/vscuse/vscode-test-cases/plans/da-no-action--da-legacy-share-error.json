@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 79,
+    "total_steps": 76,
     "name": "da-legacy-share-error",
     "description": {
       "owner": "",
@@ -71,29 +71,26 @@
       "step_executeCommand_filter_cec39ad66_5_1",
       "step_executeCommand_assertCommand_cec39ad66_5_1",
       "step_executeCommand_execute_cec39ad66_5_1",
-      "step_executeCommand_open_cec39ad66_5_2",
-      "step_executeCommand_assertPalette_cec39ad66_5_2",
-      "step_executeCommand_filter_cec39ad66_5_2",
-      "step_executeCommand_assertCommand_cec39ad66_5_2",
-      "step_executeCommand_execute_cec39ad66_5_2",
-      "step_executeCommand_open_cec39ad66_5_3",
-      "step_executeCommand_assertPalette_cec39ad66_5_3",
-      "step_executeCommand_filter_cec39ad66_5_3",
-      "step_executeCommand_assertCommand_cec39ad66_5_3",
-      "step_executeCommand_execute_cec39ad66_5_3",
+      "step_share_assertVisible_cec39ad66_5_2",
+      "step_share_click_cec39ad66_5_2",
+      "step_singleSelect_assertQuestion_cec39ad66_5_3",
+      "step_singleSelect_assertOptionsLoaded_cec39ad66_5_3",
+      "step_singleSelect_filter_cec39ad66_5_3",
+      "step_singleSelect_assertOption_cec39ad66_5_3",
+      "step_singleSelect_confirm_cec39ad66_5_3",
       "step_singleSelect_assertQuestion_cec39ad66_5_4",
       "step_singleSelect_assertOptionsLoaded_cec39ad66_5_4",
       "step_singleSelect_filter_cec39ad66_5_4",
       "step_singleSelect_assertOption_cec39ad66_5_4",
       "step_singleSelect_confirm_cec39ad66_5_4",
-      "step_singleSelect_assertQuestion_cec39ad66_5_5",
-      "step_singleSelect_assertOptionsLoaded_cec39ad66_5_5",
-      "step_singleSelect_filter_cec39ad66_5_5",
-      "step_singleSelect_assertOption_cec39ad66_5_5",
-      "step_singleSelect_confirm_cec39ad66_5_5",
-      "step_textInput_assertQuestion_cec39ad66_5_6",
-      "step_textInput_input_cec39ad66_5_6",
-      "step_textInput_confirm_cec39ad66_5_6",
+      "step_textInput_assertQuestion_cec39ad66_5_5",
+      "step_textInput_input_cec39ad66_5_5",
+      "step_textInput_confirm_cec39ad66_5_5",
+      "step_singleSelect_assertQuestion_cec39ad66_5_6",
+      "step_singleSelect_assertOptionsLoaded_cec39ad66_5_6",
+      "step_singleSelect_filter_cec39ad66_5_6",
+      "step_singleSelect_assertOption_cec39ad66_5_6",
+      "step_singleSelect_confirm_cec39ad66_5_6",
       "step_assertNotificationContains_assert_cec39ad66_5_7"
     ],
     "tags": [
@@ -1348,13 +1345,11 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cec39ad66_5_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "step_id": "step_share_assertVisible_cec39ad66_5_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the LIFECYCLE section of the Microsoft 365 Agents Toolkit side bar is visible and its Share command is selectable.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1365,206 +1360,41 @@
       "preconditions": [],
       "postconditions": [],
       "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertPalette_cec39ad66_5_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_open_cec39ad66_5_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
+        "component:tree-view",
+        "action:share",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cec39ad66_5_2",
+      "step_id": "step_share_click_cec39ad66_5_2",
       "agent": "interaction",
-      "tool": "type_text",
+      "tool": "click",
       "parameters": {
-        "text": "Notifications: Show Notifications"
+        "button": "left",
+        "x": 122,
+        "y": 573
       },
-      "description": "Type the resolved command title into the active Command Palette.",
+      "description": "Click Share in the LIFECYCLE section of the Microsoft 365 Agents Toolkit side bar.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cec39ad66_5_2"
+        "step_share_assertVisible_cec39ad66_5_2"
       ],
-      "preconditions": [],
+      "preconditions": [
+        "dhash:122:573:16:5:40a0a04048505040",
+        "dhash:122:573:96:5:b2a48488c4cacb10",
+        "dhash:122:573:0:10:24a4302030303232"
+      ],
       "postconditions": [],
       "tags": [
-        "component:command-palette",
-        "action:execute-command"
+        "component:tree-view",
+        "action:share"
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cec39ad66_5_2",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Notifications: Show Notifications and the highlighted command listed under it is titled Notifications: Show Notifications.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_filter_cec39ad66_5_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_execute_cec39ad66_5_2",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to execute the selected Command Palette command.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertCommand_cec39ad66_5_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_open_cec39ad66_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "f1"
-      },
-      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_execute_cec39ad66_5_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertPalette_cec39ad66_5_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_open_cec39ad66_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_filter_cec39ad66_5_3",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Microsoft 365 Agents: Share"
-      },
-      "description": "Type the resolved command title into the active Command Palette.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertPalette_cec39ad66_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_assertCommand_cec39ad66_5_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Share and the highlighted command listed under it is titled Microsoft 365 Agents: Share.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_filter_cec39ad66_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_executeCommand_execute_cec39ad66_5_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to execute the selected Command Palette command.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_executeCommand_assertCommand_cec39ad66_5_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:command-palette",
-        "action:execute-command"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertQuestion_cec39ad66_5_4",
+      "step_id": "step_singleSelect_assertQuestion_cec39ad66_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1574,7 +1404,114 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cec39ad66_5_3"
+        "step_share_click_cec39ad66_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cec39ad66_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Share the agent has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cec39ad66_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_cec39ad66_5_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Share access"
+      },
+      "description": "Type the resolved option label Share access into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_cec39ad66_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_cec39ad66_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Share access is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_cec39ad66_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_cec39ad66_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_cec39ad66_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_cec39ad66_5_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Share the agent with users is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1589,7 +1526,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Share the agent has finished loading and lists at least one selectable option.",
+      "description": "@assertion the prompt titled Share the agent with users has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -1610,9 +1547,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Share access"
+        "text": "Share to specified users(s) or user group"
       },
-      "description": "Type the resolved option label Share access into the active single-select prompt.",
+      "description": "Type the resolved option label Share to specified users(s) or user group into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1632,7 +1569,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Share access is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Share to specified users(s) or user group is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1671,11 +1608,11 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cec39ad66_5_5",
+      "step_id": "step_textInput_assertQuestion_cec39ad66_5_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Share the agent with users is visible.",
+      "description": "@assertion the active prompt titled Email addresses of users or groups for agent sharing is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1687,119 +1624,12 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cec39ad66_5_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the prompt titled Share the agent with users has finished loading and lists at least one selectable option.",
-      "content_refs": [],
-      "timeout": 120,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertQuestion_cec39ad66_5_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_filter_cec39ad66_5_5",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Share to specified users(s) or user group"
-      },
-      "description": "Type the resolved option label Share to specified users(s) or user group into the active single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cec39ad66_5_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOption_cec39ad66_5_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option Share to specified users(s) or user group is visible and selectable in the filtered single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_filter_cec39ad66_5_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_confirm_cec39ad66_5_5",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the filtered single-select option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOption_cec39ad66_5_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_textInput_assertQuestion_cec39ad66_5_6",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Email addresses of users or groups for agent sharing is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_confirm_cec39ad66_5_5"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
         "answer_type:text",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_textInput_input_cec39ad66_5_6",
+      "step_id": "step_textInput_input_cec39ad66_5_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1811,7 +1641,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cec39ad66_5_6"
+        "step_textInput_assertQuestion_cec39ad66_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1821,7 +1651,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cec39ad66_5_6",
+      "step_id": "step_textInput_confirm_cec39ad66_5_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1833,7 +1663,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cec39ad66_5_6"
+        "step_textInput_input_cec39ad66_5_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1843,17 +1673,124 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_cec39ad66_5_7",
+      "step_id": "step_singleSelect_assertQuestion_cec39ad66_5_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion a visible Visual Studio Code notification contains the literal text Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
+      "description": "@assertion the active prompt titled Select an environment is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cec39ad66_5_6"
+        "step_textInput_confirm_cec39ad66_5_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cec39ad66_5_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Select an environment has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cec39ad66_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_cec39ad66_5_6",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "dev"
+      },
+      "description": "Type the resolved option label dev into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_cec39ad66_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_cec39ad66_5_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option dev is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_cec39ad66_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_cec39ad66_5_6",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_cec39ad66_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_assertNotificationContains_assert_cec39ad66_5_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text [ConfigManager.InvalidYamlSchemaError]: Unable to parse yaml file. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_cec39ad66_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
