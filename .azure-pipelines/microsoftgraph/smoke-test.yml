@@ -1,18 +1,10 @@
 name: smoke_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 
 # Manual-only: registering this definition cannot disturb existing CI.
-# Flip to a `pr:` / `trigger:` block once a run has been verified green.
-# A PR trigger additionally requires extending 1ES.Unofficial.PipelineTemplate.
+# Flip to a `pr:` / `trigger:` block once a run has been verified green;
+# the Unofficial template is already the correct one for unreviewed PR code.
 trigger: none
 pr: none
-
-parameters:
-  # A default is mandatory and must be non-empty: Azure DevOps marks every
-  # string parameter Required in the queue form and rejects a blank value.
-  - name: poolName
-    displayName: Agent pool
-    type: string
-    default: AzurePipelines-EO
 
 variables:
   - name: nodeVersion
@@ -20,41 +12,69 @@ variables:
   - name: pnpmVersion
     value: '8.6.12'
 
-jobs:
-  - job: smoke
-    displayName: Build and test @microsoft/app-manifest
-    pool:
-      name: ${{ parameters.poolName }}
-    steps:
-      - checkout: self
-        clean: true
-        fetchDepth: 1
+resources:
+  repositories:
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
 
-      - pwsh: |
-          Write-Host "Agent.Name=$(Agent.Name)"
-          Write-Host "Agent.OS=$(Agent.OS)"
-          Write-Host "Build.SourceBranch=$(Build.SourceBranch)"
-          Write-Host "Build.SourceVersion=$(Build.SourceVersion)"
-          git --version
-        displayName: Report agent context
+# Azure-Pipelines-1ESPT-ExDShared only accepts jobs issued by a 1ES template,
+# so the pool and the `extends` block have to change together.
+extends:
+  template: v1/1ES.Unofficial.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    sdl:
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        os: windows
+        image: windows-latest
+      # No .config/tsaoptions.json exists in this repo yet.
+      tsa:
+        enabled: false
 
-      - task: UseNode@1
-        displayName: Install Node.js
-        inputs:
-          version: $(nodeVersion)
+    stages:
+      - stage: validate
+        displayName: Validate
+        jobs:
+          - job: smoke
+            displayName: Build and test @microsoft/app-manifest
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              os: windows
+              image: windows-latest
+            steps:
+              - checkout: self
+                clean: true
+                fetchDepth: 1
 
-      # Corepack is avoided on purpose: activating pnpm through it contacts
-      # Corepack's public version-metadata endpoint, which 1ES agents block.
-      - script: npm install -g pnpm@$(pnpmVersion)
-        displayName: Install pnpm
+              - pwsh: |
+                  Write-Host "Agent.Name=$(Agent.Name)"
+                  Write-Host "Agent.OS=$(Agent.OS)"
+                  Write-Host "Build.SourceBranch=$(Build.SourceBranch)"
+                  Write-Host "Build.SourceVersion=$(Build.SourceVersion)"
+                  git --version
+                displayName: Report agent context
 
-      # Filtered install keeps the smoke run fast; a full workspace install is
-      # not needed to prove the agent can restore this repo's dependency graph.
-      - script: pnpm install --frozen-lockfile --filter @microsoft/app-manifest...
-        displayName: Install dependencies (manifest slice)
+              - task: UseNode@1
+                displayName: Install Node.js
+                inputs:
+                  version: $(nodeVersion)
 
-      - script: pnpm --filter @microsoft/app-manifest build
-        displayName: Build @microsoft/app-manifest
+              # Corepack is avoided on purpose: activating pnpm through it
+              # contacts Corepack's public version-metadata endpoint, which
+              # 1ES agents block.
+              - script: npm install -g pnpm@$(pnpmVersion)
+                displayName: Install pnpm
 
-      - script: pnpm --filter @microsoft/app-manifest test:unit
-        displayName: Unit test @microsoft/app-manifest
+              # Filtered install keeps the smoke run fast; a full workspace
+              # install is not needed to prove the agent can restore this
+              # repo's dependency graph.
+              - script: pnpm install --frozen-lockfile --filter @microsoft/app-manifest...
+                displayName: Install dependencies (manifest slice)
+
+              - script: pnpm --filter @microsoft/app-manifest build
+                displayName: Build @microsoft/app-manifest
+
+              - script: pnpm --filter @microsoft/app-manifest test:unit
+                displayName: Unit test @microsoft/app-manifest
