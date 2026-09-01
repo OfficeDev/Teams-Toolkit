@@ -70,7 +70,7 @@
       // Escape backslashes and double quotes for safe TS string literal
       const escaped = value.replace(/\\/g, "\\\\").replace(/\"/g, '\\"');
 
-      tspLines.push(`  const ${ident} = "${escaped}";`);
+      tspLines.push(`  alias ${ident} = "${escaped}";`);
       tspLines.push("");
     }
 
