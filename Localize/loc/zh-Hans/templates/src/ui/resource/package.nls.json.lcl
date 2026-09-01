@@ -558,18 +558,60 @@
       </Item>
       <Item ItemId=";template.newCFShortcut.detail" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Task pane add-in with custom function and shortcut]]></Val>
+          <Val><![CDATA[Create custom functions in Excel using a shared runtime]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[带有自定义函数和快捷方式的任务窗格加载项]]></Val>
+            <Val><![CDATA[在 Excel 中使用共享运行时创建自定义函数]]></Val>
           </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Task pane add-in with custom function and shortcut]]></Val>
+          </Prev>
         </Str>
         <Disp Icon="Str" />
       </Item>
       <Item ItemId=";template.newCFShortcut.label" ItemType="0" PsrId="306" Leaf="true">
         <Str Cat="Text">
-          <Val><![CDATA[Custom Function and Shortcut]]></Val>
+          <Val><![CDATA[Excel Custom Functions (Shared Runtime)]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
-            <Val><![CDATA[自定义函数和快捷方式]]></Val>
+            <Val><![CDATA[Excel 自定义函数(共享运行时)]]></Val>
+          </Tgt>
+          <Prev Cat="Text">
+            <Val><![CDATA[Custom Function and Shortcut]]></Val>
+          </Prev>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.newExcelCustomFunctions.detail" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Create custom functions in Excel using a JavaScript-only runtime]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[在 Excel 中使用仅 JavaScript 运行时创建自定义函数]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.newExcelCustomFunctions.label" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Excel Custom Functions (JavaScript-only Runtime)]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[Excel 自定义函数(仅 JavaScript 运行时)]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.newSsoNaa.detail" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Task pane add-in that uses Nested App Auth for single sign-on]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[使用嵌套应用身份验证进行单一登录的任务窗格加载项]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.newSsoNaa.label" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Single Sign-On with Nested App Auth]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[使用嵌套应用身份验证进行单一登录]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
@@ -651,6 +693,24 @@
           <Val><![CDATA[Word]]></Val>
           <Tgt Cat="Text" Stat="Loc" Orig="New">
             <Val><![CDATA[Word]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.officeAddin.naaHost.placeholder" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Select an Office application]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[选择 Office 应用程序]]></Val>
+          </Tgt>
+        </Str>
+        <Disp Icon="Str" />
+      </Item>
+      <Item ItemId=";template.officeAddin.naaHost.title" ItemType="0" PsrId="306" Leaf="true">
+        <Str Cat="Text">
+          <Val><![CDATA[Select the Office application to support]]></Val>
+          <Tgt Cat="Text" Stat="Loc" Orig="New">
+            <Val><![CDATA[选择要支持的 Office 应用程序]]></Val>
           </Tgt>
         </Str>
         <Disp Icon="Str" />
