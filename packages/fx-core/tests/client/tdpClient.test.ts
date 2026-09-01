@@ -470,7 +470,7 @@ describe("TeamsDevPortalClient Test", () => {
       vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
       const externalId = uuid();
       const appId = uuid();
-      teamsDevPortalClient.regionEndpoint = "https://dev.teams.microsoft.com/cosmicprodamer";
+      teamsDevPortalClient.regionEndpoint = undefined;
       vi.spyOn(fakeAxiosInstance, "get")
         .mockRejectedValueOnce({ response: { status: 404 } })
         .mockResolvedValueOnce({
@@ -486,7 +486,6 @@ describe("TeamsDevPortalClient Test", () => {
 
       chai.assert.equal(app.appId, appId);
       chai.assert.equal(app.teamsAppId, externalId);
-      teamsDevPortalClient.setRegionEndpoint(undefined as unknown as string);
     });
   });
 
@@ -567,6 +566,22 @@ describe("TeamsDevPortalClient Test", () => {
       } finally {
         teamsDevPortalClient.setRegionEndpoint(undefined as unknown as string);
       }
+    });
+
+    it("does not list apps when direct lookup fails with a non-404 response", async () => {
+      const fakeAxiosInstance = axios.create();
+      vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
+      vi.spyOn(fakeAxiosInstance, "get").mockRejectedValue({ response: { status: 403 } });
+      const listAppsSpy = vi.spyOn(teamsDevPortalClient, "listApps");
+
+      try {
+        await teamsDevPortalClient.getApp(token, appDef.teamsAppId!);
+        chai.assert.fail("should throw error");
+      } catch (error) {
+        chai.assert.equal(error.name, DeveloperPortalAPIFailedSystemError.name);
+      }
+
+      expect(listAppsSpy).not.toHaveBeenCalled();
     });
 
     it("app id not match", async () => {
@@ -1613,7 +1628,7 @@ describe("TeamsDevPortalClient Test", () => {
       const res = await teamsDevPortalClient.listApps(token);
       chai.assert.equal(res[0].teamsAppId, appDef.teamsAppId);
     });
-    it("Error - no region", async () => {
+    it("uses the default endpoint when no region is set", async () => {
       const fakeAxiosInstance = axios.create();
       vi.spyOn(axios, "create").mockReturnValue(fakeAxiosInstance);
 
@@ -1622,12 +1637,10 @@ describe("TeamsDevPortalClient Test", () => {
       };
       vi.spyOn(fakeAxiosInstance, "get").mockResolvedValue(response);
       teamsDevPortalClient.setRegionEndpoint("");
-      try {
-        await teamsDevPortalClient.listApps(token);
-        chai.assert.fail("should throw error");
-      } catch (e) {
-        chai.assert.isTrue(e instanceof Error);
-      }
+
+      const apps = await teamsDevPortalClient.listApps(token);
+
+      chai.assert.deepEqual(apps, []);
     });
     it("Error - api failure", async () => {
       const fakeAxiosInstance = axios.create();

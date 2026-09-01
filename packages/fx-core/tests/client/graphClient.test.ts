@@ -943,6 +943,32 @@ describe("Teams app publish APIs", () => {
     }
   });
 
+  it("publishTeamsApp should include Graph validation details from a 400 response", async () => {
+    vi.spyOn(fakeAxiosInstance, "post").mockRejectedValue({
+      message: "Request failed with status code 400",
+      response: {
+        status: 400,
+        data: {
+          error: {
+            message: "Unable to parse Teams app manifest",
+            innerError: {
+              details: [{ code: "SchemaError_Required", message: "Required property is missing." }],
+            },
+          },
+        },
+      },
+    });
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
+
+    try {
+      await graphClient.publishTeamsApp("token", "external-id", Buffer.from("zip"));
+      chai.assert.fail("Should throw");
+    } catch (e: any) {
+      chai.expect(e.message).to.include("Required property is missing.");
+      chai.expect(e.message).not.to.include("Request failed with status code 400");
+    }
+  });
+
   it("publishTeamsAppUpdate should post to appDefinitions with staged teamsAppId", async () => {
     vi.spyOn(graphClient, "getStagedApp").mockResolvedValue({
       teamsAppId: "catalog-app-id",
@@ -1038,6 +1064,31 @@ describe("Teams app publish APIs", () => {
       chai.expect(e).to.be.instanceOf(Error);
       chai.expect(e.message).to.include("publishTeamsAppUpdate");
       chai.expect(e.message).to.include("invalid package");
+    }
+  });
+
+  it("publishTeamsAppUpdate should include Graph error message from a 400 response", async () => {
+    vi.spyOn(graphClient, "getStagedApp").mockResolvedValue({
+      teamsAppId: "catalog-app-id",
+      displayName: "App Name",
+      publishingState: "published" as any,
+      lastModifiedDateTime: null,
+    });
+    vi.spyOn(fakeAxiosInstance, "post").mockRejectedValue({
+      message: "Request failed with status code 400",
+      response: {
+        status: 400,
+        data: { error: { message: "The app version must be higher than the existing version." } },
+      },
+    });
+    vi.spyOn(RetryHandler, "Retry").mockImplementation(async (fn: any) => await fn());
+
+    try {
+      await graphClient.publishTeamsAppUpdate("token", "external-id", Buffer.from("zip"));
+      chai.assert.fail("Should throw");
+    } catch (e: any) {
+      chai.expect(e.message).to.include("The app version must be higher");
+      chai.expect(e.message).not.to.include("Request failed with status code 400");
     }
   });
 });

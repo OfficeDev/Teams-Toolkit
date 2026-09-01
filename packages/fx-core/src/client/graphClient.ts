@@ -382,7 +382,7 @@ export class GraphClient {
         getDefaultString(
           "error.graphAPI.apiFailed.message",
           "publishTeamsApp",
-          error?.message || "unknown error"
+          this.getGraphErrorMessage(error)
         )
       );
     }
@@ -439,10 +439,28 @@ export class GraphClient {
         getDefaultString(
           "error.graphAPI.apiFailed.message",
           "publishTeamsAppUpdate",
-          error?.message || "unknown error"
+          this.getGraphErrorMessage(error)
         )
       );
     }
+  }
+
+  private getGraphErrorMessage(error: any): string {
+    const responseError = error?.response?.data?.error;
+    const details = responseError?.innerError?.details;
+    const detailMessage = Array.isArray(details)
+      ? details
+          .map((detail: any) => detail?.message)
+          .filter(Boolean)
+          .join("; ")
+      : undefined;
+    return (
+      detailMessage ||
+      responseError?.message ||
+      error?.response?.data?.errorMessage ||
+      error?.message ||
+      "unknown error"
+    );
   }
 
   /**

@@ -105,7 +105,18 @@ export class CreateTeamsAppDriver implements StepDriver {
       try {
         createdAppDefinition = await teamsDevPortalClient.getApp(appStudioToken, appId);
         create = false;
-      } catch (error) {}
+      } catch (e: any) {
+        if (e instanceof UserError || e instanceof SystemError) {
+          return err(e);
+        }
+        return err(
+          AppStudioResultFactory.SystemError(
+            AppStudioError.TeamsAppCreateFailedError.name,
+            AppStudioError.TeamsAppCreateFailedError.message(e),
+            "https://aka.ms/teamsfx-actions/teamsapp-create"
+          )
+        );
+      }
     }
 
     if (create) {

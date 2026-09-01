@@ -207,11 +207,10 @@ export class TeamsDevPortalClient {
 
   @hooks([ErrorContextMW({ source: "Teams", component: "TeamsDevPortalClient" })])
   async listApps(token: string): Promise<AppDefinition[]> {
-    if (!this.regionEndpoint) throw new Error("Failed to get region");
     let requester: AxiosInstance;
     try {
       requester = this.createRequesterWithToken(token);
-      TOOLS.logProvider.debug(`Sent API Request: GET ${this.regionEndpoint}/v1.0/apps`);
+      TOOLS.logProvider.debug(`Sent API Request: GET ${this.getEndpoint()}/v1.0/apps`);
       const apps: AppDefinition[] = [];
       let continuationToken: string | undefined;
       do {
@@ -270,6 +269,9 @@ export class TeamsDevPortalClient {
       try {
         response = await this.getAppResponse(token, appId);
       } catch (error) {
+        if (error?.response?.status !== HttpStatusCode.NOTFOUND) {
+          throw error;
+        }
         const resolvedAppId = await this.resolveLegacyAppId(token, appId);
         if (resolvedAppId === appId) {
           throw error;
