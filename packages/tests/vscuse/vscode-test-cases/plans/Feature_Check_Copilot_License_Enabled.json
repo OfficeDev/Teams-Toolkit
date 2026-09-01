@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 16,
+    "total_steps": 17,
     "created_at": "2026-06-17T02:10:05.016638",
     "name": "Feature Check Copilot License Enabled",
     "description": {
@@ -27,6 +27,7 @@
       "step_a0026de5",
       "step_fa6d6cb1",
       "step_78a597ab",
+      "step_5f5e5f2a",
       "step_47935ca7",
       "step_ed29b905",
       "step_b16aa4f5",
@@ -37,7 +38,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-06-17T02:28:59.615382"
+    "updated_at": "2026-08-22T02:22:17.579000"
   },
   "steps": [
     {
@@ -192,9 +193,9 @@
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:512:431:16:5:d2d46667c4d328a0",
-        "dhash:512:431:96:5:0000a4595128d59a",
-        "dhash:512:431:0:10:24b0949490b17075"
+        "dhash:512:431:16:5:d2d46667c4da2854",
+        "dhash:512:431:96:5:0000a45951aa949a",
+        "dhash:512:431:0:10:2c78747470717035"
       ],
       "postconditions": [],
       "tags": [],
@@ -229,24 +230,46 @@
       "plan_id": "plan_80b368dd"
     },
     {
+      "step_id": "step_5f5e5f2a",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 975,
+        "y": 456
+      },
+      "description": "Click the \"Sign in\" button in the Microsoft 365 account notification at the bottom right of Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-08-22T02:22:17.579000",
+      "plan_id": "plan_80b368dd"
+    },
+    {
       "step_id": "step_47935ca7",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 703,
-        "y": 100
+        "x": 762,
+        "y": 97
       },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the top of the Visual Studio Code interface to access a Microsoft 365 account.",
+      "description": "Click the \"Sign in\" button within the Microsoft 365 developer sandbox modal.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:703:100:16:5:0000000000000000",
-        "dhash:703:100:96:5:00000042b2474971",
-        "dhash:703:100:0:10:9cb89590b0717d7f"
+        "dhash:762:97:16:5:24b9a72ba9aba343",
+        "dhash:762:97:96:5:0008304b4fe04848",
+        "dhash:762:97:0:10:94b8959090b9797b"
       ],
       "postconditions": [],
       "tags": [],
