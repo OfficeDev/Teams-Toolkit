@@ -1,0 +1,136 @@
+version: 1
+
+cases:
+  - id: da-typespec-oauth-with-reference-id
+    scenarioId: SCN-DA-CREATE-TYPESPEC
+    workItemIds: [32238176]
+    gate: manual
+    steps:
+      [
+        scaffold-typespec,
+        check-scaffold,
+        configure-oauth-with-reference-id,
+        check-oauth-with-reference-id,
+        set-package-reference-id,
+        package-dev,
+      ]
+
+  - id: da-typespec-oauth-without-reference-id
+    scenarioId: SCN-DA-CREATE-TYPESPEC
+    workItemIds: [32238147]
+    gate: manual
+    steps:
+      [
+        scaffold-typespec,
+        check-scaffold,
+        configure-oauth-without-reference-id,
+        check-oauth-without-reference-id,
+        login-m365,
+        provision-oauth,
+        f5-copilot-remote,
+        open-agent,
+        check-oauth-sign-in,
+      ]
+
+steps:
+  scaffold-typespec:
+    type: scaffold
+    with:
+      template: da/typespec
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: typespec
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-scaffold:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          exists: true
+
+  configure-oauth-with-reference-id:
+    type: configureTypeSpecAction
+    with:
+      action: github-oauth-with-reference-id
+
+  check-oauth-with-reference-id:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          contains:
+            - "model oauth is OAuth2Auth<"
+            - '@authReferenceId("${{OAUTH2_CONFIGURATION_ID}}")'
+
+  configure-oauth-without-reference-id:
+    type: configureTypeSpecAction
+    with:
+      action: github-oauth-without-reference-id
+
+  check-oauth-without-reference-id:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          contains: ["model oauth is OAuth2Auth<"]
+          notContains: ["@authReferenceId"]
+
+  package-dev:
+    type: packageApp
+    with:
+      environment: dev
+
+  set-package-reference-id:
+    type: userEnvironment
+    with:
+      target: dev
+      variables:
+        OAUTH2_CONFIGURATION_ID: 00000000-0000-0000-0000-000000000000
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-oauth:
+    type: provision
+    with:
+      environment: none
+      oauth:
+        clientId: "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
+        clientSecret: "${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-oauth-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: List repositories for the authenticated user
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          namePrefix: Sign in to GitHub
