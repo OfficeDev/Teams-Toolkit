@@ -1,0 +1,79 @@
+name: Pack npm packages
+
+# Packs workspace packages into .tgz files and uploads them as a single
+# `npm-packages` artifact, so an Azure DevOps pipeline can download the folder
+# and hand it to the ESRP Release task (contenttype: npm, contentsource: Folder).
+# ESRP does not build or pack — it only distributes what is in the folder.
+
+on:
+  workflow_dispatch:
+    inputs:
+      filter:
+        description: "pnpm filter selecting what to build (suffix with ... to include dependencies)"
+        required: false
+        default: "@microsoft/app-manifest..."
+      packages:
+        description: "Comma-separated package names to pack. Empty = every non-private package that was built."
+        required: false
+        default: "@microsoft/app-manifest"
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.17
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter "${{ inputs.filter }}"
+
+      - name: Build
+        run: pnpm --filter "${{ inputs.filter }}" build
+
+      # `pnpm pack` (not `npm pack`) is required: it rewrites `workspace:*`
+      # dependency ranges to real versions in the tarball's package.json.
+      - name: Pack
+        env:
+          PACK_PACKAGES: ${{ inputs.packages }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/npm-packages"
+
+          pnpm -r list --depth -1 --json > /tmp/workspace.json
+          PACK_PACKAGES="$PACK_PACKAGES" node -e '
+            const list = require("/tmp/workspace.json");
+            const wanted = (process.env.PACK_PACKAGES || "")
+              .split(",").map(s => s.trim()).filter(Boolean);
+            for (const p of list) {
+              if (!p.name || !p.path || p.private) continue;
+              if (wanted.length && !wanted.includes(p.name)) continue;
+              console.log([p.name, p.path].join("\t"));
+            }
+          ' > /tmp/packlist.txt
+
+          if [ ! -s /tmp/packlist.txt ]; then
+            echo "No publishable packages matched." >&2
+            exit 1
+          fi
+
+          while IFS=$'\t' read -r NAME PKG_PATH; do
+            echo "::group::pack $NAME"
+            (cd "$PKG_PATH" && pnpm pack --pack-destination "$GITHUB_WORKSPACE/npm-packages")
+            echo "::endgroup::"
+          done < /tmp/packlist.txt
+
+          ls -l "$GITHUB_WORKSPACE/npm-packages"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: npm-packages/*.tgz
+          if-no-files-found: error
+          retention-days: 7

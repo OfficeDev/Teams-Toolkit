@@ -182,6 +182,9 @@ extends:
 
                   New-Item -ItemType Directory -Force -Path '$(npmPackagesDir)' | Out-Null
                   Expand-Archive -Path $zip -DestinationPath '$(npmPackagesDir)' -Force
+                  Write-Host "Extracted:"
+                  Get-ChildItem -Path '$(npmPackagesDir)' -Recurse -File |
+                    ForEach-Object { Write-Host ("  {0}  ({1:N0} bytes)" -f $_.FullName, $_.Length) }
                 env:
                   GH_TOKEN: $(GITHUB_TOKEN)
                 displayName: Download packed npm packages
