@@ -1,0 +1,36 @@
+version: 1
+
+cases:
+  - id: feature-provision-without-account
+    scenarioId: VCB-180
+    workItemIds: [15263834]
+    steps: [scaffold-tab-ts, check-tab-ts, provision-without-account]
+
+steps:
+  scaffold-tab-ts:
+    type: scaffold
+    with:
+      template: non-sso-tab
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: non-sso-tab
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-tab-ts:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["provision:"]
+
+  provision-without-account:
+    type: provisionWithoutAccount

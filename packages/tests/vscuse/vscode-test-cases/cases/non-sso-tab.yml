@@ -6,7 +6,7 @@ version: 1
 cases:
   - id: tab-ts-remote-teams
     scenarioId: SCN-CREATE-NON-SSO-TAB-01
-    workItemIds: [14134646, 15263834]
+    workItemIds: [14134646]
     steps:
       [
         scaffold-tab-ts,
