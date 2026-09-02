@@ -1756,7 +1756,6 @@ function createSemanticStepCompiler() {
     for (const commandTitle of [
       commandTitles.clearNotifications,
       commandTitles.notifications,
-      commandTitles.share,
     ]) {
       const error = append(
         output,
@@ -1766,6 +1765,15 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
+    let error = append(
+      output,
+      render(state, "command-palette/execute-second-command.json.tpl", {
+        firstCommandTitle:
+          "Microsoft 365 Agents: Remove access to the shared app",
+        commandTitle: commandTitles.share,
+      }),
+    );
+    if (error) return error;
     for (const answer of [
       {
         component: "quick-input/single-select.json.tpl",
@@ -1789,13 +1797,10 @@ function createSemanticStepCompiler() {
         },
       },
     ]) {
-      const error = append(
-        output,
-        render(state, answer.component, answer.values),
-      );
+      error = append(output, render(state, answer.component, answer.values));
       if (error) return error;
     }
-    const error = append(
+    error = append(
       output,
       render(state, "notifications/assert-contains.json.tpl", {
         notificationText: unsupportedWorkflowVersionShareError,

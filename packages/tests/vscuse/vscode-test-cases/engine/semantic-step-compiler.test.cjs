@@ -8741,6 +8741,24 @@ steps:
     (step) =>
       step.tool === "type_text" && step.parameters.text === shareFlow[0],
   );
+  const shareCommandSelection = plan.steps.slice(
+    shareCommandIndex + 1,
+    shareCommandIndex + 5,
+  );
+  assert.deepEqual(
+    shareCommandSelection.map((step) => step.tool),
+    ["", "key_press", "", "key_press"],
+  );
+  assert.match(
+    shareCommandSelection[0].description,
+    /Remove access to the shared app.*first.*Microsoft 365 Agents: Share.*second/,
+  );
+  assert.equal(shareCommandSelection[1].parameters.key, "down");
+  assert.match(
+    shareCommandSelection[2].description,
+    /Microsoft 365 Agents: Share.*highlighted/,
+  );
+  assert.equal(shareCommandSelection[3].parameters.key, "enter");
   const errorText =
     "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
   const errorIndex = plan.steps.findIndex((step) =>
