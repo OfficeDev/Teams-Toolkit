@@ -229,7 +229,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.strictEqual(condition.expr, "mcpServerUrl == null");
   });
 
-  it("SCN-ADD-MCP-13 and SCN-ADD-MCP-14: auth question accepts and describes bearer-token", () => {
+  it("SCN-ADD-MCP-13: auth question accepts and describes bearer-token", () => {
     const authTypeQuestion = questionItems(questions).find(
       (question) => question.name === "authType"
     );
@@ -294,7 +294,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.equal(mcpAuthScaffoldDeps.resolveMCPOAuthMetadata.mock.calls.length, 0);
   });
 
-  it("SCN-ADD-MCP-14: omitted optional API key preserves provision-time collection", async () => {
+  it("omitted optional API key preserves provision-time collection", async () => {
     const { files, secrets } = await run({ authType: "bearer-token" });
 
     assert.notInclude(text(files, YML_PATH), "primaryClientSecret:");
