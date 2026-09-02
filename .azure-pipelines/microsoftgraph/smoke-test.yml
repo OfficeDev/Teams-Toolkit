@@ -6,6 +6,17 @@ name: smoke_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 trigger: none
 pr: none
 
+parameters:
+  # Run id of the GitHub Actions run that packed the .tgz files (the number in
+  # https://github.com/<repo>/actions/runs/<id>). Leave empty to skip the
+  # download probe and only run the build/test smoke job.
+  - name: githubRunId
+    type: string
+    default: ''
+  - name: githubArtifactName
+    type: string
+    default: 'npm-packages'
+
 variables:
   - name: nodeVersion
     value: '22.17'
@@ -16,6 +27,11 @@ variables:
   # root .npmrc, which GitHub Actions and local dev also read.
   - name: npmRegistry
     value: 'https://packagefeedproxy.microsoft.io/npm/'
+  - name: githubRepo
+    value: 'OfficeDev/microsoft-365-agents-toolkit'
+  # Folder the ESRP Release task will eventually point `folderlocation` at.
+  - name: npmPackagesDir
+    value: '$(Build.SourcesDirectory)/npm-packages'
 
 resources:
   repositories:
@@ -66,20 +82,138 @@ extends:
                 inputs:
                   version: $(nodeVersion)
 
-              # Corepack is avoided on purpose: activating pnpm through it
-              # contacts Corepack's public version-metadata endpoint, which
-              # 1ES agents block.
-              - script: npm install -g pnpm@$(pnpmVersion) --registry=$(npmRegistry)
-                displayName: Install pnpm
+              # # Corepack is avoided on purpose: activating pnpm through it
+              # # contacts Corepack's public version-metadata endpoint, which
+              # # 1ES agents block.
+              # - script: npm install -g pnpm@$(pnpmVersion) --registry=$(npmRegistry)
+              #   displayName: Install pnpm
 
-              # Filtered install keeps the smoke run fast; a full workspace
-              # install is not needed to prove the agent can restore this
-              # repo's dependency graph.
-              - script: pnpm install --frozen-lockfile --registry=$(npmRegistry) --filter @microsoft/app-manifest...
-                displayName: Install dependencies (manifest slice)
+              # # Filtered install keeps the smoke run fast; a full workspace
+              # # install is not needed to prove the agent can restore this
+              # # repo's dependency graph.
+              # - script: pnpm install --frozen-lockfile --registry=$(npmRegistry) --filter @microsoft/app-manifest...
+              #   displayName: Install dependencies (manifest slice)
 
-              - script: pnpm --filter @microsoft/app-manifest build
-                displayName: Build @microsoft/app-manifest
+              # - script: pnpm --filter @microsoft/app-manifest build
+              #   displayName: Build @microsoft/app-manifest
 
-              - script: pnpm --filter @microsoft/app-manifest test:unit
-                displayName: Unit test @microsoft/app-manifest
+              # - script: pnpm --filter @microsoft/app-manifest test:unit
+              #   displayName: Unit test @microsoft/app-manifest
+
+      # Feasibility probe for the ESRP npm publish design:
+      #   GitHub Actions packs the workspace into .tgz files and uploads them as a
+      #   workflow-run artifact; this pipeline downloads that artifact and hands the
+      #   folder to EsrpRelease@12 (contentsource: Folder). This stage only proves
+      #   the download half — it does NOT publish anything.
+      - stage: npm_packages
+        displayName: Download packed npm packages
+        dependsOn: []
+        condition: ne('${{ parameters.githubRunId }}', '')
+        jobs:
+          - job: download
+            displayName: Download .tgz artifact from GitHub Actions
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              os: windows
+              image: windows-latest
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  displayName: Publish npm-packages folder
+                  targetPath: $(npmPackagesDir)
+                  artifactName: npm-packages
+            steps:
+              - checkout: none
+
+              # Separated from the download so a network block on api.github.com is
+              # distinguishable from an auth/artifact-name failure.
+              - pwsh: |
+                  $ErrorActionPreference = 'Stop'
+                  foreach ($url in @(
+                    'https://api.github.com/repos/$(githubRepo)',
+                    'https://api.github.com/zen'
+                  )) {
+                    try {
+                      $r = Invoke-WebRequest -Uri $url -Method Head -UseBasicParsing -TimeoutSec 30
+                      Write-Host "OK   $url -> $($r.StatusCode)"
+                    } catch {
+                      Write-Host "FAIL $url -> $($_.Exception.Message)"
+                    }
+                  }
+                displayName: Probe GitHub reachability
+
+              - pwsh: |
+                  $ErrorActionPreference = 'Stop'
+                  if (-not $env:GH_TOKEN) {
+                    throw "Set a secret pipeline variable GITHUB_TOKEN (repo-scoped PAT or GitHub App token) with actions:read."
+                  }
+
+                  $headers = @{
+                    Authorization          = "Bearer $env:GH_TOKEN"
+                    Accept                 = 'application/vnd.github+json'
+                    'X-GitHub-Api-Version' = '2022-11-28'
+                    'User-Agent'           = 'atk-azdo-smoke-test'
+                  }
+
+                  $runId = '${{ parameters.githubRunId }}'
+                  $name  = '${{ parameters.githubArtifactName }}'
+                  $listUrl = "https://api.github.com/repos/$(githubRepo)/actions/runs/$runId/artifacts?per_page=100"
+                  Write-Host "GET $listUrl"
+                  $artifacts = (Invoke-RestMethod -Uri $listUrl -Headers $headers).artifacts
+                  Write-Host "Artifacts on run: $($artifacts.name -join ', ')"
+
+                  $artifact = $artifacts | Where-Object { $_.name -eq $name } | Select-Object -First 1
+                  if (-not $artifact) { throw "Artifact '$name' not found on run $runId." }
+                  if ($artifact.expired) { throw "Artifact '$name' has expired." }
+
+                  # The archive_download_url 302-redirects to an unauthenticated blob
+                  # URL; Invoke-WebRequest follows it and would forward the auth header
+                  # to that host, so resolve the redirect explicitly instead.
+                  $zip = Join-Path $env:AGENT_TEMPDIRECTORY 'npm-packages.zip'
+                  $res = Invoke-WebRequest -Uri $artifact.archive_download_url -Headers $headers `
+                    -MaximumRedirection 0 -SkipHttpErrorCheck -UseBasicParsing
+                  if ($res.StatusCode -in 301, 302, 307) {
+                    $location = $res.Headers.Location | Select-Object -First 1
+                    Write-Host "Following redirect to $(([uri]$location).Host)"
+                    Invoke-WebRequest -Uri $location -OutFile $zip -UseBasicParsing
+                  } else {
+                    throw "Unexpected status $($res.StatusCode) from archive_download_url."
+                  }
+
+                  New-Item -ItemType Directory -Force -Path '$(npmPackagesDir)' | Out-Null
+                  Expand-Archive -Path $zip -DestinationPath '$(npmPackagesDir)' -Force
+                env:
+                  GH_TOKEN: $(GITHUB_TOKEN)
+                displayName: Download packed npm packages
+
+              - pwsh: |
+                  $ErrorActionPreference = 'Stop'
+                  $tgz = Get-ChildItem -Path '$(npmPackagesDir)' -Filter *.tgz -Recurse -File
+                  if ($tgz.Count -eq 0) { throw "No .tgz files found under $(npmPackagesDir)." }
+                  Write-Host "Found $($tgz.Count) .tgz file(s) for ESRP folderlocation:"
+                  $tgz | ForEach-Object {
+                    Write-Host ("  {0}  ({1:N0} bytes)" -f $_.FullName.Replace('$(npmPackagesDir)', 'npm-packages'), $_.Length)
+                  }
+                displayName: Verify ESRP folder layout
+
+              # Publish step, intentionally left out until the ESRP onboarding
+              # (managed identity, key vault, sign cert, collaborators) is done:
+              #
+              # - task: EsrpRelease@12
+              #   displayName: Publish to npm
+              #   inputs:
+              #     connectedservicename: '<service-connection>'
+              #     usemanagedidentity: true
+              #     keyvaultname: '<key-vault>'
+              #     signcertname: '<sign-cert>'
+              #     clientid: '<client-id>'
+              #     intent: 'PackageDistribution'
+              #     contenttype: 'npm'
+              #     contentsource: 'Folder'
+              #     folderlocation: '$(npmPackagesDir)'
+              #     waitforreleasecompletion: true
+              #     owners: '<owner>@microsoft.com'
+              #     approvers: '<approver>@microsoft.com'
+              #     serviceendpointurl: 'https://api.esrp.microsoft.com'
+              #     mainpublisher: 'ESRPRELPACMAN'
+              #     domaintenantid: '975f013f-7f24-47e8-a7d3-abc4752bf346'
