@@ -17,6 +17,7 @@
         "ymlPath": "m365agents.yml",
         "authType": "{{authType}}",
         "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "apiKey": "{{#apiKey}}{{apiKey}}{{/apiKey}}",
         "optionalYmlPaths": ["m365agents.local.yml"]
       }
     },
@@ -25,7 +26,8 @@
       "when": "authType == 'oauth' || authType == 'entra-sso' || authType == 'bearer-token'",
       "with": {
         "authType": "{{authType}}",
-        "mcpServerUrl": "{{MCPForDAServerUrl}}"
+        "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "apiKey": "{{#apiKey}}{{apiKey}}{{/apiKey}}"
       }
     }
   ]

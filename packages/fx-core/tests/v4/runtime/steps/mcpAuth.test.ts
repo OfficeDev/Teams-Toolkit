@@ -323,6 +323,46 @@ describe("mcp-auth steps (v4)", () => {
       );
     });
 
+    it("SCN-ADD-MCP-16: persists a bearer token as a secret", async () => {
+      const { ctx, files, secretEnvironmentVariables } = makeCtx({
+        "env/.env.dev": "TEAMSFX_ENV=dev\n",
+        "env/.env.local": "TEAMSFX_ENV=local\n",
+      });
+
+      const result = await mcpAuthPersistCredentialEnv.apply(
+        {
+          authType: "bearer-token",
+          mcpServerUrl: SERVER_URL,
+          apiKey: "the-bearer-token",
+        },
+        ctx
+      );
+
+      assert.isTrue(result.isOk());
+      assert.notInclude(text(files, "env/.env.dev"), "the-bearer-token");
+      assert.equal(
+        secretEnvironmentVariables.get("dev")?.get("SECRET_MCP_DA_API_KEY_APIGITHUBC"),
+        "the-bearer-token"
+      );
+      assert.equal(
+        secretEnvironmentVariables.get("local")?.get("SECRET_MCP_DA_API_KEY_APIGITHUBC"),
+        "the-bearer-token"
+      );
+
+      const devOnly = makeCtx({ "env/.env.dev": "TEAMSFX_ENV=dev\n" });
+      const devOnlyResult = await mcpAuthPersistCredentialEnv.apply(
+        {
+          authType: "bearer-token",
+          mcpServerUrl: SERVER_URL,
+          apiKey: "the-bearer-token",
+        },
+        devOnly.ctx
+      );
+      assert.isTrue(devOnlyResult.isOk());
+      assert.isFalse(devOnly.files.has("env/.env.local"));
+      assert.isFalse(devOnly.secretEnvironmentVariables.has("local"));
+    });
+
     it("is idempotent — a re-run does not duplicate the variable", async () => {
       const { ctx, files } = makeCtx({ "env/.env.dev": "TEAMSFX_ENV=dev\n" });
       await mcpAuthPersistCredentialEnv.apply({ authType: "oauth", mcpServerUrl: SERVER_URL }, ctx);

@@ -74,6 +74,7 @@ import { pluginManifestUtils } from "../../driver/teamsApp/utils/PluginManifestU
 import { generatePlugin, listAPIInfo, validateOpenAPISpec } from "../../../common/daSpecParser";
 import { isMCPScaffoldWarning } from "../../utils/mcpAuthScaffolder";
 import { pathUtils } from "../../utils/pathUtils";
+import { envUtil } from "../../utils/envUtil";
 
 const enum telemetryProperties {
   validationStatus = "validation-status",
@@ -631,7 +632,8 @@ export async function injectAuthAction(
   forceToAddNew: boolean,
   authType?: string,
   enablePKCE?: boolean,
-  registrationId?: string
+  registrationId?: string,
+  apiKey?: string
 ): Promise<AuthActionInjectResult | undefined> {
   const ymlPath = pathUtils.getYmlFilePath(projectPath) as string;
   const localYamlPath = pathUtils.getYmlFilePath(projectPath, "local", true) as string;
@@ -643,12 +645,16 @@ export async function injectAuthAction(
       (Utils.isBearerTokenAuth(authScheme) || Utils.isAPIKeyAuthButNotInCookie(authScheme))) ||
     authType === APIKeyAuthType
   ) {
+    const apiKeyEnvName = apiKey?.trim()
+      ? `SECRET_${Utils.getSafeRegistrationIdEnvName(`${authName}_API_KEY`)}`
+      : undefined;
     const res = await ActionInjector.injectCreateAPIKeyAction(
       ymlPath,
       authName,
       relativeSpecPath,
       forceToAddNew,
-      registrationId
+      registrationId,
+      apiKeyEnvName
     );
 
     if (!!localYamlPath && (await fs.pathExists(localYamlPath))) {
@@ -657,8 +663,24 @@ export async function injectAuthAction(
         authName,
         relativeSpecPath,
         forceToAddNew,
-        registrationId
+        res?.registrationIdEnvName,
+        apiKeyEnvName
       );
+    }
+
+    if (res?.primaryClientSecretEnvName && apiKey) {
+      const envListRes = await envUtil.listEnv(projectPath);
+      if (envListRes.isErr()) {
+        throw envListRes.error;
+      }
+      for (const environment of envListRes.value) {
+        const writeEnvRes = await envUtil.writeEnv(projectPath, environment, {
+          [res.primaryClientSecretEnvName]: apiKey,
+        });
+        if (writeEnvRes.isErr()) {
+          throw writeEnvRes.error;
+        }
+      }
     }
     return res;
   } else if (

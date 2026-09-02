@@ -829,12 +829,22 @@ describe("CLI commands", () => {
   });
 
   describe("addPluginCommand", async () => {
-    it("SCN-ADD-MCP-14: exposes bearer-token authentication to atk add action", () => {
+    it("SCN-ADD-OPENAPI-KEY-01: exposes an optional API key on atk add action", () => {
+      const apiKey = addPluginCommand.options?.find((option) => option.name === "api-key");
+
+      assert.equal(apiKey?.type, "string");
+      assert.notEqual(apiKey?.required, true);
+    });
+
+    it("SCN-ADD-MCP-14: exposes bearer-token authentication and secret to atk add action", () => {
       const authType = addPluginCommand.options?.find(
         (option) => option.name === "mcp-da-auth-type"
       );
+      const apiKey = addPluginCommand.options?.find((option) => option.name === "mcp-da-api-key");
 
       assert.include(authType?.choices, "bearer-token");
+      assert.equal(apiKey?.type, "string");
+      assert.notEqual(apiKey?.required, true);
     });
 
     it("success", async () => {

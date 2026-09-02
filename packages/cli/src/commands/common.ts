@@ -36,6 +36,7 @@ const MCP_DA_CREDENTIAL_OPTION_NAMES = [
   "mcp-da-client-id",
   "mcp-da-client-secret",
   "mcp-da-scopes",
+  "mcp-da-api-key",
 ];
 
 function mcpDACredentialOptions(): CLICommandOption[] {
@@ -55,6 +56,11 @@ function mcpDACredentialOptions(): CLICommandOption[] {
       name: "mcp-da-scopes",
       type: "string",
       description: "Space-separated OAuth scopes for the MCP server. Optional for static OAuth.",
+    },
+    {
+      name: "mcp-da-api-key",
+      type: "string",
+      description: "API key sent as a bearer token to the MCP server.",
     },
   ];
 }

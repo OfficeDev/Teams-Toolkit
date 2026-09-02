@@ -161,6 +161,7 @@ export async function injectMCPAuthActionToYml(args: {
   persistCredentialEnvRefs?: boolean;
   serverName?: string;
   scopes?: string;
+  apiKey?: string;
 }): Promise<InjectMCPAuthActionResult> {
   if (args.authType === "none") return {};
   if (args.authType === "bearer-token") {
@@ -168,7 +169,10 @@ export async function injectMCPAuthActionToYml(args: {
       args.ymlPath,
       args.authName,
       args.registrationId,
-      args.mcpServerUrl
+      args.mcpServerUrl,
+      args.persistCredentialEnvRefs && args.serverName && args.apiKey
+        ? `SECRET_MCP_DA_API_KEY_${args.serverName}`
+        : undefined
     );
     return {};
   }
@@ -247,8 +251,14 @@ export async function persistMCPAuthCredentialEnvVars(args: {
   clientId?: string;
   clientSecret?: string;
   scopes?: string;
+  apiKey?: string;
 }): Promise<void> {
-  if (args.authType !== "oauth" && args.authType !== "entra-sso") return;
+  if (
+    args.authType !== "oauth" &&
+    args.authType !== "entra-sso" &&
+    args.authType !== "bearer-token"
+  )
+    return;
 
   const envs: Record<string, string> = {};
   if (args.clientId) {
@@ -261,6 +271,8 @@ export async function persistMCPAuthCredentialEnvVars(args: {
     if (args.scopes) {
       envs[`MCP_DA_OAUTH_SCOPE_${args.serverName}`] = args.scopes;
     }
+  } else if (args.authType === "bearer-token" && args.apiKey) {
+    envs[`SECRET_MCP_DA_API_KEY_${args.serverName}`] = args.apiKey;
   }
   if (Object.keys(envs).length === 0) return;
 

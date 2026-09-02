@@ -19,6 +19,37 @@ describe("ActionInjector", () => {
 
     return count;
   }
+
+  describe("generateAuthAction for API key", () => {
+    it("SCN-ADD-OPENAPI-KEY-02: includes the supplied secret reference", () => {
+      const result = ActionInjector.generateAuthAction(
+        "apiKey/register",
+        "apiKey",
+        "TEAMS_APP_ID",
+        "./appPackage/apiSpecification/openapi.yaml",
+        "APIKEY_REGISTRATION_ID",
+        undefined,
+        undefined,
+        undefined,
+        "SECRET_APIKEY_API_KEY"
+      );
+
+      assert.equal(result.with.primaryClientSecret, "${{SECRET_APIKEY_API_KEY}}");
+    });
+
+    it("SCN-ADD-OPENAPI-KEY-03: omits the secret reference when no value is supplied", () => {
+      const result = ActionInjector.generateAuthAction(
+        "apiKey/register",
+        "apiKey",
+        "TEAMS_APP_ID",
+        "./appPackage/apiSpecification/openapi.yaml",
+        "APIKEY_REGISTRATION_ID"
+      );
+
+      assert.notProperty(result.with, "primaryClientSecret");
+    });
+  });
+
   describe("injectCreateOAuthAction", () => {
     const sampleAuthAction = {
       uses: "oauth/register",
@@ -626,7 +657,7 @@ describe("ActionInjector", () => {
       }
     });
 
-    it("should handle existing OAuth action if env names for configuration id exists", async () => {
+    it("SCN-ADD-OPENAPI-KEY-05: suffixes the secret name with the unique registration suffix", async () => {
       const ymlPath = "path/to/yml";
       const authName = "testAuth";
       const specRelativePath = "path/to/spec";
@@ -654,20 +685,27 @@ describe("ActionInjector", () => {
       vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
       vi.spyOn(Utils, "getSafeRegistrationIdEnvName").mockReturnValue("BEARERAUTH_REGISTRATION_ID");
       vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
+      vi.mocked(ActionInjector.generateAuthAction).mockRestore();
 
       const result = await ActionInjector.injectCreateAPIKeyAction(
         ymlPath,
         authName,
         specRelativePath,
-        forceToAddNew
+        forceToAddNew,
+        undefined,
+        "SECRET_BEARERAUTH_API_KEY"
       );
 
       assert.deepEqual(result, {
         defaultRegistrationIdEnvName: "BEARERAUTH_REGISTRATION_ID",
         registrationIdEnvName: "BEARERAUTH_REGISTRATION_ID1",
+        primaryClientSecretEnvName: "SECRET_BEARERAUTH_API_KEY1",
       });
-
       assert.equal(countOccurrences(writeStub.mock.calls[0][1], "apiKey/register"), 2);
+      assert.include(
+        writeStub.mock.calls[0][1],
+        "primaryClientSecret: ${{SECRET_BEARERAUTH_API_KEY1}}"
+      );
     });
 
     it("should check for authName and specPath in existing OAuth actions", async () => {
