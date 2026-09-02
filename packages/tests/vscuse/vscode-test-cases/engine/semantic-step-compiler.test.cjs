@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 177 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 180 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 177 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 177);
+  assert.equal(first.value.files.length, 180);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 177);
+  assert.equal(generatedFiles.length, 180);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -7988,6 +7988,342 @@ test("VCB-173: advanced DA authentication cases use personal scope before provis
   }
 });
 
+test("VCB-174: TypeSpec OAuth with a reference ID uses an immutable compiler-owned mutation", () => {
+  const sourceText = `version: 1
+cases:
+  - id: typespec-oauth-with-reference-id
+    scenarioId: VCB-174
+    workItemIds: [32238176]
+    gate: manual
+    steps: [scaffold, check, configure-action, verify, package-app]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/typespec
+      answers:
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect: { exists: true }
+  configure-action:
+    type: configureTypeSpecAction
+    with:
+      action: github-oauth-with-reference-id
+  verify:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          contains: ["model oauth is OAuth2Auth<", "@authReferenceId", "OAUTH2_CONFIGURATION_ID"]
+  package-app:
+    type: packageApp
+    with:
+      environment: dev
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-174.yml");
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  const mutationCommand = plan.steps.find(
+    (step) =>
+      step.step_id.startsWith("step_configureTypeSpecGitHubOAuthAction_") &&
+      step.tool === "type_text",
+  );
+  assert.notEqual(mutationCommand, undefined);
+  const encodedScript = mutationCommand.parameters.text.match(
+    /base64\.b64decode\("([^"]+)"\)/,
+  )?.[1];
+  assert.equal(typeof encodedScript, "string");
+  const mutationScript = Buffer.from(encodedScript, "base64").toString("utf8");
+  assert.equal(
+    mutationScript.includes(
+      "e20150c80f47dfc9b068a282a9a8e429daa0b557/github-agent.tsp",
+    ),
+    true,
+  );
+  assert.equal(mutationScript.includes("refs/heads/main"), false);
+  assert.equal(mutationScript.includes("@authReferenceId"), true);
+  assert.equal(mutationScript.includes("OAUTH2_CONFIGURATION_ID"), true);
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "Microsoft 365 Agents: Zip App Package",
+    ),
+    true,
+  );
+
+  for (const invalidAction of [
+    "github-oauth-with-reference-id\n      path: other.tsp",
+    "github-oauth-unknown",
+  ]) {
+    const invalid = compileInlineSource(
+      sourceText.replace("github-oauth-with-reference-id", invalidAction),
+      "vscuse-vcb-174-invalid.yml",
+    );
+    assert.equal(invalid.ok, false);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_TYPESPEC_ACTION_INPUT_INVALID",
+    );
+  }
+});
+
+test("VCB-175: TypeSpec OAuth without a reference ID enables provision credentials", () => {
+  const sourceText = `version: 1
+cases:
+  - id: typespec-oauth-without-reference-id
+    scenarioId: VCB-175
+    workItemIds: [32238147]
+    gate: manual
+    steps: [scaffold, check, configure-action, verify, login, provision]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/typespec
+      answers:
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect: { exists: true }
+  configure-action:
+    type: configureTypeSpecAction
+    with:
+      action: github-oauth-without-reference-id
+  verify:
+    type: checks
+    with:
+      - type: file
+        path: src/agent/main.tsp
+        expect:
+          contains: ["model oauth is OAuth2Auth<"]
+          notContains: ["@authReferenceId"]
+  login:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  provision:
+    type: provision
+    with:
+      environment: none
+      oauth:
+        clientId: "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
+        clientSecret: "\${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-175.yml");
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    typedValues.includes("${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"),
+    true,
+  );
+  assert.equal(
+    typedValues.includes("${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"),
+    true,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes("client ID/Secret for OAuth Registration"),
+    ),
+    true,
+  );
+
+  const redundantCredentials = compileInlineSource(
+    sourceText.replace(
+      "github-oauth-without-reference-id",
+      "github-oauth-with-reference-id",
+    ),
+    "vscuse-vcb-175-redundant.yml",
+  );
+  assert.equal(redundantCredentials.ok, false);
+  assert.equal(
+    redundantCredentials.diagnostics[0].code,
+    "VCB_PROVISION_INPUT_REDUNDANT",
+  );
+});
+
+test("VCB-176: addDaCapability adds immutable Embedded Knowledge", () => {
+  const sourceText = `version: 1
+cases:
+  - id: da-add-embedded-knowledge
+    scenarioId: VCB-176
+    workItemIds: [34657755]
+    gate: manual
+    steps: [scaffold, check, add-knowledge, verify]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { exists: true }
+  add-knowledge:
+    type: addDaCapability
+    with:
+      capability: embeddedKnowledge
+  verify:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/EmbeddedKnowledge/Document.docx
+        expect: { exists: true }
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: ['"name": "EmbeddedKnowledge"', '"file": "EmbeddedKnowledge/Document.docx"']
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-176.yml");
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  for (const value of [
+    "Microsoft 365 Agents: Add Capability",
+    "Embedded Knowledge",
+    "manifest.json",
+  ]) {
+    assert.equal(typedValues.includes(value), true, value);
+  }
+  const prepareCommand = plan.steps.find(
+    (step) =>
+      step.step_id.startsWith("step_prepareEmbeddedKnowledgeDocument_") &&
+      step.tool === "type_text",
+  );
+  assert.notEqual(prepareCommand, undefined);
+  const encodedScript = prepareCommand.parameters.text.match(
+    /base64\.b64decode\("([^"]+)"\)/,
+  )?.[1];
+  assert.equal(typeof encodedScript, "string");
+  const prepareScript = Buffer.from(encodedScript, "base64").toString("utf8");
+  assert.equal(
+    prepareScript.includes(
+      "282e74768fdd4ce6a62b2d5eeb0894e839ebd0ed/DA-EK/Document.docx",
+    ),
+    true,
+  );
+  assert.equal(prepareScript.includes("refs/heads/main"), false);
+  for (const invalidInput of [
+    "capability: embeddedKnowledge\n      fixture: other.docx",
+    "capability: embeddedKnowledge\n      url: https://example.com/file.docx",
+    "capability: unknown",
+  ]) {
+    const invalid = compileInlineSource(
+      sourceText.replace("capability: embeddedKnowledge", invalidInput),
+      "vscuse-vcb-176-invalid.yml",
+    );
+    assert.equal(invalid.ok, false);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_ADD_DA_CAPABILITY_INPUT_INVALID",
+    );
+  }
+});
+
+test("VCB-177: runnable TypeSpec OAuth and Embedded Knowledge cases reuse Copilot chat", async () => {
+  const oauthResult = await compileFixture(
+    "da-typespec-oauth.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(oauthResult.ok, true, oauthResult.diagnostics?.[0]?.code);
+  assert.equal(oauthResult.value.length, 2);
+
+  const referenceDescriptor = oauthResult.value.find(
+    (descriptor) => descriptor.caseId === "da-typespec-oauth-with-reference-id",
+  );
+  const withoutReferenceDescriptor = oauthResult.value.find(
+    (descriptor) =>
+      descriptor.caseId === "da-typespec-oauth-without-reference-id",
+  );
+  assert.notEqual(referenceDescriptor, undefined);
+  assert.notEqual(withoutReferenceDescriptor, undefined);
+
+  const referenceTypedValues = referenceDescriptor.plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  for (const deferredValue of [
+    "Microsoft 365 Agents: Provision",
+    "Debug: Select and Start Debugging",
+    "List repositories for the authenticated user",
+  ]) {
+    assert.equal(
+      referenceTypedValues.includes(deferredValue),
+      false,
+      deferredValue,
+    );
+  }
+
+  const withoutReferenceTypedValues = withoutReferenceDescriptor.plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  for (const chatValue of [
+    "Microsoft 365 Agents: Provision",
+    "Debug: Select and Start Debugging",
+    "List repositories for the authenticated user",
+  ]) {
+    assert.equal(
+      withoutReferenceTypedValues.includes(chatValue),
+      true,
+      chatValue,
+    );
+  }
+  assert.equal(
+    withoutReferenceDescriptor.plan.steps.some((step) =>
+      step.description.includes("Sign in to GitHub"),
+    ),
+    true,
+  );
+
+  const embeddedKnowledgeResult = await compileFixture(
+    "feature-da-add-capability-embedded-knowledge.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(
+    embeddedKnowledgeResult.ok,
+    true,
+    embeddedKnowledgeResult.diagnostics?.[0]?.code,
+  );
+  const embeddedKnowledgePlan = embeddedKnowledgeResult.value[0].plan;
+  const embeddedKnowledgeTypedValues = embeddedKnowledgePlan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    embeddedKnowledgeTypedValues.includes("what's GPA of Sarah Miller"),
+    true,
+  );
+  assert.equal(
+    embeddedKnowledgePlan.steps.some((step) =>
+      step.description.includes('assistant response contains "3.8"'),
+    ),
+    true,
+  );
+});
+
 test("VCB-153: publishDeveloperPortal preserves every remaining recorded pointer precondition", () => {
   const sourceText = createPackageSource({ includePublish: true });
   const result = compileInlineSource(sourceText, "vscuse-vcb-153.yml");
@@ -8449,7 +8785,7 @@ test("VCB-164: repeated OpenAPI actions provision a personal-scope declarative a
   );
 });
 
-test("VCB-154: thirteen legacy plans are replaced, three are retired, and five remain", async () => {
+test("VCB-154: sixteen legacy plans are replaced, three are retired, and two remain", async () => {
   const migrations = [
     {
       source: "feature-basic-tab-local-debug.yml",
@@ -8531,6 +8867,24 @@ test("VCB-154: thirteen legacy plans are replaced, three are retired, and five r
       generated: "da-no-action--da-legacy-share-error.json",
       legacy: "DA_Error_Message_of_Legacy_Projects.json",
     },
+    {
+      source: "da-typespec-oauth.yml",
+      caseId: "da-typespec-oauth-with-reference-id",
+      generated: "da-typespec--da-typespec-oauth-with-reference-id.json",
+      legacy: "DA_Typespec_Oauth_With_Reference_Id.json",
+    },
+    {
+      source: "da-typespec-oauth.yml",
+      caseId: "da-typespec-oauth-without-reference-id",
+      generated: "da-typespec--da-typespec-oauth-without-reference-id.json",
+      legacy: "DA_Typespec_Oauth_Without_Reference_Id.json",
+    },
+    {
+      source: "feature-da-add-capability-embedded-knowledge.yml",
+      caseId: "da-add-embedded-knowledge",
+      generated: "da-no-action--da-add-embedded-knowledge.json",
+      legacy: "DA_With_EK_Happy_Path.json",
+    },
   ];
   const plansDirectory = path.join(casesDirectory, "..", "plans");
   for (const migration of migrations) {
@@ -8590,18 +8944,6 @@ test("VCB-154: thirteen legacy plans are replaced, three are retired, and five r
   ];
   const notMapped = [
     ["DA_No_Action_Web_Search.json", "ambiguous second branch omits its URL"],
-    [
-      "DA_With_EK_Happy_Path.json",
-      "Document.docx fixture is neither vendored nor pinned",
-    ],
-    [
-      "DA_Typespec_Oauth_With_Reference_Id.json",
-      "mutable blob/main source is not pinned",
-    ],
-    [
-      "DA_Typespec_Oauth_Without_Reference_Id.json",
-      "mutable blob/main source is not pinned",
-    ],
   ];
   const retired = [
     [
@@ -8627,7 +8969,7 @@ test("VCB-154: thirteen legacy plans are replaced, three are retired, and five r
   );
   for (const [status, expectedCount] of [
     ["Partial", 1],
-    ["Not Mapped", 4],
+    ["Not Mapped", 1],
     ["Retired", 3],
   ]) {
     assert.equal(

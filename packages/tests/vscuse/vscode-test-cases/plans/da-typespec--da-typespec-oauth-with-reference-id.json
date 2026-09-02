@@ -1,0 +1,1357 @@
+{
+  "plan_metadata": {
+    "version": "1.1",
+    "plan_id": "plan_24a91e6817b2",
+    "execution_context": {
+      "delay_between_steps": 1,
+      "stop_on_error": true,
+      "precondition_wait_timeout": 30,
+      "precondition_retry_interval": 1
+    },
+    "total_steps": 58,
+    "name": "da-typespec-oauth-with-reference-id",
+    "description": {
+      "owner": "",
+      "workitem": "32238176",
+      "other": ""
+    },
+    "execution_order": [
+      "step_closeWelcomeOverlay_assertVisible_c39dbe901_1_1",
+      "step_closeWelcomeOverlay_close_c39dbe901_1_1",
+      "step_closeWelcomeOverlay_assertReady_c39dbe901_1_1",
+      "step_executeCommand_open_c39dbe901_1_2",
+      "step_executeCommand_assertPalette_c39dbe901_1_2",
+      "step_executeCommand_filter_c39dbe901_1_2",
+      "step_executeCommand_assertCommand_c39dbe901_1_2",
+      "step_executeCommand_execute_c39dbe901_1_2",
+      "step_assertToolkitViewSettled_assert_c39dbe901_1_3",
+      "step_closeGetStartedEditor_assertActive_c39dbe901_1_4",
+      "step_closeGetStartedEditor_close_c39dbe901_1_4",
+      "step_closeGetStartedEditor_assertClosed_c39dbe901_1_4",
+      "step_executeCommand_open_c39dbe901_1_5",
+      "step_executeCommand_assertPalette_c39dbe901_1_5",
+      "step_executeCommand_filter_c39dbe901_1_5",
+      "step_executeCommand_assertCommand_c39dbe901_1_5",
+      "step_executeCommand_execute_c39dbe901_1_5",
+      "step_singleSelect_assertQuestion_c39dbe901_1_6",
+      "step_singleSelect_assertOptionsLoaded_c39dbe901_1_6",
+      "step_singleSelect_filter_c39dbe901_1_6",
+      "step_singleSelect_assertOption_c39dbe901_1_6",
+      "step_singleSelect_confirm_c39dbe901_1_6",
+      "step_singleSelect_assertQuestion_c39dbe901_1_7",
+      "step_singleSelect_assertOptionsLoaded_c39dbe901_1_7",
+      "step_singleSelect_filter_c39dbe901_1_7",
+      "step_singleSelect_assertOption_c39dbe901_1_7",
+      "step_singleSelect_confirm_c39dbe901_1_7",
+      "step_confirmOption_assertPrompt_c39dbe901_1_8",
+      "step_confirmOption_confirm_c39dbe901_1_8",
+      "step_textInput_assertQuestion_c39dbe901_1_9",
+      "step_textInput_input_c39dbe901_1_9",
+      "step_textInput_confirm_c39dbe901_1_9",
+      "step_assertProjectWindowReady_assert_c39dbe901_1_10",
+      "step_checkWorkspaceFiles_verify_c39dbe901_2_1",
+      "step_executeCommand_open_c39dbe901_3_1",
+      "step_executeCommand_assertPalette_c39dbe901_3_1",
+      "step_executeCommand_filter_c39dbe901_3_1",
+      "step_executeCommand_assertCommand_c39dbe901_3_1",
+      "step_executeCommand_execute_c39dbe901_3_1",
+      "step_configureTypeSpecGitHubOAuthAction_openTerminal_c39dbe901_3_2",
+      "step_configureTypeSpecGitHubOAuthAction_assertTerminal_c39dbe901_3_2",
+      "step_configureTypeSpecGitHubOAuthAction_typeCommand_c39dbe901_3_2",
+      "step_configureTypeSpecGitHubOAuthAction_runCommand_c39dbe901_3_2",
+      "step_configureTypeSpecGitHubOAuthAction_assertConfigured_c39dbe901_3_2",
+      "step_configureTypeSpecGitHubOAuthAction_closeTerminal_c39dbe901_3_2",
+      "step_configureTypeSpecGitHubOAuthAction_assertClosed_c39dbe901_3_2",
+      "step_checkWorkspaceFiles_verify_c39dbe901_4_1",
+      "step_executeCommand_open_c39dbe901_5_1",
+      "step_executeCommand_assertPalette_c39dbe901_5_1",
+      "step_executeCommand_filter_c39dbe901_5_1",
+      "step_executeCommand_assertCommand_c39dbe901_5_1",
+      "step_executeCommand_execute_c39dbe901_5_1",
+      "step_clickOption_assertPrompt_c39dbe901_5_2",
+      "step_clickOption_click_c39dbe901_5_2",
+      "step_filterOption_filter_c39dbe901_5_3",
+      "step_filterOption_assertOption_c39dbe901_5_3",
+      "step_filterOption_confirm_c39dbe901_5_3",
+      "step_assertNotificationContains_assert_c39dbe901_5_4"
+    ],
+    "tags": [
+      "case_id:da-typespec-oauth-with-reference-id",
+      "scenario_id:SCN-DA-CREATE-TYPESPEC",
+      "template_id:da/typespec",
+      "gate:manual"
+    ]
+  },
+  "steps": [
+    {
+      "step_id": "step_closeWelcomeOverlay_assertVisible_c39dbe901_1_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the startup \"Welcome to VS Code\" sign-in overlay is visible and its Close button is available.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeWelcomeOverlay",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_closeWelcomeOverlay_close_c39dbe901_1_1",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 952,
+        "y": 128
+      },
+      "description": "Click the Close button on the startup Welcome sign-in overlay.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeWelcomeOverlay_assertVisible_c39dbe901_1_1"
+      ],
+      "preconditions": [
+        "dhash:952:128:16:5:255266345964665b",
+        "dhash:952:128:96:5:16100c10100c1404",
+        "dhash:952:128:0:10:2592eae0f08e8621"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeWelcomeOverlay",
+        "force_run:true"
+      ]
+    },
+    {
+      "step_id": "step_closeWelcomeOverlay_assertReady_c39dbe901_1_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the startup sign-in overlay is no longer visible and the VS Code workbench is ready.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeWelcomeOverlay_close_c39dbe901_1_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeWelcomeOverlay",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c39dbe901_1_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeWelcomeOverlay_assertReady_c39dbe901_1_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c39dbe901_1_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c39dbe901_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c39dbe901_1_2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c39dbe901_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c39dbe901_1_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View and the highlighted command listed under it is titled Microsoft 365 Agents Toolkit: Focus on Microsoft 365 Agents Toolkit View.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c39dbe901_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c39dbe901_1_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c39dbe901_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_assertToolkitViewSettled_assert_c39dbe901_1_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Microsoft 365 Agents Toolkit view is open in the side bar and an editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is open in the editor area.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c39dbe901_1_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:assertToolkitViewSettled",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_assertActive_c39dbe901_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the editor tab labeled Welcome showing the Build a Declarative Agent walkthrough is the active editor tab in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertToolkitViewSettled_assert_c39dbe901_1_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_close_c39dbe901_1_4",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+w"
+      },
+      "description": "Press Ctrl+W to close the Welcome editor tab.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_assertActive_c39dbe901_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor"
+      ]
+    },
+    {
+      "step_id": "step_closeGetStartedEditor_assertClosed_c39dbe901_1_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion no editor tab is open in the Visual Studio Code editor area.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_close_c39dbe901_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:closeGetStartedEditor",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c39dbe901_1_5",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_closeGetStartedEditor_assertClosed_c39dbe901_1_4"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c39dbe901_1_5",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c39dbe901_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c39dbe901_1_5",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Create New Agent/App"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c39dbe901_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c39dbe901_1_5",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Create New Agent/App and the highlighted command listed under it is titled Microsoft 365 Agents: Create New Agent/App.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c39dbe901_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c39dbe901_1_5",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c39dbe901_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c39dbe901_1_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled New Project is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c39dbe901_1_5"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_c39dbe901_1_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled New Project has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c39dbe901_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c39dbe901_1_6",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Declarative Agent"
+      },
+      "description": "Type the resolved option label Declarative Agent into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_c39dbe901_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c39dbe901_1_6",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Declarative Agent is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c39dbe901_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c39dbe901_1_6",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c39dbe901_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_c39dbe901_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Create Declarative Agent is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c39dbe901_1_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_c39dbe901_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Create Declarative Agent has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_c39dbe901_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_c39dbe901_1_7",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Start with TypeSpec for Microsoft 365 Copilot"
+      },
+      "description": "Type the resolved option label Start with TypeSpec for Microsoft 365 Copilot into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_c39dbe901_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_c39dbe901_1_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option Start with TypeSpec for Microsoft 365 Copilot is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_c39dbe901_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_c39dbe901_1_7",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_c39dbe901_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_confirmOption_assertPrompt_c39dbe901_1_8",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Workspace Folder is visible and the option Default folder is focused.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_confirm_c39dbe901_1_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:key-press",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_confirmOption_confirm_c39dbe901_1_8",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the Default folder option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_confirmOption_assertPrompt_c39dbe901_1_8"
+      ],
+      "preconditions": [
+        "dhash:364:74:16:5:08056a9a5d5516b6",
+        "dhash:364:74:96:5:44232286e2168e01",
+        "dhash:364:74:0:10:f0b09494b2717075"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:key-press"
+      ]
+    },
+    {
+      "step_id": "step_textInput_assertQuestion_c39dbe901_1_9",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Application Name is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_confirmOption_confirm_c39dbe901_1_8"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_textInput_input_c39dbe901_1_9",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "${{var:app_name:vscuse_app_#####}}"
+      },
+      "description": "Type the authored value into the active text prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_assertQuestion_c39dbe901_1_9"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_textInput_confirm_c39dbe901_1_9",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the accepted text input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_input_c39dbe901_1_9"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_assertProjectWindowReady_assert_c39dbe901_1_10",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Preview README.md editor tab is open in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 60,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_c39dbe901_1_9"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:initialization",
+        "initialization:assertProjectWindowReady",
+        "step_retry_timeout: 60"
+      ]
+    },
+    {
+      "step_id": "step_checkWorkspaceFiles_verify_c39dbe901_2_1",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9hZ2VudC9tYWluLnRzcCIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOltdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+      },
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_assertProjectWindowReady_assert_c39dbe901_1_10"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:checks",
+        "assertion:file",
+        "step_retry_timeout:120"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c39dbe901_3_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_c39dbe901_2_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c39dbe901_3_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c39dbe901_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c39dbe901_3_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Notifications: Clear All Notifications"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c39dbe901_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c39dbe901_3_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Notifications: Clear All Notifications and the highlighted command listed under it is titled Notifications: Clear All Notifications.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c39dbe901_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c39dbe901_3_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c39dbe901_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_configureTypeSpecGitHubOAuthAction_openTerminal_c39dbe901_3_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+shift+~"
+      },
+      "description": "Open a new integrated terminal in Visual Studio Code with Ctrl+Shift+~.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c39dbe901_3_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:configure-typespec-action"
+      ]
+    },
+    {
+      "step_id": "step_configureTypeSpecGitHubOAuthAction_assertTerminal_c39dbe901_3_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion a new VS Code integrated terminal is visible and focused with a Bash shell prompt ready for input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_configureTypeSpecGitHubOAuthAction_openTerminal_c39dbe901_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:configure-typespec-action",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_configureTypeSpecGitHubOAuthAction_typeCommand_c39dbe901_3_2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "PROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" python3 -c 'import base64;exec(base64.b64decode(\"aW1wb3J0IG9zCmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aApmcm9tIHVybGxpYi5yZXF1ZXN0IGltcG9ydCB1cmxvcGVuCgpzb3VyY2VfdXJsID0gImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9LZW5uZXRoQldTb25nL3R5cGVTcGVjU2NoZW1hL2UyMDE1MGM4MGY0N2RmYzliMDY4YTI4MmE5YThlNDI5ZGFhMGI1NTcvZ2l0aHViLWFnZW50LnRzcCIKc291cmNlID0gdXJsb3Blbihzb3VyY2VfdXJsLCB0aW1lb3V0PTYwKS5yZWFkKCkuZGVjb2RlKCJ1dGYtOCIpCm9hdXRoX21vZGVsID0gIm1vZGVsIG9hdXRoIGlzIE9BdXRoMkF1dGg8IgppZiBzb3VyY2UuY291bnQob2F1dGhfbW9kZWwpICE9IDE6CiAgcmFpc2UgQXNzZXJ0aW9uRXJyb3IoIlRoZSBwaW5uZWQgVHlwZVNwZWMgc291cmNlIG11c3QgY29udGFpbiBleGFjdGx5IG9uZSBPQXV0aCBtb2RlbCIpCgpyZWZlcmVuY2UgPSAnQGF1dGhSZWZlcmVuY2VJZCgiXCR7e09BVVRIMl9DT05GSUdVUkFUSU9OX0lEfX0iKScKaWYgcmVmZXJlbmNlIGluIHNvdXJjZToKICByYWlzZSBBc3NlcnRpb25FcnJvcigiVGhlIE9BdXRoIHJlZmVyZW5jZSBtdXN0IG5vdCBhbHJlYWR5IGV4aXN0IikKc291cmNlID0gc291cmNlLnJlcGxhY2Uob2F1dGhfbW9kZWwsIHJlZmVyZW5jZSArICJcbiIgKyBvYXV0aF9tb2RlbCkKCnNvdXJjZV9maWxlID0gUGF0aChvcy5lbnZpcm9uWyJQUk9KRUNUX0RJUiJdKS5yZXNvbHZlKCkgLyAic3JjIiAvICJhZ2VudCIgLyAibWFpbi50c3AiCnNvdXJjZV9maWxlLndyaXRlX3RleHQoc291cmNlLCBlbmNvZGluZz0idXRmLTgiKQp3cml0dGVuID0gc291cmNlX2ZpbGUucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCmlmIHdyaXR0ZW4uY291bnQob2F1dGhfbW9kZWwpICE9IDE6CiAgcmFpc2UgQXNzZXJ0aW9uRXJyb3IoIlRoZSBPQXV0aCBtb2RlbCB3YXMgbm90IHdyaXR0ZW4gZXhhY3RseSBvbmNlIikKaWYgVHJ1ZSAhPSAoIkBhdXRoUmVmZXJlbmNlSWQiIGluIHdyaXR0ZW4pOgogIHJhaXNlIEFzc2VydGlvbkVycm9yKCJUaGUgT0F1dGggYXV0aGVudGljYXRpb24gcmVmZXJlbmNlIHN0YXRlIGlzIGluY29ycmVjdCIpCg==\"))' && printf '\\nVSCUSE_TYPESPEC_OAUTH_%s\\n' CONFIGURED"
+      },
+      "description": "Type the compiler-owned TypeSpec GitHub OAuth mutation command into the active integrated terminal.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_configureTypeSpecGitHubOAuthAction_assertTerminal_c39dbe901_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:configure-typespec-action"
+      ]
+    },
+    {
+      "step_id": "step_configureTypeSpecGitHubOAuthAction_runCommand_c39dbe901_3_2",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the verified TypeSpec GitHub OAuth mutation command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_configureTypeSpecGitHubOAuthAction_typeCommand_c39dbe901_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:configure-typespec-action"
+      ]
+    },
+    {
+      "step_id": "step_configureTypeSpecGitHubOAuthAction_assertConfigured_c39dbe901_3_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the VS Code integrated terminal visibly displays the complete text VSCUSE_TYPESPEC_OAUTH_CONFIGURED.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_configureTypeSpecGitHubOAuthAction_runCommand_c39dbe901_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:configure-typespec-action",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_configureTypeSpecGitHubOAuthAction_closeTerminal_c39dbe901_3_2",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+`"
+      },
+      "description": "Close the verified integrated terminal with Ctrl+`.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_configureTypeSpecGitHubOAuthAction_assertConfigured_c39dbe901_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:configure-typespec-action"
+      ]
+    },
+    {
+      "step_id": "step_configureTypeSpecGitHubOAuthAction_assertClosed_c39dbe901_3_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the integrated terminal panel is no longer visible and the Visual Studio Code workbench is ready.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_configureTypeSpecGitHubOAuthAction_closeTerminal_c39dbe901_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:configure-typespec-action",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_checkWorkspaceFiles_verify_c39dbe901_4_1",
+      "agent": "code",
+      "tool": "",
+      "parameters": {
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" ASSERTIONS_B64=\"W3sicGF0aCI6InNyYy9hZ2VudC9tYWluLnRzcCIsImV4aXN0cyI6dHJ1ZSwiY29udGFpbnMiOlsibW9kZWwgb2F1dGggaXMgT0F1dGgyQXV0aDwiLCJAYXV0aFJlZmVyZW5jZUlkKFwiJHt7T0FVVEgyX0NPTkZJR1VSQVRJT05fSUR9fVwiKSJdLCJub3RDb250YWlucyI6W119XQ==\" python3 - <<'PY'\nimport base64\nimport json\nimport os\nfrom pathlib import Path\n\nproject = Path(os.environ[\"PROJECT_DIR\"]).resolve()\nassertions = json.loads(base64.b64decode(os.environ[\"ASSERTIONS_B64\"]).decode(\"utf-8\"))\nfor assertion in assertions:\n    target = (project / assertion[\"path\"]).resolve()\n    try:\n        target.relative_to(project)\n    except ValueError as error:\n        raise AssertionError(\"File assertion escaped the project directory\") from error\n    exists = target.is_file()\n    if exists != assertion[\"exists\"]:\n        raise AssertionError(f\"Unexpected file existence for {assertion['path']}\")\n    if not exists:\n        continue\n    content = target.read_text(encoding=\"utf-8\")\n    for expected in assertion.get(\"contains\", []):\n        expected = expected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if expected not in content:\n            raise AssertionError(f\"Expected content is absent from {assertion['path']}\")\n    for unexpected in assertion.get(\"notContains\", []):\n        unexpected = unexpected.replace(\"__VSCUSE_APP_NAME__\", project.name)\n        if unexpected in content:\n            raise AssertionError(f\"Unexpected content is present in {assertion['path']}\")\nPY\n```"
+      },
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; verify its project-relative file assertions, project files are not VS Code .code-workspace files, do not use /workspace, and do not log file contents.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_configureTypeSpecGitHubOAuthAction_assertClosed_c39dbe901_3_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:checks",
+        "assertion:file",
+        "step_retry_timeout:120"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "f1"
+      },
+      "description": "Press the F1 key to open the Command Palette in Visual Studio Code.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_c39dbe901_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertPalette_c39dbe901_5_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Visual Studio Code Command Palette is visible with a > character in its input box and is ready to accept a command search.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_open_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_filter_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Zip App Package"
+      },
+      "description": "Type the resolved command title into the active Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertPalette_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_assertCommand_c39dbe901_5_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Zip App Package and the highlighted command listed under it is titled Microsoft 365 Agents: Zip App Package.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_filter_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_execute_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the selected Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_assertCommand_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_clickOption_assertPrompt_c39dbe901_5_2",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Select Teams manifest.json File is visible and the option manifest.json is selectable.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeCommand_execute_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:click",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_clickOption_click_c39dbe901_5_2",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 442,
+        "y": 81
+      },
+      "description": "Click the manifest.json option in the active prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_clickOption_assertPrompt_c39dbe901_5_2"
+      ],
+      "preconditions": [
+        "dhash:442:81:16:5:0c736a0aaafb608c",
+        "dhash:442:81:96:5:000028d2d128121c",
+        "dhash:442:81:0:10:d0712230b022a00d"
+      ],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "interaction:click"
+      ]
+    },
+    {
+      "step_id": "step_filterOption_filter_c39dbe901_5_3",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "dev"
+      },
+      "description": "Type the resolved option label into the active option picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_clickOption_click_c39dbe901_5_2"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_filterOption_assertOption_c39dbe901_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option dev is visible and selectable in the filtered option picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_filter_c39dbe901_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_filterOption_confirm_c39dbe901_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_assertOption_c39dbe901_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_assertNotificationContains_assert_c39dbe901_5_4",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion a visible Visual Studio Code notification contains the literal text App package successfully built at. A notification with different text, including an in-progress notification, does not satisfy this assertion.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_filterOption_confirm_c39dbe901_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:notifications",
+        "action:assert-contains",
+        "step_retry_timeout: 120"
+      ]
+    }
+  ],
+  "screenshots": {}
+}
