@@ -181,7 +181,9 @@ extends:
 
               # Fallback path: run artifacts are never anonymous, so this needs a
               # secret pipeline variable named GITHUB_TOKEN with actions:read.
-              - ${{ if ne(parameters.githubRunId, '') }}:
+              # Ignored when githubReleaseTag is set, so the AzDO run dialog (which
+              # marks every parameter "Required") can be given a throwaway value.
+              - ${{ if and(eq(parameters.githubReleaseTag, ''), ne(parameters.githubRunId, '')) }}:
                   - pwsh: |
                       $ErrorActionPreference = 'Stop'
                       # An undefined pipeline variable is left as the literal macro
