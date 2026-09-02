@@ -4,12 +4,11 @@ import { includes } from "lodash";
 import Mustache from "mustache";
 import { AppDefinition } from "../interfaces/appdefinitions/appDefinition";
 import { ConfigurableTab } from "../interfaces/appdefinitions/configurableTab";
-import { expandEnvironmentVariable, getEnvironmentVariables } from "../../../utils/common";
+import { getEnvironmentVariables } from "../../../utils/common";
 import { WrapDriverContext } from "../../util/wrapUtil";
-import { FxError, Result, err, ok } from "@microsoft/teamsfx-api";
-import { MissingEnvironmentVariablesError } from "../../../../error";
+import { FxError, Result } from "@microsoft/teamsfx-api";
 import { TelemetryPropertyKey } from "./telemetry";
-import { expandVariableWithFunction, ManifestType } from "../../../utils/envFunctionUtils";
+import { resolveManifestWithContext, ManifestType } from "../../../utils/envFunctionUtils";
 import { DriverContext } from "../../interface/commonArgs";
 export { RetryHandler } from "../../../../common/retryHandler";
 
@@ -232,28 +231,5 @@ export async function getResolvedManifest(
     });
   }
 
-  let value = content;
-  if (manifestType !== ManifestType.ApiSpec) {
-    const processedFunctionRes = await expandVariableWithFunction(
-      content,
-      ctx,
-      undefined,
-      true,
-      manifestType,
-      path
-    );
-    if (processedFunctionRes.isErr()) {
-      return processedFunctionRes;
-    }
-
-    value = expandEnvironmentVariable(processedFunctionRes.value);
-  } else {
-    value = expandEnvironmentVariable(value);
-  }
-
-  const notExpandedVars = getEnvironmentVariables(value);
-  if (notExpandedVars.length > 0) {
-    return err(new MissingEnvironmentVariablesError("manifest", notExpandedVars.join(","), path));
-  }
-  return ok(value);
+  return resolveManifestWithContext(content, ctx, manifestType, path);
 }

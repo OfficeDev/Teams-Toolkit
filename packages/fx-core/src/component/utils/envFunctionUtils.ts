@@ -8,12 +8,19 @@ import {
   Result,
   UserError,
   UserErrorOptions,
+  ManifestType,
+  expandFileFunctionMacros,
+  UnsupportedFileFormatError as ManifestUnsupportedFileFormatError,
+  InvalidFunctionError as ManifestInvalidFunctionError,
+  InvalidFunctionParameterError as ManifestInvalidFunctionParameterError,
+  ReadFileError as ManifestReadFileError,
+  FileNotFoundError as ManifestFileNotFoundError,
+  FileReferenceOutsideManifestDirectoryError as ManifestFileReferenceOutsideManifestDirectoryError,
+  MissingEnvironmentVariablesError as ManifestMissingEnvironmentVariablesError,
+  resolveManifest,
+  ResolveManifestResult,
 } from "@microsoft/teamsfx-api";
-import path from "path";
-import fs from "fs-extra";
-import stripBom from "strip-bom";
-import { FileNotFoundError } from "../../error";
-import { expandEnvironmentVariable } from "./common";
+import { FileNotFoundError, MissingEnvironmentVariablesError, assembleError } from "../../error";
 import { getLocalizedString } from "../../common/localizeUtils";
 import { DriverContext } from "../driver/interface/commonArgs";
 
@@ -26,14 +33,86 @@ enum TelemetryPropertyKey {
   functionCount = "function-count",
 }
 
-export enum ManifestType {
-  TeamsManifest = "teams-manifest",
-  PluginManifest = "plugin-manifest",
-  DeclarativeCopilotManifest = "declarative-copilot-manifest",
-  ApiSpec = "api-spec",
-  EmbeddedKnowledgeFile = "embedded-knowledge-file",
+// Re-exported for existing importers (ManifestUtils, PluginManifestUtils, utils, createAppPackage).
+export { ManifestType };
+
+// Map a plain error thrown by @microsoft/app-manifest's resolver to the localized
+// FxError surface fx-core drivers expect, emitting the same diagnostic logs as before.
+function toFxError(e: unknown, ctx: DriverContext): FxError {
+  if (e instanceof ManifestUnsupportedFileFormatError) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.unsupportedFile.errorLog", e.filePath, "txt")
+    );
+    return new UnsupportedFileFormatError(ctx.platform);
+  }
+  if (e instanceof ManifestInvalidFunctionError) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.unsupportedFunction.errorLog", e.token, "file")
+    );
+    return new InvalidFunctionError(ctx.platform);
+  }
+  if (e instanceof ManifestInvalidFunctionParameterError) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.invalidFunctionParameter.errorLog", e.token, "file")
+    );
+    return new InvalidFunctionParameter(ctx.platform);
+  }
+  if (e instanceof ManifestReadFileError) {
+    ctx.logProvider.error(
+      getLocalizedString("core.envFunc.readFile.errorLog", e.filePath, e.cause?.toString())
+    );
+    return new ReadFileError(ctx.platform, e.filePath);
+  }
+  if (e instanceof ManifestFileNotFoundError) {
+    return new FileNotFoundError(source, e.filePath);
+  }
+  if (e instanceof ManifestFileReferenceOutsideManifestDirectoryError) {
+    ctx.logProvider.error(
+      getLocalizedString(
+        "core.envFunc.fileReferenceOutsideManifestDirectory.errorLog.local",
+        e.fileReference,
+        e.resolvedPath,
+        e.manifestDirectory,
+        "$[file()]"
+      )
+    );
+    return new FileReferenceOutsideManifestDirectoryError(
+      e.fileReference,
+      e.resolvedPath,
+      e.manifestDirectory
+    );
+  }
+  if (e instanceof ManifestMissingEnvironmentVariablesError) {
+    return new MissingEnvironmentVariablesError("manifest", e.names, e.fromPath);
+  }
+  // Anything else is unexpected; wrap it so the Result<T, FxError> contract holds.
+  return assembleError(e, source);
 }
 
+// Run a resolver that yields { content, functionCount }, mapping thrown
+// ManifestTemplateErrors to localized FxError and emitting function-count telemetry.
+async function runManifestResolver(
+  resolve: () => Promise<ResolveManifestResult>,
+  ctx: DriverContext,
+  manifestType: ManifestType
+): Promise<Result<string, FxError>> {
+  let resolved: ResolveManifestResult;
+  try {
+    resolved = await resolve();
+  } catch (e) {
+    return err(toFxError(e, ctx));
+  }
+
+  if (resolved.functionCount > 0) {
+    ctx.telemetryReporter?.sendTelemetryEvent(telemetryEvent, {
+      [TelemetryPropertyKey.manifestType]: manifestType.toString(),
+      [TelemetryPropertyKey.functionCount]: resolved.functionCount.toString(),
+    });
+  }
+  return ok(resolved.content);
+}
+
+// Expand only `$[file()]` macros, leaving `${{ENV}}` substitution to the caller.
 export async function expandVariableWithFunction(
   content: string,
   ctx: DriverContext,
@@ -42,204 +121,25 @@ export async function expandVariableWithFunction(
   manifestType: ManifestType,
   fromPath: string
 ): Promise<Result<string, FxError>> {
-  const regex = /\$\[ *[a-zA-Z][a-zA-Z]*\([^\]]*\) *\]/g;
-  const matches = content.match(regex);
-
-  if (!matches) {
-    return ok(content); // no function
-  }
-  let count = 0;
-  for (const placeholder of matches) {
-    const processedRes = await processFunction(
-      placeholder.slice(2, -1).trim(),
-      ctx,
-      envs,
-      fromPath
-    );
-    if (processedRes.isErr()) {
-      return err(processedRes.error);
-    }
-    let value = processedRes.value;
-    if (isJson && value) {
-      value = JSON.stringify(value).slice(1, -1);
-    }
-    if (value) {
-      count += 1;
-      content = content.replace(placeholder, value);
-    }
-  }
-
-  if (count > 0) {
-    ctx.telemetryReporter?.sendTelemetryEvent(telemetryEvent, {
-      [TelemetryPropertyKey.manifestType]: manifestType.toString(),
-      [TelemetryPropertyKey.functionCount]: count.toString(),
-    });
-  }
-  return ok(content);
+  return runManifestResolver(
+    () => expandFileFunctionMacros(content, isJson, { envs, fromPath }),
+    ctx,
+    manifestType
+  );
 }
 
-async function processFunction(
+// Fully resolve a manifest via @microsoft/app-manifest's resolveManifest (shared
+// file()+env logic), adding the fx-core concerns it is agnostic to.
+export async function resolveManifestWithContext(
   content: string,
   ctx: DriverContext,
-  envs: { [key in string]: string } | undefined,
-  path: string
-): Promise<Result<string, FxError>> {
-  const firstTrimmedContent = content.trim();
-  if (!firstTrimmedContent.startsWith("file(") || !firstTrimmedContent.endsWith(")")) {
-    ctx.logProvider.error(
-      getLocalizedString("core.envFunc.unsupportedFunction.errorLog", firstTrimmedContent, "file")
-    );
-    return err(new InvalidFunctionError(ctx.platform));
-  }
-
-  // file()
-  const trimmedParameter = content.slice(5, -1).trim();
-  if (trimmedParameter[0] === "'" && trimmedParameter[trimmedParameter.length - 1] === "'") {
-    // static string as function parameter
-    const res = await readFileContent(
-      trimmedParameter.substring(1, trimmedParameter.length - 1),
-      ctx,
-      envs,
-      path
-    );
-    return res;
-  } else if (trimmedParameter.startsWith("${{") && trimmedParameter.endsWith("}}")) {
-    // env variable inside
-    const resolvedParameter = expandEnvironmentVariable(trimmedParameter, envs);
-
-    const res = readFileContent(resolvedParameter, ctx, envs, path);
-    return res;
-  } else if (trimmedParameter.startsWith("file(") && trimmedParameter.endsWith(")")) {
-    // nested function inside
-    const processsedRes = await processFunction(trimmedParameter, ctx, envs, path);
-
-    if (processsedRes.isErr()) {
-      return err(processsedRes.error);
-    }
-
-    const readFileRes = await readFileContent(processsedRes.value, ctx, envs, path);
-    return readFileRes;
-  } else {
-    // invalid content inside function
-    ctx.logProvider.error(
-      getLocalizedString("core.envFunc.invalidFunctionParameter.errorLog", trimmedParameter, "file")
-    );
-    return err(new InvalidFunctionParameter(ctx.platform));
-  }
-}
-
-async function readFileContent(
-  filePath: string,
-  ctx: DriverContext,
-  envs: { [key in string]: string } | undefined,
+  manifestType: ManifestType,
   fromPath: string
 ): Promise<Result<string, FxError>> {
-  const manifestDirectory = path.resolve(path.dirname(fromPath));
-  const absolutePath = path.resolve(manifestDirectory, filePath);
-  const safeFileReference = path.isAbsolute(filePath) ? path.basename(filePath) : filePath;
-  if (!isPathContained(manifestDirectory, absolutePath)) {
-    return fileReferenceOutsideManifestDirectory(ctx, filePath, absolutePath, manifestDirectory);
-  }
-
-  if (!isSupportedFileFormat(filePath)) {
-    ctx.logProvider.error(
-      getLocalizedString("core.envFunc.unsupportedFile.errorLog", safeFileReference, "txt")
-    );
-    return err(new UnsupportedFileFormatError(ctx.platform));
-  }
-
-  let realManifestDirectory: string;
-  let realFilePath: string;
-  try {
-    realManifestDirectory = await fs.realpath(manifestDirectory);
-    realFilePath = await fs.realpath(absolutePath);
-  } catch (error) {
-    if (isFileNotFoundError(error)) {
-      return err(new FileNotFoundError(source, safeFileReference));
-    }
-    ctx.logProvider.error(
-      getLocalizedString(
-        "core.envFunc.readFile.errorLog",
-        safeFileReference,
-        getFileSystemErrorCode(error)
-      )
-    );
-    return err(new ReadFileError(ctx.platform, safeFileReference));
-  }
-
-  if (!isPathContained(realManifestDirectory, realFilePath)) {
-    return fileReferenceOutsideManifestDirectory(ctx, filePath, realFilePath, manifestDirectory);
-  }
-
-  if (!isSupportedFileFormat(realFilePath)) {
-    ctx.logProvider.error(
-      getLocalizedString("core.envFunc.unsupportedFile.errorLog", safeFileReference, "txt")
-    );
-    return err(new UnsupportedFileFormatError(ctx.platform));
-  }
-
-  try {
-    let fileContent = await fs.readFile(realFilePath, "utf8");
-    fileContent = stripBom(fileContent);
-    let processedFileContent = expandEnvironmentVariable(fileContent, envs);
-    processedFileContent = processedFileContent.replace(/\r\n/g, "\n");
-    return ok(processedFileContent);
-  } catch (error) {
-    ctx.logProvider.error(
-      getLocalizedString(
-        "core.envFunc.readFile.errorLog",
-        safeFileReference,
-        getFileSystemErrorCode(error)
-      )
-    );
-    return err(new ReadFileError(ctx.platform, safeFileReference));
-  }
-}
-
-function isPathContained(directory: string, filePath: string): boolean {
-  const relativePath = path.relative(directory, filePath);
-  return (
-    relativePath === "" ||
-    (relativePath !== ".." &&
-      !relativePath.startsWith(`..${path.sep}`) &&
-      !path.isAbsolute(relativePath))
-  );
-}
-
-function isSupportedFileFormat(filePath: string): boolean {
-  const extension = path.extname(filePath).toLowerCase();
-  return extension === ".txt" || extension === ".md";
-}
-
-function isFileNotFoundError(error: unknown): boolean {
-  return getFileSystemErrorCode(error) === "ENOENT";
-}
-
-function getFileSystemErrorCode(error: unknown): string {
-  return typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    typeof error.code === "string"
-    ? error.code
-    : "UNKNOWN";
-}
-
-function fileReferenceOutsideManifestDirectory(
-  ctx: DriverContext,
-  fileReference: string,
-  resolvedPath: string,
-  manifestDirectory: string
-): Result<string, FxError> {
-  const errorLog = getLocalizedString(
-    "core.envFunc.fileReferenceOutsideManifestDirectory.errorLog.local",
-    fileReference,
-    resolvedPath,
-    manifestDirectory,
-    "$[file()]"
-  );
-  ctx.logProvider.error(errorLog);
-  return err(
-    new FileReferenceOutsideManifestDirectoryError(fileReference, resolvedPath, manifestDirectory)
+  return runManifestResolver(
+    () => resolveManifest(content, { manifestType, fromPath }),
+    ctx,
+    manifestType
   );
 }
 

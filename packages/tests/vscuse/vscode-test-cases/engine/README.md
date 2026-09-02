@@ -71,8 +71,10 @@ target content and identity after diff reporting, verifies renamed backups befor
 installs targets exclusively. Each target is registered to the transaction immediately after
 linking and identity-checked again before commit completes; rollback removes only links that still
 belong to that transaction. Descriptor
-filenames must match the compiler's normalized lowercase alphanumeric-and-hyphen `.json` form,
-which also rejects Windows alternate data streams and reserved device basenames. Staging or commit
+filenames normally use normalized `<template-id>--<case-id>.json`; case IDs beginning with
+`feature-` instead use `<case-id>.json`, so those descriptor filenames begin with `feature-`.
+Both forms allow only lowercase alphanumeric-and-hyphen segments and reject Windows alternate
+data streams and reserved device basenames. Staging or commit
 failures roll back prior content; if restoration fails, the prior content remains in a sibling
 `.bak` file and setup returns `VCB_OUTPUT_ROLLBACK`. If committed-output cleanup fails, setup keeps
 the committed targets and returns `VCB_OUTPUT_CLEANUP`, including temporary, backup, or lock cleanup

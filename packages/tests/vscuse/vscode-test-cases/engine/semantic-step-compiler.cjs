@@ -19,7 +19,7 @@ const userEnvironmentTargetFiles = Object.freeze({
   dev: ".env.dev.user",
   playground: ".env.playground.user",
 });
-const provisionInputGroups = new Set(["apiKey", "arm", "oauth"]);
+const provisionInputGroups = new Set(["apiKey", "arm", "entra", "oauth"]);
 const provisionEnvironmentInput = "environment";
 const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
@@ -83,6 +83,33 @@ const userEnvironmentMutationScriptBase64 = Buffer.from(
   userEnvironmentMutationScript,
   "utf8",
 ).toString("base64");
+const projectEnvironmentMutationScript = String.raw`import os
+from pathlib import Path
+
+project_dir = Path(os.environ["PROJECT_DIR"]).resolve()
+environment_file = project_dir / "env" / ".env.dev"
+if not environment_file.is_file():
+  raise AssertionError("The project environment file must already exist")
+name = os.environ["VARIABLE_NAME"]
+value = os.environ["VARIABLE_VALUE"]
+if not value:
+  raise AssertionError("The variable value resolved to nothing")
+lines = environment_file.read_text(encoding="utf-8").splitlines()
+prefix = name + "="
+matches = [index for index, line in enumerate(lines) if line.startswith(prefix)]
+if len(matches) != 1:
+  raise AssertionError("The project environment variable must already exist exactly once")
+expected = name + "='" + value + "'"
+lines[matches[0]] = expected
+environment_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
+written = [line for line in environment_file.read_text(encoding="utf-8").splitlines() if line.startswith(prefix)]
+if written != [expected]:
+  raise AssertionError("The project environment variable was not written exactly once with its value")
+`;
+const projectEnvironmentMutationScriptBase64 = Buffer.from(
+  projectEnvironmentMutationScript,
+  "utf8",
+).toString("base64");
 const typeSpecGitHubIssuesMutationScript = String.raw`import os
 from pathlib import Path
 
@@ -113,6 +140,8 @@ const typeSpecGitHubIssuesMutationScriptBase64 = Buffer.from(
 
 const commandTitles = {
   addDaAction: "Microsoft 365 Agents: Add Action",
+  addApiAuthConfiguration:
+    "Microsoft 365 Agents: Add Configurations to Support Actions with Authentication in Declarative Agent",
   addDaCapability: "Microsoft 365 Agents: Add Capability",
   clearNotifications: "Notifications: Clear All Notifications",
   create: "Microsoft 365 Agents: Create New Agent/App",
@@ -348,6 +377,12 @@ const provisionArmQuestions = [
 const provisionApiKeyQuestion = {
   component: "quick-input/text.json.tpl",
   title: "Enter API Key in OpenAPI Description Document",
+};
+
+const provisionEntraQuestion = {
+  component: "quick-input/text.json.tpl",
+  key: "clientId",
+  title: "Entra SSO client ID",
 };
 
 const provisionOauthQuestions = [
@@ -1118,9 +1153,22 @@ function createSemanticStepCompiler() {
         "The provision operation must declare at most one input group.",
       );
     }
+    const supportsApiKeyProvision =
+      state.template === "da/api-plugin-from-existing-api" ||
+      (state.template === "da/no-action" &&
+        (state.completed.has("addApiAuthConfiguration:api-key") ||
+          state.completed.has("addApiAuthConfiguration:bearer-token")));
+    const supportsEntraProvision =
+      state.template === "da/no-action" &&
+      state.completed.has("addApiAuthConfiguration:microsoft-entra");
+    const supportsOAuthProvision =
+      state.template === "da/api-plugin-from-existing-api" ||
+      (state.template === "da/no-action" &&
+        state.completed.has("addApiAuthConfiguration:oauth"));
     if (
-      (inputs.apiKey !== undefined || inputs.oauth !== undefined) &&
-      state.template !== "da/api-plugin-from-existing-api"
+      (inputs.apiKey !== undefined && !supportsApiKeyProvision) ||
+      (inputs.entra !== undefined && !supportsEntraProvision) ||
+      (inputs.oauth !== undefined && !supportsOAuthProvision)
     ) {
       return failure(
         "VCB_PROVISION_INPUT_REDUNDANT",
@@ -1143,6 +1191,32 @@ function createSemanticStepCompiler() {
         value: {
           confirmation: provisionApiKeyConfirmation,
           questions,
+        },
+      };
+    }
+    if (inputs.entra !== undefined) {
+      if (
+        !isRecord(inputs.entra) ||
+        !hasOnlyFields(inputs.entra, new Set([provisionEntraQuestion.key]))
+      ) {
+        return failure(
+          "VCB_PROVISION_INPUT_UNKNOWN",
+          "The Microsoft Entra provision operation does not match its supported input set.",
+        );
+      }
+      if (!environmentExpressionPattern.test(inputs.entra.clientId ?? "")) {
+        return failure(
+          "VCB_ACCOUNT_EXPRESSION_REQUIRED",
+          "The Microsoft Entra client ID must use an environment expression.",
+        );
+      }
+      return {
+        ok: true,
+        value: {
+          confirmation: undefined,
+          questions: [
+            { ...provisionEntraQuestion, value: inputs.entra.clientId },
+          ],
         },
       };
     }
@@ -1501,6 +1575,45 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileProjectEnvironment(state, definition) {
+    const inputs = definition.with ?? {};
+    const variables = inputs.variables ?? {};
+    const names = isRecord(variables) ? Object.keys(variables).sort() : [];
+    if (
+      !isRecord(inputs) ||
+      !hasOnlyFields(inputs, new Set(["variables"])) ||
+      !isRecord(variables) ||
+      names.length === 0 ||
+      names.some(
+        (name) =>
+          !localEnvironmentNamePattern.test(name) ||
+          typeof variables[name] !== "string" ||
+          variables[name].length === 0 ||
+          !localEnvironmentValuePattern.test(
+            variables[name].replaceAll(runnerPlaceholderPattern, ""),
+          ),
+      )
+    ) {
+      return failure(
+        "VCB_PROJECT_ENVIRONMENT_INPUT_INVALID",
+        "The project environment operation requires shell-safe variable names and values.",
+      );
+    }
+    const output = [];
+    for (const name of names) {
+      const error = append(
+        output,
+        render(state, "workspace/project-environment-variable.json.tpl", {
+          mutationScriptBase64: projectEnvironmentMutationScriptBase64,
+          variableName: name,
+          variableValue: variables[name],
+        }),
+      );
+      if (error) return error;
+    }
+    return { ok: true, value: output };
+  }
+
   function compileRemoveWorkspaceFile(state, definition) {
     const inputs = definition.with ?? {};
     if (
@@ -1652,6 +1765,7 @@ function createSemanticStepCompiler() {
       ),
     );
     if (error) return error;
+    state.completed.add("configureTypeSpecAction");
     return { ok: true, value: output };
   }
 
@@ -1835,6 +1949,210 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileAddApiAuthConfiguration(state, definition) {
+    const inputs = definition.with;
+    const entraScope =
+      "api://plugincb4aae.azurewebsites.net/4cfde729-32e4-4862-a409-07e14dbfd296/readpairs_read: Read repair records";
+    const oauthAuthorizationUrl = "https://github.com/login/oauth/authorize";
+    const oauthTokenUrl = "https://github.com/login/oauth/access_token";
+    const oauthScope = "repo: Read repos";
+    const isApiKeyConfiguration =
+      isRecord(inputs) &&
+      hasOnlyFields(
+        inputs,
+        new Set(["authType", "authName", "location", "keyName"]),
+      ) &&
+      inputs.authType === "api-key" &&
+      inputs.authName === "apiKey" &&
+      inputs.location === "header" &&
+      inputs.keyName === "X-API-KEY";
+    const isBearerConfiguration =
+      isRecord(inputs) &&
+      hasOnlyFields(inputs, new Set(["authType", "authName"])) &&
+      inputs.authType === "bearer-token" &&
+      inputs.authName === "apiKey";
+    const isMicrosoftEntraConfiguration =
+      isRecord(inputs) &&
+      hasOnlyFields(inputs, new Set(["authType", "authName", "scope"])) &&
+      inputs.authType === "microsoft-entra" &&
+      inputs.authName === "aadAuthCode" &&
+      inputs.scope === entraScope;
+    const isOAuthConfiguration =
+      isRecord(inputs) &&
+      hasOnlyFields(
+        inputs,
+        new Set([
+          "authType",
+          "authName",
+          "authorizationUrl",
+          "tokenUrl",
+          "refreshUrl",
+          "scope",
+          "pkce",
+        ]),
+      ) &&
+      inputs.authType === "oauth" &&
+      inputs.authName === "oauth2" &&
+      inputs.authorizationUrl === oauthAuthorizationUrl &&
+      inputs.tokenUrl === oauthTokenUrl &&
+      inputs.refreshUrl === "" &&
+      inputs.scope === oauthScope &&
+      inputs.pkce === false;
+    if (
+      state.template !== "da/no-action" ||
+      !state.completed.has("addDaAction") ||
+      (!isApiKeyConfiguration &&
+        !isBearerConfiguration &&
+        !isMicrosoftEntraConfiguration &&
+        !isOAuthConfiguration)
+    ) {
+      return failure(
+        "VCB_ADD_API_AUTH_INPUT_INVALID",
+        "The API authentication configuration input or entry state is not supported.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.addApiAuthConfiguration,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/confirm-option.json.tpl", {
+        optionLabel: "ai-plugin.json",
+        preconditions: ["dhash:512:384:0:20:4020226363636421"],
+        questionTitle: "Import Manifest File",
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "quick-input/text.json.tpl", {
+        inputValue: inputs.authName,
+        questionTitle: "Enter the Name of Auth Configuration",
+      }),
+    );
+    if (error) return error;
+    const authQuestions = isApiKeyConfiguration
+      ? [
+          ["Authentication Type", "API Key"],
+          ["Enter where the API Key should be in the request", "Header"],
+        ]
+      : isBearerConfiguration
+        ? [["Authentication Type", "API Key (Bearer Token Auth)"]]
+        : isMicrosoftEntraConfiguration
+          ? [["Authentication Type", "Microsoft Entra"]]
+          : [["Authentication Type", "OAuth"]];
+    for (const [questionTitle, optionLabel] of authQuestions) {
+      error = append(
+        output,
+        render(state, "quick-input/single-select.json.tpl", {
+          optionLabel,
+          questionTitle,
+        }),
+      );
+      if (error) return error;
+    }
+    if (isApiKeyConfiguration) {
+      error = append(
+        output,
+        render(state, "quick-input/text.json.tpl", {
+          inputValue: inputs.keyName,
+          questionTitle: "Enter the Name of API Key",
+        }),
+      );
+      if (error) return error;
+    }
+    const successNotificationText =
+      "Microsoft 365 Agents Toolkit has successfully updated your project configuration (m365agents.yaml and m365agents.local.yaml) files with added action to support authentication flow. You can proceed to remote provision.";
+    if (isMicrosoftEntraConfiguration) {
+      error = append(
+        output,
+        render(state, "quick-input/text.json.tpl", {
+          inputValue: inputs.scope,
+          questionTitle:
+            "Enter the OAuth Scope. Samle: scope1: description for scope1; scope2: description for scope2",
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "command-palette/execute-command.json.tpl", {
+          commandTitle: commandTitles.notifications,
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(
+          state,
+          "notifications/assert-collapsed-prefix-and-contains.json.tpl",
+          {
+            collapsedNotificationPrefix:
+              "Microsoft 365 Agents Toolkit has successfully ad",
+            notificationText: successNotificationText,
+            retryTimeout: "60",
+          },
+        ),
+      );
+      if (error) return error;
+    }
+    if (isOAuthConfiguration) {
+      for (const [questionTitle, inputValue] of [
+        ["Enter the OAuth Authorization URL", inputs.authorizationUrl],
+        ["Enter the OAuth Token URL", inputs.tokenUrl],
+      ]) {
+        error = append(
+          output,
+          render(state, "quick-input/text.json.tpl", {
+            inputValue,
+            questionTitle,
+          }),
+        );
+        if (error) return error;
+      }
+      error = append(
+        output,
+        render(state, "quick-input/empty-text.json.tpl", {
+          questionTitle: "Enter the OAuth Refresh URL",
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "quick-input/text.json.tpl", {
+          inputValue: inputs.scope,
+          questionTitle:
+            "Enter the OAuth Scope. Samle: scope1: description for scope1; scope2: description for scope2",
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "quick-input/single-select.json.tpl", {
+          optionLabel: "No",
+          questionTitle: "Enable PKCE for OAuth?",
+        }),
+      );
+      if (error) return error;
+    }
+    if (!isMicrosoftEntraConfiguration) {
+      error = append(
+        output,
+        render(state, "notifications/assert-contains.json.tpl", {
+          notificationText: successNotificationText,
+          retryTimeout: "60",
+        }),
+      );
+      if (error) return error;
+    }
+    state.completed.add(`addApiAuthConfiguration:${inputs.authType}`);
+    return { ok: true, value: output };
+  }
+
   function compileRegenerateDaAction(state, definition) {
     const inputs = definition.with;
     if (
@@ -1915,25 +2233,40 @@ function createSemanticStepCompiler() {
   function compilePackageApp(state, definition) {
     const inputs = definition.with;
     if (
-      state.template !== "default-bot" ||
-      state.profile !== targetAdapters["Debug in Teams (Chrome)"] ||
-      !state.completed.has("login:m365") ||
-      !state.completed.has("chat-ready") ||
       !isRecord(inputs) ||
       !hasOnlyFields(inputs, new Set(["environment"])) ||
-      inputs.environment !== "local"
+      !["dev", "local"].includes(inputs.environment)
     ) {
       return failure(
         "VCB_PACKAGE_APP_INPUT_INVALID",
         "The app package input or local Teams entry state is not supported.",
       );
     }
+    const packagesDefaultBot =
+      state.template === "default-bot" &&
+      state.profile === targetAdapters["Debug in Teams (Chrome)"] &&
+      state.completed.has("login:m365") &&
+      state.completed.has("chat-ready") &&
+      inputs.environment === "local";
+    const packagesTypeSpec =
+      state.template === "da/typespec" &&
+      state.completed.has("configureTypeSpecAction") &&
+      inputs.environment === "dev";
+    if (!packagesDefaultBot && !packagesTypeSpec) {
+      return failure(
+        "VCB_PACKAGE_APP_INPUT_INVALID",
+        "The app package input or entry state is not supported.",
+      );
+    }
     const output = [];
-    let error = append(
-      output,
-      render(state, "browser/teams/close-local-app-window.json.tpl", {}),
-    );
-    if (error) return error;
+    let error;
+    if (packagesDefaultBot) {
+      error = append(
+        output,
+        render(state, "browser/teams/close-local-app-window.json.tpl", {}),
+      );
+      if (error) return error;
+    }
     error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
@@ -1941,18 +2274,33 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    const manifestOption = packagesTypeSpec
+      ? {
+          preconditions: [
+            "dhash:442:81:16:5:0c736a0aaafb608c",
+            "dhash:442:81:96:5:000028d2d128121c",
+            "dhash:442:81:0:10:d0712230b022a00d",
+          ],
+          x: 442,
+          y: 81,
+        }
+      : {
+          preconditions: [
+            "dhash:394:76:16:5:21a65953529ab34e",
+            "dhash:394:76:96:5:0005804505010000",
+            "dhash:394:76:0:10:d0832723b2292168",
+          ],
+          x: 394,
+          y: 76,
+        };
     error = append(
       output,
       render(state, "quick-input/click-option.json.tpl", {
         optionLabel: "manifest.json",
-        preconditions: [
-          "dhash:394:76:16:5:21a65953529ab34e",
-          "dhash:394:76:96:5:0005804505010000",
-          "dhash:394:76:0:10:d0832723b2292168",
-        ],
+        preconditions: manifestOption.preconditions,
         questionTitle: "Select Teams manifest.json File",
-        x: 394,
-        y: 76,
+        x: manifestOption.x,
+        y: manifestOption.y,
       }),
     );
     if (error) return error;
@@ -2667,6 +3015,8 @@ function createSemanticStepCompiler() {
         return compileLocalUserEnvironment(state, definition);
       case "userEnvironment":
         return compileUserEnvironment(state, definition);
+      case "projectEnvironment":
+        return compileProjectEnvironment(state, definition);
       case "removeWorkspaceFile":
         return compileRemoveWorkspaceFile(state, definition);
       case "workflowVersion":
@@ -2677,6 +3027,8 @@ function createSemanticStepCompiler() {
         return compileAddDaCapability(state, definition);
       case "addDaAction":
         return compileAddDaAction(state, definition);
+      case "addApiAuthConfiguration":
+        return compileAddApiAuthConfiguration(state, definition);
       case "regenerateDaAction":
         return compileRegenerateDaAction(state, definition);
       case "packageApp":

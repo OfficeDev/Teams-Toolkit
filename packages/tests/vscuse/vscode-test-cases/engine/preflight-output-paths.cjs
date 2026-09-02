@@ -27,7 +27,9 @@ function preflightOutputPaths({ expandedCases, sourcePath }) {
       return;
     }
 
-    const fileName = `${templateSegment}--${caseSegment}.json`;
+    const fileName = caseSegment.startsWith("feature-")
+      ? `${caseSegment}.json`
+      : `${templateSegment}--${caseSegment}.json`;
     if (fileNames.has(fileName)) {
       diagnostics.push(
         createDiagnostic(

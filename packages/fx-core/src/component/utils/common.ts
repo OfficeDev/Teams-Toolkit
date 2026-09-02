@@ -18,8 +18,6 @@ import { getLocalizedString } from "../../common/localizeUtils";
 import { SummaryConstant } from "../configManager/constant";
 import { EOL } from "os";
 
-const placeholderRegex = /\${{ *[a-zA-Z_][a-zA-Z0-9_]* *}}/g;
-
 /**
  * check parameter, throw error if value is null or undefined
  * @param name parameter name
@@ -128,44 +126,10 @@ export async function wrapSummary(
   }
 }
 
-// Expand environment variables in content. The format of referencing environment variable is: ${{ENV_NAME}}
-export function expandEnvironmentVariable(
-  content: string,
-  envs?: { [key in string]: string }
-): string {
-  const placeholders = content.match(placeholderRegex);
-  if (placeholders) {
-    for (const placeholder of placeholders) {
-      const envName = placeholder.slice(3, -2).trim(); // removes `${{` and `}}`
-      const envValue = envs ? envs[envName] : process.env[envName];
-      if (envName === "APP_NAME_SUFFIX") {
-        if (envValue !== undefined && envValue !== null) {
-          content = content.replace(placeholder, envValue);
-        }
-      } else {
-        if (envValue) {
-          content = content.replace(placeholder, envValue);
-        }
-      }
-    }
-  }
-
-  return content;
-}
-
-/**
- * Expand environment variables in content. The format of referencing environment variable is: ${{ENV_NAME}}
- * @return An array of environment variables
- */
-export function getEnvironmentVariables(content: string): string[] {
-  const placeholders = content.match(placeholderRegex);
-  if (placeholders) {
-    const variables = placeholders.map((placeholder) => placeholder.slice(3, -2).trim()); // removes `${{` and `}}`)
-    // remove duplicates
-    return [...new Set(variables)];
-  }
-  return [];
-}
+// Manifest env-variable (`${{ENV_NAME}}`) expansion lives in @microsoft/app-manifest
+// (re-exported via @microsoft/teamsfx-api) so hosts can resolve manifests without
+// fx-core. Re-exported here to keep the existing import path for fx-core call sites.
+export { expandEnvironmentVariable, getEnvironmentVariables } from "@microsoft/teamsfx-api";
 
 export function getAbsolutePath(relativeOrAbsolutePath: string, projectPath: string): string {
   relativeOrAbsolutePath = relativeOrAbsolutePath || "";
