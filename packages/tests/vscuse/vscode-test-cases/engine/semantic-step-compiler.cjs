@@ -137,6 +137,75 @@ const typeSpecGitHubIssuesMutationScriptBase64 = Buffer.from(
   typeSpecGitHubIssuesMutationScript,
   "utf8",
 ).toString("base64");
+const typeSpecGitHubOAuthSource =
+  "https://raw.githubusercontent.com/KennethBWSong/typeSpecSchema/e20150c80f47dfc9b068a282a9a8e429daa0b557/github-agent.tsp";
+
+function createTypeSpecGitHubOAuthMutationScript(includeReferenceId) {
+  const referenceMutation = includeReferenceId
+    ? String.raw`
+reference = '@authReferenceId("\${{OAUTH2_CONFIGURATION_ID}}")'
+if reference in source:
+  raise AssertionError("The OAuth reference must not already exist")
+source = source.replace(oauth_model, reference + "\n" + oauth_model)
+`
+    : String.raw`
+if "@authReferenceId" in source:
+  raise AssertionError("The OAuth source must not contain an authentication reference")
+`;
+  return String.raw`import os
+from pathlib import Path
+from urllib.request import urlopen
+
+source_url = "${typeSpecGitHubOAuthSource}"
+source = urlopen(source_url, timeout=60).read().decode("utf-8")
+project_dir = Path(os.environ["PROJECT_DIR"]).resolve()
+fixture_agent_name = "github-agent0507"
+generated_agent_name = project_dir.name
+if source.count(fixture_agent_name) != 1:
+  raise AssertionError("The pinned TypeSpec source must contain exactly one fixture agent name")
+source = source.replace(fixture_agent_name, generated_agent_name)
+oauth_model = "model oauth is OAuth2Auth<"
+if source.count(oauth_model) != 1:
+  raise AssertionError("The pinned TypeSpec source must contain exactly one OAuth model")
+${referenceMutation}
+source_file = project_dir / "src" / "agent" / "main.tsp"
+source_file.write_text(source, encoding="utf-8")
+written = source_file.read_text(encoding="utf-8")
+if fixture_agent_name in written or written.count(generated_agent_name) != 1:
+  raise AssertionError("The generated TypeSpec agent name is incorrect")
+if written.count(oauth_model) != 1:
+  raise AssertionError("The OAuth model was not written exactly once")
+if ${includeReferenceId ? "True" : "False"} != ("@authReferenceId" in written):
+  raise AssertionError("The OAuth authentication reference state is incorrect")
+`;
+}
+
+const typeSpecGitHubOAuthWithReferenceMutationScriptBase64 = Buffer.from(
+  createTypeSpecGitHubOAuthMutationScript(true),
+  "utf8",
+).toString("base64");
+const typeSpecGitHubOAuthWithoutReferenceMutationScriptBase64 = Buffer.from(
+  createTypeSpecGitHubOAuthMutationScript(false),
+  "utf8",
+).toString("base64");
+const embeddedKnowledgeDocumentSource =
+  "https://raw.githubusercontent.com/ayachensiyuan/vscuse-resources/282e74768fdd4ce6a62b2d5eeb0894e839ebd0ed/DA-EK/Document.docx";
+const prepareEmbeddedKnowledgeDocumentScript = String.raw`import os
+from pathlib import Path
+from urllib.request import urlopen
+
+document = urlopen("${embeddedKnowledgeDocumentSource}", timeout=60).read()
+if not document.startswith(b"PK"):
+  raise AssertionError("The pinned embedded knowledge fixture is not a DOCX file")
+document_path = Path(os.environ["PROJECT_DIR"]).resolve() / "Document.docx"
+document_path.write_bytes(document)
+if document_path.stat().st_size != len(document):
+  raise AssertionError("The embedded knowledge fixture was not written completely")
+`;
+const prepareEmbeddedKnowledgeDocumentScriptBase64 = Buffer.from(
+  prepareEmbeddedKnowledgeDocumentScript,
+  "utf8",
+).toString("base64");
 
 const commandTitles = {
   addDaAction: "Microsoft 365 Agents: Add Action",
@@ -1164,7 +1233,11 @@ function createSemanticStepCompiler() {
     const supportsOAuthProvision =
       state.template === "da/api-plugin-from-existing-api" ||
       (state.template === "da/no-action" &&
-        state.completed.has("addApiAuthConfiguration:oauth"));
+        state.completed.has("addApiAuthConfiguration:oauth")) ||
+      (state.template === "da/typespec" &&
+        state.completed.has(
+          "configureTypeSpecAction:github-oauth-without-reference-id",
+        ));
     if (
       (inputs.apiKey !== undefined && !supportsApiKeyProvision) ||
       (inputs.entra !== undefined && !supportsEntraProvision) ||
@@ -1735,11 +1808,16 @@ function createSemanticStepCompiler() {
   }
 
   function compileConfigureTypeSpecAction(state, definition) {
+    const action = definition.with?.action;
     if (
       state.template !== "da/typespec" ||
       !isRecord(definition.with) ||
       !hasOnlyFields(definition.with, new Set(["action"])) ||
-      definition.with.action !== "github-issues"
+      ![
+        "github-issues",
+        "github-oauth-with-reference-id",
+        "github-oauth-without-reference-id",
+      ].includes(action)
     ) {
       return failure(
         "VCB_TYPESPEC_ACTION_INPUT_INVALID",
@@ -1754,30 +1832,43 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    const isGitHubIssues = action === "github-issues";
+    const mutationScriptBase64 = isGitHubIssues
+      ? typeSpecGitHubIssuesMutationScriptBase64
+      : action === "github-oauth-with-reference-id"
+        ? typeSpecGitHubOAuthWithReferenceMutationScriptBase64
+        : typeSpecGitHubOAuthWithoutReferenceMutationScriptBase64;
     error = append(
       output,
       render(
         state,
-        "workspace/configure-typespec-github-issues-action.json.tpl",
-        {
-          mutationScriptBase64: typeSpecGitHubIssuesMutationScriptBase64,
-        },
+        isGitHubIssues
+          ? "workspace/configure-typespec-github-issues-action.json.tpl"
+          : "workspace/configure-typespec-github-oauth-action.json.tpl",
+        { mutationScriptBase64 },
       ),
     );
     if (error) return error;
     state.completed.add("configureTypeSpecAction");
+    state.completed.add(`configureTypeSpecAction:${action}`);
     return { ok: true, value: output };
   }
 
   function compileAddDaCapability(state, definition) {
     const inputs = definition.with;
+    const isCopilotConnector =
+      isRecord(inputs) &&
+      hasOnlyFields(inputs, new Set(["capability", "connectionId"])) &&
+      inputs.capability === "copilotConnector" &&
+      typeof inputs.connectionId === "string" &&
+      connectionIdPattern.test(inputs.connectionId);
+    const isEmbeddedKnowledge =
+      isRecord(inputs) &&
+      hasOnlyFields(inputs, new Set(["capability"])) &&
+      inputs.capability === "embeddedKnowledge";
     if (
       state.template !== "da/no-action" ||
-      !isRecord(inputs) ||
-      !hasOnlyFields(inputs, new Set(["capability", "connectionId"])) ||
-      inputs.capability !== "copilotConnector" ||
-      typeof inputs.connectionId !== "string" ||
-      !connectionIdPattern.test(inputs.connectionId)
+      (!isCopilotConnector && !isEmbeddedKnowledge)
     ) {
       return failure(
         "VCB_ADD_DA_CAPABILITY_INPUT_INVALID",
@@ -1785,6 +1876,71 @@ function createSemanticStepCompiler() {
       );
     }
     const output = [];
+    if (isEmbeddedKnowledge) {
+      let error = append(
+        output,
+        render(
+          state,
+          "workspace/prepare-embedded-knowledge-document.json.tpl",
+          {
+            preparationScriptBase64:
+              prepareEmbeddedKnowledgeDocumentScriptBase64,
+          },
+        ),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "command-palette/execute-command.json.tpl", {
+          commandTitle: commandTitles.addDaCapability,
+        }),
+      );
+      if (error) return error;
+      for (const selection of [
+        { optionLabel: "Embedded Knowledge", questionTitle: "Add Capability" },
+        {
+          optionLabel: "manifest.json",
+          questionTitle: "Select Teams manifest.json File",
+        },
+      ]) {
+        error = append(
+          output,
+          render(state, "quick-input/single-select.json.tpl", selection),
+        );
+        if (error) return error;
+      }
+      error = append(
+        output,
+        render(state, "quick-input/click-option.json.tpl", {
+          optionLabel: "Browse...",
+          preconditions: [
+            "dhash:398:75:16:5:9191000000000000",
+            "dhash:398:75:96:5:0000000000000000",
+            "dhash:398:75:0:10:d094222323232421",
+          ],
+          questionTitle: "Add embedded knowledge files",
+          x: 398,
+          y: 75,
+        }),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "dialog/embedded-knowledge-file-chooser.json.tpl", {}),
+      );
+      if (error) return error;
+      error = append(
+        output,
+        render(state, "dialog/click-primary-action.json.tpl", {
+          actionLabel: "Add",
+          dialogTitle:
+            "the Microsoft 365 Agents Toolkit capability confirmation",
+        }),
+      );
+      if (error) return error;
+      state.completed.add("addDaCapability");
+      return { ok: true, value: output };
+    }
     let error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {

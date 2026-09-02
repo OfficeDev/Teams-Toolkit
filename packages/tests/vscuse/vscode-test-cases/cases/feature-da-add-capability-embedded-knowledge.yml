@@ -1,0 +1,99 @@
+version: 1
+
+cases:
+  - id: da-add-embedded-knowledge
+    scenarioId: SCN-DA-ADD-EMBEDDED-KNOWLEDGE
+    workItemIds: [34657755]
+    gate: manual
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-embedded-knowledge,
+        check-embedded-knowledge,
+        login-m365,
+        provision,
+        f5-copilot-remote,
+        open-agent,
+        check-table-columns,
+      ]
+
+steps:
+  scaffold-da-no-action:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-da-no-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          exists: true
+          notContains: ['"capabilities"']
+      - type: file
+        path: appPackage/EmbeddedKnowledge/Document.docx
+        expect:
+          exists: false
+
+  add-embedded-knowledge:
+    type: addDaCapability
+    with:
+      capability: embeddedKnowledge
+
+  check-embedded-knowledge:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/EmbeddedKnowledge/Document.docx
+        expect:
+          exists: true
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains:
+            - '"name": "EmbeddedKnowledge"'
+            - '"file": "EmbeddedKnowledge/Document.docx"'
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision:
+    type: provision
+
+  f5-copilot-remote:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+
+  open-agent:
+    type: open
+    with:
+      kind: agent
+      destination: chat
+
+  check-table-columns:
+    type: checks
+    with:
+      # Column names exercise the pinned document without requesting a person's
+      # educational record, which Copilot can correctly decline to disclose.
+      - type: chat
+        send: What are the column headers in the student table?
+        expect:
+          contains: ["Graduation Year"]
