@@ -112,6 +112,26 @@ cases:
         check-oauth-sign-in,
       ]
 
+  - id: feature-da-no-action-pkce-oauth-auth-remote-preview
+    scenarioId: SCN-DA-ADD-OPENAPI-ACTION
+    workItemIds: [31541624]
+    gate: manual
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-pkce-oauth-openapi-action,
+        check-openapi-action,
+        add-pkce-oauth-auth,
+        check-pkce-oauth-auth,
+        set-personal-scope,
+        login-m365,
+        provision-pkce-oauth,
+        f5-copilot-remote,
+        open-agent,
+        check-pkce-oauth-sign-in,
+      ]
+
 steps:
   scaffold-da-no-action:
     type: scaffold
@@ -183,6 +203,13 @@ steps:
       url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_github.yaml
       operations: all
 
+  add-pkce-oauth-openapi-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_pkce.yaml
+      operations: all
+
   add-api-key-auth:
     type: addApiAuthConfiguration
     with:
@@ -214,6 +241,17 @@ steps:
       refreshUrl: ""
       scope: "repo: Read repos"
       pkce: false
+
+  add-pkce-oauth-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: oauth
+      authName: oAuth2AuthCode
+      authorizationUrl: https://login.microsoftonline.com/81ccb34d-48d6-48a2-82ca-04d530ee06b7/oauth2/v2.0/authorize
+      tokenUrl: https://login.microsoftonline.com/81ccb34d-48d6-48a2-82ca-04d530ee06b7/oauth2/v2.0/token
+      refreshUrl: ""
+      scope: "api://81ccb34d-48d6-48a2-82ca-04d530ee06b/repairs_read: Read repair records"
+      pkce: true
 
   check-openapi-action:
     type: checks
@@ -441,6 +479,44 @@ steps:
           notContains:
             - "isPKCEEnabled: true"
 
+  check-pkce-oauth-auth:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{OAUTH2AUTHCODE_REGISTRATION_ID}}"'
+      - type: file
+        path: appPackage/apiSpecificationFile/openapi.yaml
+        expect:
+          contains:
+            - "oAuth2AuthCode:"
+            - "type: oauth2"
+            - "authorizationCode:"
+            - "https://login.microsoftonline.com/81ccb34d-48d6-48a2-82ca-04d530ee06b7/oauth2/v2.0/authorize"
+            - "https://login.microsoftonline.com/81ccb34d-48d6-48a2-82ca-04d530ee06b7/oauth2/v2.0/token"
+            - "api://81ccb34d-48d6-48a2-82ca-04d530ee06b/repairs_read: Read repair records"
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: oauth/register"
+            - "name: oAuth2AuthCode"
+            - "flow: authorizationCode"
+            - "isPKCEEnabled: true"
+            - "configurationId: OAUTH2AUTHCODE_REGISTRATION_ID"
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: oauth/register"
+            - "name: oAuth2AuthCode"
+            - "flow: authorizationCode"
+            - "isPKCEEnabled: true"
+            - "configurationId: OAUTH2AUTHCODE_REGISTRATION_ID"
+
   set-personal-scope:
     type: projectEnvironment
     with:
@@ -480,6 +556,12 @@ steps:
         clientId: "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
         clientSecret: "${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"
 
+  provision-pkce-oauth:
+    type: provision
+    with:
+      oauth:
+        clientId: "${{env:EXISTING_OAUTH_CLIENT_ID}}"
+
   f5-copilot-remote:
     type: target
     with:
@@ -513,3 +595,14 @@ steps:
         expect:
           role: button
           name: Sign in to GitHub v3 REST API
+
+  check-pkce-oauth-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: List all repairs
+        allowAction: true
+      - type: browser
+        expect:
+          role: button
+          namePrefix: Sign in

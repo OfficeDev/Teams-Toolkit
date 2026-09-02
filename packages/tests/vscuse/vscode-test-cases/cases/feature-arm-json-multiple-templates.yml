@@ -1,0 +1,96 @@
+version: 1
+
+cases:
+  - id: feature-arm-json-multiple-templates
+    scenarioId: SCN-ARM-JSON-MULTIPLE-TEMPLATES
+    workItemIds: [16835373]
+    gate: manual
+    steps:
+      [
+        scaffold-tab,
+        check-tab,
+        configure-arm-json-templates,
+        check-arm-json-templates,
+        login-azure,
+        login-m365,
+        provision-arm,
+        check-arm-output,
+      ]
+
+steps:
+  scaffold-tab:
+    type: scaffold
+    with:
+      template: non-sso-tab
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: non-sso-tab
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
+  check-tab:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["path: ./infra/azure.bicep"]
+
+  configure-arm-json-templates:
+    type: configureArmJsonTemplates
+
+  check-arm-json-templates:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "path: ./infra/azure.json"
+            - "parameters: ./infra/azure.parameters.test.json"
+            - "deploymentName: test-json-format"
+      - type: file
+        path: infra/azure.json
+        expect:
+          contains: ['"SQLRESOURCEID"']
+      - type: file
+        path: infra/azure.parameters.test.json
+        expect:
+          contains: ['"resourceBaseName"']
+
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "${{env:AZURE_ACCOUNT_NAME}}"
+      password: "${{secret:AZURE_ACCOUNT_PASSWORD}}"
+
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "${{env:M365_ACCOUNT_NAME}}"
+      password: "${{secret:M365_ACCOUNT_PASSWORD}}"
+
+  provision-arm:
+    type: provision
+    with:
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "${{var:app_name}}-rg"
+        newResourceGroupLocation: "${{env:RESOURCE_GROUP_REGION}}"
+
+  check-arm-output:
+    type: checks
+    with:
+      - type: file
+        path: env/.env.dev
+        expect:
+          contains: ["SQLRESOURCEID="]
