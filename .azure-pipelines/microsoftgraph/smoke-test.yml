@@ -1,21 +1,30 @@
 name: smoke_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 
-# Manual-only: registering this definition cannot disturb existing CI.
-# Flip to a `pr:` / `trigger:` block once a run has been verified green;
-# the Unofficial template is already the correct one for unreviewed PR code.
-trigger: none
+# Fires automatically when .github/workflows/pack-npm-packages.yml pushes an
+# `npm-packages-*` tag alongside its GitHub Release. AzDO receives the tag push
+# over the GitHub service connection's webhook, so no token or API call is
+# needed on the GitHub side. Branches are excluded so ordinary commits to dev
+# never queue this definition.
+trigger:
+  branches:
+    exclude:
+      - '*'
+  tags:
+    include:
+      - 'npm-packages-*'
+
 pr: none
 
 parameters:
-  # Run id of the GitHub Actions run that packed the .tgz files (the number in
-  # https://github.com/<repo>/actions/runs/<id>). Leave empty to skip the
-  # download probe and only run the build/test smoke job.
-  - name: githubRunId
+  # Tag of the GitHub Release holding the packed .tgz assets, produced by
+  # .github/workflows/pack-npm-packages.yml. Release assets are anonymous on this
+  # public repo, so no credential is involved — the same source the vsix and
+  # templates releases are consumed from today.
+  # Empty on a tag-triggered run = derive the tag from Build.SourceBranchName.
+  # Empty on a manual run = skip the download stage and only run the build/test job.
+  - name: githubReleaseTag
     type: string
     default: ''
-  - name: githubArtifactName
-    type: string
-    default: 'npm-packages'
 
 variables:
   - name: nodeVersion
@@ -101,17 +110,21 @@ extends:
               #   displayName: Unit test @microsoft/app-manifest
 
       # Feasibility probe for the ESRP npm publish design:
-      #   GitHub Actions packs the workspace into .tgz files and uploads them as a
-      #   workflow-run artifact; this pipeline downloads that artifact and hands the
-      #   folder to EsrpRelease@12 (contentsource: Folder). This stage only proves
-      #   the download half — it does NOT publish anything.
+      #   GitHub Actions packs the workspace into .tgz files and attaches them to a
+      #   GitHub Release; this pipeline downloads those assets and hands the folder
+      #   to EsrpRelease@12 (contentsource: Folder). This stage only proves the
+      #   download half — it does NOT publish anything.
       - stage: npm_packages
         displayName: Download packed npm packages
         dependsOn: []
-        condition: ne('${{ parameters.githubRunId }}', '')
+        condition: >-
+          or(
+            ne('${{ parameters.githubReleaseTag }}', ''),
+            startsWith(variables['Build.SourceBranch'], 'refs/tags/npm-packages-')
+          )
         jobs:
           - job: download
-            displayName: Download .tgz artifact from GitHub Actions
+            displayName: Download .tgz files from GitHub
             pool:
               name: Azure-Pipelines-1ESPT-ExDShared
               os: windows
@@ -142,52 +155,39 @@ extends:
                   }
                 displayName: Probe GitHub reachability
 
+              # Release assets are public, so no credential is involved at all —
+              # the same source the vsix and templates releases are consumed from.
               - pwsh: |
                   $ErrorActionPreference = 'Stop'
-                  if (-not $env:GH_TOKEN) {
-                    throw "Set a secret pipeline variable GITHUB_TOKEN (repo-scoped PAT or GitHub App token) with actions:read."
-                  }
-
                   $headers = @{
-                    Authorization          = "Bearer $env:GH_TOKEN"
                     Accept                 = 'application/vnd.github+json'
                     'X-GitHub-Api-Version' = '2022-11-28'
                     'User-Agent'           = 'atk-azdo-smoke-test'
                   }
 
-                  $runId = '${{ parameters.githubRunId }}'
-                  $name  = '${{ parameters.githubArtifactName }}'
-                  $listUrl = "https://api.github.com/repos/$(githubRepo)/actions/runs/$runId/artifacts?per_page=100"
-                  Write-Host "GET $listUrl"
-                  $artifacts = (Invoke-RestMethod -Uri $listUrl -Headers $headers).artifacts
-                  Write-Host "Artifacts on run: $($artifacts.name -join ', ')"
-
-                  $artifact = $artifacts | Where-Object { $_.name -eq $name } | Select-Object -First 1
-                  if (-not $artifact) { throw "Artifact '$name' not found on run $runId." }
-                  if ($artifact.expired) { throw "Artifact '$name' has expired." }
-
-                  # The archive_download_url 302-redirects to an unauthenticated blob
-                  # URL; Invoke-WebRequest follows it and would forward the auth header
-                  # to that host, so resolve the redirect explicitly instead.
-                  $zip = Join-Path $env:AGENT_TEMPDIRECTORY 'npm-packages.zip'
-                  $res = Invoke-WebRequest -Uri $artifact.archive_download_url -Headers $headers `
-                    -MaximumRedirection 0 -SkipHttpErrorCheck -UseBasicParsing
-                  if ($res.StatusCode -in 301, 302, 307) {
-                    $location = $res.Headers.Location | Select-Object -First 1
-                    Write-Host "Following redirect to $(([uri]$location).Host)"
-                    Invoke-WebRequest -Uri $location -OutFile $zip -UseBasicParsing
-                  } else {
-                    throw "Unexpected status $($res.StatusCode) from archive_download_url."
+                  $tag = '${{ parameters.githubReleaseTag }}'
+                  if (-not $tag) {
+                    # Tag-triggered run: Build.SourceBranch is refs/tags/<tag>, and
+                    # SourceBranchName is its last segment. Release tags here carry
+                    # no slashes, so the last segment is the whole tag.
+                    $tag = '$(Build.SourceBranchName)'
+                    Write-Host "No githubReleaseTag parameter; using triggering tag '$tag'."
                   }
+                  $relUrl = "https://api.github.com/repos/$(githubRepo)/releases/tags/$([uri]::EscapeDataString($tag))"
+                  Write-Host "GET $relUrl (anonymous)"
+                  $release = Invoke-RestMethod -Uri $relUrl -Headers $headers
+
+                  $assets = @($release.assets | Where-Object { $_.name -like '*.tgz' })
+                  Write-Host "Assets on release: $($release.assets.name -join ', ')"
+                  if ($assets.Count -eq 0) { throw "Release '$tag' has no .tgz assets." }
 
                   New-Item -ItemType Directory -Force -Path '$(npmPackagesDir)' | Out-Null
-                  Expand-Archive -Path $zip -DestinationPath '$(npmPackagesDir)' -Force
-                  Write-Host "Extracted:"
-                  Get-ChildItem -Path '$(npmPackagesDir)' -Recurse -File |
-                    ForEach-Object { Write-Host ("  {0}  ({1:N0} bytes)" -f $_.FullName, $_.Length) }
-                env:
-                  GH_TOKEN: $(GITHUB_TOKEN)
-                displayName: Download packed npm packages
+                  foreach ($a in $assets) {
+                    $dest = Join-Path '$(npmPackagesDir)' $a.name
+                    Write-Host "Downloading $($a.name) ($($a.size) bytes)"
+                    Invoke-WebRequest -Uri $a.browser_download_url -OutFile $dest -UseBasicParsing
+                  }
+                displayName: Download .tgz release assets
 
               - pwsh: |
                   $ErrorActionPreference = 'Stop'
