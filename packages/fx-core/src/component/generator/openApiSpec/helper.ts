@@ -645,7 +645,8 @@ export async function injectAuthAction(
       (Utils.isBearerTokenAuth(authScheme) || Utils.isAPIKeyAuthButNotInCookie(authScheme))) ||
     authType === APIKeyAuthType
   ) {
-    const apiKeyEnvName = apiKey?.trim()
+    const normalizedApiKey = apiKey?.trim();
+    const apiKeyEnvName = normalizedApiKey
       ? `SECRET_${Utils.getSafeRegistrationIdEnvName(`${authName}_API_KEY`)}`
       : undefined;
     const res = await ActionInjector.injectCreateAPIKeyAction(
@@ -668,14 +669,15 @@ export async function injectAuthAction(
       );
     }
 
-    if (res?.primaryClientSecretEnvName && apiKey) {
+    if (res?.primaryClientSecretEnvName && normalizedApiKey) {
       const envListRes = await envUtil.listEnv(projectPath);
       if (envListRes.isErr()) {
         throw envListRes.error;
       }
-      for (const environment of envListRes.value) {
+      const environments = envListRes.value.length > 0 ? envListRes.value : ["dev"];
+      for (const environment of environments) {
         const writeEnvRes = await envUtil.writeEnv(projectPath, environment, {
-          [res.primaryClientSecretEnvName]: apiKey,
+          [res.primaryClientSecretEnvName]: normalizedApiKey,
         });
         if (writeEnvRes.isErr()) {
           throw writeEnvRes.error;

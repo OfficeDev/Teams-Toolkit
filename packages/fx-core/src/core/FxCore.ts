@@ -2994,7 +2994,9 @@ export class FxCore extends FxCoreOpenPluginPart {
         apiSpecPath,
         true,
         authTypeScheme,
-        "enablePKCE" in authParameters ? authParameters.enablePKCE : undefined
+        "enablePKCE" in authParameters ? authParameters.enablePKCE : undefined,
+        undefined,
+        authTypeScheme === APIKeyAuthType ? inputs[QuestionNames.ApiSpecApiKey] : undefined
       );
 
       if (addAuthActionRes?.registrationIdEnvName) {

@@ -231,6 +231,29 @@ describe("mcpAuthScaffolder", () => {
       );
     });
 
+    it("omits the API-key reference for a whitespace-only bearer token", async () => {
+      const apiKeyStub = vi
+        .spyOn(ActionInjector, "injectCreateAPIKeyActionForMCP")
+        .mockResolvedValue();
+
+      await injectMCPAuthActionToYml({
+        ...baseArgs,
+        authType: "bearer-token",
+        endpoints: {},
+        persistCredentialEnvRefs: true,
+        serverName: "SERVER1",
+        apiKey: "   ",
+      });
+
+      expect(apiKeyStub).toHaveBeenCalledExactlyOnceWith(
+        baseArgs.ymlPath,
+        baseArgs.authName,
+        baseArgs.registrationId,
+        baseArgs.mcpServerUrl,
+        undefined
+      );
+    });
+
     it("injects DCR action with placeholder when well-known url is missing", async () => {
       const dcrStub = vi.spyOn(ActionInjector, "injectCreateDcrActionForMCP").mockResolvedValue();
       const result = await injectMCPAuthActionToYml({
@@ -464,7 +487,7 @@ describe("mcpAuthScaffolder", () => {
         projectPath: "/proj",
         authType: "bearer-token",
         serverName: "S1",
-        apiKey: "the-api-key",
+        apiKey: "  the-api-key  ",
       });
 
       expect(writeStub).toHaveBeenCalledExactlyOnceWith("/proj", "dev", {

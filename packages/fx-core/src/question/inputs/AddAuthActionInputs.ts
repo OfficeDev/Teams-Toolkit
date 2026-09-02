@@ -35,4 +35,6 @@ export interface AddAuthActionInputs extends Inputs {
   "api-key-in"?: "header" | "query";
   /** @description Enter the Name of API Key */
   "api-key-name"?: string;
+  /** @description API Key (optional) */
+  "api-key"?: string;
 }

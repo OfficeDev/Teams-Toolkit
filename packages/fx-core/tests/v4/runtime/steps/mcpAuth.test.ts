@@ -333,7 +333,7 @@ describe("mcp-auth steps (v4)", () => {
         {
           authType: "bearer-token",
           mcpServerUrl: SERVER_URL,
-          apiKey: "the-bearer-token",
+          apiKey: "  the-bearer-token  ",
         },
         ctx
       );

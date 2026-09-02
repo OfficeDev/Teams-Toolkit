@@ -374,25 +374,40 @@ export function openApiApiKeyNode(): IQTreeNode {
       inputs.platform === Platform.CLI &&
       inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id &&
       inputs.apiAuthData?.some((auth) => auth.authType === "apiKey") === true,
-    data: {
-      type: "text",
-      name: QuestionNames.ApiSpecApiKey,
-      cliShortName: "k",
-      password: true,
-      title: getLocalizedString("core.addOpenApiActionQuestion.ApiKey.title"),
-      cliDescription: getLocalizedString("core.addOpenApiActionQuestion.ApiKey.title"),
-      forgetLastValue: true,
-      required: false,
-      validation: {
-        validFunc: (input: string): string | undefined => {
-          if (input && (input.length < 10 || input.length > 512)) {
-            return getLocalizedString("core.createProjectQuestion.invalidApiKey.message");
-          }
+    data: apiKeyValueQuestion(),
+  };
+}
 
-          return undefined;
-        },
+function apiKeyValueQuestion(): TextInputQuestion {
+  return {
+    type: "text",
+    name: QuestionNames.ApiSpecApiKey,
+    cliShortName: "k",
+    password: true,
+    title: getLocalizedString("core.addOpenApiActionQuestion.ApiKey.title"),
+    cliDescription: getLocalizedString("core.addOpenApiActionQuestion.ApiKey.title"),
+    forgetLastValue: true,
+    required: false,
+    validation: {
+      validFunc: (input: string): string | undefined => {
+        const normalizedInput = input.trim();
+        if (normalizedInput && (normalizedInput.length < 10 || normalizedInput.length > 512)) {
+          return getLocalizedString("core.createProjectQuestion.invalidApiKey.message");
+        }
+
+        return undefined;
       },
     },
+  };
+}
+
+function authConfigApiKeyNode(): IQTreeNode {
+  return {
+    condition: (inputs: Inputs) =>
+      inputs.platform === Platform.CLI &&
+      (inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.apiKey().id ||
+        inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.bearerToken().id),
+    data: apiKeyValueQuestion(),
   };
 }
 
@@ -981,6 +996,7 @@ export function addAuthActionQuestion(): IQTreeNode {
       },
       oauthParametersQuestion(),
       apiKeyParameterQuestion(),
+      authConfigApiKeyNode(),
       microsoftEntraParameterQuestion(),
     ],
   };

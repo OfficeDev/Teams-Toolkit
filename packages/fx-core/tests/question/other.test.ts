@@ -85,6 +85,54 @@ describe("addAuthActionQuestion", () => {
     vi.restoreAllMocks();
   });
 
+  it("SCN-ADD-OPENAPI-KEY-06: offers an optional API key only in CLI auth-config", async () => {
+    const apiKeyNode = addAuthActionQuestion().children?.find(
+      (child) => child.data.name === QuestionNames.ApiSpecApiKey
+    );
+
+    assert.isDefined(apiKeyNode);
+    assert.equal(apiKeyNode.data.type, "text");
+    assert.isTrue(apiKeyNode.data.password);
+    assert.isFalse(apiKeyNode.data.required);
+    assert.equal(apiKeyNode.data.cliShortName, "k");
+    assert.isDefined(apiKeyNode.condition);
+    assert.isDefined(apiKeyNode.data.validation);
+
+    const cliResult = await apiKeyNode.condition({
+      platform: Platform.CLI,
+      [QuestionNames.ApiAuth]: "api-key",
+    });
+    const vscodeResult = await apiKeyNode.condition({
+      platform: Platform.VSCode,
+      [QuestionNames.ApiAuth]: "api-key",
+    });
+    const blankValidationResult = await apiKeyNode.data.validation.validFunc("   ");
+
+    assert.isTrue(cliResult);
+    assert.isFalse(vscodeResult);
+    assert.isUndefined(blankValidationResult);
+  });
+
+  it("SCN-ADD-OPENAPI-KEY-10: offers an optional secret for CLI bearer-token auth-config", async () => {
+    const apiKeyNode = addAuthActionQuestion().children?.find(
+      (child) => child.data.name === QuestionNames.ApiSpecApiKey
+    );
+
+    assert.isDefined(apiKeyNode?.condition);
+    assert.isTrue(
+      await apiKeyNode.condition({
+        platform: Platform.CLI,
+        [QuestionNames.ApiAuth]: "bearer-token",
+      })
+    );
+    assert.isFalse(
+      await apiKeyNode.condition({
+        platform: Platform.VSCode,
+        [QuestionNames.ApiAuth]: "bearer-token",
+      })
+    );
+  });
+
   it("apiSpecFromPluginManifestQuestion", async () => {
     const inputs = {
       platform: Platform.VSCode,

@@ -663,7 +663,7 @@ describe("injectAuthAction", async () => {
       registrationIdEnvName: "APIKEY_REGISTRATION_ID1",
       primaryClientSecretEnvName: "SECRET_APIKEY_API_KEY1",
     });
-    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok([]));
     const writeStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
     await injectAuthAction(
@@ -675,7 +675,7 @@ describe("injectAuthAction", async () => {
       undefined,
       undefined,
       undefined,
-      "supplied-secret"
+      "  supplied-secret  "
     );
 
     expect(injectStub).toHaveBeenCalledWith(
@@ -698,6 +698,39 @@ describe("injectAuthAction", async () => {
     expect(writeStub).toHaveBeenCalledExactlyOnceWith("/project", "dev", {
       SECRET_APIKEY_API_KEY1: "supplied-secret",
     });
+  });
+
+  it("SCN-ADD-OPENAPI-KEY-08: treats a whitespace-only API key as omitted", async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(Utils, "isBearerTokenAuth").mockReturnValue(true);
+    const injectStub = vi
+      .spyOn(ActionInjector, "injectCreateAPIKeyAction")
+      .mockResolvedValue(undefined);
+    const listStub = vi.spyOn(envUtil, "listEnv");
+    const writeStub = vi.spyOn(envUtil, "writeEnv");
+
+    await injectAuthAction(
+      "/project",
+      "apiKey",
+      { type: "apiKey", in: "header", name: "X-API-KEY" },
+      "/project/appPackage/apiSpecification/openapi.yaml",
+      true,
+      undefined,
+      undefined,
+      undefined,
+      "   "
+    );
+
+    expect(injectStub).toHaveBeenCalledWith(
+      "m365agents.yml",
+      "apiKey",
+      "./appPackage/apiSpecification/openapi.yaml",
+      true,
+      undefined,
+      undefined
+    );
+    expect(listStub).not.toHaveBeenCalled();
+    expect(writeStub).not.toHaveBeenCalled();
   });
 
   it("SCN-ADD-OPENAPI-KEY-03: omission preserves the existing provision flow", async () => {

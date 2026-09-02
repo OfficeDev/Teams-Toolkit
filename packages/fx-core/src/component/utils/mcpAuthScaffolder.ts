@@ -165,12 +165,13 @@ export async function injectMCPAuthActionToYml(args: {
 }): Promise<InjectMCPAuthActionResult> {
   if (args.authType === "none") return {};
   if (args.authType === "bearer-token") {
+    const normalizedApiKey = args.apiKey?.trim();
     await ActionInjector.injectCreateAPIKeyActionForMCP(
       args.ymlPath,
       args.authName,
       args.registrationId,
       args.mcpServerUrl,
-      args.persistCredentialEnvRefs && args.serverName && args.apiKey
+      args.persistCredentialEnvRefs && args.serverName && normalizedApiKey
         ? `SECRET_MCP_DA_API_KEY_${args.serverName}`
         : undefined
     );
@@ -271,8 +272,8 @@ export async function persistMCPAuthCredentialEnvVars(args: {
     if (args.scopes) {
       envs[`MCP_DA_OAUTH_SCOPE_${args.serverName}`] = args.scopes;
     }
-  } else if (args.authType === "bearer-token" && args.apiKey) {
-    envs[`SECRET_MCP_DA_API_KEY_${args.serverName}`] = args.apiKey;
+  } else if (args.authType === "bearer-token" && args.apiKey?.trim()) {
+    envs[`SECRET_MCP_DA_API_KEY_${args.serverName}`] = args.apiKey.trim();
   }
   if (Object.keys(envs).length === 0) return;
 

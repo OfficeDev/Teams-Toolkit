@@ -226,7 +226,7 @@ export async function persistMcpAuthRegistrationEnv(
   } else if (args.authType === "entra-sso" && args.entraClientId !== undefined) {
     values[identifiers.clientId] = args.entraClientId;
   } else if (args.authType === "bearer-token" && args.apiKey?.trim()) {
-    values[identifiers.apiKey] = args.apiKey;
+    values[identifiers.apiKey] = args.apiKey.trim();
   }
   const existingEnvironments = STANDARD_ENVIRONMENTS.filter(
     (environment) => ctx.read(`env/.env.${environment}`) !== undefined
