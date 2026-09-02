@@ -7,9 +7,18 @@ trigger: none
 pr: none
 
 parameters:
-  # Run id of the GitHub Actions run that packed the .tgz files (the number in
-  # https://github.com/<repo>/actions/runs/<id>). Leave empty to skip the
-  # download probe and only run the build/test smoke job.
+  # Two ways to get the packed .tgz files, mirroring how the VSIX is consumed:
+  #
+  #   githubReleaseTag - assets of a GitHub Release. Anonymous on a public repo,
+  #     so no token is needed. This is what cd.yml already does for the vsix and
+  #     the templates, and is the preferred shape.
+  #   githubRunId - artifact of a workflow run. Always requires auth, so a secret
+  #     pipeline variable GITHUB_TOKEN (actions:read) must be set.
+  #
+  # Set exactly one. Both empty = skip the stage and only run the build/test job.
+  - name: githubReleaseTag
+    type: string
+    default: ''
   - name: githubRunId
     type: string
     default: ''
@@ -101,17 +110,17 @@ extends:
               #   displayName: Unit test @microsoft/app-manifest
 
       # Feasibility probe for the ESRP npm publish design:
-      #   GitHub Actions packs the workspace into .tgz files and uploads them as a
-      #   workflow-run artifact; this pipeline downloads that artifact and hands the
-      #   folder to EsrpRelease@12 (contentsource: Folder). This stage only proves
-      #   the download half — it does NOT publish anything.
+      #   GitHub Actions packs the workspace into .tgz files and publishes them
+      #   (release assets, or a workflow-run artifact); this pipeline downloads them
+      #   and hands the folder to EsrpRelease@12 (contentsource: Folder). This stage
+      #   only proves the download half — it does NOT publish anything.
       - stage: npm_packages
         displayName: Download packed npm packages
         dependsOn: []
-        condition: ne('${{ parameters.githubRunId }}', '')
+        condition: or(ne('${{ parameters.githubReleaseTag }}', ''), ne('${{ parameters.githubRunId }}', ''))
         jobs:
           - job: download
-            displayName: Download .tgz artifact from GitHub Actions
+            displayName: Download .tgz files from GitHub
             pool:
               name: Azure-Pipelines-1ESPT-ExDShared
               os: windows
@@ -142,52 +151,87 @@ extends:
                   }
                 displayName: Probe GitHub reachability
 
-              - pwsh: |
-                  $ErrorActionPreference = 'Stop'
-                  if (-not $env:GH_TOKEN) {
-                    throw "Set a secret pipeline variable GITHUB_TOKEN (repo-scoped PAT or GitHub App token) with actions:read."
-                  }
+              # Preferred path: release assets are public, so no credential is
+              # involved at all. Same source the vsix and templates already use.
+              - ${{ if ne(parameters.githubReleaseTag, '') }}:
+                  - pwsh: |
+                      $ErrorActionPreference = 'Stop'
+                      $headers = @{
+                        Accept                 = 'application/vnd.github+json'
+                        'X-GitHub-Api-Version' = '2022-11-28'
+                        'User-Agent'           = 'atk-azdo-smoke-test'
+                      }
 
-                  $headers = @{
-                    Authorization          = "Bearer $env:GH_TOKEN"
-                    Accept                 = 'application/vnd.github+json'
-                    'X-GitHub-Api-Version' = '2022-11-28'
-                    'User-Agent'           = 'atk-azdo-smoke-test'
-                  }
+                      $tag = '${{ parameters.githubReleaseTag }}'
+                      $relUrl = "https://api.github.com/repos/$(githubRepo)/releases/tags/$([uri]::EscapeDataString($tag))"
+                      Write-Host "GET $relUrl (anonymous)"
+                      $release = Invoke-RestMethod -Uri $relUrl -Headers $headers
 
-                  $runId = '${{ parameters.githubRunId }}'
-                  $name  = '${{ parameters.githubArtifactName }}'
-                  $listUrl = "https://api.github.com/repos/$(githubRepo)/actions/runs/$runId/artifacts?per_page=100"
-                  Write-Host "GET $listUrl"
-                  $artifacts = (Invoke-RestMethod -Uri $listUrl -Headers $headers).artifacts
-                  Write-Host "Artifacts on run: $($artifacts.name -join ', ')"
+                      $assets = @($release.assets | Where-Object { $_.name -like '*.tgz' })
+                      Write-Host "Assets on release: $($release.assets.name -join ', ')"
+                      if ($assets.Count -eq 0) { throw "Release '$tag' has no .tgz assets." }
 
-                  $artifact = $artifacts | Where-Object { $_.name -eq $name } | Select-Object -First 1
-                  if (-not $artifact) { throw "Artifact '$name' not found on run $runId." }
-                  if ($artifact.expired) { throw "Artifact '$name' has expired." }
+                      New-Item -ItemType Directory -Force -Path '$(npmPackagesDir)' | Out-Null
+                      foreach ($a in $assets) {
+                        $dest = Join-Path '$(npmPackagesDir)' $a.name
+                        Write-Host "Downloading $($a.name) ($($a.size) bytes)"
+                        Invoke-WebRequest -Uri $a.browser_download_url -OutFile $dest -UseBasicParsing
+                      }
+                    displayName: Download .tgz release assets (no token)
 
-                  # The archive_download_url 302-redirects to an unauthenticated blob
-                  # URL; Invoke-WebRequest follows it and would forward the auth header
-                  # to that host, so resolve the redirect explicitly instead.
-                  $zip = Join-Path $env:AGENT_TEMPDIRECTORY 'npm-packages.zip'
-                  $res = Invoke-WebRequest -Uri $artifact.archive_download_url -Headers $headers `
-                    -MaximumRedirection 0 -SkipHttpErrorCheck -UseBasicParsing
-                  if ($res.StatusCode -in 301, 302, 307) {
-                    $location = $res.Headers.Location | Select-Object -First 1
-                    Write-Host "Following redirect to $(([uri]$location).Host)"
-                    Invoke-WebRequest -Uri $location -OutFile $zip -UseBasicParsing
-                  } else {
-                    throw "Unexpected status $($res.StatusCode) from archive_download_url."
-                  }
+              # Fallback path: run artifacts are never anonymous, so this needs a
+              # secret pipeline variable named GITHUB_TOKEN with actions:read.
+              - ${{ if ne(parameters.githubRunId, '') }}:
+                  - pwsh: |
+                      $ErrorActionPreference = 'Stop'
+                      # An undefined pipeline variable is left as the literal macro
+                      # '$(GITHUB_TOKEN)', which is non-empty and would reach GitHub
+                      # as a bogus credential (401 Bad credentials).
+                      if (-not $env:GH_TOKEN -or $env:GH_TOKEN -like '*$(*') {
+                        throw "Secret pipeline variable GITHUB_TOKEN is not set. Run artifacts require auth (actions:read); use githubReleaseTag instead to avoid tokens entirely."
+                      }
 
-                  New-Item -ItemType Directory -Force -Path '$(npmPackagesDir)' | Out-Null
-                  Expand-Archive -Path $zip -DestinationPath '$(npmPackagesDir)' -Force
-                  Write-Host "Extracted:"
-                  Get-ChildItem -Path '$(npmPackagesDir)' -Recurse -File |
-                    ForEach-Object { Write-Host ("  {0}  ({1:N0} bytes)" -f $_.FullName, $_.Length) }
-                env:
-                  GH_TOKEN: $(GITHUB_TOKEN)
-                displayName: Download packed npm packages
+                      $headers = @{
+                        Authorization          = "Bearer $env:GH_TOKEN"
+                        Accept                 = 'application/vnd.github+json'
+                        'X-GitHub-Api-Version' = '2022-11-28'
+                        'User-Agent'           = 'atk-azdo-smoke-test'
+                      }
+
+                      $runId = '${{ parameters.githubRunId }}'
+                      $name  = '${{ parameters.githubArtifactName }}'
+                      $listUrl = "https://api.github.com/repos/$(githubRepo)/actions/runs/$runId/artifacts?per_page=100"
+                      Write-Host "GET $listUrl"
+                      $artifacts = (Invoke-RestMethod -Uri $listUrl -Headers $headers).artifacts
+                      Write-Host "Artifacts on run: $($artifacts.name -join ', ')"
+
+                      $artifact = $artifacts | Where-Object { $_.name -eq $name } | Select-Object -First 1
+                      if (-not $artifact) { throw "Artifact '$name' not found on run $runId." }
+                      if ($artifact.expired) { throw "Artifact '$name' has expired." }
+
+                      # The archive_download_url 302-redirects to an unauthenticated blob
+                      # URL; Invoke-WebRequest follows it and would forward the auth header
+                      # to that host, so resolve the redirect explicitly instead.
+                      $zip = Join-Path $env:AGENT_TEMPDIRECTORY 'npm-packages.zip'
+                      $res = Invoke-WebRequest -Uri $artifact.archive_download_url -Headers $headers `
+                        -MaximumRedirection 0 -SkipHttpErrorCheck -UseBasicParsing
+                      if ($res.StatusCode -in 301, 302, 307) {
+                        $location = $res.Headers.Location | Select-Object -First 1
+                        Write-Host "Following redirect to $(([uri]$location).Host)"
+                        Invoke-WebRequest -Uri $location -OutFile $zip -UseBasicParsing
+                      } else {
+                        throw "Unexpected status $($res.StatusCode) from archive_download_url."
+                      }
+
+                      New-Item -ItemType Directory -Force -Path '$(npmPackagesDir)' | Out-Null
+                      Expand-Archive -Path $zip -DestinationPath '$(npmPackagesDir)' -Force
+                      Write-Host "Extracted:"
+                      Get-ChildItem -Path '$(npmPackagesDir)' -Recurse -File |
+                        ForEach-Object { Write-Host ("  {0}  ({1:N0} bytes)" -f $_.FullName, $_.Length) }
+                    env:
+                      GH_TOKEN: $(GITHUB_TOKEN)
+                    displayName: Download packed npm packages (run artifact)
+
 
               - pwsh: |
                   $ErrorActionPreference = 'Stop'
