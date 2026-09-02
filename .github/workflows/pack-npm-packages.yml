@@ -17,7 +17,7 @@ on:
         required: false
         default: "@microsoft/app-manifest"
       release_tag:
-        description: "Also attach the .tgz files to a GitHub Release under this tag (lets AzDO download them without a token). Empty = artifact only."
+        description: "Attach the .tgz files to a GitHub Release under this tag, which also auto-triggers the AzDO pipeline. Use 'auto' for a unique npm-packages-<timestamp> tag. Empty = artifact only."
         required: false
         default: ""
 
@@ -84,6 +84,27 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+      # AzDO triggers on the tag PUSH, so re-using an existing tag would update the
+      # release without starting a pipeline run. 'auto' mints a fresh tag each time.
+      - name: Resolve release tag
+        id: tag
+        if: ${{ inputs.release_tag != '' }}
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          if [ "$RELEASE_TAG" = "auto" ]; then
+            RESOLVED="npm-packages-$(date -u +%Y%m%d%H%M%S)"
+          else
+            RESOLVED="$RELEASE_TAG"
+          fi
+          case "$RESOLVED" in
+            npm-packages-*) ;;
+            *) echo "Tag '$RESOLVED' will not trigger the AzDO pipeline (needs an npm-packages-* prefix)." >&2 ;;
+          esac
+          echo "tag=$RESOLVED" >> "$GITHUB_OUTPUT"
+          echo "Release tag: $RESOLVED"
+
       # Release assets are anonymously downloadable on this public repo, so an
       # Azure DevOps pipeline can fetch them with no credential — the same way the
       # vsix and templates releases are consumed today.
@@ -92,7 +113,7 @@ jobs:
         uses: ncipollo/release-action@v1.10.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ inputs.release_tag }}
+          tag: ${{ steps.tag.outputs.tag }}
           artifacts: npm-packages/*.tgz
           artifactErrorsFailBuild: true
           allowUpdates: true

@@ -1,9 +1,18 @@
 name: smoke_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 
-# Manual-only: registering this definition cannot disturb existing CI.
-# Flip to a `pr:` / `trigger:` block once a run has been verified green;
-# the Unofficial template is already the correct one for unreviewed PR code.
-trigger: none
+# Fires automatically when .github/workflows/pack-npm-packages.yml pushes an
+# `npm-packages-*` tag alongside its GitHub Release. AzDO receives the tag push
+# over the GitHub service connection's webhook, so no token or API call is
+# needed on the GitHub side. Branches are excluded so ordinary commits to dev
+# never queue this definition.
+trigger:
+  branches:
+    exclude:
+      - '*'
+  tags:
+    include:
+      - 'npm-packages-*'
+
 pr: none
 
 parameters:
@@ -11,7 +20,8 @@ parameters:
   # .github/workflows/pack-npm-packages.yml. Release assets are anonymous on this
   # public repo, so no credential is involved — the same source the vsix and
   # templates releases are consumed from today.
-  # Empty = skip the download stage and only run the build/test job.
+  # Empty on a tag-triggered run = derive the tag from Build.SourceBranchName.
+  # Empty on a manual run = skip the download stage and only run the build/test job.
   - name: githubReleaseTag
     type: string
     default: ''
@@ -107,7 +117,11 @@ extends:
       - stage: npm_packages
         displayName: Download packed npm packages
         dependsOn: []
-        condition: ne('${{ parameters.githubReleaseTag }}', '')
+        condition: >-
+          or(
+            ne('${{ parameters.githubReleaseTag }}', ''),
+            startsWith(variables['Build.SourceBranch'], 'refs/tags/npm-packages-')
+          )
         jobs:
           - job: download
             displayName: Download .tgz files from GitHub
@@ -152,6 +166,13 @@ extends:
                   }
 
                   $tag = '${{ parameters.githubReleaseTag }}'
+                  if (-not $tag) {
+                    # Tag-triggered run: Build.SourceBranch is refs/tags/<tag>, and
+                    # SourceBranchName is its last segment. Release tags here carry
+                    # no slashes, so the last segment is the whole tag.
+                    $tag = '$(Build.SourceBranchName)'
+                    Write-Host "No githubReleaseTag parameter; using triggering tag '$tag'."
+                  }
                   $relUrl = "https://api.github.com/repos/$(githubRepo)/releases/tags/$([uri]::EscapeDataString($tag))"
                   Write-Host "GET $relUrl (anonymous)"
                   $release = Invoke-RestMethod -Uri $relUrl -Headers $headers
