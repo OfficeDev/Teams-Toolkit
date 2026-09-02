@@ -1778,13 +1778,6 @@ function createSemanticStepCompiler() {
       {
         component: "quick-input/single-select.json.tpl",
         values: {
-          questionTitle: "Select an environment",
-          optionLabel: "dev",
-        },
-      },
-      {
-        component: "quick-input/single-select.json.tpl",
-        values: {
           questionTitle: "Share the agent",
           optionLabel: "Share access",
         },
@@ -1801,6 +1794,13 @@ function createSemanticStepCompiler() {
         values: {
           questionTitle: "Email addresses of users or groups for agent sharing",
           inputValue: inputs.email,
+        },
+      },
+      {
+        component: "quick-input/single-select.json.tpl",
+        values: {
+          questionTitle: "Select an environment",
+          optionLabel: "dev",
         },
       },
     ]) {

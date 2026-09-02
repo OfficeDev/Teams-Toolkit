@@ -93,14 +93,14 @@
       "step_singleSelect_filter_cec39ad66_5_5",
       "step_singleSelect_assertOption_cec39ad66_5_5",
       "step_singleSelect_confirm_cec39ad66_5_5",
-      "step_singleSelect_assertQuestion_cec39ad66_5_6",
-      "step_singleSelect_assertOptionsLoaded_cec39ad66_5_6",
-      "step_singleSelect_filter_cec39ad66_5_6",
-      "step_singleSelect_assertOption_cec39ad66_5_6",
-      "step_singleSelect_confirm_cec39ad66_5_6",
-      "step_textInput_assertQuestion_cec39ad66_5_7",
-      "step_textInput_input_cec39ad66_5_7",
-      "step_textInput_confirm_cec39ad66_5_7",
+      "step_textInput_assertQuestion_cec39ad66_5_6",
+      "step_textInput_input_cec39ad66_5_6",
+      "step_textInput_confirm_cec39ad66_5_6",
+      "step_singleSelect_assertQuestion_cec39ad66_5_7",
+      "step_singleSelect_assertOptionsLoaded_cec39ad66_5_7",
+      "step_singleSelect_filter_cec39ad66_5_7",
+      "step_singleSelect_assertOption_cec39ad66_5_7",
+      "step_singleSelect_confirm_cec39ad66_5_7",
       "step_assertNotificationContains_assert_cec39ad66_5_8"
     ],
     "tags": [
@@ -1618,7 +1618,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Select an environment is visible.",
+      "description": "@assertion the active prompt titled Share the agent is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1639,7 +1639,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Select an environment has finished loading and lists at least one selectable option.",
+      "description": "@assertion the prompt titled Share the agent has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -1660,9 +1660,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "dev"
+        "text": "Share access"
       },
-      "description": "Type the resolved option label dev into the active single-select prompt.",
+      "description": "Type the resolved option label Share access into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1682,7 +1682,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option dev is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Share access is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1725,7 +1725,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Share the agent is visible.",
+      "description": "@assertion the active prompt titled Share the agent with users is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1746,7 +1746,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the prompt titled Share the agent has finished loading and lists at least one selectable option.",
+      "description": "@assertion the prompt titled Share the agent with users has finished loading and lists at least one selectable option.",
       "content_refs": [],
       "timeout": 120,
       "retry_count": 0,
@@ -1767,9 +1767,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "Share access"
+        "text": "Share to specified users(s) or user group"
       },
-      "description": "Type the resolved option label Share access into the active single-select prompt.",
+      "description": "Type the resolved option label Share to specified users(s) or user group into the active single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1789,7 +1789,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the option Share access is visible and selectable in the filtered single-select prompt.",
+      "description": "@assertion the option Share to specified users(s) or user group is visible and selectable in the filtered single-select prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1828,11 +1828,11 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cec39ad66_5_6",
+      "step_id": "step_textInput_assertQuestion_cec39ad66_5_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Share the agent with users is visible.",
+      "description": "@assertion the active prompt titled Email addresses of users or groups for agent sharing is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1844,119 +1844,12 @@
       "postconditions": [],
       "tags": [
         "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cec39ad66_5_6",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the prompt titled Share the agent with users has finished loading and lists at least one selectable option.",
-      "content_refs": [],
-      "timeout": 120,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertQuestion_cec39ad66_5_6"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_filter_cec39ad66_5_6",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "Share to specified users(s) or user group"
-      },
-      "description": "Type the resolved option label Share to specified users(s) or user group into the active single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cec39ad66_5_6"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOption_cec39ad66_5_6",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the option Share to specified users(s) or user group is visible and selectable in the filtered single-select prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_filter_cec39ad66_5_6"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_confirm_cec39ad66_5_6",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm the filtered single-select option.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_assertOption_cec39ad66_5_6"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect"
-      ]
-    },
-    {
-      "step_id": "step_textInput_assertQuestion_cec39ad66_5_7",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Email addresses of users or groups for agent sharing is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_singleSelect_confirm_cec39ad66_5_6"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
         "answer_type:text",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_textInput_input_cec39ad66_5_7",
+      "step_id": "step_textInput_input_cec39ad66_5_6",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1968,7 +1861,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cec39ad66_5_7"
+        "step_textInput_assertQuestion_cec39ad66_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1978,7 +1871,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cec39ad66_5_7",
+      "step_id": "step_textInput_confirm_cec39ad66_5_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1990,13 +1883,120 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cec39ad66_5_7"
+        "step_textInput_input_cec39ad66_5_6"
       ],
       "preconditions": [],
       "postconditions": [],
       "tags": [
         "component:quick-input",
         "answer_type:text"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertQuestion_cec39ad66_5_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Select an environment is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_cec39ad66_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cec39ad66_5_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Select an environment has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cec39ad66_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_cec39ad66_5_7",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "dev"
+      },
+      "description": "Type the resolved option label dev into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_cec39ad66_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_cec39ad66_5_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option dev is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_cec39ad66_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_cec39ad66_5_7",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_cec39ad66_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
       ]
     },
     {
@@ -2010,7 +2010,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cec39ad66_5_7"
+        "step_singleSelect_confirm_cec39ad66_5_7"
       ],
       "preconditions": [],
       "postconditions": [],
