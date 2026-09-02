@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 58,
+    "total_steps": 67,
     "name": "da-typespec-oauth-with-reference-id",
     "description": {
       "owner": "",
@@ -63,17 +63,26 @@
       "step_configureTypeSpecGitHubOAuthAction_closeTerminal_c39dbe901_3_2",
       "step_configureTypeSpecGitHubOAuthAction_assertClosed_c39dbe901_3_2",
       "step_checkWorkspaceFiles_verify_c39dbe901_4_1",
-      "step_executeCommand_open_c39dbe901_5_1",
-      "step_executeCommand_assertPalette_c39dbe901_5_1",
-      "step_executeCommand_filter_c39dbe901_5_1",
-      "step_executeCommand_assertCommand_c39dbe901_5_1",
-      "step_executeCommand_execute_c39dbe901_5_1",
-      "step_clickOption_assertPrompt_c39dbe901_5_2",
-      "step_clickOption_click_c39dbe901_5_2",
-      "step_filterOption_filter_c39dbe901_5_3",
-      "step_filterOption_assertOption_c39dbe901_5_3",
-      "step_filterOption_confirm_c39dbe901_5_3",
-      "step_assertNotificationContains_assert_c39dbe901_5_4"
+      "step_setUserEnvironmentVariable_openTerminal_c39dbe901_5_1",
+      "step_setUserEnvironmentVariable_assertTerminal_c39dbe901_5_1",
+      "step_setUserEnvironmentVariable_typeCommand_c39dbe901_5_1",
+      "step_setUserEnvironmentVariable_runCommand_c39dbe901_5_1",
+      "step_setUserEnvironmentVariable_typeValue_c39dbe901_5_1",
+      "step_setUserEnvironmentVariable_submitValue_c39dbe901_5_1",
+      "step_setUserEnvironmentVariable_assertUpdated_c39dbe901_5_1",
+      "step_setUserEnvironmentVariable_closeTerminal_c39dbe901_5_1",
+      "step_setUserEnvironmentVariable_assertClosed_c39dbe901_5_1",
+      "step_executeCommand_open_c39dbe901_6_1",
+      "step_executeCommand_assertPalette_c39dbe901_6_1",
+      "step_executeCommand_filter_c39dbe901_6_1",
+      "step_executeCommand_assertCommand_c39dbe901_6_1",
+      "step_executeCommand_execute_c39dbe901_6_1",
+      "step_clickOption_assertPrompt_c39dbe901_6_2",
+      "step_clickOption_click_c39dbe901_6_2",
+      "step_filterOption_filter_c39dbe901_6_3",
+      "step_filterOption_assertOption_c39dbe901_6_3",
+      "step_filterOption_confirm_c39dbe901_6_3",
+      "step_assertNotificationContains_assert_c39dbe901_6_4"
     ],
     "tags": [
       "case_id:da-typespec-oauth-with-reference-id",
@@ -1108,7 +1117,202 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_c39dbe901_5_1",
+      "step_id": "step_setUserEnvironmentVariable_openTerminal_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+shift+~"
+      },
+      "description": "Open a new integrated terminal in Visual Studio Code with Ctrl+Shift+~.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_checkWorkspaceFiles_verify_c39dbe901_4_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setUserEnvironmentVariable_assertTerminal_c39dbe901_5_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion a new VS Code integrated terminal is visible and focused with a Bash shell prompt ready for input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setUserEnvironmentVariable_openTerminal_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_setUserEnvironmentVariable_typeCommand_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "read -rs VARIABLE_VALUE && PROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" TARGET_KEY=\"dev\" VARIABLE_NAME=\"OAUTH2_CONFIGURATION_ID\" VARIABLE_VALUE=\"$VARIABLE_VALUE\" python3 -c 'import base64;exec(base64.b64decode(\"aW1wb3J0IG9zCmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAoKcHJvamVjdF9kaXIgPSBQYXRoKG9zLmVudmlyb25bIlBST0pFQ1RfRElSIl0pLnJlc29sdmUoKQp0YXJnZXRfa2V5ID0gb3MuZW52aXJvblsiVEFSR0VUX0tFWSJdCnRhcmdldHMgPSB7CiAgImRldiI6IHByb2plY3RfZGlyIC8gImVudiIgLyAiLmVudi5kZXYudXNlciIsCiAgInBsYXlncm91bmQiOiBwcm9qZWN0X2RpciAvICJlbnYiIC8gIi5lbnYucGxheWdyb3VuZC51c2VyIiwKfQplbnZpcm9ubWVudF9maWxlID0gdGFyZ2V0cy5nZXQodGFyZ2V0X2tleSkKaWYgZW52aXJvbm1lbnRfZmlsZSBpcyBOb25lOgogIHJhaXNlIEFzc2VydGlvbkVycm9yKCJUaGUgdXNlciBlbnZpcm9ubWVudCB0YXJnZXQgaXMgbm90IHN1cHBvcnRlZCIpCmVudmlyb25tZW50X2ZpbGUucGFyZW50Lm1rZGlyKHBhcmVudHM9VHJ1ZSwgZXhpc3Rfb2s9VHJ1ZSkKZW52aXJvbm1lbnRfZmlsZS50b3VjaChleGlzdF9vaz1UcnVlKQpuYW1lID0gb3MuZW52aXJvblsiVkFSSUFCTEVfTkFNRSJdCnZhbHVlID0gb3MuZW52aXJvblsiVkFSSUFCTEVfVkFMVUUiXQppZiBub3QgdmFsdWU6CiAgcmFpc2UgQXNzZXJ0aW9uRXJyb3IoIlRoZSB2YXJpYWJsZSB2YWx1ZSByZXNvbHZlZCB0byBub3RoaW5nIikKbGluZXMgPSBlbnZpcm9ubWVudF9maWxlLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKS5zcGxpdGxpbmVzKCkKcHJlZml4ID0gbmFtZSArICI9IgpleHBlY3RlZCA9IG5hbWUgKyAiPSciICsgdmFsdWUgKyAiJyIKa2VwdCA9IFtsaW5lIGZvciBsaW5lIGluIGxpbmVzIGlmIG5vdCBsaW5lLnN0YXJ0c3dpdGgocHJlZml4KV0Ka2VwdC5hcHBlbmQoZXhwZWN0ZWQpCmVudmlyb25tZW50X2ZpbGUud3JpdGVfdGV4dCgiXG4iLmpvaW4oa2VwdCkgKyAiXG4iLCBlbmNvZGluZz0idXRmLTgiKQp3cml0dGVuID0gW2xpbmUgZm9yIGxpbmUgaW4gZW52aXJvbm1lbnRfZmlsZS5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04Iikuc3BsaXRsaW5lcygpIGlmIGxpbmUuc3RhcnRzd2l0aChwcmVmaXgpXQppZiB3cml0dGVuICE9IFtleHBlY3RlZF06CiAgcmFpc2UgQXNzZXJ0aW9uRXJyb3IoIlRoZSB1c2VyIGVudmlyb25tZW50IHZhcmlhYmxlIHdhcyBub3Qgd3JpdHRlbiBleGFjdGx5IG9uY2Ugd2l0aCBpdHMgdmFsdWUiKQo=\"))' && printf '\\nVSCUSE_USER_ENVIRONMENT_%s\\n' UPDATED"
+      },
+      "description": "Type the compiler-owned OAUTH2_CONFIGURATION_ID mutation command for the dev user environment into the active integrated terminal.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setUserEnvironmentVariable_assertTerminal_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setUserEnvironmentVariable_runCommand_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to run the OAUTH2_CONFIGURATION_ID mutation command and begin hidden value input.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setUserEnvironmentVariable_typeCommand_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setUserEnvironmentVariable_typeValue_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "00000000-0000-0000-0000-000000000000"
+      },
+      "description": "Type the resolved OAUTH2_CONFIGURATION_ID value into the Bash read command, which does not echo the value.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setUserEnvironmentVariable_runCommand_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setUserEnvironmentVariable_submitValue_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to submit the hidden OAUTH2_CONFIGURATION_ID value and finish the verified mutation.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setUserEnvironmentVariable_typeValue_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setUserEnvironmentVariable_assertUpdated_c39dbe901_5_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the VS Code integrated terminal visibly shows the exact text VSCUSE_USER_ENVIRONMENT_UPDATED on a standalone line, followed by a Bash shell prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setUserEnvironmentVariable_submitValue_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_setUserEnvironmentVariable_closeTerminal_c39dbe901_5_1",
+      "agent": "interaction",
+      "tool": "keyboard_shortcut",
+      "parameters": {
+        "keys": "ctrl+`"
+      },
+      "description": "Close the verified integrated terminal with Ctrl+`.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setUserEnvironmentVariable_assertUpdated_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment"
+      ]
+    },
+    {
+      "step_id": "step_setUserEnvironmentVariable_assertClosed_c39dbe901_5_1",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the integrated terminal panel is no longer visible and the Visual Studio Code workbench is ready.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_setUserEnvironmentVariable_closeTerminal_c39dbe901_5_1"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:workspace",
+        "operation:user-environment",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeCommand_open_c39dbe901_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1120,7 +1324,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_checkWorkspaceFiles_verify_c39dbe901_4_1"
+        "step_setUserEnvironmentVariable_assertClosed_c39dbe901_5_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1130,7 +1334,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_c39dbe901_5_1",
+      "step_id": "step_executeCommand_assertPalette_c39dbe901_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1140,7 +1344,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_c39dbe901_5_1"
+        "step_executeCommand_open_c39dbe901_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1151,7 +1355,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_c39dbe901_5_1",
+      "step_id": "step_executeCommand_filter_c39dbe901_6_1",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1163,7 +1367,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_c39dbe901_5_1"
+        "step_executeCommand_assertPalette_c39dbe901_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1173,7 +1377,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_c39dbe901_5_1",
+      "step_id": "step_executeCommand_assertCommand_c39dbe901_6_1",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1183,7 +1387,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_c39dbe901_5_1"
+        "step_executeCommand_filter_c39dbe901_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1194,7 +1398,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_c39dbe901_5_1",
+      "step_id": "step_executeCommand_execute_c39dbe901_6_1",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1206,7 +1410,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_c39dbe901_5_1"
+        "step_executeCommand_assertCommand_c39dbe901_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1216,7 +1420,7 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_c39dbe901_5_2",
+      "step_id": "step_clickOption_assertPrompt_c39dbe901_6_2",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1226,7 +1430,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_c39dbe901_5_1"
+        "step_executeCommand_execute_c39dbe901_6_1"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1238,7 +1442,7 @@
       ]
     },
     {
-      "step_id": "step_clickOption_click_c39dbe901_5_2",
+      "step_id": "step_clickOption_click_c39dbe901_6_2",
       "agent": "interaction",
       "tool": "click",
       "parameters": {
@@ -1252,7 +1456,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_assertPrompt_c39dbe901_5_2"
+        "step_clickOption_assertPrompt_c39dbe901_6_2"
       ],
       "preconditions": [
         "dhash:442:81:16:5:0c736a0aaafb608c",
@@ -1267,7 +1471,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_filter_c39dbe901_5_3",
+      "step_id": "step_filterOption_filter_c39dbe901_6_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1279,7 +1483,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickOption_click_c39dbe901_5_2"
+        "step_clickOption_click_c39dbe901_6_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1289,7 +1493,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_assertOption_c39dbe901_5_3",
+      "step_id": "step_filterOption_assertOption_c39dbe901_6_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1299,7 +1503,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_filter_c39dbe901_5_3"
+        "step_filterOption_filter_c39dbe901_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1310,7 +1514,7 @@
       ]
     },
     {
-      "step_id": "step_filterOption_confirm_c39dbe901_5_3",
+      "step_id": "step_filterOption_confirm_c39dbe901_6_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1322,7 +1526,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_assertOption_c39dbe901_5_3"
+        "step_filterOption_assertOption_c39dbe901_6_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1332,7 +1536,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_c39dbe901_5_4",
+      "step_id": "step_assertNotificationContains_assert_c39dbe901_6_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1342,7 +1546,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_filterOption_confirm_c39dbe901_5_3"
+        "step_filterOption_confirm_c39dbe901_6_3"
       ],
       "preconditions": [],
       "postconditions": [],

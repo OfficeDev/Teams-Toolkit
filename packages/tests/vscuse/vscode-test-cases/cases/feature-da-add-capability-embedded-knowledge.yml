@@ -15,7 +15,7 @@ cases:
         provision,
         f5-copilot-remote,
         open-agent,
-        check-sarah-gpa,
+        check-table-columns,
       ]
 
 steps:
@@ -88,11 +88,12 @@ steps:
       kind: agent
       destination: chat
 
-  check-sarah-gpa:
+  check-table-columns:
     type: checks
     with:
-      # The compiler-pinned document identifies Sarah Miller's GPA as 3.8.
+      # Column names exercise the pinned document without requesting a person's
+      # educational record, which Copilot can correctly decline to disclose.
       - type: chat
-        send: what's GPA of Sarah Miller
+        send: What are the column headers in the student table?
         expect:
-          contains: ["3.8"]
+          contains: ["Graduation Year"]

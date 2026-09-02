@@ -11,6 +11,7 @@ cases:
         check-scaffold,
         configure-oauth-with-reference-id,
         check-oauth-with-reference-id,
+        set-package-reference-id,
         package-dev,
       ]
 
@@ -88,6 +89,13 @@ steps:
     type: packageApp
     with:
       environment: dev
+
+  set-package-reference-id:
+    type: userEnvironment
+    with:
+      target: dev
+      variables:
+        OAUTH2_CONFIGURATION_ID: 00000000-0000-0000-0000-000000000000
 
   login-m365:
     type: login

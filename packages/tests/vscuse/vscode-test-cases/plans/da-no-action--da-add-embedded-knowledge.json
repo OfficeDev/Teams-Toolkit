@@ -2941,9 +2941,9 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "what's GPA of Sarah Miller"
+        "text": "What are the column headers in the student table?"
       },
-      "description": "Type \"what's GPA of Sarah Miller\" into the Copilot message input.",
+      "description": "Type \"What are the column headers in the student table?\" into the Copilot message input.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -3011,7 +3011,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the current assistant response contains \"3.8\".",
+      "description": "@assertion the current assistant response contains \"Graduation Year\".",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,

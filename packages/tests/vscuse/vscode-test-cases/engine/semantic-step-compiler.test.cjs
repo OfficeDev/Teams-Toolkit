@@ -8313,12 +8313,83 @@ test("VCB-177: runnable TypeSpec OAuth and Embedded Knowledge cases reuse Copilo
     .filter((step) => step.tool === "type_text")
     .map((step) => step.parameters.text);
   assert.equal(
-    embeddedKnowledgeTypedValues.includes("what's GPA of Sarah Miller"),
+    embeddedKnowledgeTypedValues.includes(
+      "What are the column headers in the student table?",
+    ),
     true,
   );
   assert.equal(
     embeddedKnowledgePlan.steps.some((step) =>
-      step.description.includes('assistant response contains "3.8"'),
+      step.description.includes(
+        'assistant response contains "Graduation Year"',
+      ),
+    ),
+    true,
+  );
+});
+
+test("VCB-178: package-only OAuth substitution and Embedded Knowledge chat avoid live failures", async () => {
+  const oauthResult = await compileFixture(
+    "da-typespec-oauth.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(oauthResult.ok, true, oauthResult.diagnostics?.[0]?.code);
+  const referencePlan = oauthResult.value.find(
+    (descriptor) => descriptor.caseId === "da-typespec-oauth-with-reference-id",
+  )?.plan;
+  assert.notEqual(referencePlan, undefined);
+  const referenceTypedValues = referencePlan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  const placeholderIndex = referenceTypedValues.indexOf(
+    "00000000-0000-0000-0000-000000000000",
+  );
+  const packageIndex = referenceTypedValues.indexOf(
+    "Microsoft 365 Agents: Zip App Package",
+  );
+  assert.notEqual(placeholderIndex, -1);
+  assert.notEqual(packageIndex, -1);
+  assert.equal(placeholderIndex < packageIndex, true);
+  assert.equal(
+    referencePlan.steps.some(
+      (step) =>
+        step.step_id.startsWith(
+          "step_setUserEnvironmentVariable_typeCommand_",
+        ) &&
+        step.description.includes("OAUTH2_CONFIGURATION_ID") &&
+        step.description.includes("dev user environment"),
+    ),
+    true,
+  );
+
+  const embeddedKnowledgeResult = await compileFixture(
+    "feature-da-add-capability-embedded-knowledge.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(
+    embeddedKnowledgeResult.ok,
+    true,
+    embeddedKnowledgeResult.diagnostics?.[0]?.code,
+  );
+  const embeddedKnowledgePlan = embeddedKnowledgeResult.value[0].plan;
+  const embeddedKnowledgeTypedValues = embeddedKnowledgePlan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    embeddedKnowledgeTypedValues.includes(
+      "What are the column headers in the student table?",
+    ),
+    true,
+  );
+  assert.equal(
+    embeddedKnowledgeTypedValues.includes("what's GPA of Sarah Miller"),
+    false,
+  );
+  assert.equal(
+    embeddedKnowledgePlan.steps.some((step) =>
+      step.description.includes(
+        'assistant response contains "Graduation Year"',
+      ),
     ),
     true,
   );
