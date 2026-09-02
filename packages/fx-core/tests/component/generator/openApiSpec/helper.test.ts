@@ -700,6 +700,55 @@ describe("injectAuthAction", async () => {
     });
   });
 
+  it("SCN-ADD-OPENAPI-KEY-02: propagates environment listing failures", async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(Utils, "isBearerTokenAuth").mockReturnValue(true);
+    vi.spyOn(ActionInjector, "injectCreateAPIKeyAction").mockResolvedValue({
+      primaryClientSecretEnvName: "SECRET_APIKEY_API_KEY",
+    });
+    const listError = new SystemError("test", "ListEnvironmentFailed", "", "");
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(err(listError));
+
+    await expect(
+      injectAuthAction(
+        "/project",
+        "apiKey",
+        { type: "apiKey", in: "header", name: "X-API-KEY" },
+        "/project/appPackage/apiSpecification/openapi.yaml",
+        true,
+        undefined,
+        undefined,
+        undefined,
+        "supplied-secret"
+      )
+    ).rejects.toBe(listError);
+  });
+
+  it("SCN-ADD-OPENAPI-KEY-02: propagates encrypted secret write failures", async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(Utils, "isBearerTokenAuth").mockReturnValue(true);
+    vi.spyOn(ActionInjector, "injectCreateAPIKeyAction").mockResolvedValue({
+      primaryClientSecretEnvName: "SECRET_APIKEY_API_KEY",
+    });
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
+    const writeError = new SystemError("test", "WriteEnvironmentFailed", "", "");
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(err(writeError));
+
+    await expect(
+      injectAuthAction(
+        "/project",
+        "apiKey",
+        { type: "apiKey", in: "header", name: "X-API-KEY" },
+        "/project/appPackage/apiSpecification/openapi.yaml",
+        true,
+        undefined,
+        undefined,
+        undefined,
+        "supplied-secret"
+      )
+    ).rejects.toBe(writeError);
+  });
+
   it("SCN-ADD-OPENAPI-KEY-08: treats a whitespace-only API key as omitted", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     vi.spyOn(Utils, "isBearerTokenAuth").mockReturnValue(true);

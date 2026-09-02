@@ -107,10 +107,16 @@ describe("addAuthActionQuestion", () => {
       [QuestionNames.ApiAuth]: "api-key",
     });
     const blankValidationResult = await apiKeyNode.data.validation.validFunc("   ");
+    const shortValidationResult = await apiKeyNode.data.validation.validFunc("short");
+    const longValidationResult = await apiKeyNode.data.validation.validFunc("a".repeat(513));
+    const validValidationResult = await apiKeyNode.data.validation.validFunc("a".repeat(10));
 
     assert.isTrue(cliResult);
     assert.isFalse(vscodeResult);
     assert.isUndefined(blankValidationResult);
+    assert.isDefined(shortValidationResult);
+    assert.equal(longValidationResult, shortValidationResult);
+    assert.isUndefined(validValidationResult);
   });
 
   it("SCN-ADD-OPENAPI-KEY-10: offers an optional secret for CLI bearer-token auth-config", async () => {
