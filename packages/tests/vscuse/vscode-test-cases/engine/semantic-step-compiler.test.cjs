@@ -8444,6 +8444,125 @@ test("VCB-179: TypeSpec OAuth mutations replace the fixture agent name with the 
   }
 });
 
+test("VCB-180: Provision without account is a capability case instead of a remote Tab template case", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: provision-without-account
+    scenarioId: VCB-180
+    workItemIds: [15263834]
+    steps: [scaffold, check, reject-provision]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: non-sso-tab
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: teams-other-app-type
+        - question: teamsOtherAppType
+          value: non-sso-tab
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect: { contains: ["provision:"] }
+  reject-provision:
+    type: provisionWithoutAccount
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-180.yml");
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value[0].plan;
+  assert.equal(
+    plan.steps.some(
+      (step) =>
+        step.tool === "type_text" &&
+        step.parameters.text === "Microsoft 365 Agents: Provision",
+    ),
+    true,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes(
+        "Microsoft 365 Agents Toolkit needs a Microsoft 365 account",
+      ),
+    ),
+    true,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      /account name|password|select.*environment|stage executed successfully/i.test(
+        step.description,
+      ),
+    ),
+    false,
+  );
+
+  const fixture = await compileFixture(
+    "feature-provision-without-account.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  assert.equal(fixture.value.length, 1);
+  assert.equal(
+    fixture.value[0].plan.plan_metadata.description.workitem,
+    "15263834",
+  );
+  const remoteTab = await compileFixture(
+    "non-sso-tab.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(remoteTab.ok, true, remoteTab.diagnostics?.[0]?.code);
+  assert.equal(
+    remoteTab.value.find(({ caseId }) => caseId === "tab-ts-remote-teams").plan
+      .plan_metadata.description.workitem,
+    "14134646",
+  );
+
+  for (const [invalidSource, expectedCode] of [
+    [
+      sourceText.replace(
+        "    type: provisionWithoutAccount\n",
+        "    type: provisionWithoutAccount\n    with:\n      unexpected: true\n",
+      ),
+      "VCB_PROVISION_WITHOUT_ACCOUNT_INPUT_INVALID",
+    ],
+    [
+      sourceText
+        .replace(
+          "    steps: [scaffold, check, reject-provision]",
+          "    steps: [scaffold, check, login, reject-provision]",
+        )
+        .replace(
+          "  reject-provision:\n",
+          '  login:\n    type: login\n    with:\n      type: m365\n      account: "${{env:M365_ACCOUNT_NAME}}"\n      password: "${{secret:M365_ACCOUNT_PASSWORD}}"\n  reject-provision:\n',
+        ),
+      "VCB_PROVISION_WITHOUT_ACCOUNT_INPUT_INVALID",
+    ],
+    [
+      sourceText.replace(
+        "    steps: [scaffold, check, reject-provision]",
+        "    steps: [scaffold, reject-provision]",
+      ),
+      "VCB_OPERATION_ORDER",
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      "vscuse-vcb-180-invalid.yml",
+    );
+    assert.equal(invalid.ok, false);
+    assert.equal(invalid.diagnostics[0].code, expectedCode);
+  }
+});
+
 test("VCB-153: publishDeveloperPortal preserves every remaining recorded pointer precondition", () => {
   const sourceText = createPackageSource({ includePublish: true });
   const result = compileInlineSource(sourceText, "vscuse-vcb-153.yml");
@@ -8905,7 +9024,7 @@ test("VCB-164: repeated OpenAPI actions provision a personal-scope declarative a
   );
 });
 
-test("VCB-154: sixteen legacy plans are replaced, three are retired, and two remain", async () => {
+test("VCB-154: eighteen legacy plans are replaced, three are retired, and one remains", async () => {
   const migrations = [
     {
       source: "feature-basic-tab-local-debug.yml",
@@ -9005,6 +9124,18 @@ test("VCB-154: sixteen legacy plans are replaced, three are retired, and two rem
       generated: "da-no-action--da-add-embedded-knowledge.json",
       legacy: "DA_With_EK_Happy_Path.json",
     },
+    {
+      source: "feature-provision-without-account.yml",
+      caseId: "feature-provision-without-account",
+      generated: "feature-provision-without-account.json",
+      legacy: "Basic_Tab_Remote_Debug.json",
+    },
+    {
+      source: "feature-provision-without-account.yml",
+      caseId: "feature-provision-without-account",
+      generated: "feature-provision-without-account.json",
+      legacy: "Feature_Provision_Without_Account.json",
+    },
   ];
   const plansDirectory = path.join(casesDirectory, "..", "plans");
   for (const migration of migrations) {
@@ -9058,10 +9189,6 @@ test("VCB-154: sixteen legacy plans are replaced, three are retired, and two rem
     true,
   );
 
-  const partial = [
-    "Basic_Tab_Remote_Debug.json",
-    "legacy provision-before-login flow is not covered",
-  ];
   const notMapped = [
     ["DA_No_Action_Web_Search.json", "ambiguous second branch omits its URL"],
   ];
@@ -9088,7 +9215,7 @@ test("VCB-154: sixteen legacy plans are replaced, three are retired, and two rem
     "utf8",
   );
   for (const [status, expectedCount] of [
-    ["Partial", 1],
+    ["Partial", 0],
     ["Not Mapped", 1],
     ["Retired", 3],
   ]) {
@@ -9099,23 +9226,6 @@ test("VCB-154: sixteen legacy plans are replaced, three are retired, and two rem
       `${status} row count`,
     );
   }
-  assert.equal(fsSync.existsSync(path.join(plansDirectory, partial[0])), true);
-  assert.match(
-    mapping,
-    new RegExp(
-      `\\| \\\`${partial[0].replaceAll(".", "\\.")}\\\`[^\\n]*\\| Partial\\s+\\|[^\\n]*${partial[1]}`,
-      "i",
-    ),
-    partial[0],
-  );
-  assert.doesNotMatch(
-    mapping,
-    new RegExp(
-      `\\| \\\`${partial[0].replaceAll(".", "\\.")}\\\`\\s+\\| Not Mapped\\s+\\|`,
-      "i",
-    ),
-    `${partial[0]} has one status`,
-  );
   for (const [legacy, blocker] of notMapped) {
     assert.equal(fsSync.existsSync(path.join(plansDirectory, legacy)), true);
     assert.match(

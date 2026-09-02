@@ -2479,6 +2479,35 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileProvisionWithoutAccount(state, definition) {
+    if (
+      definition.with !== undefined ||
+      state.requiresInitialFileCheck ||
+      state.completed.has("login:azure") ||
+      state.completed.has("login:m365")
+    ) {
+      return failure(
+        "VCB_PROVISION_WITHOUT_ACCOUNT_INPUT_INVALID",
+        "Provision without account requires a checked scaffold with no prior login and no authored input.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "command-palette/execute-command.json.tpl", {
+        commandTitle: commandTitles.provision,
+      }),
+    );
+    if (error) return error;
+    error = append(
+      output,
+      render(state, "dialog/assert-m365-account-required.json.tpl", {}),
+    );
+    if (error) return error;
+    state.completed.add("provisionWithoutAccount");
+    return { ok: true, value: output };
+  }
+
   function compilePublishDeveloperPortal(state, definition) {
     const credentials = state.credentials.get("m365");
     if (
@@ -3157,6 +3186,8 @@ function createSemanticStepCompiler() {
       case "provision":
       case "deploy":
         return compileLifecycle(state, definition);
+      case "provisionWithoutAccount":
+        return compileProvisionWithoutAccount(state, definition);
       case "pythonEnvironment":
         return compilePythonEnvironment(state, definition);
       case "localEnvironment":

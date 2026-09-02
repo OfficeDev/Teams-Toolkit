@@ -159,6 +159,7 @@
     "feature-da-no-action-oauth-auth-remote-preview.json",
     "feature-da-two-openapi-actions-personal-provision.json",
     "feature-da-typespec-package-action-remote-preview.json",
+    "feature-provision-without-account.json",
     "non-sso-tab--tab-ts-local-name-validation.json",
     "non-sso-tab--tab-ts-local-teams-env-recreated.json",
     "non-sso-tab--tab-ts-local-teams.json",

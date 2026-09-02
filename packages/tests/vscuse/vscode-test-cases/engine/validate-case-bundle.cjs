@@ -20,6 +20,7 @@ const allowedStepTypes = new Set([
   "scaffold",
   "login",
   "provision",
+  "provisionWithoutAccount",
   "deploy",
   "pythonEnvironment",
   "localEnvironment",

@@ -200,7 +200,6 @@ Compiled from the YAML cases under [`vscode-test-cases/cases/`](vscode-test-case
 | Test Plan                                 | Description                  |
 | ----------------------------------------- | ---------------------------- |
 | `Basic_Tab_Local_Debug`                   | Basic Tab local              |
-| `Basic_Tab_Remote_Debug`                  | Basic Tab remote             |
 | `Tab_Local_Debug_Env_Local_Creation`      | Tab local env creation       |
 | `Tab_With_Upgraded_Manifest_Remote_Debug` | Tab upgraded manifest remote |
 
