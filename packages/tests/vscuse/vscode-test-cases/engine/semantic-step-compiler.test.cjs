@@ -8395,6 +8395,55 @@ test("VCB-178: package-only OAuth substitution and Embedded Knowledge chat avoid
   );
 });
 
+test("VCB-179: TypeSpec OAuth mutations replace the fixture agent name with the generated project name", async () => {
+  const result = await compileFixture(
+    "da-typespec-oauth.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  assert.equal(result.value.length, 2);
+
+  for (const descriptor of result.value) {
+    const mutationCommand = descriptor.plan.steps.find(
+      (step) =>
+        step.step_id.startsWith("step_configureTypeSpecGitHubOAuthAction_") &&
+        step.tool === "type_text",
+    );
+    assert.notEqual(mutationCommand, undefined, descriptor.caseId);
+    const encodedScript = mutationCommand.parameters.text.match(
+      /base64\.b64decode\("([^"]+)"\)/,
+    )?.[1];
+    assert.equal(typeof encodedScript, "string", descriptor.caseId);
+    const mutationScript = Buffer.from(encodedScript, "base64").toString(
+      "utf8",
+    );
+    assert.equal(
+      mutationScript.includes("generated_agent_name = project_dir.name"),
+      true,
+      descriptor.caseId,
+    );
+    assert.equal(
+      mutationScript.includes("if source.count(fixture_agent_name) != 1:"),
+      true,
+      descriptor.caseId,
+    );
+    assert.equal(
+      mutationScript.includes(
+        "source = source.replace(fixture_agent_name, generated_agent_name)",
+      ),
+      true,
+      descriptor.caseId,
+    );
+    assert.equal(
+      mutationScript.includes(
+        "if fixture_agent_name in written or written.count(generated_agent_name) != 1:",
+      ),
+      true,
+      descriptor.caseId,
+    );
+  }
+});
+
 test("VCB-153: publishDeveloperPortal preserves every remaining recorded pointer precondition", () => {
   const sourceText = createPackageSource({ includePublish: true });
   const result = compileInlineSource(sourceText, "vscuse-vcb-153.yml");

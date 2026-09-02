@@ -158,13 +158,21 @@ from urllib.request import urlopen
 
 source_url = "${typeSpecGitHubOAuthSource}"
 source = urlopen(source_url, timeout=60).read().decode("utf-8")
+project_dir = Path(os.environ["PROJECT_DIR"]).resolve()
+fixture_agent_name = "github-agent0507"
+generated_agent_name = project_dir.name
+if source.count(fixture_agent_name) != 1:
+  raise AssertionError("The pinned TypeSpec source must contain exactly one fixture agent name")
+source = source.replace(fixture_agent_name, generated_agent_name)
 oauth_model = "model oauth is OAuth2Auth<"
 if source.count(oauth_model) != 1:
   raise AssertionError("The pinned TypeSpec source must contain exactly one OAuth model")
 ${referenceMutation}
-source_file = Path(os.environ["PROJECT_DIR"]).resolve() / "src" / "agent" / "main.tsp"
+source_file = project_dir / "src" / "agent" / "main.tsp"
 source_file.write_text(source, encoding="utf-8")
 written = source_file.read_text(encoding="utf-8")
+if fixture_agent_name in written or written.count(generated_agent_name) != 1:
+  raise AssertionError("The generated TypeSpec agent name is incorrect")
 if written.count(oauth_model) != 1:
   raise AssertionError("The OAuth model was not written exactly once")
 if ${includeReferenceId ? "True" : "False"} != ("@authReferenceId" in written):
