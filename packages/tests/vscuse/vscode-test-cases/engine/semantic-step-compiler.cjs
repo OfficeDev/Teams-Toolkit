@@ -1778,6 +1778,13 @@ function createSemanticStepCompiler() {
       {
         component: "quick-input/single-select.json.tpl",
         values: {
+          questionTitle: "Select an environment",
+          optionLabel: "dev",
+        },
+      },
+      {
+        component: "quick-input/single-select.json.tpl",
+        values: {
           questionTitle: "Share the agent",
           optionLabel: "Share access",
         },

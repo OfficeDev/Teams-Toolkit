@@ -8759,6 +8759,22 @@ steps:
     /Microsoft 365 Agents: Share.*highlighted/,
   );
   assert.equal(shareCommandSelection[3].parameters.key, "enter");
+  const environmentSelection = plan.steps.slice(
+    shareCommandIndex + 5,
+    shareCommandIndex + 10,
+  );
+  assert.deepEqual(
+    environmentSelection.map((step) => step.tool),
+    ["", "", "type_text", "", "key_press"],
+  );
+  assert.match(environmentSelection[0].description, /Select an environment/);
+  assert.equal(environmentSelection[2].parameters.text, "dev");
+  assert.match(environmentSelection[3].description, /option dev/);
+  assert.equal(environmentSelection[4].parameters.key, "enter");
+  assert.match(
+    plan.steps[shareCommandIndex + 10].description,
+    /prompt titled Share the agent/,
+  );
   const errorText =
     "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
   const errorIndex = plan.steps.findIndex((step) =>
