@@ -238,6 +238,12 @@ error messages after configuring an invalid OpenAI key. Generated cases already 
 OpenAI Copilot execution across TypeScript, JavaScript, local, and remote modes, while generated
 Weather Agent cases cover OpenAI on Teams and Playground and Copilot with Azure OpenAI.
 
+## Retired Legacy Deployment Plans
+
+| Legacy plan                                | Status  | Reason                                                                                                                                                                                                                            |
+| ------------------------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Feature_Prompt_Use_Run_From_Package.json` | Retired | The plan only asserted the slow zip-deploy recommendation link after a timing-dependent Azure deployment. The threshold and link are covered by the fx-core unit test, while Azure E2E tests verify `WEBSITE_RUN_FROM_PACKAGE=1`. |
+
 ## Retained Legacy Plans Not Mapped
 
 | Legacy plan                    | Status     | Blocker                                                                                                                                        |

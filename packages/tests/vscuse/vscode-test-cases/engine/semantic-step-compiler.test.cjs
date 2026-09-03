@@ -9124,7 +9124,7 @@ test("VCB-164: repeated OpenAPI actions provision a personal-scope declarative a
   );
 });
 
-test("VCB-154: twenty-one legacy plans are replaced, three are retired, and one remains", async () => {
+test("VCB-154: twenty-one legacy plans are replaced, four are retired, and one remains", async () => {
   const migrations = [
     {
       source: "feature-basic-tab-local-debug.yml",
@@ -9324,6 +9324,10 @@ test("VCB-154: twenty-one legacy plans are replaced, three are retired, and one 
       "Feature_DA_Advanced_Personal_Scope_Provision_with_Copilot_License.json",
       "only assertion is `AGENT_SCOPE=personal`",
     ],
+    [
+      "Feature_Prompt_Use_Run_From_Package.json",
+      "threshold and link are covered by the fx-core unit test",
+    ],
   ];
   const mapping = await fs.readFile(
     path.join(casesDirectory, "legacy-case-mapping.md"),
@@ -9336,7 +9340,7 @@ test("VCB-154: twenty-one legacy plans are replaced, three are retired, and one 
   for (const [status, expectedCount] of [
     ["Partial", 0],
     ["Not Mapped", 1],
-    ["Retired", 3],
+    ["Retired", 4],
   ]) {
     assert.equal(
       mapping.match(new RegExp(`^\\|[^\\n]*\\|\\s*${status}\\s*\\|`, "gmu"))
