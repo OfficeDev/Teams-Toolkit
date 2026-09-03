@@ -12,7 +12,11 @@ require("../standalone-patch");
 import ServerConnection from "./serverConnection";
 
 const port = Number(process.argv.slice(2)[0]) || 7920;
-const wss = new WebSocket.Server({ port: port });
+const wss = new WebSocket.Server({
+  host: "127.0.0.1",
+  port,
+  verifyClient: ({ origin }: { origin?: string }) => origin === undefined,
+});
 
 wss.on("connection", function cb(ws) {
   const wsStream = WebSocket.createWebSocketStream(ws, { encoding: "utf8" });
