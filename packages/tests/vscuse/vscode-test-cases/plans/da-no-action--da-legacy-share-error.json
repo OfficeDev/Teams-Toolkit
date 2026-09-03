@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 79,
+    "total_steps": 86,
     "name": "da-legacy-share-error",
     "description": {
       "owner": "",
@@ -76,11 +76,13 @@
       "step_executeCommand_filter_cec39ad66_5_2",
       "step_executeCommand_assertCommand_cec39ad66_5_2",
       "step_executeCommand_execute_cec39ad66_5_2",
-      "step_executeCommand_open_cec39ad66_5_3",
-      "step_executeCommand_assertPalette_cec39ad66_5_3",
-      "step_executeCommand_filter_cec39ad66_5_3",
-      "step_executeCommand_assertCommand_cec39ad66_5_3",
-      "step_executeCommand_execute_cec39ad66_5_3",
+      "step_executeSecondCommand_open_cec39ad66_5_3",
+      "step_executeSecondCommand_assertPalette_cec39ad66_5_3",
+      "step_executeSecondCommand_filter_cec39ad66_5_3",
+      "step_executeSecondCommand_assertResults_cec39ad66_5_3",
+      "step_executeSecondCommand_next_cec39ad66_5_3",
+      "step_executeSecondCommand_assertCommand_cec39ad66_5_3",
+      "step_executeSecondCommand_execute_cec39ad66_5_3",
       "step_singleSelect_assertQuestion_cec39ad66_5_4",
       "step_singleSelect_assertOptionsLoaded_cec39ad66_5_4",
       "step_singleSelect_filter_cec39ad66_5_4",
@@ -94,7 +96,12 @@
       "step_textInput_assertQuestion_cec39ad66_5_6",
       "step_textInput_input_cec39ad66_5_6",
       "step_textInput_confirm_cec39ad66_5_6",
-      "step_assertNotificationContains_assert_cec39ad66_5_7"
+      "step_singleSelect_assertQuestion_cec39ad66_5_7",
+      "step_singleSelect_assertOptionsLoaded_cec39ad66_5_7",
+      "step_singleSelect_filter_cec39ad66_5_7",
+      "step_singleSelect_assertOption_cec39ad66_5_7",
+      "step_singleSelect_confirm_cec39ad66_5_7",
+      "step_assertNotificationContains_assert_cec39ad66_5_8"
     ],
     "tags": [
       "case_id:da-legacy-share-error",
@@ -1221,9 +1228,9 @@
       "agent": "code",
       "tool": "",
       "parameters": {
-        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" WORKFLOW_VERSION=\"v1.9\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nworkflow_file = Path(os.environ[\"PROJECT_DIR\"]).resolve() / \"m365agents.yml\"\ntarget = \"version: \" + os.environ[\"WORKFLOW_VERSION\"]\nlines = workflow_file.read_text(encoding=\"utf-8\").splitlines()\nmatches = [index for index, line in enumerate(lines) if line.startswith(\"version:\")]\nif len(matches) != 1:\n    raise AssertionError(\"The workflow must contain exactly one top-level version\")\nlines[matches[0]] = target\nworkflow_file.write_text(\"\\n\".join(lines) + \"\\n\", encoding=\"utf-8\")\nwritten = workflow_file.read_text(encoding=\"utf-8\").splitlines()\nif [line for line in written if line.startswith(\"version:\")] != [target]:\n    raise AssertionError(\"The workflow version was not written exactly once\")\nPY\n```"
+        "sample": "=== Generated Script ===\nLanguage: bash\n\n```bash\nset -euo pipefail\nPROJECT_DIR=\"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" WORKFLOW_VERSION=\"v1.9\" python3 - <<'PY'\nimport os\nfrom pathlib import Path\n\nworkflow_file = Path(os.environ[\"PROJECT_DIR\"]).resolve() / \"m365agents.yml\"\ntarget = \"version: \" + os.environ[\"WORKFLOW_VERSION\"]\nsource_schema = \"# yaml-language-server: $schema=https://aka.ms/m365-agents-toolkits/v1.12/yaml.schema.json\"\ntarget_schema = source_schema.replace(\"v1.12\", os.environ[\"WORKFLOW_VERSION\"])\ntext = workflow_file.read_text(encoding=\"utf-8\")\nlines = text.splitlines()\nmatches = [index for index, line in enumerate(lines) if line.startswith(\"version:\")]\nif len(matches) != 1:\n    raise AssertionError(\"The workflow must contain exactly one top-level version\")\nif lines.count(source_schema) != 1:\n    raise AssertionError(\"The workflow must contain exactly one v1.12 schema directive\")\nlines[matches[0]] = target\nlines[lines.index(source_schema)] = target_schema\ntext = \"\\n\".join(lines) + \"\\n\"\nsource_action = \"  - uses: copilotAgent/publish\"\ntarget_action = \"  - uses: teamsApp/shareToOthers\"\nif text.count(source_action) != 2:\n    raise AssertionError(\"The workflow must contain exactly two copilotAgent/publish actions\")\ntext = text.replace(source_action, target_action)\nfor scope in (\"      scope: ${{AGENT_SCOPE}}\\n\", \"      scope: tenant\\n\"):\n    if text.count(scope) != 1:\n        raise AssertionError(\"The workflow must contain the expected publish scope\")\n    text = text.replace(scope, \"\")\npublished_app_id = \"      appId: M365_PUBLISHED_APP_ID\\n\"\nif text.count(published_app_id) != 1:\n    raise AssertionError(\"The workflow must contain the expected published app output\")\ntext = text.replace(published_app_id, published_app_id + \"      shareLink: SHARE_LINK\\n\")\nworkflow_file.write_text(text, encoding=\"utf-8\")\nwritten = workflow_file.read_text(encoding=\"utf-8\")\nwritten_lines = written.splitlines()\nif [line for line in written_lines if line.startswith(\"version:\")] != [target]:\n    raise AssertionError(\"The workflow version was not written exactly once\")\nif [line for line in written_lines if line.startswith(\"# yaml-language-server:\")] != [target_schema]:\n    raise AssertionError(\"The workflow schema directive was not written exactly once\")\nif source_action in written or written.count(target_action) != 2:\n    raise AssertionError(\"The workflow actions were not converted exactly twice\")\nif any(line.strip().startswith(\"scope:\") for line in written_lines):\n    raise AssertionError(\"The unsupported publish scopes were not removed\")\nif written.count(\"      shareLink: SHARE_LINK\") != 2:\n    raise AssertionError(\"The legacy share outputs were not written exactly twice\")\nPY\n```"
       },
-      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; replace the top-level version in m365agents.yml with v1.9 and verify the written workflow, do not reinterpret or regenerate the script, and do not use /workspace.",
+      "description": "@code execute the supplied generated bash script exactly as authored and read its exact PROJECT_DIR under /home/vscode/AgentsToolkitProjects/ from that script; replace the top-level version in m365agents.yml with v1.9, convert its publish actions to the schema-valid legacy share shape, and verify the written workflow, do not reinterpret or regenerate the script, and do not use /workspace.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -1456,7 +1463,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_open_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_open_cec39ad66_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -1478,7 +1485,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertPalette_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_assertPalette_cec39ad66_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1488,7 +1495,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_open_cec39ad66_5_3"
+        "step_executeSecondCommand_open_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1499,7 +1506,7 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_filter_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_filter_cec39ad66_5_3",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -1511,7 +1518,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertPalette_cec39ad66_5_3"
+        "step_executeSecondCommand_assertPalette_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1521,17 +1528,17 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_assertCommand_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_assertResults_cec39ad66_5_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Share and the highlighted command listed under it is titled Microsoft 365 Agents: Share.",
+      "description": "@assertion the Command Palette input box reads >Microsoft 365 Agents: Share, Microsoft 365 Agents: Remove access to the shared app is the highlighted first result, and Microsoft 365 Agents: Share is the second selectable result.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_filter_cec39ad66_5_3"
+        "step_executeSecondCommand_filter_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1542,19 +1549,62 @@
       ]
     },
     {
-      "step_id": "step_executeCommand_execute_cec39ad66_5_3",
+      "step_id": "step_executeSecondCommand_next_cec39ad66_5_3",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
-        "key": "enter"
+        "key": "down"
       },
-      "description": "Press Enter to execute the selected Command Palette command.",
+      "description": "Press Down to highlight the second filtered command.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_assertCommand_cec39ad66_5_3"
+        "step_executeSecondCommand_assertResults_cec39ad66_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command"
+      ]
+    },
+    {
+      "step_id": "step_executeSecondCommand_assertCommand_cec39ad66_5_3",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the command Microsoft 365 Agents: Share is highlighted in the filtered Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeSecondCommand_next_cec39ad66_5_3"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:command-palette",
+        "action:execute-command",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_executeSecondCommand_execute_cec39ad66_5_3",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to execute the highlighted Command Palette command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_executeSecondCommand_assertCommand_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1574,7 +1624,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_executeCommand_execute_cec39ad66_5_3"
+        "step_executeSecondCommand_execute_cec39ad66_5_3"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -1843,7 +1893,114 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_cec39ad66_5_7",
+      "step_id": "step_singleSelect_assertQuestion_cec39ad66_5_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the active prompt titled Select an environment is visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_textInput_confirm_cec39ad66_5_6"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOptionsLoaded_cec39ad66_5_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the prompt titled Select an environment has finished loading and lists at least one selectable option.",
+      "content_refs": [],
+      "timeout": 120,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertQuestion_cec39ad66_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 120"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_filter_cec39ad66_5_7",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "dev"
+      },
+      "description": "Type the resolved option label dev into the active single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOptionsLoaded_cec39ad66_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_assertOption_cec39ad66_5_7",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the option dev is visible and selectable in the filtered single-select prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_filter_cec39ad66_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect",
+        "step_retry_timeout: 30"
+      ]
+    },
+    {
+      "step_id": "step_singleSelect_confirm_cec39ad66_5_7",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "enter"
+      },
+      "description": "Press Enter to confirm the filtered single-select option.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [
+        "step_singleSelect_assertOption_cec39ad66_5_7"
+      ],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "component:quick-input",
+        "answer_type:singleSelect"
+      ]
+    },
+    {
+      "step_id": "step_assertNotificationContains_assert_cec39ad66_5_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -1853,7 +2010,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cec39ad66_5_6"
+        "step_singleSelect_confirm_cec39ad66_5_7"
       ],
       "preconditions": [],
       "postconditions": [],

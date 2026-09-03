@@ -8788,14 +8788,43 @@ steps:
   assert.equal(plan.plan_metadata.tags.includes("gate:manual"), true);
 
   const descriptions = plan.steps.map((step) => step.description);
+  const workflowMutation = plan.steps.find((step) =>
+    step.step_id.startsWith("step_setWorkflowVersion_"),
+  );
+  assert.notEqual(workflowMutation, undefined);
   assert.equal(
-    descriptions.some((description) =>
-      description.includes(
-        "replace the top-level version in m365agents.yml with v1.9 and verify the written workflow",
-      ),
+    workflowMutation.parameters.sample.includes(
+      'target_action = "  - uses: teamsApp/shareToOthers"',
     ),
     true,
   );
+  assert.match(
+    workflowMutation.parameters.sample,
+    /if text\.count\(source_action\) != 2:/,
+  );
+  assert.match(
+    workflowMutation.parameters.sample,
+    /target_schema = source_schema\.replace\("v1\.12", os\.environ\["WORKFLOW_VERSION"\]\)/,
+  );
+  assert.match(
+    workflowMutation.parameters.sample,
+    /workflow schema directive was not written exactly once/,
+  );
+  assert.match(
+    workflowMutation.parameters.sample,
+    /scope: \$\{\{AGENT_SCOPE\}\}/,
+  );
+  assert.match(workflowMutation.parameters.sample, /scope: tenant/);
+  assert.match(
+    workflowMutation.parameters.sample,
+    /if any\(line\.strip\(\)\.startswith\("scope:"\)/,
+  );
+  assert.match(workflowMutation.parameters.sample, /shareLink: SHARE_LINK/);
+  assert.match(
+    workflowMutation.description,
+    /replace the top-level version in m365agents\.yml with v1\.9/,
+  );
+  assert.match(workflowMutation.description, /schema-valid legacy share shape/);
   const typedValues = plan.steps
     .filter((step) => step.tool === "type_text")
     .map((step) => step.parameters.text);
@@ -8860,12 +8889,81 @@ steps:
     (step) =>
       step.tool === "type_text" && step.parameters.text === shareFlow[0],
   );
+  const shareCommandSelection = plan.steps.slice(
+    shareCommandIndex + 1,
+    shareCommandIndex + 5,
+  );
+  assert.deepEqual(
+    shareCommandSelection.map((step) => step.tool),
+    ["", "key_press", "", "key_press"],
+  );
+  assert.match(
+    shareCommandSelection[0].description,
+    /Remove access to the shared app.*first.*Microsoft 365 Agents: Share.*second/,
+  );
+  assert.equal(shareCommandSelection[1].parameters.key, "down");
+  assert.match(
+    shareCommandSelection[2].description,
+    /Microsoft 365 Agents: Share.*highlighted/,
+  );
+  assert.equal(shareCommandSelection[3].parameters.key, "enter");
+  assert.match(
+    plan.steps[shareCommandIndex + 5].description,
+    /prompt titled Share the agent/,
+  );
+  const emailInputIndex = plan.steps.findIndex(
+    (step, index) =>
+      index > shareCommandIndex &&
+      step.tool === "type_text" &&
+      step.parameters.text === "${{env:M365_ACCOUNT_NAME}}",
+  );
+  const environmentSelection = plan.steps.slice(
+    emailInputIndex + 2,
+    emailInputIndex + 7,
+  );
+  assert.deepEqual(
+    environmentSelection.map((step) => step.tool),
+    ["", "", "type_text", "", "key_press"],
+  );
+  assert.match(environmentSelection[0].description, /Select an environment/);
+  assert.equal(environmentSelection[2].parameters.text, "dev");
+  assert.match(environmentSelection[3].description, /option dev/);
+  assert.equal(environmentSelection[4].parameters.key, "enter");
+  const clearNotificationsIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Clear All Notifications",
+  );
+  const showNotificationsIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Show Notifications",
+  );
+  assert.equal(clearNotificationsIndex >= 0, true);
+  assert.equal(showNotificationsIndex > clearNotificationsIndex, true);
+  assert.equal(shareCommandIndex > showNotificationsIndex, true);
   const errorText =
     "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
   const errorIndex = plan.steps.findIndex((step) =>
     step.description.includes(errorText),
   );
-  assert.equal(shareCommandIndex >= 0 && errorIndex > shareCommandIndex, true);
+  assert.equal(errorIndex, emailInputIndex + 7);
+  assert.deepEqual(plan.steps[errorIndex].depends_on, [
+    environmentSelection[4].step_id,
+  ]);
+  assert.match(
+    plan.steps[errorIndex].step_id,
+    /^step_assertNotificationContains_assert_/,
+  );
+  assert.equal(
+    plan.steps[errorIndex].description,
+    `@assertion a visible Visual Studio Code notification contains the literal text ${errorText}. A notification with different text, including an in-progress notification, does not satisfy this assertion.`,
+  );
+  assert.deepEqual(plan.steps[errorIndex].tags, [
+    "component:notifications",
+    "action:assert-contains",
+    "step_retry_timeout: 60",
+  ]);
   assert.equal(
     plan.steps
       .slice(shareCommandIndex, errorIndex + 1)
