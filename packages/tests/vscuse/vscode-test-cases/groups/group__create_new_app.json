@@ -51,7 +51,7 @@
       ],
       "postconditions": [],
       "tags": [
-        "force_run:true"
+        "precondition_wait_timeout:60"
       ],
       "screenshot": "step_497386dc",
       "created_at": "2026-05-18T10:07:14.930016",

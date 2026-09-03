@@ -555,7 +555,7 @@
         "x": 509,
         "y": 513
       },
-      "description": "Click the \"Open\" button in the vsсuse_app_4YhGglocal app onboarding dialog within the Microsoft Teams web interface.",
+      "description": "Click the \"Open\" button in the vs\u0441use_app_4YhGglocal app onboarding dialog within the Microsoft Teams web interface.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
