@@ -91,6 +91,22 @@ cases:
         check-rag-custom-api-chat-openai,
       ]
 
+  - id: feature-local-debug-custom-api-without-openai-key
+    scenarioId: VCB-183
+    workItemIds: [31256782, 33502084]
+    steps:
+      [
+        scaffold-rag-custom-api-py-openai-deferred,
+        check-rag-custom-api-py-openai,
+        use-gpt-4o-mini-py,
+        create-python-environment,
+        redirect-openai-base-url,
+        login-m365,
+        f5-teams-local-with-openai-key,
+        open-app,
+        check-rag-custom-api-chat-openai,
+      ]
+
   - id: rag-custom-api-ts-azure-openai-remote-teams
     scenarioId: SCN-CREATE-RAG-CUSTOM-API-01
     workItemIds: [28891618]
@@ -583,6 +599,36 @@ steps:
           type: text
           value: "${{var:app_name:vscuse_app_#####}}"
 
+  scaffold-rag-custom-api-py-openai-deferred:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - question: projectType
+          value: teams-agent-and-app-type
+        - question: teamsAppType
+          value: custom-copilot-rag
+        - question: customCopilotRag
+          value: custom-copilot-rag-custom-api
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - question: apiOperations
+          type: multiSelect
+          value: all
+        - question: llmService
+          value: llm-service-openai
+        - question: openAIKey
+          type: text
+          value: deferred
+        - question: language
+          value: python
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "${{var:app_name:vscuse_app_#####}}"
+
   check-rag-custom-api-py-openai:
     type: checks
     with:
@@ -668,6 +714,14 @@ steps:
     with:
       profile: "Debug in Teams (Chrome)"
       profileSelection: first
+
+  f5-teams-local-with-openai-key:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+      runtimeInputs:
+        openAIKey: "${{secret:AZURE_OPENAI_API_KEY}}"
 
   f5-teams-remote:
     type: target

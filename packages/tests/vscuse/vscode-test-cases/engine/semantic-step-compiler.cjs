@@ -25,6 +25,8 @@ const provisionEnvironmentSkipValue = "none";
 const copilotLaunchFeatureFlag = "TEAMSFX_CEA_ENABLED=true";
 const regenerateDaActionApiSpecLocation =
   "https://raw.githubusercontent.com/SLdragon/example-openapi-spec/675fd5e0bf33ac3c4cb77a4eb51fc80461caff1d/real-no-auth.yaml";
+const pkceOAuthApiSpecLocation =
+  "https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_pkce.yaml";
 const unsupportedWorkflowVersionShareError =
   "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
 const localUserEnvironmentMutationScript = String.raw`import os
@@ -108,6 +110,59 @@ if written != [expected]:
 `;
 const projectEnvironmentMutationScriptBase64 = Buffer.from(
   projectEnvironmentMutationScript,
+  "utf8",
+).toString("base64");
+
+const armJsonTemplatesMutationScriptBase64 = Buffer.from(
+  String.raw`import json
+import os
+from pathlib import Path
+
+project_dir = Path(os.environ["PROJECT_DIR"]).resolve()
+workflow_path = project_dir / "m365agents.yml"
+workflow = workflow_path.read_text(encoding="utf-8")
+anchor = "          deploymentName: Create-resources\n"
+addition = (
+  anchor
+  + "        - path: ./infra/azure.json\n"
+  + "          parameters: ./infra/azure.parameters.test.json\n"
+  + "          deploymentName: test-json-format\n"
+)
+if workflow.count(anchor) != 1 or "azure.parameters.test.json" in workflow:
+  raise AssertionError("The Tab workflow must contain one unmodified ARM template anchor")
+
+arm_template = {
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {"resourceBaseName": {"type": "string"}},
+  "resources": [],
+  "outputs": {
+    "SQLRESOURCEID": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Sql/servers', parameters('resourceBaseName'))]",
+    }
+  },
+}
+arm_parameters = {
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {"resourceBaseName": {"value": "vscuseSql"}},
+}
+
+infra_dir = project_dir / "infra"
+template_path = infra_dir / "azure.json"
+parameters_path = infra_dir / "azure.parameters.test.json"
+workflow_path.write_text(workflow.replace(anchor, addition), encoding="utf-8")
+template_path.write_text(json.dumps(arm_template, indent=2) + "\n", encoding="utf-8")
+parameters_path.write_text(json.dumps(arm_parameters, indent=2) + "\n", encoding="utf-8")
+
+written_workflow = workflow_path.read_text(encoding="utf-8")
+if written_workflow.count("path: ./infra/azure.json") != 1:
+  raise AssertionError("The JSON ARM template entry was not written exactly once")
+if json.loads(template_path.read_text(encoding="utf-8")) != arm_template:
+  raise AssertionError("The JSON ARM template was not written completely")
+if json.loads(parameters_path.read_text(encoding="utf-8")) != arm_parameters:
+  raise AssertionError("The JSON ARM parameters were not written completely")`,
   "utf8",
 ).toString("base64");
 const typeSpecGitHubIssuesMutationScript = String.raw`import os
@@ -966,7 +1021,13 @@ function createSemanticStepCompiler() {
       }
       if (
         question.secret === true &&
-        !secretExpressionPattern.test(answer.value)
+        !secretExpressionPattern.test(answer.value) &&
+        !(
+          answer.question === "openAIKey" &&
+          answer.value === "deferred" &&
+          definition.with.template === "custom-copilot-rag-custom-api" &&
+          answerState.llmService === "llm-service-openai"
+        )
       ) {
         return failure(
           "VCB_SECRET_EXPRESSION_REQUIRED",
@@ -1059,10 +1120,14 @@ function createSemanticStepCompiler() {
         }
         error = append(
           output,
-          render(state, "quick-input/text.json.tpl", {
-            inputValue: answer.value,
-            questionTitle,
-          }),
+          answer.question === "openAIKey" && answer.value === "deferred"
+            ? render(state, "quick-input/empty-text.json.tpl", {
+                questionTitle,
+              })
+            : render(state, "quick-input/text.json.tpl", {
+                inputValue: answer.value,
+                questionTitle,
+              }),
         );
       }
       if (error) return error;
@@ -1071,6 +1136,15 @@ function createSemanticStepCompiler() {
       return failure(
         "VCB_APP_NAME_EXPRESSION_REQUIRED",
         "The scaffold must initialize app_name.",
+      );
+    }
+    if (
+      answerState.openAIKey === "deferred" &&
+      answerState.language !== "python"
+    ) {
+      return failure(
+        "VCB_DEFERRED_SECRET_INPUT_INVALID",
+        "The deferred OpenAI key is supported only by the Python Custom API template.",
       );
     }
     // The last answer starts project creation, which reopens the workspace in a
@@ -1091,6 +1165,7 @@ function createSemanticStepCompiler() {
     state.language = answerState.language;
     state.apiSpecLocation = answerState.apiSpecLocation;
     state.apiOperations = answerState.apiOperations;
+    state.deferredOpenAIKey = answerState.openAIKey === "deferred";
     return { ok: true, value: output };
   }
 
@@ -1294,8 +1369,14 @@ function createSemanticStepCompiler() {
       };
     }
     if (inputs.oauth !== undefined) {
+      const isPkceOAuth = state.completed.has(
+        "addApiAuthConfiguration:oauth-pkce",
+      );
+      const oauthQuestions = isPkceOAuth
+        ? provisionOauthQuestions.slice(0, 1)
+        : provisionOauthQuestions;
       const expectedKeys = new Set(
-        provisionOauthQuestions.map((question) => question.key),
+        oauthQuestions.map((question) => question.key),
       );
       if (
         !isRecord(inputs.oauth) ||
@@ -1308,21 +1389,22 @@ function createSemanticStepCompiler() {
       }
       if (
         !environmentExpressionPattern.test(inputs.oauth.clientId ?? "") ||
-        !secretExpressionPattern.test(inputs.oauth.clientSecret ?? "")
+        (!isPkceOAuth &&
+          !secretExpressionPattern.test(inputs.oauth.clientSecret ?? ""))
       ) {
         return failure(
           "VCB_ACCOUNT_EXPRESSION_REQUIRED",
           "OAuth provision credentials must use environment and secret expressions.",
         );
       }
-      const questions = provisionOauthQuestions.map((question) => ({
+      const questions = oauthQuestions.map((question) => ({
         ...question,
         value: inputs.oauth[question.key],
       }));
       return {
         ok: true,
         value: {
-          confirmation: provisionOauthConfirmation,
+          confirmation: isPkceOAuth ? undefined : provisionOauthConfirmation,
           questions,
         },
       };
@@ -1702,6 +1784,18 @@ function createSemanticStepCompiler() {
     }
     return render(state, "workspace/remove-file.json.tpl", {
       relativePath: inputs.path,
+    });
+  }
+
+  function compileConfigureArmJsonTemplates(state, definition) {
+    if (state.template !== "non-sso-tab" || definition.with !== undefined) {
+      return failure(
+        "VCB_ARM_JSON_TEMPLATES_INPUT_INVALID",
+        "The ARM JSON templates operation accepts no input and requires a non-SSO Tab project.",
+      );
+    }
+    return render(state, "workspace/configure-arm-json-templates.json.tpl", {
+      mutationScriptBase64: armJsonTemplatesMutationScriptBase64,
     });
   }
 
@@ -2114,6 +2208,9 @@ function createSemanticStepCompiler() {
     );
     if (error) return error;
     state.completed.add("addDaAction");
+    if (isOpenApi && inputs.url === pkceOAuthApiSpecLocation) {
+      state.completed.add("addDaAction:pkce-oauth");
+    }
     return { ok: true, value: output };
   }
 
@@ -2124,6 +2221,12 @@ function createSemanticStepCompiler() {
     const oauthAuthorizationUrl = "https://github.com/login/oauth/authorize";
     const oauthTokenUrl = "https://github.com/login/oauth/access_token";
     const oauthScope = "repo: Read repos";
+    const pkceAuthorizationUrl =
+      "https://login.microsoftonline.com/81ccb34d-48d6-48a2-82ca-04d530ee06b7/oauth2/v2.0/authorize";
+    const pkceTokenUrl =
+      "https://login.microsoftonline.com/81ccb34d-48d6-48a2-82ca-04d530ee06b7/oauth2/v2.0/token";
+    const pkceScope =
+      "api://81ccb34d-48d6-48a2-82ca-04d530ee06b/repairs_read: Read repair records";
     const isApiKeyConfiguration =
       isRecord(inputs) &&
       hasOnlyFields(
@@ -2166,13 +2269,36 @@ function createSemanticStepCompiler() {
       inputs.refreshUrl === "" &&
       inputs.scope === oauthScope &&
       inputs.pkce === false;
+    const isPkceOAuthConfiguration =
+      state.completed.has("addDaAction:pkce-oauth") &&
+      isRecord(inputs) &&
+      hasOnlyFields(
+        inputs,
+        new Set([
+          "authType",
+          "authName",
+          "authorizationUrl",
+          "tokenUrl",
+          "refreshUrl",
+          "scope",
+          "pkce",
+        ]),
+      ) &&
+      inputs.authType === "oauth" &&
+      inputs.authName === "oAuth2AuthCode" &&
+      inputs.authorizationUrl === pkceAuthorizationUrl &&
+      inputs.tokenUrl === pkceTokenUrl &&
+      inputs.refreshUrl === "" &&
+      inputs.scope === pkceScope &&
+      inputs.pkce === true;
     if (
       state.template !== "da/no-action" ||
       !state.completed.has("addDaAction") ||
       (!isApiKeyConfiguration &&
         !isBearerConfiguration &&
         !isMicrosoftEntraConfiguration &&
-        !isOAuthConfiguration)
+        !isOAuthConfiguration &&
+        !isPkceOAuthConfiguration)
     ) {
       return failure(
         "VCB_ADD_API_AUTH_INPUT_INVALID",
@@ -2268,7 +2394,7 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
-    if (isOAuthConfiguration) {
+    if (isOAuthConfiguration || isPkceOAuthConfiguration) {
       for (const [questionTitle, inputValue] of [
         ["Enter the OAuth Authorization URL", inputs.authorizationUrl],
         ["Enter the OAuth Token URL", inputs.tokenUrl],
@@ -2301,7 +2427,7 @@ function createSemanticStepCompiler() {
       error = append(
         output,
         render(state, "quick-input/single-select.json.tpl", {
-          optionLabel: "No",
+          optionLabel: inputs.pkce ? "Yes" : "No",
           questionTitle: "Enable PKCE for OAuth?",
         }),
       );
@@ -2318,6 +2444,9 @@ function createSemanticStepCompiler() {
       if (error) return error;
     }
     state.completed.add(`addApiAuthConfiguration:${inputs.authType}`);
+    if (isPkceOAuthConfiguration) {
+      state.completed.add("addApiAuthConfiguration:oauth-pkce");
+    }
     return { ok: true, value: output };
   }
 
@@ -2683,7 +2812,20 @@ function createSemanticStepCompiler() {
   }
 
   function compileTarget(state, definition) {
-    const profileTitle = definition.with?.profile;
+    const inputs = definition.with;
+    if (
+      !isRecord(inputs) ||
+      !hasOnlyFields(
+        inputs,
+        new Set(["profile", "profileSelection", "runtimeInputs"]),
+      )
+    ) {
+      return failure(
+        "VCB_TARGET_INPUT_INVALID",
+        "The target contains an unsupported input.",
+      );
+    }
+    const profileTitle = inputs.profile;
     const profile = targetAdapters[profileTitle];
     if (profile === undefined) {
       return failure(
@@ -2713,6 +2855,24 @@ function createSemanticStepCompiler() {
         "The target is missing a required preceding operation.",
       );
     }
+    const runtimeInputs = inputs.runtimeInputs;
+    const requiresDeferredOpenAIKey = state.deferredOpenAIKey === true;
+    if (runtimeInputs !== undefined || requiresDeferredOpenAIKey) {
+      if (
+        !requiresDeferredOpenAIKey ||
+        state.template !== "custom-copilot-rag-custom-api" ||
+        state.language !== "python" ||
+        profileTitle !== "Debug in Teams (Chrome)" ||
+        !isRecord(runtimeInputs) ||
+        !hasOnlyFields(runtimeInputs, new Set(["openAIKey"])) ||
+        !secretExpressionPattern.test(runtimeInputs.openAIKey ?? "")
+      ) {
+        return failure(
+          "VCB_TARGET_RUNTIME_INPUT_INVALID",
+          "The target runtime input does not match a deferred Python Custom API OpenAI key.",
+        );
+      }
+    }
 
     const output = [];
     let error = append(
@@ -2722,7 +2882,7 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
-    const profileSelectionId = definition.with?.profileSelection;
+    const profileSelectionId = inputs.profileSelection;
     if (profileSelectionId === undefined) {
       return failure(
         "VCB_TARGET_PROFILE_SELECTION_REQUIRED",
@@ -2748,6 +2908,16 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    if (requiresDeferredOpenAIKey) {
+      error = append(
+        output,
+        render(state, "quick-input/deferred-text.json.tpl", {
+          inputValue: runtimeInputs.openAIKey,
+          questionTitle: "OpenAI Key",
+        }),
+      );
+      if (error) return error;
+    }
     if (profile.browserAuthentication !== undefined) {
       const credentials = state.credentials.get(
         profile.browserAuthentication.credentials,
@@ -3218,6 +3388,8 @@ function createSemanticStepCompiler() {
         return compileProjectEnvironment(state, definition);
       case "removeWorkspaceFile":
         return compileRemoveWorkspaceFile(state, definition);
+      case "configureArmJsonTemplates":
+        return compileConfigureArmJsonTemplates(state, definition);
       case "workflowVersion":
         return compileWorkflowVersion(state, definition);
       case "configureTypeSpecAction":
