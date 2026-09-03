@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 28,
+    "total_steps": 29,
     "created_at": "2026-06-15T08:16:25.991733",
     "name": "Feature DA No Action Add PKCE OAuth Auth Configurations",
     "description": {
@@ -52,6 +52,7 @@
       "plan_a85ba056",
       "plan_a6628e50",
       "plan_r_1021_031941",
+      "step_open_app_details_chat",
       "step_f0cd8816",
       "step_ae961d90",
       "step_7e99e581",
@@ -631,6 +632,28 @@
       ],
       "screenshot": "step_da80314a",
       "created_at": "2026-06-15T08:16:26.231100",
+      "plan_id": "plan_f1b0cfbf"
+    },
+    {
+      "step_id": "step_open_app_details_chat",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 288,
+        "y": 214
+      },
+      "description": "Click the visible blue \"Open\" button in the app-details modal to open the provisioned agent chat in Microsoft 365 Copilot.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-09-03T02:13:50.618000",
       "plan_id": "plan_f1b0cfbf"
     },
     {
