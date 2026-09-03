@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2.0,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 32,
+    "total_steps": 28,
     "created_at": "2026-06-15T08:16:25.991733",
     "name": "Feature DA No Action Add PKCE OAuth Auth Configurations",
     "description": {
@@ -52,10 +52,6 @@
       "plan_a85ba056",
       "plan_a6628e50",
       "plan_r_1021_031941",
-      "step_assert_app_details_chat",
-      "step_open_app_details_chat",
-      "step_assert_app_details_open_chat",
-      "step_confirm_open_app_details_chat",
       "step_f0cd8816",
       "step_ae961d90",
       "step_7e99e581",
@@ -635,94 +631,6 @@
       ],
       "screenshot": "step_da80314a",
       "created_at": "2026-06-15T08:16:26.231100",
-      "plan_id": "plan_f1b0cfbf"
-    },
-    {
-      "step_id": "step_assert_app_details_chat",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the app details popup is visible with its primary action button below the app name.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "step_retry_timeout: 180"
-      ],
-      "screenshot": null,
-      "created_at": "2026-09-03T02:29:09.554000",
-      "plan_id": "plan_f1b0cfbf"
-    },
-    {
-      "step_id": "step_open_app_details_chat",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 265,
-        "y": 214
-      },
-      "description": "Click the visible blue \"Add\" or \"Open\" button in the Microsoft 365 Copilot app details dialog.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "ocr:true"
-      ],
-      "screenshot": "",
-      "created_at": "2026-09-03T02:13:50.618000",
-      "plan_id": "plan_f1b0cfbf"
-    },
-    {
-      "step_id": "step_assert_app_details_open_chat",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the dialog that the app details popup opened is visible with its Open button.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "step_retry_timeout: 180"
-      ],
-      "screenshot": null,
-      "created_at": "2026-09-03T02:29:09.554000",
-      "plan_id": "plan_f1b0cfbf"
-    },
-    {
-      "step_id": "step_confirm_open_app_details_chat",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 529,
-        "y": 506
-      },
-      "description": "Click the blue \"Open\" button in the \"Added successfully!\" or \"Let's go\" dialog to open the provisioned agent chat in Microsoft 365 Copilot.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "ocr:true"
-      ],
-      "screenshot": "",
-      "created_at": "2026-09-03T02:29:09.554000",
       "plan_id": "plan_f1b0cfbf"
     },
     {
