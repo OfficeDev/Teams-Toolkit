@@ -27,12 +27,11 @@ on:
       - completed
 
 permissions:
-  contents: write
+  contents: read
   actions: read
-  pull-requests: write
-  id-token: write
+  pull-requests: read
 
-jobs: 
+jobs:
   pr-title:
     if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
@@ -72,23 +71,27 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{github.event.pull_request.head.repo.full_name}}
-      
+
       - name: setup project
         uses: ./.github/actions/setup-project
 
       - name: lint and format check files in PR on Fork
-        if: ${{ github.event.pull_request.head.repo.full_name != 'OfficeDev/TeamsFx' }}
+        if: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
         run: |
-          git remote add upstream https://github.com/OfficeDev/TeamsFx.git
-          git fetch upstream ${{ github.event.pull_request.base.ref }}
+          git remote add upstream "https://github.com/${{ github.repository }}.git"
+          git fetch upstream "$BASE_BRANCH"
           VAR=$(realpath .github/scripts/lint-pr.sh)
-          pnpm -r exec -- bash $VAR upstream/${{ github.event.pull_request.base.ref }}
+          pnpm -r exec -- bash "$VAR" "upstream/$BASE_BRANCH"
 
       - name: lint and format check files in PR on local
-        if: ${{ github.event.pull_request.head.repo.full_name == 'OfficeDev/TeamsFx' }}
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
         run: |
           VAR=$(realpath .github/scripts/lint-pr.sh)
-          pnpm -r exec -- bash $VAR origin/${{ github.event.pull_request.base.ref }}
+          pnpm -r exec -- bash "$VAR" "origin/$BASE_BRANCH"
 
       - name: Check if there are changes
         id: changes
@@ -113,7 +116,7 @@ jobs:
         shell: bash
         env:
           CI: true
-          
+
   check-yaml-lint:
     if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
@@ -130,22 +133,28 @@ jobs:
           pip install yamllint
           npm install mustache -g
           echo '{"appName":"test"}'>test.json
-      
+
       - name: check origin or remote
         id: remote
+        env:
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          CURRENT_REPOSITORY: ${{ github.repository }}
         run: |
-          if [ ${{ github.event.pull_request.head.repo.full_name == 'OfficeDev/TeamsFx' }} ]
+          if [ "$HEAD_REPOSITORY" = "$CURRENT_REPOSITORY" ]
           then
             echo "target=origin" >> $GITHUB_OUTPUT
           else
             echo "target=remote" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: check yaml lint origin
+        env:
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          TARGET_REMOTE: ${{ steps.remote.outputs.target }}
         run: |
-          TRAGET=${{steps.remote.outputs.target}}/${{ github.event.pull_request.base.ref }}
-          YMLTPL=$(git diff --diff-filter=MARC $TRAGET...HEAD --name-only -- templates | grep -E '.yml.tpl$'|xargs)
-          echo $YMLTPL
+          TARGET="$TARGET_REMOTE/$BASE_BRANCH"
+          YMLTPL=$(git diff --diff-filter=MARC "$TARGET...HEAD" --name-only -- templates | grep -E '.yml.tpl$'|xargs)
+          echo "$YMLTPL"
           if [ ! -z "$YMLTPL" ]
           then
               for obj in "$YMLTPL"
@@ -160,15 +169,12 @@ jobs:
     steps:
       - shell: bash
         if: ${{ github.event_name == 'pull_request'}}
+        env:
+          PR_COMMIT_COUNT: ${{ github.event.pull_request.commits }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
-            echo "depth=$(($(jq length <<< '${{ toJson(github.event.commits) }}') + 1))" >> $GITHUB_ENV
-            echo "branch=${{ github.ref_name }}" >> $GITHUB_ENV
-          fi
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "depth=$((${{ github.event.pull_request.commits }} + 1))" >> $GITHUB_ENV
-            echo "branch=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
-          fi
+          echo "depth=$((PR_COMMIT_COUNT + 1))" >> "$GITHUB_ENV"
+          echo "branch=$PR_HEAD_REF" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         if: ${{ github.event_name == 'pull_request'}}
         with:
@@ -192,6 +198,12 @@ jobs:
   generate-changelog:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' }}
+    permissions:
+      contents: write
+    env:
+      TARGET_BRANCH: ${{ github.event.inputs.target-branch }}
+      SOURCE_BRANCH: ${{ github.event.inputs.source-branch }}
+      GITHUB_ACTOR_NAME: ${{ github.actor }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -204,8 +216,8 @@ jobs:
         id: update-changelog
         working-directory: ./
         run: |
-          git fetch origin ${{ github.event.inputs.source-branch }}:${{ github.event.inputs.source-branch }}
-          head=$(git merge-base ${{ github.event.inputs.target-branch }} ${{ github.event.inputs.source-branch }})
+          git fetch origin "$SOURCE_BRANCH:$SOURCE_BRANCH"
+          head=$(git merge-base "$TARGET_BRANCH" "$SOURCE_BRANCH")
           tempfile=$(mktemp)
           REPO_URL="https://github.com/OfficeDev/Teams-toolkit"
 
@@ -218,7 +230,7 @@ jobs:
           history_dotnet_sdk_feat=$(git log --pretty=format:"- [%s]($REPO_URL/commit/%h)" $head...HEAD -- ./packages/dotnet-sdk | grep "feat:" || true)
 
           cat <<EOF > "$tempfile"
-          ### RELEASE ${{ github.event.inputs.source-branch }}...${{ github.event.inputs.target-branch }}
+          ### RELEASE $SOURCE_BRANCH...$TARGET_BRANCH
           ### Feature Commits
 
           #### Fx-core
@@ -273,14 +285,14 @@ jobs:
           cat "$tempfile"
           cat ./packages/vscode-extension/PRERELEASE.md >> "$tempfile"
           mv "$tempfile" ./packages/vscode-extension/PRERELEASE.md
-          git checkout -b changelog/${{ github.event.inputs.target-branch }}
+          git checkout -b "changelog/$TARGET_BRANCH"
           echo "=== changelog file path ==="
-          echo "https://github.com/OfficeDev/teams-toolkit/blob/changelog/${{ github.event.inputs.source-branch }}/packages/vscode-extension/PRERELEASE.md"
+          echo "https://github.com/OfficeDev/teams-toolkit/blob/changelog/$SOURCE_BRANCH/packages/vscode-extension/PRERELEASE.md"
 
-          body="<h2>CHANGELOG ${{ github.event.inputs.source-branch }} ... ${{ github.event.inputs.target-branch }}</h2><h3><a href='https:\/\/github.com\/OfficeDev\/teams-toolkit\/blob\/changelog\/${{ github.event.inputs.target-branch }}\/packages\/vscode-extension\/PRERELEASE.md'>Click Here to Open Changelog File</a></h3>"
-          subject="[Changelog] ${{ github.event.inputs.source-branch }} ... ${{ github.event.inputs.target-branch }}"
+          body="<h2>CHANGELOG $SOURCE_BRANCH ... $TARGET_BRANCH</h2><h3><a href='https:\/\/github.com\/OfficeDev\/teams-toolkit\/blob\/changelog\/$TARGET_BRANCH\/packages\/vscode-extension\/PRERELEASE.md'>Click Here to Open Changelog File</a></h3>"
+          subject="[Changelog] $SOURCE_BRANCH ... $TARGET_BRANCH"
 
-          github_user=${{ github.actor }}
+          github_user="$GITHUB_ACTOR_NAME"
           echo "github_user=$github_user"
           accounts_file="./.github/accounts.json"
           email=$(jq -r --arg user "$github_user" '.[$user]' "$accounts_file")
@@ -293,14 +305,16 @@ jobs:
 
       - name: setup user info
         working-directory: ./
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          user_info=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/users/${{ github.actor }})
-          git config --global user.email $(echo $user_info | jq -r '.name')
-          git config --global user.name $(echo $user_info | jq -r '.name')
+          user_info=$(curl -s -H "Authorization: token $GH_TOKEN" "https://api.github.com/users/$GITHUB_ACTOR_NAME")
+          git config --global user.email "$(echo "$user_info" | jq -r '.name')"
+          git config --global user.name "$(echo "$user_info" | jq -r '.name')"
           git add ./packages/vscode-extension/PRERELEASE.md
           git commit -m "dosc: update changelog for release"
-          git push --force origin changelog/${{ github.event.inputs.target-branch }}
-          
+          git push --force origin "changelog/$TARGET_BRANCH"
+
       - name: Send E-mail
         uses: ./.github/actions/send-email-report
         env:
