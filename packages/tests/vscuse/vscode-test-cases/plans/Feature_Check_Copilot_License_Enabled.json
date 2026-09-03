@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 15,
+    "total_steps": 16,
     "created_at": "2026-06-17T02:10:05.016638",
     "name": "Feature Check Copilot License Enabled",
     "description": {
@@ -27,6 +27,7 @@
       "step_a0026de5",
       "step_78a597ab",
       "step_47935ca7",
+      "step_6b12e8d4",
       "step_ed29b905",
       "step_b16aa4f5",
       "step_c51b1af7",
@@ -36,7 +37,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-09-03T02:43:47.577000"
+    "updated_at": "2026-09-03T02:50:05.808000"
   },
   "steps": [
     {
@@ -48,7 +49,7 @@
         "x": 951,
         "y": 130
       },
-      "description": "Click the language selection button (flag icon) in the top right corner of the VS Code welcome screen to open the language options.",
+      "description": "Click the Close (X) button in the top-right corner of the VS Code welcome sign-in dialog to dismiss it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -210,7 +211,7 @@
         "x": 976,
         "y": 457
       },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the bottom right of the Visual Studio Code interface to open the Microsoft authentication browser.",
+      "description": "Click the \"Sign in\" button in the Microsoft 365 notification to open the Microsoft 365 developer sandbox prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -221,6 +222,32 @@
       "tags": [],
       "screenshot": "step_47935ca7",
       "created_at": "2026-06-17T02:19:55.488096",
+      "plan_id": "plan_80b368dd"
+    },
+    {
+      "step_id": "step_6b12e8d4",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 762,
+        "y": 97
+      },
+      "description": "Click the \"Sign in\" button in the Microsoft 365 developer sandbox prompt to launch and activate the Microsoft authentication browser.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [
+        "dhash:762:97:16:5:24b1a72ba9aba343",
+        "dhash:762:97:96:5:0008304b0f344900",
+        "dhash:762:97:0:10:9c68332223232421"
+      ],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-09-03T02:50:05.808000",
       "plan_id": "plan_80b368dd"
     },
     {
