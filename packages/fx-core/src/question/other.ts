@@ -68,6 +68,19 @@ import {
   validateMCPServerUrl,
 } from "./scaffold/vsc/teamsProjectTypeNode";
 
+function mcpForDAAddAuthCredentialNodes(): IQTreeNode[] {
+  return MCPForDAAuthCredentialNodes().map((node) => {
+    const authTypeCondition = node.condition;
+    return {
+      ...node,
+      condition: (inputs: Inputs) =>
+        featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT) &&
+        !featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled) &&
+        (authTypeCondition === undefined || authTypeCondition(inputs)),
+    };
+  });
+}
+
 export function convertAadToNewSchemaQuestionNode(): IQTreeNode {
   return {
     data: { type: "group" },
@@ -755,11 +768,7 @@ export function addPluginQuestionNode(): IQTreeNode {
               staticOptions: MCPForDAAddAuthTypeStaticOptions(),
               default: "oauth",
             },
-            children:
-              featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT) &&
-              !featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)
-                ? MCPForDAAuthCredentialNodes()
-                : [],
+            children: mcpForDAAddAuthCredentialNodes(),
           },
         ],
       },

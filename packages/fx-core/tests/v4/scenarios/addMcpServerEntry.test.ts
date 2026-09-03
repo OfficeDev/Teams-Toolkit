@@ -208,7 +208,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
     assert.equal(warned[0][1], "repair the oauth urls");
   });
 
-  it("SCN-ADD-MCP-12: v4 add questions collect auth type but defer credentials", () => {
+  it("SCN-ADD-MCP-12: v4 add questions collect auth type but defer credentials", async () => {
     vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       return flag === FeatureFlags.V4Enabled || flag === FeatureFlags.MCPForDADT;
     });
@@ -223,6 +223,18 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
 
     assert.isDefined(serverUrlNode);
     assert.isDefined(authTypeNode);
-    assert.lengthOf(authTypeNode?.children ?? [], 0);
+    const credentialNodes = authTypeNode?.children ?? [];
+    assert.lengthOf(credentialNodes, 3);
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+    };
+    for (const node of credentialNodes) {
+      const condition = node.condition;
+      if (typeof condition !== "function") {
+        assert.fail(`expected ${node.data.name} to have a condition`);
+      }
+      assert.isFalse(await condition(inputs));
+    }
   });
 });

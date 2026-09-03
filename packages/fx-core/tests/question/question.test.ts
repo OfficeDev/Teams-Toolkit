@@ -1223,6 +1223,51 @@ describe("addPluginQuestionNode", async () => {
     mockedEnvRestore();
   });
 
+  it("keeps MCP credential nodes in the CLI contract when V4 is enabled", () => {
+    let dadtEnabled = true;
+    let v4Enabled = true;
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      if (flag === FeatureFlags.MCPForDADT) return dadtEnabled;
+      if (flag === FeatureFlags.V4Enabled) return v4Enabled;
+      return false;
+    });
+
+    const serverUrlNode = addPluginQuestionNode().children!.find(
+      (child) => child.data.name === QuestionNames.MCPForDAServerUrl
+    );
+    const authTypeNode = serverUrlNode!.children!.find(
+      (child) => child.data.name === QuestionNames.MCPForDAAuthType
+    );
+    const credentialNodes = authTypeNode!.children!;
+
+    assert.sameMembers(
+      credentialNodes.map((node) => node.data.name),
+      [
+        QuestionNames.MCPForDAClientId,
+        QuestionNames.MCPForDAClientSecret,
+        QuestionNames.MCPForDAScopes,
+      ]
+    );
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+    };
+    credentialNodes.forEach((node) => {
+      assert.isFalse((node.condition as ConditionFunc)(inputs));
+    });
+
+    v4Enabled = false;
+    dadtEnabled = false;
+    credentialNodes.forEach((node) => {
+      assert.isFalse((node.condition as ConditionFunc)(inputs));
+    });
+
+    dadtEnabled = true;
+    credentialNodes.forEach((node) => {
+      assert.isTrue((node.condition as ConditionFunc)(inputs));
+    });
+  });
+
   it("should include inputOrSearchAPISpecNode when KiotaNPMIntegration is enabled", async () => {
     const sandbox = vi;
     try {
