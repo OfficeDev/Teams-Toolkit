@@ -48,6 +48,13 @@ export const AddPluginOptions: CLICommandOption[] = [
     description: "Select OpenAPI Document",
   },
   {
+    name: "api-key",
+    type: "string",
+    shortName: "k",
+    description: "API Key (optional)",
+    required: false,
+  },
+  {
     name: "mcp-da-server-url",
     type: "string",
     description: "MCP Server URL",
@@ -78,6 +85,12 @@ export const AddPluginOptions: CLICommandOption[] = [
     name: "mcp-da-scopes",
     type: "string",
     description: "OAuth Scopes (optional)",
+    required: false,
+  },
+  {
+    name: "mcp-da-api-key",
+    type: "string",
+    description: "API Key (optional)",
     required: false,
   },
   {

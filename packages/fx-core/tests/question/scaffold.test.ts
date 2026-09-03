@@ -48,6 +48,7 @@ import {
 } from "../../src/question/scaffold/vsc/createRootNode";
 import { daProjectTypeNode } from "../../src/question/scaffold/vsc/daProjectTypeNode";
 import * as templateHelper from "../../src/component/generator/templateHelper";
+import { addPluginQuestionNode, openApiApiKeyNode } from "../../src/question/other";
 import {
   getRootProjectTypeNode,
   getTdpProjectTypeNode,
@@ -419,13 +420,61 @@ describe("MCPForDAAddAuthTypeStaticOptions", () => {
 });
 
 describe("MCPForDAAuthCredentialNodes", () => {
-  const [clientIdNode, clientSecretNode, scopesNode] = MCPForDAAuthCredentialNodes();
+  const [clientIdNode, clientSecretNode, scopesNode, apiKeyNode] = MCPForDAAuthCredentialNodes();
 
-  it("returns three credential nodes", () => {
+  it("returns OAuth and API-key credential nodes", () => {
     assert.equal((clientIdNode.data as any).name, QuestionNames.MCPForDAClientId);
     assert.equal((clientSecretNode.data as any).name, QuestionNames.MCPForDAClientSecret);
     assert.equal((scopesNode.data as any).name, QuestionNames.MCPForDAScopes);
+    assert.equal((apiKeyNode.data as any).name, QuestionNames.MCPForDAApiKey);
   });
+
+  it("SCN-ADD-MCP-12: API key is optional and shown for bearer-token on CLI only", () => {
+    const condition = apiKeyNode.condition as ConditionFunc;
+    assert.isTrue(
+      condition({
+        platform: Platform.CLI,
+        [QuestionNames.MCPForDAAuthType]: "bearer-token",
+      } as Inputs)
+    );
+    assert.isFalse(
+      condition({
+        platform: Platform.VSCode,
+        [QuestionNames.MCPForDAAuthType]: "bearer-token",
+      } as Inputs)
+    );
+    assert.isFalse(
+      condition({
+        platform: Platform.CLI,
+        [QuestionNames.MCPForDAAuthType]: "oauth",
+      } as Inputs)
+    );
+    assert.isTrue((apiKeyNode.data as any).password);
+    assert.isFalse((apiKeyNode.data as any).required);
+  });
+
+  for (const v4Enabled of [false, true]) {
+    it(`SCN-ADD-MCP-12: composes the API-key question when v4 is ${v4Enabled ? "on" : "off"}`, () => {
+      vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+        return flag === FeatureFlags.MCPForDADT || (flag === FeatureFlags.V4Enabled && v4Enabled);
+      });
+      const root = addPluginQuestionNode();
+      const serverUrlNode = root.children?.find(
+        (node) => (node.data as any).name === QuestionNames.MCPForDAServerUrl
+      );
+      const authTypeNode = serverUrlNode?.children?.find(
+        (node) => (node.data as any).name === QuestionNames.MCPForDAAuthType
+      );
+      const credentialNames = authTypeNode?.children?.map((node) => (node.data as any).name);
+
+      assert.include(credentialNames, QuestionNames.MCPForDAApiKey);
+      if (v4Enabled) {
+        assert.notInclude(credentialNames, QuestionNames.MCPForDAClientSecret);
+      } else {
+        assert.include(credentialNames, QuestionNames.MCPForDAClientSecret);
+      }
+    });
+  }
 
   it("client id node is shown for oauth and entra-sso only", () => {
     const cond = clientIdNode.condition as ConditionFunc;
@@ -508,6 +557,39 @@ describe("MCPForDAAuthCredentialNodes", () => {
       cond({ platform: Platform.VSCode, [QuestionNames.MCPForDAAuthType]: "entra-sso" } as Inputs)
     );
     assert.isFalse((scopesNode.data as any).required);
+  });
+});
+
+describe("openApiApiKeyNode", () => {
+  it("SCN-ADD-OPENAPI-KEY-01: is optional and shown only for CLI API-key operations", () => {
+    const node = openApiApiKeyNode();
+    const condition = node.condition as ConditionFunc;
+
+    assert.isTrue(
+      condition({
+        platform: Platform.CLI,
+        [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+        apiAuthData: [{ serverUrl: "https://example.com", authType: "apiKey" }],
+      } as Inputs)
+    );
+    assert.isFalse(
+      condition({
+        platform: Platform.VSCode,
+        [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+        apiAuthData: [{ serverUrl: "https://example.com", authType: "apiKey" }],
+      } as Inputs)
+    );
+    assert.isFalse(
+      condition({
+        platform: Platform.CLI,
+        [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+        apiAuthData: [{ serverUrl: "https://example.com", authType: "oauth2" }],
+      } as Inputs)
+    );
+    assert.equal((node.data as any).name, QuestionNames.ApiSpecApiKey);
+    assert.equal((node.data as any).title, "API Key (optional)");
+    assert.isTrue((node.data as any).password);
+    assert.isFalse((node.data as any).required);
   });
 });
 

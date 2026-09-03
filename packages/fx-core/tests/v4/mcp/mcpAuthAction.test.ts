@@ -132,6 +132,7 @@ describe("v4 MCP auth YAML action", () => {
       ...BASE_ARGS,
       authType: "bearer-token",
       endpoints: {},
+      credentialEnvNames: { apiKey: "SECRET_MCP_DA_API_KEY_APIGITHUBC" },
     });
 
     assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
@@ -141,6 +142,7 @@ describe("v4 MCP auth YAML action", () => {
         name: "apigithubc",
         appId: "${{TEAMS_APP_ID}}",
         baseUrl: "https://api.github.com/mcp",
+        primaryClientSecret: "${{SECRET_MCP_DA_API_KEY_APIGITHUBC}}",
       },
       writeToEnvironmentFile: { registrationId: "MCP_DA_AUTH_ID_APIGITHUBC" },
     });

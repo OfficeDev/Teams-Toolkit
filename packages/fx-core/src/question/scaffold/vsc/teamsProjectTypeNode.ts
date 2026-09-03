@@ -623,7 +623,22 @@ export function MCPForDAAuthCredentialNodes(): IQTreeNode[] {
       required: false,
     },
   };
-  return [clientIdNode, clientSecretNode, scopesNode];
+  return [clientIdNode, clientSecretNode, scopesNode, MCPForDAApiKeyNode()];
+}
+
+export function MCPForDAApiKeyNode(): IQTreeNode {
+  return {
+    condition: (inputs: Inputs) =>
+      inputs.platform === Platform.CLI && inputs[QuestionNames.MCPForDAAuthType] === "bearer-token",
+    data: {
+      name: QuestionNames.MCPForDAApiKey,
+      type: "text",
+      password: true,
+      title: getLocalizedString("core.createProjectQuestion.mcpForDa.ApiKey.title"),
+      placeholder: getLocalizedString("core.createProjectQuestion.mcpForDa.ApiKey.placeholder"),
+      required: false,
+    },
+  };
 }
 
 /**

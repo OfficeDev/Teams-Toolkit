@@ -82,7 +82,12 @@ describe("commands/common MCP-for-DA gating", () => {
   });
 
   describe("gateMCPDACredentialOptions", () => {
-    const credentialNames = ["mcp-da-client-id", "mcp-da-client-secret", "mcp-da-scopes"];
+    const credentialNames = [
+      "mcp-da-client-id",
+      "mcp-da-client-secret",
+      "mcp-da-scopes",
+      "mcp-da-api-key",
+    ];
 
     function baseOptions(): CLICommandOption[] {
       return [authTypeOption()];

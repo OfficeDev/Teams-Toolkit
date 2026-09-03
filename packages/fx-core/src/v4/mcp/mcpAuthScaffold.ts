@@ -20,9 +20,7 @@ import { deriveMcpServerName } from "../runtime/whitelist";
  */
 
 const SOURCE = "Scaffold";
-
-/** MCP create scaffolding persists collected credentials to the default development environment. */
-const CREATE_ENVIRONMENT = "dev";
+const STANDARD_ENVIRONMENTS = ["dev", "local"];
 
 /** Indirection seam so unit tests can stub the network probes on a plain object. */
 export const mcpAuthScaffoldDeps = {
@@ -45,6 +43,7 @@ function mcpAuthIdentifiers(mcpServerUrl: string): {
   clientId: string;
   clientSecret: string;
   scope: string;
+  apiKey: string;
 } {
   const namespace = deriveMcpServerName(mcpServerUrl);
   const uppercaseNamespace = namespace.toUpperCase();
@@ -54,6 +53,7 @@ function mcpAuthIdentifiers(mcpServerUrl: string): {
     clientId: `MCP_DA_OAUTH_CLIENT_ID_${uppercaseNamespace}`,
     clientSecret: `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_${uppercaseNamespace}`,
     scope: `MCP_DA_OAUTH_SCOPE_${uppercaseNamespace}`,
+    apiKey: `SECRET_MCP_DA_API_KEY_${uppercaseNamespace}`,
   };
 }
 
@@ -120,7 +120,12 @@ export async function injectMcpAuthAction(
     authType: string;
     mcpServerUrl: string;
     optionalYmlPaths?: string[];
-    credentialFields?: { clientId: boolean; clientSecret: boolean; scope: boolean };
+    credentialFields?: {
+      clientId: boolean;
+      clientSecret: boolean;
+      scope: boolean;
+      apiKey?: boolean;
+    };
   }
 ): Promise<Result<void, FxError>> {
   const current = ctx.read(args.ymlPath);
@@ -164,6 +169,9 @@ export async function injectMcpAuthAction(
       ...(args.authType === "entra-sso" && args.credentialFields?.clientId
         ? { credentialEnvNames: { clientId: identifiers.clientId } }
         : {}),
+      ...(args.authType === "bearer-token" && args.credentialFields?.apiKey
+        ? { credentialEnvNames: { apiKey: identifiers.apiKey } }
+        : {}),
     });
     if (injectResult.isErr()) {
       return err(injectResult.error);
@@ -191,7 +199,7 @@ export async function injectMcpAuthAction(
  * Persist the deterministic registration placeholder and the static credentials collected during
  * create. The runtime routes `SECRET_*` through its encrypted user-environment storage.
  */
-export function persistMcpAuthRegistrationEnv(
+export async function persistMcpAuthRegistrationEnv(
   ctx: StepContext,
   args: {
     authType: string;
@@ -200,6 +208,7 @@ export function persistMcpAuthRegistrationEnv(
     oauthClientSecret?: string;
     oauthScopes?: string;
     entraClientId?: string;
+    apiKey?: string;
   }
 ): Promise<Result<void, FxError>> {
   const identifiers = mcpAuthIdentifiers(args.mcpServerUrl);
@@ -216,6 +225,18 @@ export function persistMcpAuthRegistrationEnv(
     }
   } else if (args.authType === "entra-sso" && args.entraClientId !== undefined) {
     values[identifiers.clientId] = args.entraClientId;
+  } else if (args.authType === "bearer-token" && args.apiKey?.trim()) {
+    values[identifiers.apiKey] = args.apiKey.trim();
   }
-  return ctx.writeEnvironment(CREATE_ENVIRONMENT, values);
+  const existingEnvironments = STANDARD_ENVIRONMENTS.filter(
+    (environment) => ctx.read(`env/.env.${environment}`) !== undefined
+  );
+  const targetEnvironments = existingEnvironments.length > 0 ? existingEnvironments : ["dev"];
+  for (const environment of targetEnvironments) {
+    const writeResult = await ctx.writeEnvironment(environment, values);
+    if (writeResult.isErr()) {
+      return err(writeResult.error);
+    }
+  }
+  return ok(undefined);
 }
