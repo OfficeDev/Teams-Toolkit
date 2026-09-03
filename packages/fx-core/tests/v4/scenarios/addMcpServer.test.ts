@@ -93,6 +93,10 @@ interface RunOptions {
   authType?: string;
   teamsManifestPath?: string;
   apiKey?: string;
+  oauthClientId?: string;
+  oauthClientSecret?: string;
+  oauthScopes?: string;
+  entraClientId?: string;
 }
 
 async function run(options: RunOptions = {}): Promise<{
@@ -109,6 +113,12 @@ async function run(options: RunOptions = {}): Promise<{
       teamsManifestPath,
       authType,
       ...(options.apiKey !== undefined ? { apiKey: options.apiKey } : {}),
+      ...(options.oauthClientId !== undefined ? { oauthClientId: options.oauthClientId } : {}),
+      ...(options.oauthClientSecret !== undefined
+        ? { oauthClientSecret: options.oauthClientSecret }
+        : {}),
+      ...(options.oauthScopes !== undefined ? { oauthScopes: options.oauthScopes } : {}),
+      ...(options.entraClientId !== undefined ? { entraClientId: options.entraClientId } : {}),
     },
     callerFloor: { appName: "Existing Agent", language: "common" },
     existing: [
@@ -219,7 +229,15 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
   it("SCN-ADD-MCP-09: entry params skip the prefilled URL and selected manifest path", async () => {
     assert.isTrue(isRecord(descriptor));
     const entry = recordProperty(descriptor, "entry");
-    assert.deepStrictEqual(entry.params, ["mcpServerUrl", "teamsManifestPath", "apiKey"]);
+    assert.deepStrictEqual(entry.params, [
+      "mcpServerUrl",
+      "teamsManifestPath",
+      "apiKey",
+      "oauthClientId",
+      "oauthClientSecret",
+      "oauthScopes",
+      "entraClientId",
+    ]);
 
     const mcpServerUrlQuestion = questionItems(questions).find(
       (question) => question.name === "mcpServerUrl"
@@ -242,23 +260,45 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.isUndefined(questionItems(questions).find((question) => question.name === "apiKey"));
   });
 
-  it("SCN-ADD-MCP-10: static auth defers credentials to provision", async () => {
+  it("SCN-ADD-MCP-10: static auth persists credentials supplied during add", async () => {
     assert.isTrue(isRecord(descriptor));
     const properties = recordProperty(recordProperty(descriptor, "optionsSchema"), "properties");
-    assert.notProperty(properties, "oauthClientId");
-    assert.notProperty(properties, "oauthClientSecret");
-    assert.notProperty(properties, "oauthScopes");
-    assert.notProperty(properties, "entraClientId");
+    assert.property(properties, "oauthClientId");
+    assert.property(properties, "oauthClientSecret");
+    assert.property(properties, "oauthScopes");
+    assert.property(properties, "entraClientId");
 
-    for (const authType of ["oauth", "entra-sso"]) {
-      const { files } = await run({ authType });
-      const yml = text(files, YML_PATH);
-      assert.include(yml, "uses: oauth/register");
-      assert.notInclude(yml, "clientId:");
-      assert.notInclude(yml, "clientSecret:");
-      assert.notInclude(yml, "MCP_DA_OAUTH_");
-      assert.notInclude(yml, "SECRET_MCP_DA_OAUTH_");
-    }
+    const oauth = await run({
+      authType: "oauth",
+      oauthClientId: "oauth-client-id",
+      oauthClientSecret: "oauth-client-secret",
+      oauthScopes: "scope.one scope.two",
+    });
+    const oauthYml = text(oauth.files, YML_PATH);
+    assert.include(oauthYml, "clientId: ${{MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC}}");
+    assert.include(oauthYml, "clientSecret: ${{SECRET_MCP_DA_OAUTH_CLIENT_SECRET_APIGITHUBC}}");
+    assert.include(oauthYml, "scope: ${{MCP_DA_OAUTH_SCOPE_APIGITHUBC}}");
+    assert.include(
+      text(oauth.files, ENV_PATH),
+      "MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC=oauth-client-id"
+    );
+    assert.include(
+      text(oauth.files, ENV_PATH),
+      "MCP_DA_OAUTH_SCOPE_APIGITHUBC=scope.one scope.two"
+    );
+    assert.equal(
+      oauth.secretsByEnvironment.get("dev")?.get("SECRET_MCP_DA_OAUTH_CLIENT_SECRET_APIGITHUBC"),
+      "oauth-client-secret"
+    );
+
+    const entra = await run({ authType: "entra-sso", entraClientId: "entra-client-id" });
+    const entraYml = text(entra.files, YML_PATH);
+    assert.include(entraYml, "clientId: ${{MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC}}");
+    assert.notInclude(entraYml, "clientSecret:");
+    assert.include(
+      text(entra.files, ENV_PATH),
+      "MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC=entra-client-id"
+    );
   });
 
   it("SCN-ADD-MCP-15 and SCN-ADD-MCP-16: bearer-token uses API-key auth without OAuth data", async () => {

@@ -21,7 +21,7 @@ A developer adds a remote MCP-backed action to an existing Declarative Agent pro
 
 The VS Code surface infers the Teams manifest from the open project and writes as soon as its required answers are complete. CLI can prefill the server URL and Teams manifest path through command options and retains its standard confirmation behavior in interactive mode.
 
-The shipped v3 engine and the v4 preview template share the dynamic user goal and runtime shape: both leave `functions` empty and omit `mcp_tool_description` and `enable_dynamic_discovery`, relying on the host's default dynamic discovery. They currently differ in credential flow: shipped v3 collects and persists static OAuth or Entra credentials during add, while v4 defers those credential questions to provision. These rollout variants remain under this stable Scenario ID.
+The shipped v3 engine and the v4 preview template share the dynamic user goal, runtime shape, and credential flow: both leave `functions` empty, omit `mcp_tool_description` and `enable_dynamic_discovery`, and collect and persist static OAuth or Entra credentials during add.
 
 When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it adds the server to `.vscode/mcp.json`, then `SCN-DA-FETCH-MCP-TOOLS` fetches and selects static tools. That fallback remains supported until the DT feature flag and route are removed.
 
@@ -30,7 +30,7 @@ When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it 
 - Requires an existing DA project with a Teams app manifest, referenced declarative agent manifest, and `m365agents.yml`.
 - Produces a new dynamic action manifest and modifies the existing DA manifest and lifecycle file.
 - Remote MCP URL hosts determine the generated action namespace and filename; same-host additions converge on the same desired path.
-- Provision owns cloud-side OAuth registration. Shipped v3 collects static OAuth or Entra credentials during add; the v4 preview defers missing values to provision.
+- Provision owns cloud-side OAuth registration. Both v3 and v4 collect static OAuth or Entra credentials during add.
 - DT-off VS Code behavior depends on `SCN-DA-FETCH-MCP-TOOLS` to turn the staged MCP server into a static action.
 
 ## Feature flags
@@ -53,7 +53,7 @@ When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it 
 - Action source: the developer selects `Start with a MCP server`.
 - Server URL: the developer enters a remote MCP server URL unless the surface already supplied it. The URL is checked as it is entered, by the same rule as create: a value that is not an absolute `http(s)` address, or one the server answers with 404 to an MCP `initialize` request, is rejected on the question.
 - Authentication: `OAuth (with static registration)`, `Entra SSO`, and `None` are available on the dynamic path. `OAuth (with dynamic registration)` is available only when DT and DCR are both true.
-- Static OAuth and Entra SSO: shipped v3 asks for the required client ID, the OAuth client secret, and optional OAuth scopes during add, then persists environment references. The v4 preview writes registration wiring without credential values and asks for missing values during provision.
+- Static OAuth and Entra SSO: both v3 and v4 ask for the required client ID, the OAuth client secret, and optional OAuth scopes during add, then persist environment references.
 - Dynamic OAuth: add injects `dcr/register`. Unresolved authorization discovery produces a warning and a well-known URL placeholder that must be repaired before provision.
 - DT-off compatibility: VS Code stages the server in `.vscode/mcp.json` and hands off to `SCN-DA-FETCH-MCP-TOOLS` instead of writing the action inline.
 - Confirmation: VS Code dynamic mode writes after the final required answer. CLI interactive retains the standard modification confirmation; cancellation writes nothing.
@@ -68,12 +68,12 @@ When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it 
 - `appPackage/ai-plugin-<NS>.json` is created on the dynamic path. Its `RemoteMCPServer` runtime contains the URL and `run_for_functions: ["*"]`; both shipped v3 and the v4 preview omit `mcp_tool_description` and `enable_dynamic_discovery`. No static MCP tools file is created.
 - The existing declarative agent manifest is resolved from the Teams app manifest and updated to reference the new action manifest.
 - `m365agents.yml` receives `oauth/register` for static OAuth or Entra SSO, `dcr/register` for dynamic OAuth, and no registration action for `None`.
-- For static OAuth and Entra SSO, shipped v3 writes `MCP_DA_OAUTH_CLIENT_ID_<NS>` to each regular environment file, writes the OAuth secret as `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_<NS>` through the encrypted user-environment path, and writes `MCP_DA_OAUTH_SCOPE_<NS>` only when scopes were entered. The v4 preview writes only the deterministic `MCP_DA_AUTH_ID_<NS>=` registration-result placeholder.
+- For static OAuth and Entra SSO, both v3 and v4 write `MCP_DA_OAUTH_CLIENT_ID_<NS>` to each regular environment file, write the OAuth secret as `SECRET_MCP_DA_OAUTH_CLIENT_SECRET_<NS>` through the encrypted user-environment path, and write `MCP_DA_OAUTH_SCOPE_<NS>` only when scopes were entered. Both also write the deterministic `MCP_DA_AUTH_ID_<NS>=` registration-result placeholder.
 - On the DT-off VS Code path, this scenario writes only the collision-safe `.vscode/mcp.json` server entry; Fetch Tools owns the later static manifest and tool-list changes.
 
 ### Notifications and prompts
 
-- The dynamic flow asks for action source, conditional MCP server URL, and authentication type. Shipped v3 also asks the conditional credential follow-ups for static OAuth and Entra SSO; the generated v4 preview walk omits them.
+- The dynamic flow asks for action source, conditional MCP server URL, authentication type, and the same conditional credential follow-ups for static OAuth and Entra SSO with v4 on or off.
 - VS Code reports that the action was added after successful inline mutation. CLI uses its normal success output after confirmation or non-interactive completion.
 - Dynamic OAuth discovery fallback warns that the generated well-known URL placeholder must be repaired before provision.
 - Add has no scaffolding summary, so a lifecycle action left holding auth placeholders is raised as a warning notification naming the file to repair.
@@ -86,8 +86,7 @@ When `TEAMSFX_MCP_FOR_DA_DT=false`, VS Code keeps the compatibility handoff: it 
 
 ### Environment and secret writes
 
-- Shipped v3 stores the entered client ID and optional scopes in regular environment files and stores the OAuth client secret through the encrypted user-environment path. It does not log or write that secret to a regular environment file.
-- The v4 preview writes no credential values during add; provision asks for missing static OAuth or Entra values and later populates the registration-result placeholder.
+- Both v3 and v4 store the entered client ID and optional scopes in regular environment files and store the OAuth client secret through the encrypted user-environment path. Neither logs or writes that secret to a regular environment file.
 - Dynamic registration uses no static credential prompt.
 
 ### External side effects
@@ -112,9 +111,9 @@ flowchart TD
 	DCR -- yes --> Gate{DT and DCR enabled?}
 	Gate -- no --> Invalid[Reject unsupported value]
 	Gate -- yes --> Write
-  DCR -- no --> Engine{TEAMSFX_V4_ENABLED?}
-  Engine -- false, static OAuth or Entra --> Credentials[Collect required credential inputs]
-  Engine -- true or no auth --> Write[Create action and update DA manifest and yml]
+  DCR -- no --> Static{Static OAuth or Entra?}
+  Static -- yes --> Credentials[Collect required credential inputs]
+  Static -- no --> Write[Create action and update DA manifest and yml]
   Credentials --> Write
 	Write --> Complete([Action ready to provision])
 ```
@@ -126,7 +125,7 @@ flowchart TD
 - CLI interactive/non-interactive Add and DCR value gating remain L2 validation targets. Existing CLI MCP E2E files exercise create, not `atk add action`, and their public no-auth server cannot validate real auth injection.
 - Dynamic modify acceptance criteria are in [`add-mcp-server.md`](../../../03-specs/scenarios/da/add-mcp-server.md).
 - DT-off static tool discovery remains covered by `SCN-DA-FETCH-MCP-TOOLS`; those tests retire only after the DT flag and fallback implementation are removed.
-- Shipped v3 tests own add-time credential collection, encrypted secret persistence, and environment-reference injection. V4 scenario tests own the no-credential scaffold output and provision-time handoff.
+- V3 and v4 tests own equivalent add-time credential collection, encrypted secret persistence, and environment-reference injection.
 
 ## Implementation binding
 

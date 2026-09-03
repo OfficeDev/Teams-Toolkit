@@ -64,7 +64,6 @@ import { UninstallInputs } from "./inputs";
 import { inputOrSearchAPISpecNode } from "./scaffold/commonNodes";
 import {
   MCPForDAAddAuthTypeStaticOptions,
-  MCPForDAApiKeyNode,
   MCPForDAAuthCredentialNodes,
   validateMCPServerUrl,
 } from "./scaffold/vsc/teamsProjectTypeNode";
@@ -785,9 +784,8 @@ export function addPluginQuestionNode(): IQTreeNode {
           },
           // Auth type selection: CLI always; VS Code only when DT is on.
           // Credential follow-ups are added under DT-on because only that branch
-          // persists them. V3 collects OAuth credentials plus the optional CLI
-          // API key; v4 collects only the optional CLI API key because its OAuth
-          // credentials remain provision-owned.
+          // persists them. V3 and v4 collect the same static OAuth, Entra, and
+          // optional CLI bearer credentials.
           {
             condition: (inputs: Inputs) =>
               inputs.platform !== Platform.VSCode ||
@@ -800,9 +798,7 @@ export function addPluginQuestionNode(): IQTreeNode {
               default: "oauth",
             },
             children: featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT)
-              ? featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)
-                ? [MCPForDAApiKeyNode()]
-                : MCPForDAAuthCredentialNodes()
+              ? MCPForDAAuthCredentialNodes()
               : [],
           },
         ],

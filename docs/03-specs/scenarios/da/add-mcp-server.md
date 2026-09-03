@@ -27,10 +27,8 @@ separately routed `.vscode/mcp.json` and Fetch Tools compatibility flow.
 
 `TEAMSFX_V4_ENABLED` still defaults to `false`, so this spec intentionally owns
 the v4 preview package rather than the shipped v3 inline implementation. Both
-implementations rely on the host's implicit dynamic-discovery shape. The stable
-product scenario documents their temporary credential-flow difference: v4
-defers static credentials to provision, while shipped v3 collects them during
-add.
+implementations rely on the host's implicit dynamic-discovery shape and collect
+the same static OAuth or Entra credentials during add.
 
 ## Entry-path status
 
@@ -64,14 +62,14 @@ knowledge`, `add auth`, future modify commands) instead of routing them
 | SCN-ADD-MCP-07 | L1   | `authType` ∈ {`oauth`, `entra-sso`}                                                                                                 | persist step         | `mcp-auth/persist-credential-env` writes `MCP_DA_AUTH_ID_<NS>`                                                                                                                                                                                                                                                        |
 | SCN-ADD-MCP-08 | L1   | `authType=none`                                                                                                                     | steps                | plugin `auth.type == "None"`; both `mcp-auth/inject-yml-action` and `mcp-auth/persist-credential-env` are skipped                                                                                                                                                                                                     |
 | SCN-ADD-MCP-09 | L1   | `entry.params == ["mcpServerUrl", "teamsManifestPath"]` (CLI / pre-filled URL and project manifest)                                 | scaffold             | the `mcpServerUrl` and `teamsManifestPath` questions are skipped by the shared pre-filled-parameter semantics                                                                                                                                                                                                         |
-| SCN-ADD-MCP-10 | L1   | `authType` ∈ {`oauth`, `entra-sso`} and modify answers contain no credentials                                                       | scaffold             | the descriptor declares no credential options; `oauth/register` is injected without static credential fields so its existing provision question middleware owns those inputs; no scaffold output contains credential values or credential env references                                                              |
+| SCN-ADD-MCP-10 | L1   | `authType=oauth` with client ID, client secret, and optional scopes, or `authType=entra-sso` with client ID                         | scaffold             | the modify descriptor accepts the same credential inputs as create; `oauth/register` contains environment references for supplied fields, regular values are persisted in standard environment files, and the OAuth secret is persisted only through the encrypted user-environment path                              |
 | SCN-ADD-MCP-11 | L1   | `core.addPlugin`, MCP + DT + v4 enabled                                                                                             | modify entry         | dispatches through `modifyProjectFrontDoor` with `add-action` / `mcp` selector prefill and the existing project root, MCP URL, Teams manifest path, app name, and auth type; the legacy inline mutation path does not run                                                                                             |
-| SCN-ADD-MCP-12 | L1   | MCP + DT enabled, `authType=bearer-token`, with v4 either off or on                                                                 | add-action questions | CLI shows an optional password-style API-key question; VS Code does not show it; provision retains its existing secret prompt when the CLI credential is absent                                                                                                                                                       |
+| SCN-ADD-MCP-12 | L1   | MCP + DT enabled with v4 either off or on                                                                                           | add-action questions | static OAuth shows required client ID and client secret plus optional scopes; Entra SSO shows required client ID; CLI bearer-token shows an optional password-style API-key question while VS Code does not                                                                                                           |
 | SCN-ADD-MCP-13 | L1   | MCP add-action questions with `TEAMSFX_V4_ENABLED` either off or on                                                                 | inspect auth choices | `bearer-token` is offered as API key authentication using a bearer token                                                                                                                                                                                                                                              |
 | SCN-ADD-MCP-14 | L1   | non-interactive `atk add action --api-plugin-type mcp --mcp-da-auth-type bearer-token [--mcp-da-api-key <value>]` with v4 off or on | parse CLI options    | the CLI accepts optional `mcp-da-api-key` only on add action and does not add any provision command option                                                                                                                                                                                                            |
 | SCN-ADD-MCP-15 | L1   | `authType=bearer-token` with an entered bearer token                                                                                | render + steps       | plugin `auth.type == "ApiKeyPluginVault"` and `reference_id == mcpAuthRef(mcpServerUrl)`; `apiKey/register` in main and existing local YAML includes `primaryClientSecret: ${{SECRET_MCP_DA_API_KEY_<NS>}}`                                                                                                           |
 | SCN-ADD-MCP-16 | L1   | `authType=bearer-token` with an entered bearer token                                                                                | add action           | no OAuth metadata endpoint is probed; the token is persisted only through the encrypted user-environment path as `SECRET_MCP_DA_API_KEY_<NS>` for each existing standard `dev` and `local` environment (falling back to `dev` when neither exists), and plaintext is absent from YAML and regular environment files   |
-| SCN-ADD-MCP-17 | L1   | identical MCP add inputs with `TEAMSFX_V4_ENABLED` off and on                                                                       | compare outputs      | both paths use the same URL-derived namespace, registration ID, secret environment name, and equivalent `apiKey/register` actions                                                                                                                                                                                     |
+| SCN-ADD-MCP-17 | L1   | identical MCP add inputs with `TEAMSFX_V4_ENABLED` off and on                                                                       | compare outputs      | both paths collect and forward the same applicable credentials and use the same URL-derived namespace, registration ID, credential environment names, and equivalent auth registration actions                                                                                                                       |
 
 ## Executable validation
 
@@ -89,9 +87,9 @@ knowledge`, `add auth`, future modify commands) instead of routing them
   calls the production `core.addPlugin` entry and its legacy question adapter.
 - **Traceability:** seventeen L1 tests map 1:1 to SCN-ADD-MCP-01..17.
   They cover the dynamic plugin filename and runtime, DA-manifest registration,
-  all retained auth wiring, pre-filled entry parameters, credential deferral,
+  all retained auth wiring, pre-filled entry parameters, credential persistence,
   same-desired-state idempotency, real modify-front-door dispatch, and the
-  absence of add-time credential follow-ups.
+  add-time credential follow-ups and persistence.
 - **External boundary:** OAuth metadata probes are stubbed at the network edge.
   This validates the authored modify package and its mutations of an existing
   project; it does not validate a live MCP server, real filesystem permissions,
@@ -153,9 +151,8 @@ This scenario does **not** assert:
 
 - A `.vscode/mcp.json` write — that belongs to the DT-off VS Code `addPlugin`
   path, routed separately in `selector.json`, not this template.
-- The shipped v3 MCP add-action runtime marker or add-time credential
-  persistence. Those rollout differences are documented by the stable product
-  scenario and are not assertions of this v4 package.
+- The shipped v3 MCP add-action runtime marker. Credential question and
+  persistence parity is asserted by this v4 package.
 - Tool discovery or a static `tools` list — the DT-off compatibility path
   (`core.addPlugin` + the fetch-MCP-tools CodeLens), owned by
   `SCN-DA-FETCH-MCP-TOOLS`.
@@ -177,9 +174,9 @@ This scenario does **not** assert:
 
 ## Invariants
 
-- **INV-1** — Interactive CLI add may ask for the optional bearer token. CLI add may
-  supply one optional API-key secret; OAuth and Entra credential behavior is
-  unchanged.
+- **INV-1** — V4 on and off collect the same required static OAuth and Entra
+  credentials. Interactive CLI add may also ask for the optional bearer token;
+  CLI add may supply one optional API-key secret.
 - **INV-2** — Plaintext credentials never appear in workflow YAML or regular
   environment files. Secret values are written only through the encrypted
   user-environment path and workflows contain only `SECRET_*` references.

@@ -76,6 +76,10 @@ export interface ScaffoldAddMcpServerFromV4Options {
   mcpServerUrl: string;
   authType: string;
   apiKey?: string;
+  oauthClientId?: string;
+  oauthClientSecret?: string;
+  oauthScopes?: string;
+  entraClientId?: string;
   resolvedPackage?: ResolvedV4ChannelPackage;
 }
 
@@ -102,6 +106,12 @@ async function scaffoldAddMcpServerFromV4(
       teamsManifestPath,
       authType: String(options.authType),
       ...(options.apiKey === undefined ? {} : { apiKey: options.apiKey }),
+      ...(options.oauthClientId === undefined ? {} : { oauthClientId: options.oauthClientId }),
+      ...(options.oauthClientSecret === undefined
+        ? {}
+        : { oauthClientSecret: options.oauthClientSecret }),
+      ...(options.oauthScopes === undefined ? {} : { oauthScopes: options.oauthScopes }),
+      ...(options.entraClientId === undefined ? {} : { entraClientId: options.entraClientId }),
     };
     const source = await scaffoldDeclarativeFromV4Channel(
       context,
@@ -518,6 +528,22 @@ export class FxCoreDeclarativeAgentPart {
       if (typeof apiKey === "string") {
         entryParams.apiKey = apiKey;
       }
+      const clientId = inputs[QuestionNames.MCPForDAClientId];
+      if (typeof clientId === "string") {
+        if (authType === "oauth") {
+          entryParams.oauthClientId = clientId;
+        } else if (authType === "entra-sso") {
+          entryParams.entraClientId = clientId;
+        }
+      }
+      const clientSecret = inputs[QuestionNames.MCPForDAClientSecret];
+      if (typeof clientSecret === "string") {
+        entryParams.oauthClientSecret = clientSecret;
+      }
+      const scopes = inputs[QuestionNames.MCPForDAScopes];
+      if (typeof scopes === "string") {
+        entryParams.oauthScopes = scopes;
+      }
       const appName = teamsManifest.name.short.replace("${{APP_NAME_SUFFIX}}", "");
 
       return await fxCoreDeclarativeAgentDeps.modifyProjectFrontDoor(
@@ -531,6 +557,10 @@ export class FxCoreDeclarativeAgentPart {
             const resolvedTeamsManifestPath = answers.teamsManifestPath;
             const resolvedAuthType = answers.authType;
             const resolvedApiKey = answers.apiKey;
+            const resolvedOauthClientId = answers.oauthClientId;
+            const resolvedOauthClientSecret = answers.oauthClientSecret;
+            const resolvedOauthScopes = answers.oauthScopes;
+            const resolvedEntraClientId = answers.entraClientId;
             if (
               typeof resolvedMcpServerUrl !== "string" ||
               typeof resolvedTeamsManifestPath !== "string" ||
@@ -553,6 +583,18 @@ export class FxCoreDeclarativeAgentPart {
               mcpServerUrl: resolvedMcpServerUrl,
               authType: resolvedAuthType,
               ...(typeof resolvedApiKey === "string" ? { apiKey: resolvedApiKey } : {}),
+              ...(typeof resolvedOauthClientId === "string"
+                ? { oauthClientId: resolvedOauthClientId }
+                : {}),
+              ...(typeof resolvedOauthClientSecret === "string"
+                ? { oauthClientSecret: resolvedOauthClientSecret }
+                : {}),
+              ...(typeof resolvedOauthScopes === "string"
+                ? { oauthScopes: resolvedOauthScopes }
+                : {}),
+              ...(typeof resolvedEntraClientId === "string"
+                ? { entraClientId: resolvedEntraClientId }
+                : {}),
               resolvedPackage,
             });
           },

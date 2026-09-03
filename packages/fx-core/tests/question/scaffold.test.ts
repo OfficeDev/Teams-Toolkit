@@ -454,7 +454,7 @@ describe("MCPForDAAuthCredentialNodes", () => {
   });
 
   for (const v4Enabled of [false, true]) {
-    it(`SCN-ADD-MCP-12: composes the API-key question when v4 is ${v4Enabled ? "on" : "off"}`, () => {
+    it(`SCN-ADD-MCP-12: composes the same credential questions when v4 is ${v4Enabled ? "on" : "off"}`, () => {
       vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
         return flag === FeatureFlags.MCPForDADT || (flag === FeatureFlags.V4Enabled && v4Enabled);
       });
@@ -467,12 +467,12 @@ describe("MCPForDAAuthCredentialNodes", () => {
       );
       const credentialNames = authTypeNode?.children?.map((node) => (node.data as any).name);
 
-      assert.include(credentialNames, QuestionNames.MCPForDAApiKey);
-      if (v4Enabled) {
-        assert.notInclude(credentialNames, QuestionNames.MCPForDAClientSecret);
-      } else {
-        assert.include(credentialNames, QuestionNames.MCPForDAClientSecret);
-      }
+      assert.includeMembers(credentialNames ?? [], [
+        QuestionNames.MCPForDAClientId,
+        QuestionNames.MCPForDAClientSecret,
+        QuestionNames.MCPForDAScopes,
+        QuestionNames.MCPForDAApiKey,
+      ]);
     });
   }
 
