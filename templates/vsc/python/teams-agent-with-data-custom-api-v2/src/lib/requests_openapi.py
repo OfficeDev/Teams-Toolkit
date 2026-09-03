@@ -11,11 +11,6 @@ import openapi_pydantic as openapi
 import requests
 import yaml
 
-try:
-    from yaml import CLoader as yaml_loader
-except ImportError:
-    from yaml import Loader as yaml_loader
-
 import abc
 import requests
 
@@ -142,13 +137,13 @@ class Operation(object):
 def load_spec_from_url(url):
     r = requests.get(url)
     r.raise_for_status()
-    return yaml.load(r.text, Loader=yaml_loader)
+    return yaml.safe_load(r.text)
 
 
 def load_spec_from_file(file_path):
     with open(file_path) as f:
         spec_str = f.read()
-    return yaml.load(spec_str, Loader=yaml_loader)
+    return yaml.safe_load(spec_str)
 
 
 class OpenAPIClient:
