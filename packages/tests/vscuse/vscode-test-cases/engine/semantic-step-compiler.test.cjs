@@ -9518,8 +9518,8 @@ steps:
 
   const extraClientSecret = compileInlineSource(
     sourceText.replace(
-      '        clientId: "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"',
-      '        clientId: "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"\n        clientSecret: "\${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"',
+      '        clientId: "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"',
+      '        clientId: "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"\n        clientSecret: "${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"',
     ),
     "vscuse-vcb-181-client-secret.yml",
   );
@@ -9785,7 +9785,7 @@ steps:
     [
       "literal runtime key",
       sourceText.replace(
-        'openAIKey: "\${{secret:AZURE_OPENAI_API_KEY}}"',
+        'openAIKey: "${{secret:AZURE_OPENAI_API_KEY}}"',
         'openAIKey: "literal-key"',
       ),
     ],
@@ -9800,7 +9800,7 @@ steps:
       "missing deferred scaffold state",
       sourceText.replace(
         "{ question: openAIKey, type: text, value: deferred }",
-        '{ question: openAIKey, type: text, value: "\${{secret:AZURE_OPENAI_API_KEY}}" }',
+        '{ question: openAIKey, type: text, value: "${{secret:AZURE_OPENAI_API_KEY}}" }',
       ),
     ],
   ]) {
