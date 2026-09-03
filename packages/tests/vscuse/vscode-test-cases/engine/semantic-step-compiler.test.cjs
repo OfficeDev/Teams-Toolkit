@@ -9204,7 +9204,7 @@ test("VCB-154: twenty-one legacy plans are replaced, three are retired, and one 
       source: "custom-copilot-rag-custom-api.yml",
       caseId: "feature-local-debug-custom-api-without-openai-key",
       generated: "feature-local-debug-custom-api-without-openai-key.json",
-      legacy: "Feature_LocalDebug_Custom_API_without_OpenAI_Keys.json",
+      legacy: "Feature_LocalDebug_Custom_API_without_AzureOpenAI_Keys.json",
     },
     {
       source: "feature-da-regenerate-action.yml",
