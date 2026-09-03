@@ -49,6 +49,10 @@ on:
         type: boolean
         default: false
         description: "Skip triggering the VscUse ATK docker build after CD (e.g. when the caller builds its own image)."
+      packnpm:
+        type: boolean
+        default: false
+        description: "[ESRP migration] Pack npm packages and route publishing to Azure DevOps ESRP instead of publishing from GitHub Actions."
 
 permissions:
   actions: write
@@ -456,23 +460,87 @@ jobs:
           git add ./packages/cli/package.json ./packages/vscode-extension/package.json
           git commit -m "build: update ai key"
 
+      # ── ESRP migration, Phase 1 ────────────────────────────────────────────
+      # Produce the .tgz files that Azure DevOps will hand to ESRP Release, and
+      # attach them to a GitHub Release so AzDO can download them anonymously.
+      #
+      # Opt-in (`packnpm`) is the migration switch: these steps create the ESRP
+      # input and trigger AzDO, while the npm publish steps below are skipped.
+      # With the default packnpm=false, publishing remains unchanged.
+      #
+      # Ordering matters: pack skips any name@version already on the registry,
+      # so it MUST run before the publish steps or it would pack nothing.
+      - name: derive npm dist-tag
+        if: ${{ inputs.packnpm }}
+        id: dist-tag
+        env:
+          PREID: ${{ github.event.inputs.preid }}
+        run: |
+          # Mirrors the lane conditions on the publish steps below: the dev branch
+          # is always the alpha lane regardless of preid; otherwise preid decides.
+          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            TAG=alpha
+          elif [ "$PREID" = "preview" ]; then
+            TAG=beta
+          elif [ "$PREID" = "rc" ]; then
+            TAG=rc
+          else
+            TAG=latest
+          fi
+          echo "Dist-tag for this lane: $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: pack npm packages
+        if: ${{ inputs.packnpm }}
+        run: |
+          bash .github/scripts/pack-npm-packages.sh \
+            "$GITHUB_WORKSPACE/npm-packages" \
+            "${{ steps.dist-tag.outputs.tag }}"
+
+      - name: upload packed npm packages
+        if: ${{ inputs.packnpm }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: npm-packages/*.tgz
+          if-no-files-found: warn
+          retention-days: 7
+
+      # Release assets are anonymously downloadable, which is how the AzDO
+      # pipeline fetches them without a credential. The tag is unique per run so
+      # every run pushes a real tag — reusing one would update the release
+      # without triggering AzDO.
+      - name: attach packed npm packages to a GitHub Release
+        if: ${{ inputs.packnpm }}
+        uses: ncipollo/release-action@v1.10.0
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          tag: npm-packages-${{ github.run_id }}
+          artifacts: npm-packages/*.tgz
+          artifactErrorsFailBuild: true
+          allowUpdates: true
+          prerelease: true
+          body: |
+            Packed npm packages for the ESRP publish pipeline (dist-tag: `${{ steps.dist-tag.outputs.tag }}`).
+            Produced by CD run ${{ github.run_id }} on `${{ github.ref_name }}`. Not a product release.
+
       - name: publish alpha release to npm org
-        if: ${{ github.ref == 'refs/heads/dev'}}
+        if: ${{ !inputs.packnpm && github.ref == 'refs/heads/dev' }}
         run: |
           bash .github/scripts/npm-publish-from-package.sh alpha
 
       - name: publish preview release to npm org
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'preview' }}
+        if: ${{ !inputs.packnpm && github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'preview' }}
         run: |
           bash .github/scripts/npm-publish-from-package.sh beta
 
       - name: publish rc npm packages to npmjs.org
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'rc' }}
+        if: ${{ !inputs.packnpm && github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'rc' }}
         run: |
           bash .github/scripts/npm-publish-from-package.sh rc
 
       - name: publish stable npm packages to npmjs.org
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'stable' }}
+        if: ${{ !inputs.packnpm && github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'stable' }}
         run: |
           bash .github/scripts/npm-publish-from-package.sh
 

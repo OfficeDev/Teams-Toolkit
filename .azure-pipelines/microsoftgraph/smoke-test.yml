@@ -68,7 +68,10 @@ extends:
         displayName: Validate
         jobs:
           - job: smoke
-            displayName: Build and test @microsoft/app-manifest
+            # Build/test steps below are commented out while the npm-packages stage
+            # is the thing under test; this job currently only proves agent context
+            # and Node install.
+            displayName: Agent context check
             pool:
               name: Azure-Pipelines-1ESPT-ExDShared
               os: windows
