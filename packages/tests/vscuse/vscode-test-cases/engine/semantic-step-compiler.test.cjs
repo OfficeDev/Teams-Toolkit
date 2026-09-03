@@ -9456,7 +9456,7 @@ steps:
     type: provision
     with:
       oauth:
-        clientId: "\${{env:EXISTING_OAUTH_CLIENT_ID}}"
+        clientId: "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
   target:
     type: target
     with:
@@ -9486,7 +9486,10 @@ steps:
     .filter((step) => step.tool === "type_text")
     .map((step) => step.parameters.text);
   assert.equal(typedValues.includes("Yes"), true);
-  assert.equal(typedValues.includes("${{env:EXISTING_OAUTH_CLIENT_ID}}"), true);
+  assert.equal(
+    typedValues.includes("${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"),
+    true,
+  );
   assert.equal(
     plan.steps.some((step) =>
       step.description.includes("OAuth registration client secret"),
@@ -9515,8 +9518,8 @@ steps:
 
   const extraClientSecret = compileInlineSource(
     sourceText.replace(
-      '        clientId: "\${{env:EXISTING_OAUTH_CLIENT_ID}}"',
-      '        clientId: "\${{env:EXISTING_OAUTH_CLIENT_ID}}"\n        clientSecret: "\${{secret:EXISTING_OAUTH_CLIENT_SECRET}}"',
+      '        clientId: "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"',
+      '        clientId: "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"\n        clientSecret: "\${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"',
     ),
     "vscuse-vcb-181-client-secret.yml",
   );
@@ -9595,6 +9598,7 @@ steps:
   provision:
     type: provision
     with:
+      environment: none
       arm:
         targetResourceGroupName: "+ New resource group"
         newResourceGroupName: "\${{var:app_name}}-rg"
@@ -9614,6 +9618,12 @@ steps:
   );
   const plan = result.value[0].plan;
   assert.equal(plan.plan_metadata.description.workitem, "16835373");
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes("Select an environment"),
+    ),
+    false,
+  );
   assert.equal(
     plan.steps.some((step) =>
       step.step_id.startsWith("step_configureArmJsonTemplates_"),
@@ -9808,4 +9818,71 @@ steps:
       label,
     );
   }
+});
+
+test("VCB-184: migrated feature fixtures retain runtime prerequisites and waits", async () => {
+  const armFixture = await compileFixture(
+    "feature-arm-json-multiple-templates.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(armFixture.ok, true, armFixture.diagnostics?.[0]?.code);
+  assert.equal(
+    armFixture.value[0].plan.steps.some((step) =>
+      step.description.includes("Select an environment"),
+    ),
+    false,
+  );
+
+  const authFixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(authFixture.ok, true, authFixture.diagnostics?.[0]?.code);
+  const pkcePlan = authFixture.value.find(
+    ({ caseId }) =>
+      caseId === "feature-da-no-action-pkce-oauth-auth-remote-preview",
+  ).plan;
+  const typedValues = pkcePlan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    typedValues.includes("${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"),
+    true,
+  );
+  assert.equal(
+    typedValues.includes("${{env:EXISTING_OAUTH_CLIENT_ID}}"),
+    false,
+  );
+
+  const customApiFixture = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(
+    customApiFixture.ok,
+    true,
+    customApiFixture.diagnostics?.[0]?.code,
+  );
+  const customApiPlan = customApiFixture.value.find(
+    ({ caseId }) =>
+      caseId === "feature-local-debug-custom-api-without-openai-key",
+  ).plan;
+  const deferredOpenAIKeyPrompt = customApiPlan.steps.find((step) =>
+    step.step_id.startsWith("step_deferredTextInput_assertQuestion_"),
+  );
+  assert.notEqual(deferredOpenAIKeyPrompt, undefined);
+  assert.equal(
+    deferredOpenAIKeyPrompt.tags.includes("step_retry_timeout: 180"),
+    true,
+  );
+  const scaffoldOpenAIKeyPrompt = customApiPlan.steps.find(
+    (step) =>
+      step.step_id.startsWith("step_emptyTextInput_assertQuestion_") &&
+      step.description.includes("OpenAI Key"),
+  );
+  assert.notEqual(scaffoldOpenAIKeyPrompt, undefined);
+  assert.equal(
+    scaffoldOpenAIKeyPrompt.tags.includes("step_retry_timeout: 30"),
+    true,
+  );
 });

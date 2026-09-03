@@ -82,6 +82,7 @@ steps:
   provision-arm:
     type: provision
     with:
+      environment: none
       arm:
         targetResourceGroupName: "+ New resource group"
         newResourceGroupName: "${{var:app_name}}-rg"

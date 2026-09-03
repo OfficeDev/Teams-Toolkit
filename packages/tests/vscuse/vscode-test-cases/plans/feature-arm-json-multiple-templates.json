@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 114,
+    "total_steps": 112,
     "name": "feature-arm-json-multiple-templates",
     "description": {
       "owner": "",
@@ -111,24 +111,22 @@
       "step_executeCommand_filter_cab80027e_7_3",
       "step_executeCommand_assertCommand_cab80027e_7_3",
       "step_executeCommand_execute_cab80027e_7_3",
-      "step_clickOption_assertPrompt_cab80027e_7_4",
-      "step_clickOption_click_cab80027e_7_4",
-      "step_singleSelect_assertQuestion_cab80027e_7_5",
-      "step_singleSelect_assertOptionsLoaded_cab80027e_7_5",
-      "step_singleSelect_filter_cab80027e_7_5",
-      "step_singleSelect_assertOption_cab80027e_7_5",
-      "step_singleSelect_confirm_cab80027e_7_5",
-      "step_textInput_assertQuestion_cab80027e_7_6",
-      "step_textInput_input_cab80027e_7_6",
-      "step_textInput_confirm_cab80027e_7_6",
-      "step_singleSelect_assertQuestion_cab80027e_7_7",
-      "step_singleSelect_assertOptionsLoaded_cab80027e_7_7",
-      "step_singleSelect_filter_cab80027e_7_7",
-      "step_singleSelect_assertOption_cab80027e_7_7",
-      "step_singleSelect_confirm_cab80027e_7_7",
-      "step_clickPrimaryAction_assertDialog_cab80027e_7_8",
-      "step_clickPrimaryAction_click_cab80027e_7_8",
-      "step_assertNotificationContains_assert_cab80027e_7_9",
+      "step_singleSelect_assertQuestion_cab80027e_7_4",
+      "step_singleSelect_assertOptionsLoaded_cab80027e_7_4",
+      "step_singleSelect_filter_cab80027e_7_4",
+      "step_singleSelect_assertOption_cab80027e_7_4",
+      "step_singleSelect_confirm_cab80027e_7_4",
+      "step_textInput_assertQuestion_cab80027e_7_5",
+      "step_textInput_input_cab80027e_7_5",
+      "step_textInput_confirm_cab80027e_7_5",
+      "step_singleSelect_assertQuestion_cab80027e_7_6",
+      "step_singleSelect_assertOptionsLoaded_cab80027e_7_6",
+      "step_singleSelect_filter_cab80027e_7_6",
+      "step_singleSelect_assertOption_cab80027e_7_6",
+      "step_singleSelect_confirm_cab80027e_7_6",
+      "step_clickPrimaryAction_assertDialog_cab80027e_7_7",
+      "step_clickPrimaryAction_click_cab80027e_7_7",
+      "step_assertNotificationContains_assert_cab80027e_7_8",
       "step_checkWorkspaceFiles_verify_cab80027e_8_1"
     ],
     "tags": [
@@ -2302,11 +2300,11 @@
       ]
     },
     {
-      "step_id": "step_clickOption_assertPrompt_cab80027e_7_4",
+      "step_id": "step_singleSelect_assertQuestion_cab80027e_7_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion the active prompt titled Select an environment is visible and the option dev is selectable.",
+      "description": "@assertion the active prompt titled Select a resource group is visible.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2319,62 +2317,11 @@
       "tags": [
         "component:quick-input",
         "answer_type:singleSelect",
-        "interaction:click",
         "step_retry_timeout: 30"
       ]
     },
     {
-      "step_id": "step_clickOption_click_cab80027e_7_4",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 292,
-        "y": 77
-      },
-      "description": "Click the dev option in the active prompt.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_clickOption_assertPrompt_cab80027e_7_4"
-      ],
-      "preconditions": [
-        "dhash:292:77:16:5:0000000000000000",
-        "dhash:292:77:96:5:0000c0004020204c",
-        "dhash:292:77:0:10:d088222323232421"
-      ],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "interaction:click"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertQuestion_cab80027e_7_5",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the active prompt titled Select a resource group is visible.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_clickOption_click_cab80027e_7_4"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:quick-input",
-        "answer_type:singleSelect",
-        "step_retry_timeout: 30"
-      ]
-    },
-    {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cab80027e_7_5",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cab80027e_7_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2384,7 +2331,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cab80027e_7_5"
+        "step_singleSelect_assertQuestion_cab80027e_7_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2395,7 +2342,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cab80027e_7_5",
+      "step_id": "step_singleSelect_filter_cab80027e_7_4",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2407,7 +2354,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cab80027e_7_5"
+        "step_singleSelect_assertOptionsLoaded_cab80027e_7_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2417,7 +2364,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cab80027e_7_5",
+      "step_id": "step_singleSelect_assertOption_cab80027e_7_4",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2427,7 +2374,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cab80027e_7_5"
+        "step_singleSelect_filter_cab80027e_7_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2438,7 +2385,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cab80027e_7_5",
+      "step_id": "step_singleSelect_confirm_cab80027e_7_4",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2450,7 +2397,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cab80027e_7_5"
+        "step_singleSelect_assertOption_cab80027e_7_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2460,7 +2407,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_assertQuestion_cab80027e_7_6",
+      "step_id": "step_textInput_assertQuestion_cab80027e_7_5",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2470,7 +2417,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cab80027e_7_5"
+        "step_singleSelect_confirm_cab80027e_7_4"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2481,7 +2428,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_input_cab80027e_7_6",
+      "step_id": "step_textInput_input_cab80027e_7_5",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2493,7 +2440,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_assertQuestion_cab80027e_7_6"
+        "step_textInput_assertQuestion_cab80027e_7_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2503,7 +2450,7 @@
       ]
     },
     {
-      "step_id": "step_textInput_confirm_cab80027e_7_6",
+      "step_id": "step_textInput_confirm_cab80027e_7_5",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2515,7 +2462,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_input_cab80027e_7_6"
+        "step_textInput_input_cab80027e_7_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2525,7 +2472,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertQuestion_cab80027e_7_7",
+      "step_id": "step_singleSelect_assertQuestion_cab80027e_7_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2535,7 +2482,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_textInput_confirm_cab80027e_7_6"
+        "step_textInput_confirm_cab80027e_7_5"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2546,7 +2493,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOptionsLoaded_cab80027e_7_7",
+      "step_id": "step_singleSelect_assertOptionsLoaded_cab80027e_7_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2556,7 +2503,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertQuestion_cab80027e_7_7"
+        "step_singleSelect_assertQuestion_cab80027e_7_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2567,7 +2514,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_filter_cab80027e_7_7",
+      "step_id": "step_singleSelect_filter_cab80027e_7_6",
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
@@ -2579,7 +2526,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOptionsLoaded_cab80027e_7_7"
+        "step_singleSelect_assertOptionsLoaded_cab80027e_7_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2589,7 +2536,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_assertOption_cab80027e_7_7",
+      "step_id": "step_singleSelect_assertOption_cab80027e_7_6",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2599,7 +2546,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_filter_cab80027e_7_7"
+        "step_singleSelect_filter_cab80027e_7_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2610,7 +2557,7 @@
       ]
     },
     {
-      "step_id": "step_singleSelect_confirm_cab80027e_7_7",
+      "step_id": "step_singleSelect_confirm_cab80027e_7_6",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2622,7 +2569,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_assertOption_cab80027e_7_7"
+        "step_singleSelect_assertOption_cab80027e_7_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2632,7 +2579,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_assertDialog_cab80027e_7_8",
+      "step_id": "step_clickPrimaryAction_assertDialog_cab80027e_7_7",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2642,7 +2589,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_singleSelect_confirm_cab80027e_7_7"
+        "step_singleSelect_confirm_cab80027e_7_6"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2653,7 +2600,7 @@
       ]
     },
     {
-      "step_id": "step_clickPrimaryAction_click_cab80027e_7_8",
+      "step_id": "step_clickPrimaryAction_click_cab80027e_7_7",
       "agent": "interaction",
       "tool": "key_press",
       "parameters": {
@@ -2665,7 +2612,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_assertDialog_cab80027e_7_8"
+        "step_clickPrimaryAction_assertDialog_cab80027e_7_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2675,7 +2622,7 @@
       ]
     },
     {
-      "step_id": "step_assertNotificationContains_assert_cab80027e_7_9",
+      "step_id": "step_assertNotificationContains_assert_cab80027e_7_8",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2685,7 +2632,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_clickPrimaryAction_click_cab80027e_7_8"
+        "step_clickPrimaryAction_click_cab80027e_7_7"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2708,7 +2655,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertNotificationContains_assert_cab80027e_7_9"
+        "step_assertNotificationContains_assert_cab80027e_7_8"
       ],
       "preconditions": [],
       "postconditions": [],

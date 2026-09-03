@@ -2899,7 +2899,7 @@ function createSemanticStepCompiler() {
     if (requiresDeferredOpenAIKey) {
       error = append(
         output,
-        render(state, "quick-input/text.json.tpl", {
+        render(state, "quick-input/deferred-text.json.tpl", {
           inputValue: runtimeInputs.openAIKey,
           questionTitle: "OpenAI Key",
         }),

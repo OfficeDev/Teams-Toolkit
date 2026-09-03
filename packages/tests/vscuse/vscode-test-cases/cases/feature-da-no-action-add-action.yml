@@ -560,7 +560,7 @@ steps:
     type: provision
     with:
       oauth:
-        clientId: "${{env:EXISTING_OAUTH_CLIENT_ID}}"
+        clientId: "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
 
   f5-copilot-remote:
     type: target

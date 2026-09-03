@@ -3348,7 +3348,7 @@
       "agent": "interaction",
       "tool": "type_text",
       "parameters": {
-        "text": "${{env:EXISTING_OAUTH_CLIENT_ID}}"
+        "text": "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
       },
       "description": "Type the authored value into the active text prompt.",
       "content_refs": [],
