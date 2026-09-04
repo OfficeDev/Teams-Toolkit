@@ -26267,6 +26267,28 @@ packages:
     name: inherits
     version: 2.0.4
 
+  ms-feed-12.pkgs.visualstudio.com/inquirer@12.11.1(@types/node@22.15.0):
+    resolution: {integrity: sha1-P1dwueySawkJ5GPkLHZvJmTyzJY=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/inquirer/-/inquirer-12.11.1.tgz}
+    id: ms-feed-12.pkgs.visualstudio.com/inquirer/12.11.1
+    name: inquirer
+    version: 12.11.1
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      '@inquirer/ansi': 1.0.2
+      '@inquirer/core': 10.3.2(@types/node@22.15.0)
+      '@inquirer/prompts': 7.10.1(@types/node@22.15.0)
+      '@inquirer/type': 3.0.10(@types/node@22.15.0)
+      '@types/node': 22.15.0
+      mute-stream: 2.0.0
+      run-async: ms-feed-25.pkgs.visualstudio.com/run-async@4.0.6
+      rxjs: 7.8.2
+    dev: false
+
   ms-feed-12.pkgs.visualstudio.com/is-fullwidth-code-point@3.0.0:
     resolution: {integrity: sha1-8Rb4Bk/pCz94RKOJl8C3UFEmnx0=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz}
     name: is-fullwidth-code-point
@@ -26487,6 +26509,25 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
     dev: true
+
+  ms-feed-12.pkgs.visualstudio.com/office-addin-manifest@2.1.6:
+    resolution: {integrity: sha1-tyYa6OVrt0p9gIXmlw+PuOyXqyE=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/office-addin-manifest/-/office-addin-manifest-2.1.6.tgz}
+    name: office-addin-manifest
+    version: 2.1.6
+    hasBin: true
+    dependencies:
+      '@microsoft/app-manifest': ms-feed-25.pkgs.visualstudio.com/@microsoft/app-manifest@1.0.6
+      adm-zip: 0.6.0
+      chalk: 2.4.2
+      commander: 13.1.0
+      fs-extra: 7.0.1
+      node-fetch: 2.7.0
+      office-addin-usage-data: ms-feed-17.pkgs.visualstudio.com/office-addin-usage-data@2.1.1
+      uuid: ms-feed-2.pkgs.visualstudio.com/uuid@14.0.1
+      xml2js: 0.5.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
 
   ms-feed-12.pkgs.visualstudio.com/on-finished@2.3.0:
     resolution: {integrity: sha1-IPEzZIGwg811M3mSoWlxqi2QaUc=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/on-finished/-/on-finished-2.3.0.tgz}
@@ -26846,6 +26887,15 @@ packages:
     resolution: {integrity: sha1-toDxcohdGLvr8hqDTqJeVaG781Y=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/zod/-/zod-4.4.3.tgz}
     name: zod
     version: 4.4.3
+    dev: false
+
+  ms-feed-17.pkgs.visualstudio.com/office-addin-usage-data@2.1.1:
+    resolution: {integrity: sha1-Tc9x2lPRna1xQa7aUq8kYEyxPNw=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/office-addin-usage-data/-/office-addin-usage-data-2.1.1.tgz}
+    name: office-addin-usage-data
+    version: 2.1.1
+    hasBin: true
+    dependencies:
+      commander: 13.1.0
     dev: false
 
   ms-feed-2.pkgs.visualstudio.com/@babel/compat-data@7.29.7:
@@ -28548,6 +28598,13 @@ packages:
     engines: {node: '>=4'}
     dev: false
 
+  ms-feed-2.pkgs.visualstudio.com/uuid@14.0.1:
+    resolution: {integrity: sha1-ill1s+A4kCv9FpoQtSAvXsDPP68=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/uuid/-/uuid-14.0.1.tgz}
+    name: uuid
+    version: 14.0.1
+    hasBin: true
+    dev: false
+
   ms-feed-2.pkgs.visualstudio.com/wrap-ansi@7.0.0:
     resolution: {integrity: sha1-Z+FFz/UQpqaYS98RUpEdadLrnkM=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/wrap-ansi/-/wrap-ansi-7.0.0.tgz}
     name: wrap-ansi
@@ -29903,6 +29960,25 @@ packages:
     version: 1.13.4
     engines: {node: '>= 0.4'}
 
+  ms-feed-25.pkgs.visualstudio.com/office-addin-project@1.0.10(@types/node@22.15.0):
+    resolution: {integrity: sha1-bxoq659R1DLexjca078t7hbdJmQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/office-addin-project/-/office-addin-project-1.0.10.tgz}
+    id: ms-feed-25.pkgs.visualstudio.com/office-addin-project/1.0.10
+    name: office-addin-project
+    version: 1.0.10
+    hasBin: true
+    dependencies:
+      adm-zip: 0.6.0
+      commander: 13.1.0
+      fs-extra: 7.0.1
+      inquirer: ms-feed-12.pkgs.visualstudio.com/inquirer@12.11.1(@types/node@22.15.0)
+      office-addin-manifest: ms-feed-12.pkgs.visualstudio.com/office-addin-manifest@2.1.6
+      office-addin-manifest-converter: 0.4.1
+      office-addin-usage-data: ms-feed-17.pkgs.visualstudio.com/office-addin-usage-data@2.1.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - encoding
+    dev: false
+
   ms-feed-25.pkgs.visualstudio.com/path-parse@1.0.7:
     resolution: {integrity: sha1-+8EUtgykKzDZ2vWFjkvWi77bZzU=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/path-parse/-/path-parse-1.0.7.tgz}
     name: path-parse
@@ -29979,6 +30055,13 @@ packages:
       '@rollup/rollup-win32-x64-msvc': ms-feed-2.pkgs.visualstudio.com/@rollup/rollup-win32-x64-msvc@4.62.2
       fsevents: ms-feed-2.pkgs.visualstudio.com/fsevents@2.3.3
     dev: true
+
+  ms-feed-25.pkgs.visualstudio.com/run-async@4.0.6:
+    resolution: {integrity: sha1-1TuGrLcfQmUP4j3is8G2trNLkpQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/run-async/-/run-async-4.0.6.tgz}
+    name: run-async
+    version: 4.0.6
+    engines: {node: '>=0.12.0'}
+    dev: false
 
   ms-feed-25.pkgs.visualstudio.com/schema-utils@4.3.3:
     resolution: {integrity: sha1-WxhQkS+jHfkHFpY9RdkSH9/An0Y=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/schema-utils/-/schema-utils-4.3.3.tgz}
@@ -30181,86 +30264,3 @@ packages:
     dependencies:
       graceful-fs: ms-feed-25.pkgs.visualstudio.com/graceful-fs@4.2.11
     dev: true
-
-  ms-feed-17.pkgs.visualstudio.com/office-addin-usage-data@2.1.1:
-    resolution: {integrity: sha1-Tc9x2lPRna1xQa7aUq8kYEyxPNw=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-17.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/office-addin-usage-data/-/office-addin-usage-data-2.1.1.tgz}
-    name: office-addin-usage-data
-    version: 2.1.1
-    hasBin: true
-    dependencies:
-      commander: 13.1.0
-    dev: false
-
-  ms-feed-2.pkgs.visualstudio.com/uuid@14.0.1:
-    resolution: {integrity: sha1-ill1s+A4kCv9FpoQtSAvXsDPP68=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-2.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/uuid/-/uuid-14.0.1.tgz}
-    name: uuid
-    version: 14.0.1
-    hasBin: true
-    dev: false
-
-  ms-feed-12.pkgs.visualstudio.com/office-addin-manifest@2.1.6:
-    resolution: {integrity: sha1-tyYa6OVrt0p9gIXmlw+PuOyXqyE=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/office-addin-manifest/-/office-addin-manifest-2.1.6.tgz}
-    name: office-addin-manifest
-    version: 2.1.6
-    hasBin: true
-    dependencies:
-      '@microsoft/app-manifest': ms-feed-25.pkgs.visualstudio.com/@microsoft/app-manifest@1.0.6
-      adm-zip: 0.6.0
-      chalk: 2.4.2
-      commander: 13.1.0
-      fs-extra: 7.0.1
-      node-fetch: 2.7.0
-      office-addin-usage-data: ms-feed-17.pkgs.visualstudio.com/office-addin-usage-data@2.1.1
-      uuid: ms-feed-2.pkgs.visualstudio.com/uuid@14.0.1
-      xml2js: 0.5.0
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
-  ms-feed-25.pkgs.visualstudio.com/run-async@4.0.6:
-    resolution: {integrity: sha1-1TuGrLcfQmUP4j3is8G2trNLkpQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/run-async/-/run-async-4.0.6.tgz}
-    name: run-async
-    version: 4.0.6
-    engines: {node: '>=0.12.0'}
-    dev: false
-
-  ms-feed-12.pkgs.visualstudio.com/inquirer@12.11.1(@types/node@22.15.0):
-    resolution: {integrity: sha1-P1dwueySawkJ5GPkLHZvJmTyzJY=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-12.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/inquirer/-/inquirer-12.11.1.tgz}
-    id: ms-feed-12.pkgs.visualstudio.com/inquirer/12.11.1
-    name: inquirer
-    version: 12.11.1
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-    dependencies:
-      '@inquirer/ansi': 1.0.2
-      '@inquirer/core': 10.3.2(@types/node@22.15.0)
-      '@inquirer/prompts': 7.10.1(@types/node@22.15.0)
-      '@inquirer/type': 3.0.10(@types/node@22.15.0)
-      '@types/node': 22.15.0
-      mute-stream: 2.0.0
-      run-async: ms-feed-25.pkgs.visualstudio.com/run-async@4.0.6
-      rxjs: 7.8.2
-    dev: false
-
-  ms-feed-25.pkgs.visualstudio.com/office-addin-project@1.0.10(@types/node@22.15.0):
-    resolution: {integrity: sha1-bxoq659R1DLexjca078t7hbdJmQ=, registry: https://packagefeedproxy.microsoft.io/npm/, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/office-addin-project/-/office-addin-project-1.0.10.tgz}
-    id: ms-feed-25.pkgs.visualstudio.com/office-addin-project/1.0.10
-    name: office-addin-project
-    version: 1.0.10
-    hasBin: true
-    dependencies:
-      adm-zip: 0.6.0
-      commander: 13.1.0
-      fs-extra: 7.0.1
-      inquirer: ms-feed-12.pkgs.visualstudio.com/inquirer@12.11.1(@types/node@22.15.0)
-      office-addin-manifest: ms-feed-12.pkgs.visualstudio.com/office-addin-manifest@2.1.6
-      office-addin-manifest-converter: 0.4.1
-      office-addin-usage-data: ms-feed-17.pkgs.visualstudio.com/office-addin-usage-data@2.1.1
-    transitivePeerDependencies:
-      - '@types/node'
-      - encoding
-    dev: false
