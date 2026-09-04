@@ -211,11 +211,10 @@ extends:
                 displayName: Validate ESRP configuration (Maven dry run)
                 inputs:
                   connectedservicename: 'ATK ESRP Connection'
-                  # The service connection uses workload identity federation,
-                  # not an Azure managed identity.
-                  usemanagedidentity: false
+                  # The service connection uses a federated credential to let the
+                  # onboarded managed identity authenticate without stored secrets.
+                  usemanagedidentity: true
                   keyvaultname: 'ATK-ESRP-KEY-VAULT'
-                  authcertname: 'ATK-ESRP-CERT'
                   signcertname: 'ATK-ESRP-CERT'
                   clientid: '62d1b680-312a-4484-9737-fc13f2f7e6f3'
                   intent: 'PackageDistribution'
