@@ -65,54 +65,84 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout branch
-        uses: actions/checkout@v3
+      - name: Checkout trusted tooling
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
+          persist-credentials: false
+          path: trusted
+          ref: ${{ github.event.pull_request.base.sha }}
 
-      - name: setup project
-        uses: ./.github/actions/setup-project
+      - name: Checkout PR source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          path: pr-source
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
-      - name: lint and format check files in PR on Fork
-        if: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.17
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Install trusted tooling
+        working-directory: trusted
+        run: |
+          pnpm install --frozen-lockfile --ignore-scripts
+          pnpm run build
+
+      - name: Prepare PR source for trusted linting
         env:
-          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          BASE_REPOSITORY: ${{ github.event.pull_request.base.repo.full_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          git remote add upstream "https://github.com/${{ github.repository }}.git"
-          git fetch upstream "$BASE_BRANCH"
-          VAR=$(realpath .github/scripts/lint-pr.sh)
-          pnpm -r exec -- bash "$VAR" "upstream/$BASE_BRANCH"
+          git -C pr-source remote add upstream "https://github.com/$BASE_REPOSITORY.git"
+          git -C pr-source fetch --no-tags upstream "$BASE_SHA"
+          while IFS= read -r -d '' file; do
+            case "$file" in
+              .github/*|*eslint.config.*|*.prettierrc.*|*prettier.config.*|eslint-local-rules.js|commitlint.config.js)
+                continue
+                ;;
+            esac
+            if [ -L "pr-source/$file" ] || [ ! -f "pr-source/$file" ]; then
+              echo "Refusing to lint non-regular file: $file"
+              exit 1
+            fi
+            is_new_file=false
+            if [ ! -e "trusted/$file" ]; then
+              is_new_file=true
+            fi
+            mkdir -p "trusted/$(dirname "$file")"
+            cp -- "pr-source/$file" "trusted/$file"
+            if [ "$is_new_file" = true ]; then
+              git -C trusted add --intent-to-add -- "$file"
+            fi
+          done < <(git -C pr-source diff --diff-filter=MARC --name-only -z "$BASE_SHA...HEAD" -- '*.js' '*.ts' '*.jsx' '*.tsx')
 
-      - name: lint and format check files in PR on local
-        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-        env:
-          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+      - name: Lint and format check PR source with trusted tooling
+        working-directory: trusted
         run: |
           VAR=$(realpath .github/scripts/lint-pr.sh)
-          pnpm -r exec -- bash "$VAR" "origin/$BASE_BRANCH"
-
-      - name: Check if there are changes
-        id: changes
-        run: |
-          git add .
-          VAR=$(git diff --cached --name-only)
-          if [ ! -z "$VAR" ]
-          then 
-            echo $VAR
-            echo '======================================= Prompt Information ==============================================='
-            echo 'There may be some unformatted files in your PR, please run these commands on Git Bash terminal: '
-            echo '1. npm run setup'
-            echo '2. VAR=$(realpath .github/scripts/lint-pr.sh) '
-            echo '3. pnpm -r exec -- bash $VAR ${your-PR-target-branch}'
-            echo 'please replace the ${your-PR-target-branch} as the target branch of your PR, such as origin/dev or upstream/dev'
-            exit 1
-          fi
+          pnpm -r exec -- bash "$VAR" --working-tree
 
       - name: Check unused strings
-        working-directory: ./packages/fx-core
-        run: npm run checkUnusedStrings
+        run: |
+          if find \
+            pr-source/packages/fx-core/resource/package.nls.json \
+            pr-source/packages/fx-core/src \
+            pr-source/packages/fx-core/templates/ui \
+            -type l -print -quit | grep -q .; then
+            echo "Symbolic links are not allowed in unused-string scan inputs."
+            exit 1
+          fi
+          node trusted/packages/fx-core/scripts/find-unused-strings.js \
+            pr-source/packages/fx-core/resource/package.nls.json \
+            pr-source/packages/fx-core/src \
+            pr-source/packages/fx-core/templates/ui
         shell: bash
         env:
           CI: true
@@ -122,11 +152,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
 
       - name: Install Yaml lint and mustache
         run: |
@@ -134,34 +165,23 @@ jobs:
           npm install mustache -g
           echo '{"appName":"test"}'>test.json
 
-      - name: check origin or remote
-        id: remote
+      - name: Fetch trusted base revision
         env:
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
-          CURRENT_REPOSITORY: ${{ github.repository }}
+          BASE_REPOSITORY: ${{ github.event.pull_request.base.repo.full_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if [ "$HEAD_REPOSITORY" = "$CURRENT_REPOSITORY" ]
-          then
-            echo "target=origin" >> $GITHUB_OUTPUT
-          else
-            echo "target=remote" >> $GITHUB_OUTPUT
-          fi
+          git remote add upstream "https://github.com/$BASE_REPOSITORY.git"
+          git fetch --no-tags upstream "$BASE_SHA"
 
       - name: check yaml lint origin
         env:
-          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          TARGET_REMOTE: ${{ steps.remote.outputs.target }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          TARGET="$TARGET_REMOTE/$BASE_BRANCH"
-          YMLTPL=$(git diff --diff-filter=MARC "$TARGET...HEAD" --name-only -- templates | grep -E '.yml.tpl$'|xargs)
-          echo "$YMLTPL"
-          if [ ! -z "$YMLTPL" ]
-          then
-              for obj in "$YMLTPL"
-              do
-                mustache test.json $obj | yamllint -d "{extends: relaxed, rules: {line-length: {max: 100}}}" -
-              done
-          fi
+          mapfile -d '' templates < <(git diff --diff-filter=MARC --name-only -z "$BASE_SHA...HEAD" -- 'templates/*.yml.tpl')
+          printf '%s\n' "${templates[@]}"
+          for template in "${templates[@]}"; do
+            mustache test.json "$template" | yamllint -d "{extends: relaxed, rules: {line-length: {max: 100}}}" -
+          done
 
   check-sensitive-content:
     if: ${{ (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'schedule' }}
@@ -171,14 +191,13 @@ jobs:
         if: ${{ github.event_name == 'pull_request'}}
         env:
           PR_COMMIT_COUNT: ${{ github.event.pull_request.commits }}
-          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           echo "depth=$((PR_COMMIT_COUNT + 1))" >> "$GITHUB_ENV"
-          echo "branch=$PR_HEAD_REF" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         if: ${{ github.event_name == 'pull_request'}}
         with:
-          ref: ${{env.branch}}
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{github.event.pull_request.head.repo.full_name}}
           fetch-depth: ${{env.depth}}
       - uses: trufflesecurity/trufflehog@main
@@ -188,6 +207,8 @@ jobs:
 
       - if: ${{ github.event_name == 'schedule' }}
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - if: ${{ github.event_name == 'schedule' }}
         uses: trufflesecurity/trufflehog@main
         with:
