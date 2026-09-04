@@ -1,10 +1,9 @@
 name: smoke_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
 
-# Fires automatically when .github/workflows/pack-npm-packages.yml pushes an
-# `npm-packages-*` tag alongside its GitHub Release. AzDO receives the tag push
-# over the GitHub service connection's webhook, so no token or API call is
-# needed on the GitHub side. Branches are excluded so ordinary commits to dev
-# never queue this definition.
+# Fires automatically when cd.yml pushes an `npm-packages-*` tag alongside its
+# GitHub Release. AzDO receives the tag push over the GitHub service connection's
+# webhook, so no token or API call is needed on the GitHub side. Branches are
+# excluded so ordinary commits to dev never queue this definition.
 trigger:
   branches:
     exclude:
@@ -112,11 +111,14 @@ extends:
               # - script: pnpm --filter @microsoft/app-manifest test:unit
               #   displayName: Unit test @microsoft/app-manifest
 
-      # Feasibility probe for the ESRP npm publish design:
+      # ESRP npm publishing pipeline:
       #   GitHub Actions packs the workspace into .tgz files and attaches them to a
       #   GitHub Release; this pipeline downloads those assets and hands the folder
-      #   to EsrpRelease@12 (contentsource: Folder). This stage only proves the
-      #   download half — it does NOT publish anything.
+      #   to EsrpRelease@12 (contentsource: Folder).
+      #
+      # SAFETY LOCK: contenttype is deliberately Maven during onboarding
+      # validation. ESRP will authenticate and then reject the npm tarballs during
+      # content validation, proving the task configuration without publishing.
       - stage: npm_packages
         displayName: Download packed npm packages
         dependsOn: []
@@ -202,24 +204,24 @@ extends:
                   }
                 displayName: Verify ESRP folder layout
 
-              # Publish step, intentionally left out until the ESRP onboarding
-              # (managed identity, key vault, sign cert, collaborators) is done:
-              #
-              # - task: EsrpRelease@12
-              #   displayName: Publish to npm
-              #   inputs:
-              #     connectedservicename: '<service-connection>'
-              #     usemanagedidentity: true
-              #     keyvaultname: '<key-vault>'
-              #     signcertname: '<sign-cert>'
-              #     clientid: '<client-id>'
-              #     intent: 'PackageDistribution'
-              #     contenttype: 'npm'
-              #     contentsource: 'Folder'
-              #     folderlocation: '$(npmPackagesDir)'
-              #     waitforreleasecompletion: true
-              #     owners: '<owner>@microsoft.com'
-              #     approvers: '<approver>@microsoft.com'
-              #     serviceendpointurl: 'https://api.esrp.microsoft.com'
-              #     mainpublisher: 'ESRPRELPACMAN'
-              #     domaintenantid: '975f013f-7f24-47e8-a7d3-abc4752bf346'
+              # This run is expected to fail at ESRP content validation because
+              # .tgz npm packages are intentionally submitted as Maven content.
+              # Change contenttype to 'npm' only in the production-cutover PR.
+              - task: EsrpRelease@12
+                displayName: Validate ESRP configuration (Maven dry run)
+                inputs:
+                  connectedservicename: 'ATK ESRP Connection'
+                  usemanagedidentity: true
+                  keyvaultname: 'ATK-ESRP-KEY-VAULT'
+                  signcertname: 'ATK-ESRP-CERT'
+                  clientid: '62d1b680-312a-4484-9737-fc13f2f7e6f3'
+                  intent: 'PackageDistribution'
+                  contenttype: 'Maven'
+                  contentsource: 'Folder'
+                  folderlocation: '$(npmPackagesDir)'
+                  waitforreleasecompletion: true
+                  owners: 'alicewan@microsoft.com'
+                  approvers: 'alicewan@microsoft.com'
+                  serviceendpointurl: 'https://api.esrp.microsoft.com'
+                  mainpublisher: 'ESRPRELPACMAN'
+                  domaintenantid: '975f013f-7f24-47e8-a7d3-abc4752bf346'
