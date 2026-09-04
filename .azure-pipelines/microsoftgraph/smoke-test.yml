@@ -215,6 +215,7 @@ extends:
                   # not an Azure managed identity.
                   usemanagedidentity: false
                   keyvaultname: 'ATK-ESRP-KEY-VAULT'
+                  authcertname: 'ATK-ESRP-CERT'
                   signcertname: 'ATK-ESRP-CERT'
                   clientid: '62d1b680-312a-4484-9737-fc13f2f7e6f3'
                   intent: 'PackageDistribution'
