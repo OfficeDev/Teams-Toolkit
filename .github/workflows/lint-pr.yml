@@ -88,6 +88,8 @@ jobs:
           node-version: 22.17
 
       - uses: pnpm/action-setup@v4
+        with:
+          version: 8.6.12
 
       - name: Install trusted tooling
         working-directory: trusted
