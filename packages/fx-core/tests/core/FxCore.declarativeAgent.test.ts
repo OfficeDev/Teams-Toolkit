@@ -18,10 +18,12 @@ import * as os from "os";
 import * as path from "path";
 import { assert, vi } from "vitest";
 import { FxCore, getLocalizedString } from "../../src";
+import { resolveOpenApiAuthCredentialSource } from "../../src/core/FxCore.declarativeAgent";
 import { FeatureFlags, featureFlagManager } from "../../src/common/featureFlags";
 import { setTools } from "../../src/common/globalVars";
 import { MetadataV3 } from "../../src/common/versionMetadata";
 import { ActionInjector } from "../../src/component/configManager/actionInjector";
+import { MicrosoftEntraAuthType } from "../../src/component/configManager/constant";
 import { LocalMcpPrefix } from "../../src/component/constants";
 import { AppStudioError } from "../../src/component/driver/teamsApp/errors";
 import { copilotGptManifestUtils } from "../../src/component/driver/teamsApp/utils/CopilotGptManifestUtils";
@@ -32,7 +34,7 @@ import { envUtil } from "../../src/component/utils/envUtil";
 import { pathUtils } from "../../src/component/utils/pathUtils";
 import { NotImplementedError, UserCancelError } from "../../src/error/common";
 import { QuestionNames } from "../../src/question";
-import { ActionStartOptions } from "../../src/question/constants";
+import { ActionStartOptions, AddAuthActionAuthTypeOptions } from "../../src/question/constants";
 import { validationUtils } from "../../src/ui/validationUtils";
 import { MockTools, randomAppName } from "./utils";
 
@@ -1370,6 +1372,154 @@ async function mockV3Project(): Promise<string> {
   return appName;
 }
 
+describe("resolveOpenApiAuthCredentialSource", () => {
+  it("uses provision by default and honors explicit environment source", () => {
+    const provisionResult = resolveOpenApiAuthCredentialSource(["oauth2", "oauth2"], {
+      platform: Platform.CLI,
+    });
+    assert.isTrue(provisionResult.isOk());
+    if (provisionResult.isOk()) {
+      assert.equal(provisionResult.value, "provision");
+    }
+
+    const environmentResult = resolveOpenApiAuthCredentialSource(["oauth2", "oauth2"], {
+      platform: Platform.CLI,
+      authCredentialSource: "environment",
+    });
+    assert.isTrue(environmentResult.isOk());
+    if (environmentResult.isOk()) {
+      assert.equal(environmentResult.value, "environment");
+    }
+  });
+
+  it("infers environment for one registration with a supplied scalar credential", () => {
+    const result = resolveOpenApiAuthCredentialSource(["oauth2"], {
+      platform: Platform.CLI,
+      [QuestionNames.OpenApiAuthClientId]: " client-id ",
+    });
+
+    assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      assert.equal(result.value, "environment");
+    }
+  });
+
+  it("SCN-ADD-OPENAPI-OAUTH-09: rejects scalar credentials for multiple registrations", () => {
+    const result = resolveOpenApiAuthCredentialSource(["oauth2", "oauth2"], {
+      platform: Platform.CLI,
+      [QuestionNames.OpenApiAuthClientSecret]: "secret",
+    });
+
+    assert.isTrue(result.isErr());
+    if (result.isErr()) {
+      assert.equal(result.error.name, "AmbiguousOpenApiAuthCredentialError");
+      assert.notInclude(result.error.message, "secret");
+    }
+  });
+
+  it("SCN-ADD-OPENAPI-OAUTH-02: PKCE false alone preserves provision ownership", () => {
+    const result = resolveOpenApiAuthCredentialSource(["oauth2"], {
+      platform: Platform.CLI,
+      [QuestionNames.OpenApiAuthPKCE]: false,
+    });
+
+    assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      assert.equal(result.value, "provision");
+    }
+  });
+
+  it("SCN-ADD-OPENAPI-OAUTH-11: rejects dependent OAuth values without client ID", () => {
+    for (const inputs of [
+      { [QuestionNames.OpenApiAuthClientSecret]: "top-secret-value" },
+      { [QuestionNames.OpenApiAuthScopes]: "repairs.read" },
+      { [QuestionNames.OpenApiAuthPKCE]: true },
+    ]) {
+      const result = resolveOpenApiAuthCredentialSource(["oauth2"], {
+        platform: Platform.CLI,
+        ...inputs,
+      });
+
+      assert.isTrue(result.isErr());
+      if (result.isErr()) {
+        assert.equal(result.error.name, "IncompleteOpenApiOAuthCredentialError");
+        assert.notInclude(result.error.message, "top-secret-value");
+      }
+    }
+  });
+
+  it("SCN-ADD-OPENAPI-OAUTH-12: rejects credentials for a different auth scheme", () => {
+    const oauthOnApiKey = resolveOpenApiAuthCredentialSource(["apiKey"], {
+      platform: Platform.CLI,
+      [QuestionNames.OpenApiAuthClientId]: "client-id",
+    });
+    const apiKeyOnOAuth = resolveOpenApiAuthCredentialSource(["oauth2"], {
+      platform: Platform.CLI,
+      [QuestionNames.ApiSpecApiKey]: "api-key-value",
+    });
+
+    for (const result of [oauthOnApiKey, apiKeyOnOAuth]) {
+      assert.isTrue(result.isErr());
+      if (result.isErr()) {
+        assert.equal(result.error.name, "InapplicableOpenApiAuthCredentialError");
+      }
+    }
+  });
+
+  it("SCN-ADD-OPENAPI-OAUTH-15: rejects options unused by the selected provider or mode", () => {
+    for (const inputs of [
+      {
+        [QuestionNames.OpenApiAuthIdentityProvider]:
+          AddAuthActionAuthTypeOptions.microsoftEntra().id,
+        [QuestionNames.OpenApiAuthClientId]: "client-id",
+        [QuestionNames.OpenApiAuthClientSecret]: "top-secret-value",
+      },
+      {
+        [QuestionNames.OpenApiAuthIdentityProvider]:
+          AddAuthActionAuthTypeOptions.microsoftEntra().id,
+        [QuestionNames.OpenApiAuthClientId]: "client-id",
+        [QuestionNames.OpenApiAuthScopes]: "repairs.read",
+      },
+      {
+        [QuestionNames.OpenApiAuthIdentityProvider]:
+          AddAuthActionAuthTypeOptions.microsoftEntra().id,
+        [QuestionNames.OpenApiAuthClientId]: "client-id",
+        [QuestionNames.OpenApiAuthPKCE]: false,
+      },
+      {
+        [QuestionNames.OpenApiAuthIdentityProvider]: AddAuthActionAuthTypeOptions.oauth().id,
+        [QuestionNames.OpenApiAuthClientId]: "client-id",
+        [QuestionNames.OpenApiAuthPKCE]: true,
+        [QuestionNames.OpenApiAuthClientSecret]: "top-secret-value",
+      },
+    ]) {
+      const result = resolveOpenApiAuthCredentialSource(["oauth2"], {
+        platform: Platform.CLI,
+        ...inputs,
+      });
+
+      assert.isTrue(result.isErr());
+      if (result.isErr()) {
+        assert.equal(result.error.name, "InapplicableOpenApiAuthCredentialError");
+        assert.notInclude(result.error.message, "top-secret-value");
+      }
+    }
+  });
+
+  it("SCN-ADD-OPENAPI-OAUTH-05: explicit environment source allows placeholders", () => {
+    const result = resolveOpenApiAuthCredentialSource(["oauth2"], {
+      platform: Platform.CLI,
+      authCredentialSource: "environment",
+      [QuestionNames.OpenApiAuthClientSecret]: "",
+    });
+
+    assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      assert.equal(result.value, "environment");
+    }
+  });
+});
+
 describe("addPlugin", async () => {
   beforeEach(() => {
     setTools(addPluginTools);
@@ -1377,6 +1527,74 @@ describe("addPlugin", async () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("SCN-ADD-OPENAPI-KEY-14: rejects ambiguous credentials before project mutation", async () => {
+    const appName = await mockV3Project();
+    const inputs: Inputs = {
+      platform: Platform.VSCode,
+      [QuestionNames.ApiSpecLocation]: "test.yaml",
+      [QuestionNames.ApiOperation]: ["GET /users", "GET /inventory"],
+      [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+      [QuestionNames.ApiSpecApiKey]: "supplied-secret",
+      [QuestionNames.ManifestPath]: "manifest.json",
+      projectPath: path.join(os.tmpdir(), appName),
+    };
+    const manifest = new TeamsAppManifest();
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "test1.json", id: "action_1" }],
+    };
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockReturnValue(false);
+    vi.spyOn(validationUtils, "validateInputs").mockResolvedValue(undefined);
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    vi.spyOn(copilotGptManifestUtils, "getManifestPath").mockResolvedValue(ok("dcManifest.json"));
+    vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
+      ok({} as DeclarativeCopilotManifestSchema)
+    );
+    vi.spyOn(SpecParser.prototype, "list").mockResolvedValue({
+      APIs: [
+        {
+          api: "GET /users",
+          server: "https://example.com",
+          operationId: "getUsers",
+          isValid: true,
+          reason: [],
+          auth: {
+            name: "usersKey",
+            authScheme: { type: "apiKey", in: "header", name: "X-USERS-KEY" },
+          },
+        },
+        {
+          api: "GET /inventory",
+          server: "https://example.com",
+          operationId: "getInventory",
+          isValid: true,
+          reason: [],
+          auth: {
+            name: "inventoryKey",
+            authScheme: { type: "apiKey", in: "header", name: "X-INVENTORY-KEY" },
+          },
+        },
+      ],
+      allAPICount: 2,
+      validAPICount: 2,
+    });
+    const showMessageStub = vi.spyOn(addPluginTools.ui, "showMessage");
+    const generateStub = vi.spyOn(openApiSpecHelper, "generateFromApiSpec");
+    const addActionStub = vi.spyOn(copilotGptManifestUtils, "addAction");
+    const injectAuthStub = vi.spyOn(openApiSpecHelper, "injectAuthAction");
+
+    const result = await new FxCore(addPluginTools).addPlugin(inputs);
+
+    assert.isTrue(result.isErr());
+    if (result.isErr()) {
+      assert.equal(result.error.name, "AmbiguousOpenApiAuthCredentialError");
+    }
+    expect(showMessageStub).not.toHaveBeenCalled();
+    expect(generateStub).not.toHaveBeenCalled();
+    expect(addActionStub).not.toHaveBeenCalled();
+    expect(injectAuthStub).not.toHaveBeenCalled();
+    await fs.remove(inputs.projectPath!);
   });
 
   it("from API spec: add action success", async () => {
@@ -1472,7 +1690,7 @@ describe("addPlugin", async () => {
     }
   });
 
-  it("SCN-ADD-OPENAPI-KEY-02: forwards a supplied API key to auth injection", async () => {
+  it("SCN-ADD-OPENAPI-KEY-15: forwards explicit environment credential source", async () => {
     const appName = await mockV3Project();
     const inputs: Inputs = {
       platform: Platform.VSCode,
@@ -1481,7 +1699,7 @@ describe("addPlugin", async () => {
       [QuestionNames.ApiSpecLocation]: "test.yaml",
       [QuestionNames.ApiOperation]: ["GET /user/{userId}"],
       [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
-      [QuestionNames.ApiSpecApiKey]: "supplied-secret",
+      authCredentialSource: "environment",
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
@@ -1585,7 +1803,11 @@ describe("addPlugin", async () => {
       undefined,
       undefined,
       undefined,
-      "supplied-secret"
+      undefined,
+      "environment",
+      undefined,
+      undefined,
+      undefined
     );
     assert.isTrue(showMessageStub.mock.calls.length === 2);
     assert.isTrue(openFileStub.mock.calls.length === 1);
@@ -1595,7 +1817,7 @@ describe("addPlugin", async () => {
     }
   });
 
-  it("from API spec: add action success with oauth token auth and without teamsapp.local.yaml", async () => {
+  it("SCN-ADD-OPENAPI-OAUTH-14: forwards Microsoft Entra provider to auth injection", async () => {
     const appName = await mockV3Project();
     const inputs: Inputs = {
       platform: Platform.VSCode,
@@ -1604,6 +1826,8 @@ describe("addPlugin", async () => {
       [QuestionNames.ApiSpecLocation]: "test.yaml",
       [QuestionNames.ApiOperation]: ["GET /user/{userId}"],
       [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+      [QuestionNames.OpenApiAuthIdentityProvider]: AddAuthActionAuthTypeOptions.microsoftEntra().id,
+      [QuestionNames.OpenApiAuthClientId]: "client-id",
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
@@ -1651,7 +1875,7 @@ describe("addPlugin", async () => {
     const core = new FxCore(addPluginTools);
     vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
     vi.spyOn(ActionInjector, "injectCreateOAuthAction").mockResolvedValue();
-    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
+    const injectAuthStub = vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
       defaultRegistrationIdEnvName: "test",
       registrationIdEnvName: "test2",
     });
@@ -1706,6 +1930,21 @@ describe("addPlugin", async () => {
       console.log(result.error);
     }
     assert.isTrue(result.isOk());
+    expect(injectAuthStub).toHaveBeenCalledWith(
+      inputs.projectPath,
+      "oauth2",
+      expect.objectContaining({ type: "oauth2" }),
+      expect.stringContaining("openapi_2.yaml"),
+      true,
+      MicrosoftEntraAuthType,
+      undefined,
+      undefined,
+      undefined,
+      "environment",
+      "client-id",
+      undefined,
+      undefined
+    );
     assert.isTrue(showMessageStub.mock.calls.length === 2);
     assert.isTrue(openFileStub.mock.calls.length === 1);
 

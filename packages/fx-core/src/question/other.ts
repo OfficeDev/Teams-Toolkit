@@ -369,10 +369,15 @@ export function copilotPluginAddAPIQuestionNode(): IQTreeNode {
 
 export function openApiApiKeyNode(): IQTreeNode {
   return {
-    condition: (inputs: Inputs) =>
-      inputs.platform === Platform.CLI &&
-      inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id &&
-      inputs.apiAuthData?.some((auth) => auth.authType === "apiKey") === true,
+    condition: (inputs: Inputs) => {
+      const authRegistrations = inputs.apiAuthData ?? [];
+      return (
+        inputs.platform === Platform.CLI &&
+        inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id &&
+        authRegistrations.length === 1 &&
+        authRegistrations[0].authType === "apiKey"
+      );
+    },
     data: apiKeyValueQuestion(),
   };
 }
@@ -398,6 +403,92 @@ function apiKeyValueQuestion(): TextInputQuestion {
       },
     },
   };
+}
+
+export function openApiOAuthCredentialNodes(): IQTreeNode[] {
+  const condition = (inputs: Inputs): boolean => {
+    const authRegistrations = inputs.apiAuthData ?? [];
+    return (
+      inputs.platform === Platform.CLI &&
+      inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id &&
+      authRegistrations.length === 1 &&
+      authRegistrations[0].authType === "oauth2"
+    );
+  };
+  return [
+    {
+      condition,
+      data: {
+        type: "singleSelect",
+        name: QuestionNames.OpenApiAuthIdentityProvider,
+        title: getLocalizedString("core.addOpenApiActionQuestion.IdentityProvider.title"),
+        cliDescription: getLocalizedString(
+          "core.addOpenApiActionQuestion.IdentityProvider.description"
+        ),
+        staticOptions: [
+          AddAuthActionAuthTypeOptions.oauth(),
+          AddAuthActionAuthTypeOptions.microsoftEntra(),
+        ],
+        default: AddAuthActionAuthTypeOptions.oauth().id,
+        required: false,
+      },
+    },
+    {
+      condition,
+      data: {
+        type: "text",
+        name: QuestionNames.OpenApiAuthClientId,
+        title: getLocalizedString("core.addOpenApiActionQuestion.OAuthClientId.title"),
+        required: false,
+      },
+    },
+    {
+      condition: (inputs: Inputs) =>
+        condition(inputs) &&
+        typeof inputs[QuestionNames.OpenApiAuthClientId] === "string" &&
+        inputs[QuestionNames.OpenApiAuthClientId].trim().length > 0 &&
+        inputs[QuestionNames.OpenApiAuthIdentityProvider] !==
+          AddAuthActionAuthTypeOptions.microsoftEntra().id,
+      data: {
+        type: "confirm",
+        name: QuestionNames.OpenApiAuthPKCE,
+        title: getLocalizedString("core.addOpenApiActionQuestion.OAuthPKCE.title"),
+        isBoolean: true,
+        required: false,
+      },
+    },
+    {
+      condition: (inputs: Inputs) =>
+        condition(inputs) &&
+        typeof inputs[QuestionNames.OpenApiAuthClientId] === "string" &&
+        inputs[QuestionNames.OpenApiAuthClientId].trim().length > 0 &&
+        inputs[QuestionNames.OpenApiAuthIdentityProvider] !==
+          AddAuthActionAuthTypeOptions.microsoftEntra().id &&
+        inputs[QuestionNames.OpenApiAuthPKCE] !== true,
+      data: {
+        type: "text",
+        name: QuestionNames.OpenApiAuthClientSecret,
+        title: getLocalizedString("core.addOpenApiActionQuestion.OAuthClientSecret.title"),
+        password: true,
+        forgetLastValue: true,
+        required: false,
+      },
+    },
+    {
+      condition: (inputs: Inputs) =>
+        condition(inputs) &&
+        typeof inputs[QuestionNames.OpenApiAuthClientId] === "string" &&
+        inputs[QuestionNames.OpenApiAuthClientId].trim().length > 0 &&
+        inputs[QuestionNames.OpenApiAuthIdentityProvider] !==
+          AddAuthActionAuthTypeOptions.microsoftEntra().id,
+      data: {
+        type: "text",
+        name: QuestionNames.OpenApiAuthScopes,
+        title: getLocalizedString("core.addOpenApiActionQuestion.OAuthScopes.title"),
+        required: false,
+      },
+    },
+  ];
 }
 
 function authConfigApiKeyNode(): IQTreeNode {
@@ -745,6 +836,7 @@ export function addPluginQuestionNode(): IQTreeNode {
         },
       },
       openApiApiKeyNode(),
+      ...openApiOAuthCredentialNodes(),
       // MCP server URL input (when action type is "mcp").
       // Mirrors the "create DA with MCP" subtree under TEAMSFX_MCP_FOR_DA_DT:
       // CLI always collects auth-type + credential follow-ups; VS Code does the

@@ -50,6 +50,11 @@ export enum QuestionNames {
   OauthClientSecret = "oauth-client-secret",
   OauthClientId = "oauth-client-id",
   OauthConfirm = "oauth-confirm",
+  OpenApiAuthIdentityProvider = "openapi-auth-identity-provider",
+  OpenApiAuthClientId = "openapi-auth-client-id",
+  OpenApiAuthClientSecret = "openapi-auth-client-secret",
+  OpenApiAuthScopes = "openapi-auth-scopes",
+  OpenApiAuthPKCE = "openapi-auth-pkce",
 
   CustomCopilotRag = "custom-copilot-rag",
   CustomCopilotAssistant = "custom-copilot-agent",

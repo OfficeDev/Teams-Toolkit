@@ -165,13 +165,12 @@ export async function injectMCPAuthActionToYml(args: {
 }): Promise<InjectMCPAuthActionResult> {
   if (args.authType === "none") return {};
   if (args.authType === "bearer-token") {
-    const normalizedApiKey = args.apiKey?.trim();
     await ActionInjector.injectCreateAPIKeyActionForMCP(
       args.ymlPath,
       args.authName,
       args.registrationId,
       args.mcpServerUrl,
-      args.persistCredentialEnvRefs && args.serverName && normalizedApiKey
+      args.persistCredentialEnvRefs && args.serverName
         ? `SECRET_MCP_DA_API_KEY_${args.serverName}`
         : undefined
     );
@@ -241,6 +240,7 @@ export async function injectMCPAuthActionToYml(args: {
  *   to `env/.env.<env>.user`.
  * - `entra-sso`: writes only `MCP_DA_OAUTH_CLIENT_ID_<NAME>`.
  * - `oauth-dynamic` / `none`: no-op.
+ * Omitted static credentials are written as empty placeholders.
  *
  * Writes to every env folder entry returned by `envUtil.listEnv` (typically
  * `dev` for fresh scaffolds; multiple envs for existing projects).
@@ -262,18 +262,16 @@ export async function persistMCPAuthCredentialEnvVars(args: {
     return;
 
   const envs: Record<string, string> = {};
-  if (args.clientId) {
-    envs[`MCP_DA_OAUTH_CLIENT_ID_${args.serverName}`] = args.clientId;
+  if (args.authType === "oauth" || args.authType === "entra-sso") {
+    envs[`MCP_DA_OAUTH_CLIENT_ID_${args.serverName}`] = args.clientId ?? "";
   }
   if (args.authType === "oauth") {
-    if (args.clientSecret) {
-      envs[`SECRET_MCP_DA_OAUTH_CLIENT_SECRET_${args.serverName}`] = args.clientSecret;
-    }
+    envs[`SECRET_MCP_DA_OAUTH_CLIENT_SECRET_${args.serverName}`] = args.clientSecret ?? "";
     if (args.scopes) {
       envs[`MCP_DA_OAUTH_SCOPE_${args.serverName}`] = args.scopes;
     }
-  } else if (args.authType === "bearer-token" && args.apiKey?.trim()) {
-    envs[`SECRET_MCP_DA_API_KEY_${args.serverName}`] = args.apiKey.trim();
+  } else if (args.authType === "bearer-token") {
+    envs[`SECRET_MCP_DA_API_KEY_${args.serverName}`] = args.apiKey?.trim() ?? "";
   }
   if (Object.keys(envs).length === 0) return;
 

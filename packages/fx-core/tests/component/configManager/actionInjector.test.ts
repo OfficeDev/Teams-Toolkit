@@ -142,6 +142,21 @@ describe("ActionInjector", () => {
       });
     });
 
+    it("SCN-ADD-OPENAPI-OAUTH-02: omits PKCE configuration when disabled", () => {
+      const result = ActionInjector.generateAuthAction(
+        "oauth/register",
+        "testAuth",
+        "TEAMS_APP_ID",
+        "path/to/spec",
+        "TEST_AUTH_CONFIGURATION_ID",
+        "authorizationCode",
+        false,
+        false
+      );
+
+      assert.notProperty(result.with, "isPKCEEnabled");
+    });
+
     it("should inject OAuth action successfully if no existing env names for configuration id exists", async () => {
       const ymlPath = "path/to/yml";
       const authName = "testAuth";
@@ -236,6 +251,49 @@ describe("ActionInjector", () => {
       });
       assert.isTrue(writeStub.mock.calls[0][1].includes("oauth/register"));
       assert.isTrue(writeStub.mock.calls[0][1].includes("oauthName"));
+    });
+
+    it("SCN-ADD-OPENAPI-OAUTH-03: suffixes OAuth credential references with registration identity", async () => {
+      const ymlContent = `
+        provision:
+          - uses: teamsApp/create
+            writeToEnvironmentFile:
+              teamsAppId: TEAMS_APP_ID
+          - uses: oauth/register
+            writeToEnvironmentFile:
+              configurationId: REPAIR_AUTH_REGISTRATION_ID
+      `;
+      vi.spyOn(fs, "readFile").mockResolvedValue(ymlContent as any);
+      vi.spyOn(ActionInjector, "getTeamsAppIdEnvName").mockReturnValue("TEAMS_APP_ID");
+
+      const result = await ActionInjector.injectCreateOAuthAction(
+        "path/to/yml",
+        "repair-auth",
+        "path/to/spec",
+        true,
+        false,
+        false,
+        undefined,
+        {
+          clientId: "REPAIR_AUTH_CLIENT_ID",
+          clientSecret: "SECRET_REPAIR_AUTH_CLIENT_SECRET",
+          scope: "REPAIR_AUTH_SCOPE",
+        }
+      );
+
+      assert.deepEqual(result, {
+        defaultRegistrationIdEnvName: "REPAIR_AUTH_REGISTRATION_ID",
+        registrationIdEnvName: "REPAIR_AUTH_REGISTRATION_ID1",
+        clientIdEnvName: "REPAIR_AUTH_CLIENT_ID1",
+        clientSecretEnvName: "SECRET_REPAIR_AUTH_CLIENT_SECRET1",
+        scopeEnvName: "REPAIR_AUTH_SCOPE1",
+      });
+      assert.include(writeStub.mock.calls[0][1], "clientId: ${{REPAIR_AUTH_CLIENT_ID1}}");
+      assert.include(
+        writeStub.mock.calls[0][1],
+        "clientSecret: ${{SECRET_REPAIR_AUTH_CLIENT_SECRET1}}"
+      );
+      assert.include(writeStub.mock.calls[0][1], "scope: ${{REPAIR_AUTH_SCOPE1}}");
     });
 
     it("should inject OAuth action successfully if no existing env names for configuration id exists with pkce enabled", async () => {

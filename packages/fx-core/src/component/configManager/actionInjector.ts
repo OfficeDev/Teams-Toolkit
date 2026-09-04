@@ -43,7 +43,8 @@ export class ActionInjector {
     flow?: string,
     isMicrosoftEntra?: boolean,
     enablePKCE?: boolean,
-    primaryClientSecret?: string
+    primaryClientSecret?: string,
+    oauthCredentialEnvNames?: OAuthCredentialEnvNames
   ): any {
     const result: any = {
       uses: actionName,
@@ -73,6 +74,16 @@ export class ActionInjector {
       result.with.primaryClientSecret = `\${{${primaryClientSecret}}}`;
     }
 
+    if (oauthCredentialEnvNames) {
+      result.with.clientId = `\${{${oauthCredentialEnvNames.clientId}}}`;
+      if (oauthCredentialEnvNames.clientSecret) {
+        result.with.clientSecret = `\${{${oauthCredentialEnvNames.clientSecret}}}`;
+      }
+      if (oauthCredentialEnvNames.scope) {
+        result.with.scope = `\${{${oauthCredentialEnvNames.scope}}}`;
+      }
+    }
+
     if (isMicrosoftEntra) {
       result.with.identityProvider = MicrosoftEntraAuthType;
       result.writeToEnvironmentFile.applicationIdUri = Utils.getSafeRegistrationIdEnvName(
@@ -90,7 +101,8 @@ export class ActionInjector {
     forceToAddNew: boolean, // If it from add plugin, then we will add another CreateOAuthAction
     isMicrosoftEntra: boolean,
     enablePKCE?: boolean,
-    registrationId?: string
+    registrationId?: string,
+    oauthCredentialEnvNames?: OAuthCredentialEnvNames
   ): Promise<AuthActionInjectResult | undefined> {
     const ymlContent = await fs.readFile(ymlPath, "utf-8");
     const actionName = "oauth/register";
@@ -133,6 +145,22 @@ export class ActionInjector {
         const registrationIdEnvName =
           registrationId ??
           this.findNextAvailableEnvName(defaultEnvName, existingConfigurationIdEnvNames);
+        const registrationIdSuffix = registrationIdEnvName.startsWith(defaultEnvName)
+          ? registrationIdEnvName.slice(defaultEnvName.length)
+          : "";
+        const resolvedOAuthCredentialEnvNames = oauthCredentialEnvNames
+          ? {
+              clientId: `${oauthCredentialEnvNames.clientId}${registrationIdSuffix}`,
+              ...(oauthCredentialEnvNames.clientSecret
+                ? {
+                    clientSecret: `${oauthCredentialEnvNames.clientSecret}${registrationIdSuffix}`,
+                  }
+                : {}),
+              ...(oauthCredentialEnvNames.scope
+                ? { scope: `${oauthCredentialEnvNames.scope}${registrationIdSuffix}` }
+                : {}),
+            }
+          : undefined;
         const teamsAppIdEnvName = ActionInjector.getTeamsAppIdEnvName(provisionNode);
         if (teamsAppIdEnvName) {
           const index: number = provisionNode.items.findIndex(
@@ -148,7 +176,9 @@ export class ActionInjector {
             registrationIdEnvName,
             flow,
             isMicrosoftEntra,
-            enablePKCE
+            enablePKCE,
+            undefined,
+            resolvedOAuthCredentialEnvNames
           );
           provisionNode.items.splice(index + 1, 0, action);
         } else {
@@ -159,6 +189,17 @@ export class ActionInjector {
         return {
           defaultRegistrationIdEnvName: defaultEnvName,
           registrationIdEnvName: registrationIdEnvName,
+          ...(resolvedOAuthCredentialEnvNames
+            ? {
+                clientIdEnvName: resolvedOAuthCredentialEnvNames.clientId,
+                ...(resolvedOAuthCredentialEnvNames.clientSecret
+                  ? { clientSecretEnvName: resolvedOAuthCredentialEnvNames.clientSecret }
+                  : {}),
+                ...(resolvedOAuthCredentialEnvNames.scope
+                  ? { scopeEnvName: resolvedOAuthCredentialEnvNames.scope }
+                  : {}),
+              }
+            : {}),
         };
       }
     } else {
@@ -523,4 +564,13 @@ export interface AuthActionInjectResult {
   defaultRegistrationIdEnvName: string | undefined; // The default registration id env name without suffix
   registrationIdEnvName: string | undefined; // The real env name of registration id we write in the yaml file
   primaryClientSecretEnvName?: string;
+  clientIdEnvName?: string;
+  clientSecretEnvName?: string;
+  scopeEnvName?: string;
+}
+
+export interface OAuthCredentialEnvNames {
+  clientId: string;
+  clientSecret?: string;
+  scope?: string;
 }

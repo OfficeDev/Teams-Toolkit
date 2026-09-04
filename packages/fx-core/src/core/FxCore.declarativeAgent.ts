@@ -5,6 +5,7 @@ import { hooks } from "@feathersjs/hooks";
 import { AuthType, ListAPIResult, ProjectType, SpecParser } from "@microsoft/m365-spec-parser";
 import {
   AppPackageFolderName,
+  AuthCredentialSource,
   DefaultApiSpecFolderName,
   FxError,
   Inputs,
@@ -59,8 +60,18 @@ import {
   resolveMCPAuthEndpoints,
 } from "../component/utils/mcpAuthScaffolder";
 import { pathUtils } from "../component/utils/pathUtils";
-import { UserCancelError, assembleError } from "../error/common";
-import { ActionStartOptions, QuestionNames } from "../question/constants";
+import {
+  AmbiguousOpenApiAuthCredentialError,
+  InapplicableOpenApiAuthCredentialError,
+  IncompleteOpenApiOAuthCredentialError,
+  UserCancelError,
+  assembleError,
+} from "../error/common";
+import {
+  ActionStartOptions,
+  AddAuthActionAuthTypeOptions,
+  QuestionNames,
+} from "../question/constants";
 import { CreateNewPluginManifestSentinel } from "../question/scaffold/vsc/teamsProjectTypeNode";
 import { ConcurrentLockerMW } from "./middleware/concurrentLocker";
 import { ErrorHandlerMW } from "./middleware/errorHandler";
@@ -81,6 +92,54 @@ export interface ScaffoldAddMcpServerFromV4Options {
   oauthScopes?: string;
   entraClientId?: string;
   resolvedPackage?: ResolvedV4ChannelPackage;
+}
+
+export function resolveOpenApiAuthCredentialSource(
+  authTypes: ("apiKey" | "oauth2")[],
+  inputs: Inputs
+): Result<AuthCredentialSource, FxError> {
+  const hasValue = (name: QuestionNames): boolean => {
+    const value = inputs[name];
+    return typeof value === "string" && value.trim().length > 0;
+  };
+  const hasApiKey = hasValue(QuestionNames.ApiSpecApiKey);
+  const hasOAuthClientId = hasValue(QuestionNames.OpenApiAuthClientId);
+  const hasOAuthDependentValue = [
+    QuestionNames.OpenApiAuthClientSecret,
+    QuestionNames.OpenApiAuthScopes,
+  ].some(hasValue);
+  const hasPKCE = inputs[QuestionNames.OpenApiAuthPKCE] === true;
+  const hasClientSecretInput = inputs[QuestionNames.OpenApiAuthClientSecret] !== undefined;
+  const hasScopesInput = inputs[QuestionNames.OpenApiAuthScopes] !== undefined;
+  const hasPKCEInput = inputs[QuestionNames.OpenApiAuthPKCE] !== undefined;
+  const isMicrosoftEntra =
+    inputs[QuestionNames.OpenApiAuthIdentityProvider] ===
+    AddAuthActionAuthTypeOptions.microsoftEntra().id;
+  const hasOAuthCredential = hasOAuthClientId || hasOAuthDependentValue || hasPKCE;
+  const hasScalarCredential = hasApiKey || hasOAuthCredential;
+  if (hasScalarCredential && authTypes.length !== 1) {
+    return err(new AmbiguousOpenApiAuthCredentialError());
+  }
+  if (
+    (hasApiKey && authTypes[0] !== "apiKey") ||
+    (hasOAuthCredential && authTypes[0] !== "oauth2")
+  ) {
+    return err(new InapplicableOpenApiAuthCredentialError());
+  }
+  if (
+    (isMicrosoftEntra && (hasClientSecretInput || hasScopesInput || hasPKCEInput)) ||
+    (hasPKCE && hasClientSecretInput)
+  ) {
+    return err(new InapplicableOpenApiAuthCredentialError());
+  }
+  if (
+    inputs.authCredentialSource === undefined &&
+    !hasOAuthClientId &&
+    (hasOAuthDependentValue || hasPKCE)
+  ) {
+    return err(new IncompleteOpenApiOAuthCredentialError());
+  }
+  return ok(inputs.authCredentialSource ?? (hasScalarCredential ? "environment" : "provision"));
 }
 
 function targetRelativePath(projectPath: string, filePath: string): string {
@@ -436,7 +495,13 @@ export class FxCoreDeclarativeAgentPart {
     _apSpecPath: string,
     _pluginManifestPath: string,
     _forceToAddNew?: boolean,
-    _apiKey?: string
+    _apiKey?: string,
+    _authCredentialSource?: AuthCredentialSource,
+    _oauthClientId?: string,
+    _oauthClientSecret?: string,
+    _oauthScopes?: string,
+    _enablePKCE?: boolean,
+    _identityProvider?: string
   ): Promise<void> {
     throw new Error("Method not implemented.");
   }
@@ -639,6 +704,22 @@ export class FxCoreDeclarativeAgentPart {
       );
       const listResult = await listAPIInfo(inputs[QuestionNames.ApiSpecLocation].trim());
       authNameAndSchemes = this.parseAuthNameAndScheme(listResult, inputs);
+      const credentialAuthTypes: ("apiKey" | "oauth2")[] = [];
+      for (const { authScheme } of authNameAndSchemes) {
+        if (
+          authScheme.type === "apiKey" ||
+          (authScheme.type === "http" && authScheme.scheme.toLowerCase() === "bearer")
+        ) {
+          credentialAuthTypes.push("apiKey");
+        } else if (authScheme.type === "oauth2") {
+          credentialAuthTypes.push("oauth2");
+        }
+      }
+      const credentialSourceRes = resolveOpenApiAuthCredentialSource(credentialAuthTypes, inputs);
+      if (credentialSourceRes.isErr()) {
+        return err(credentialSourceRes.error);
+      }
+      inputs.authCredentialSource = credentialSourceRes.value;
 
       if (authNameAndSchemes.length > 0) {
         const doesLocalYamlPathExists = await fs.pathExists(
@@ -750,7 +831,13 @@ export class FxCoreDeclarativeAgentPart {
           destinationApiSpecPath,
           destinationPluginManifestPath,
           undefined,
-          inputs[QuestionNames.ApiSpecApiKey]
+          inputs[QuestionNames.ApiSpecApiKey],
+          inputs.authCredentialSource,
+          inputs[QuestionNames.OpenApiAuthClientId],
+          inputs[QuestionNames.OpenApiAuthClientSecret],
+          inputs[QuestionNames.OpenApiAuthScopes],
+          inputs[QuestionNames.OpenApiAuthPKCE],
+          inputs[QuestionNames.OpenApiAuthIdentityProvider]
         );
       }
     } else if (isGenerateFromMCP) {

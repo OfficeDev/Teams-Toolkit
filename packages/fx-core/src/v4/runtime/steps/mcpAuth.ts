@@ -69,13 +69,10 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
       mcpServerUrl,
       optionalYmlPaths: stringArrayParam(resolved, "optionalYmlPaths"),
       credentialFields: {
-        clientId:
-          authType === "oauth"
-            ? Boolean(stringParam(resolved, "oauthClientId")?.trim())
-            : Boolean(stringParam(resolved, "entraClientId")?.trim()),
-        clientSecret: Boolean(stringParam(resolved, "oauthClientSecret")?.trim()),
+        clientId: authType === "oauth" || authType === "entra-sso",
+        clientSecret: authType === "oauth",
         scope: Boolean(stringParam(resolved, "oauthScopes")?.trim()),
-        apiKey: Boolean(stringParam(resolved, "apiKey")?.trim()),
+        apiKey: authType === "bearer-token",
       },
     });
   },

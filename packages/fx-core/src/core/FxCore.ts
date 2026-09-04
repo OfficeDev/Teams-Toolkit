@@ -13,6 +13,7 @@ import {
 import {
   ApiOperation,
   AppPackageFolderName,
+  AuthCredentialSource,
   BuildFolderName,
   ConfigFolderName,
   Context,
@@ -3312,7 +3313,13 @@ export class FxCore extends FxCoreOpenPluginPart {
     apSpecPath: string,
     pluginManifestPath: string,
     forceToAddNew = true,
-    apiKey?: string
+    apiKey?: string,
+    authCredentialSource: AuthCredentialSource = "provision",
+    oauthClientId?: string,
+    oauthClientSecret?: string,
+    oauthScopes?: string,
+    enablePKCE?: boolean,
+    identityProvider?: string
   ): Promise<void> {
     if (authName && authScheme) {
       const authInjectRes = await openApiSpecHelper.injectAuthAction(
@@ -3321,10 +3328,16 @@ export class FxCore extends FxCoreOpenPluginPart {
         authScheme,
         apSpecPath,
         forceToAddNew,
+        identityProvider === AddAuthActionAuthTypeOptions.microsoftEntra().id
+          ? MicrosoftEntraAuthType
+          : undefined,
+        enablePKCE,
         undefined,
-        undefined,
-        undefined,
-        apiKey
+        apiKey,
+        authCredentialSource,
+        oauthClientId,
+        oauthClientSecret,
+        oauthScopes
       );
       if (
         authInjectRes?.defaultRegistrationIdEnvName &&

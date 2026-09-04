@@ -214,19 +214,15 @@ export async function persistMcpAuthRegistrationEnv(
   const identifiers = mcpAuthIdentifiers(args.mcpServerUrl);
   const values: Record<string, string> = { [identifiers.registrationId]: "" };
   if (args.authType === "oauth") {
-    if (args.oauthClientId !== undefined) {
-      values[identifiers.clientId] = args.oauthClientId;
-    }
-    if (args.oauthClientSecret !== undefined) {
-      values[identifiers.clientSecret] = args.oauthClientSecret;
-    }
+    values[identifiers.clientId] = args.oauthClientId ?? "";
+    values[identifiers.clientSecret] = args.oauthClientSecret ?? "";
     if (args.oauthScopes?.trim()) {
       values[identifiers.scope] = args.oauthScopes;
     }
-  } else if (args.authType === "entra-sso" && args.entraClientId !== undefined) {
-    values[identifiers.clientId] = args.entraClientId;
-  } else if (args.authType === "bearer-token" && args.apiKey?.trim()) {
-    values[identifiers.apiKey] = args.apiKey.trim();
+  } else if (args.authType === "entra-sso") {
+    values[identifiers.clientId] = args.entraClientId ?? "";
+  } else if (args.authType === "bearer-token") {
+    values[identifiers.apiKey] = args.apiKey?.trim() ?? "";
   }
   const existingEnvironments = STANDARD_ENVIRONMENTS.filter(
     (environment) => ctx.read(`env/.env.${environment}`) !== undefined

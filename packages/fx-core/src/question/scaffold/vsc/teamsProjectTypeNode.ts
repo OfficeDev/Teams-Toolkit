@@ -628,15 +628,21 @@ export function MCPForDAAuthCredentialNodes(): IQTreeNode[] {
 
 export function MCPForDAApiKeyNode(): IQTreeNode {
   return {
-    condition: (inputs: Inputs) =>
-      inputs.platform === Platform.CLI && inputs[QuestionNames.MCPForDAAuthType] === "bearer-token",
+    condition: (inputs: Inputs) => inputs[QuestionNames.MCPForDAAuthType] === "bearer-token",
     data: {
       name: QuestionNames.MCPForDAApiKey,
       type: "text",
       password: true,
       title: getLocalizedString("core.createProjectQuestion.mcpForDa.ApiKey.title"),
       placeholder: getLocalizedString("core.createProjectQuestion.mcpForDa.ApiKey.placeholder"),
-      required: false,
+      validation: {
+        validFunc: (value: string): string | undefined => {
+          if (!value || value.trim().length === 0) {
+            return getLocalizedString("core.createProjectQuestion.mcpForDa.ApiKey.required");
+          }
+          return undefined;
+        },
+      },
     },
   };
 }

@@ -207,8 +207,10 @@ export async function generateCliOptions(
       shortName: data.cliShortName,
       description: data.cliDescription || propDocDescription,
       required: data.required,
-      default: data.isBoolean ? Boolean(defaultValue as any) : (defaultValue as any),
     };
+    if (defaultValue !== undefined) {
+      option.default = data.isBoolean ? Boolean(defaultValue) : defaultValue;
+    }
 
     if (data.cliHidden) {
       option.hidden = data.cliHidden;
@@ -218,8 +220,7 @@ export async function generateCliOptions(
       const selection = data as SingleSelectQuestion | MultiSelectQuestion;
 
       const options = selection.staticOptions;
-      if (data.isBoolean) {
-      } else if (options.length > 0) {
+      if (!data.isBoolean && options.length > 0) {
         const choices = options.map((o) => (typeof o === "string" ? o : o.id));
         (option as CLIStringOption | CLIArrayOption).choices = choices;
       }
@@ -338,13 +339,13 @@ export async function generateInputs(
 
     const propDocDescription = title || data.name;
 
-    if (data.type === "singleSelect" || data.type === "multiSelect") {
+    if (data.isBoolean) {
+      type = "boolean";
+    } else if (data.type === "singleSelect" || data.type === "multiSelect") {
       const selection = data as SingleSelectQuestion | MultiSelectQuestion;
 
       const options = selection.staticOptions;
-      if (data.isBoolean) {
-        type = "boolean";
-      } else if (options.length > 0) {
+      if (options.length > 0) {
         const optionStrings = options.map((o) => (typeof o === "string" ? o : o.id));
         type = selection.skipValidation ? "string" : optionStrings.map((i) => `"${i}"`).join(" | ");
       } else {

@@ -25,6 +25,16 @@ export interface AddPluginInputs extends Inputs {
   "select-openapi-spec"?: string;
   /** @description API Key (optional) */
   "api-key"?: string;
+  /** @description Select the identity provider for OpenAPI OAuth */
+  "openapi-auth-identity-provider"?: "oauth" | "microsoft-entra";
+  /** @description OpenAPI OAuth client ID (optional) */
+  "openapi-auth-client-id"?: string;
+  /** @description Enable PKCE for OpenAPI OAuth? */
+  "openapi-auth-pkce"?: boolean;
+  /** @description OpenAPI OAuth client secret (optional) */
+  "openapi-auth-client-secret"?: string;
+  /** @description OpenAPI OAuth scopes (optional) */
+  "openapi-auth-scopes"?: string;
   /** @description MCP Server URL */
   "mcp-da-server-url"?: string;
   /** @description MCP Tools Definition File */
@@ -37,7 +47,7 @@ export interface AddPluginInputs extends Inputs {
   "mcp-da-client-secret"?: string;
   /** @description OAuth Scopes (optional) */
   "mcp-da-scopes"?: string;
-  /** @description API Key (optional) */
+  /** @description API Key */
   "mcp-da-api-key"?: string;
   /** @description Select Teams manifest.json File */
   "manifest-path"?: string;

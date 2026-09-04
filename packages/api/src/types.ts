@@ -65,6 +65,7 @@ export interface EnvMeta {
   local: boolean;
   sideloading: boolean;
 }
+export type AuthCredentialSource = "provision" | "environment";
 export interface Inputs extends Record<string, any> {
   platform: Platform;
   projectPath?: string;
@@ -79,6 +80,10 @@ export interface Inputs extends Record<string, any> {
    * Auth info about user selected APIs.
    */
   apiAuthData?: AuthInfo[];
+  /**
+   * Source for credentials referenced by generated authentication actions.
+   */
+  authCredentialSource?: AuthCredentialSource;
 }
 
 export type InputsWithProjectPath = Inputs & { projectPath: string };
