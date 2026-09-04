@@ -23,6 +23,19 @@ cases:
         check-mcp-bearer-action,
       ]
 
+  - id: feature-da-add-mcp-server
+    scenarioId: SCN-DA-ADD-MCP-ACTION-TO-DA
+    workItemIds: [37636970]
+    steps:
+      [
+        scaffold-da-no-action,
+        check-da-no-action,
+        add-mcp-none-action,
+        check-mcp-none-action,
+        add-mcp-oauth-action,
+        check-two-mcp-actions,
+      ]
+
   - id: feature-da-two-openapi-actions-personal-provision
     scenarioId: SCN-DA-ADD-OPENAPI-ACTION
     workItemIds: [29293016]
@@ -175,6 +188,23 @@ steps:
       url: https://example.com/mcp
       authType: bearer-token
 
+  add-mcp-none-action:
+    type: addDaAction
+    with:
+      source: mcp
+      url: https://learn.microsoft.com/api/mcp
+      authType: none
+
+  add-mcp-oauth-action:
+    type: addDaAction
+    with:
+      source: mcp
+      url: https://api.githubcopilot.com/mcp/
+      authType: oauth
+      clientId: "${{env:DA_MCP_OAUTH_CLIENTID}}"
+      clientSecret: "${{secret:DA_MCP_OAUTH_CLIENT_SECRET}}"
+      scopes: read:user
+
   add-api-key-openapi-action:
     type: addDaAction
     with:
@@ -307,6 +337,96 @@ steps:
             - "registrationId: MCP_DA_AUTH_ID_EXAMPLECOM"
           notContains:
             ["oauth/register", "dcr/register", "clientId:", "clientSecret:"]
+
+  check-mcp-none-action:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin.json
+        expect:
+          contains:
+            - '"namespace": "learnmicro"'
+            - '"functions": []'
+            - '"type": "RemoteMCPServer"'
+            - '"url": "https://learn.microsoft.com/api/mcp"'
+            - '"run_for_functions": ['
+            - '"*"'
+            - '"type": "None"'
+          notContains: ["mcp_tool_description", "enable_dynamic_discovery"]
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains: ['"id": "action_1"', '"file": "ai-plugin.json"']
+      - type: file
+        path: .vscode/mcp.json
+        expect:
+          exists: false
+      - type: file
+        path: appPackage/mcp-tools-1.json
+        expect:
+          exists: false
+      - type: file
+        path: m365agents.yml
+        expect:
+          notContains: ["oauth/register", "dcr/register"]
+
+  check-two-mcp-actions:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/ai-plugin_1.json
+        expect:
+          contains:
+            - '"namespace": "apigithubc"'
+            - '"functions": []'
+            - '"type": "RemoteMCPServer"'
+            - '"url": "https://api.githubcopilot.com/mcp/"'
+            - '"run_for_functions": ['
+            - '"*"'
+            - '"type": "OAuthPluginVault"'
+            - '"reference_id": "${{MCP_DA_AUTH_ID_APIGITHUBC}}"'
+          notContains: ["mcp_tool_description", "enable_dynamic_discovery"]
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect:
+          contains:
+            - '"id": "action_1"'
+            - '"file": "ai-plugin.json"'
+            - '"id": "action_2"'
+            - '"file": "ai-plugin_1.json"'
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains:
+            - "uses: oauth/register"
+            - "name: apigithubc"
+            - "configurationId: MCP_DA_AUTH_ID_APIGITHUBC"
+            - "identityProvider: Custom"
+          notContains: ["uses: dcr/register"]
+      - type: file
+        path: env/.env.dev
+        expect:
+          contains:
+            - "MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC="
+            - "MCP_DA_OAUTH_SCOPE_APIGITHUBC=read:user"
+          notContains: ["SECRET_MCP_DA_OAUTH_CLIENT_SECRET_APIGITHUBC"]
+      - type: file
+        path: .vscode/mcp.json
+        expect:
+          exists: false
+      - type: file
+        path: appPackage/mcp-tools-1.json
+        expect:
+          exists: false
+      - type: file
+        path: m365agents.local.yml
+        expect:
+          contains:
+            - "uses: oauth/register"
+            - "name: apigithubc"
+            - "configurationId: MCP_DA_AUTH_ID_APIGITHUBC"
+            - "identityProvider: Custom"
+          notContains: ["uses: dcr/register"]
 
   check-two-openapi-actions:
     type: checks

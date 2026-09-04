@@ -154,6 +154,7 @@
     "default-message-extension--message-extension-ts-playground.json",
     "default-message-extension--message-extension-ts-remote-teams.json",
     "feature-arm-json-multiple-templates.json",
+    "feature-da-add-mcp-server.json",
     "feature-da-no-action-api-key-auth-provision.json",
     "feature-da-no-action-bearer-auth-provision.json",
     "feature-da-no-action-entra-auth-remote-preview.json",

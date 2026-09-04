@@ -2116,7 +2116,34 @@ function createSemanticStepCompiler() {
       inputs.source === "mcp" &&
       isHttpsUrl(inputs.url) &&
       inputs.authType === "bearer-token";
-    if (state.template !== "da/no-action" || (!isOpenApi && !isMcpBearer)) {
+    const isMcpNone =
+      isRecord(inputs) &&
+      hasOnlyFields(inputs, new Set(["source", "url", "authType"])) &&
+      inputs.source === "mcp" &&
+      isHttpsUrl(inputs.url) &&
+      inputs.authType === "none";
+    const isMcpOAuth =
+      isRecord(inputs) &&
+      hasOnlyFields(
+        inputs,
+        new Set([
+          "source",
+          "url",
+          "authType",
+          "clientId",
+          "clientSecret",
+          "scopes",
+        ]),
+      ) &&
+      inputs.source === "mcp" &&
+      isHttpsUrl(inputs.url) &&
+      inputs.authType === "oauth" &&
+      environmentExpressionPattern.test(inputs.clientId ?? "") &&
+      secretExpressionPattern.test(inputs.clientSecret ?? "") &&
+      typeof inputs.scopes === "string" &&
+      inputs.scopes.length > 0;
+    const isMcp = isMcpBearer || isMcpNone || isMcpOAuth;
+    if (state.template !== "da/no-action" || (!isOpenApi && !isMcp)) {
       return failure(
         "VCB_ADD_DA_ACTION_INPUT_INVALID",
         "The declarative-agent action input is not supported.",
@@ -2130,7 +2157,7 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
-    if (isMcpBearer) {
+    if (isMcp) {
       error = append(
         output,
         render(state, "quick-input/single-select.json.tpl", {
@@ -2147,14 +2174,35 @@ function createSemanticStepCompiler() {
         }),
       );
       if (error) return error;
+      const authTypeLabel = isMcpBearer
+        ? "API Key (Bearer Token Auth)"
+        : isMcpOAuth
+          ? "OAuth (with static registration)"
+          : "None";
       error = append(
         output,
         render(state, "quick-input/single-select.json.tpl", {
-          optionLabel: "API Key (Bearer Token Auth)",
+          optionLabel: authTypeLabel,
           questionTitle: "Select Authentication Type",
         }),
       );
       if (error) return error;
+      if (isMcpOAuth) {
+        for (const [questionTitle, inputValue] of [
+          ["OAuth Client ID", inputs.clientId],
+          ["OAuth Client Secret", inputs.clientSecret],
+          ["OAuth Scopes (optional)", inputs.scopes],
+        ]) {
+          error = append(
+            output,
+            render(state, "quick-input/text.json.tpl", {
+              inputValue,
+              questionTitle,
+            }),
+          );
+          if (error) return error;
+        }
+      }
       state.completed.add("addDaAction");
       return { ok: true, value: output };
     }
