@@ -8,9 +8,7 @@
 # no `publishConfig.tag` publishes to `latest` — for an alpha build that would move
 # the tag every consumer installs by default.
 #
-# This is a 1:1 translation of npm-publish-from-package.sh's `--tag "$DIST_TAG"`:
-# the same value, specified in the tarball instead of on the command line. No
-# package receives a tag it would not already have received.
+# The dist-tag is specified in the tarball instead of passed to `npm publish`.
 #
 # `pnpm pack` (not `npm pack`) is required: it rewrites `workspace:*` protocol deps
 # to real versions, which npm pack would ship literally and break installs.

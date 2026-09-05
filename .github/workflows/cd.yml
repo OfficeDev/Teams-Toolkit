@@ -51,13 +51,12 @@ on:
         description: "Skip triggering the VscUse ATK docker build after CD (e.g. when the caller builds its own image)."
       packnpm:
         type: boolean
-        default: false
-        description: "[ESRP migration] Pack npm packages and route publishing to Azure DevOps ESRP instead of publishing from GitHub Actions."
+        default: true
+        description: "Pack npm packages and route publishing to Azure DevOps ESRP. Disable only when running CD without an npm release."
 
 permissions:
   actions: write
   contents: write
-  id-token: write # Required for npm OIDC trusted publishing
 
 # Production CD runs (dev / release/*) use a unique group so concurrency is a no-op and
 # real releases / nightly are never cancelled or queued. Other refs (feature/PR branches
@@ -206,11 +205,6 @@ jobs:
           wine --version
           wine64 --version
 
-      # OIDC trusted publishing (no NPM token). Requires npm >= 11.5.1, newer
-      # than the npm bundled with Node 22, so upgrade the CLI here.
-      - name: Upgrade npm for OIDC trusted publishing
-        run: npm install -g npm@latest
-      
       - name: Setup git
         run: |
           git config --global user.name 'wh-alice'
@@ -460,24 +454,18 @@ jobs:
           git add ./packages/cli/package.json ./packages/vscode-extension/package.json
           git commit -m "build: update ai key"
 
-      # ── ESRP migration, Phase 1 ────────────────────────────────────────────
       # Produce the .tgz files that Azure DevOps will hand to ESRP Release, and
       # attach them to a GitHub Release so AzDO can download them anonymously.
       #
-      # Opt-in (`packnpm`) is the migration switch: these steps create the ESRP
-      # input and trigger AzDO, while the npm publish steps below are skipped.
-      # With the default packnpm=false, publishing remains unchanged.
-      #
-      # Ordering matters: pack skips any name@version already on the registry,
-      # so it MUST run before the publish steps or it would pack nothing.
+      # `packnpm` defaults to true because ESRP is the only npm publishing path.
+      # Set it to false only for a CD run that intentionally skips npm release.
       - name: derive npm dist-tag
         if: ${{ inputs.packnpm }}
         id: dist-tag
         env:
           PREID: ${{ github.event.inputs.preid }}
         run: |
-          # Mirrors the lane conditions on the publish steps below: the dev branch
-          # is always the alpha lane regardless of preid; otherwise preid decides.
+          # The dev branch is always the alpha lane; otherwise preid decides.
           if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
             TAG=alpha
           elif [ "$PREID" = "preview" ]; then
@@ -523,26 +511,6 @@ jobs:
           body: |
             Packed npm packages for the ESRP publish pipeline (dist-tag: `${{ steps.dist-tag.outputs.tag }}`).
             Produced by CD run ${{ github.run_id }} on `${{ github.ref_name }}`. Not a product release.
-
-      - name: publish alpha release to npm org
-        if: ${{ !inputs.packnpm && github.ref == 'refs/heads/dev' }}
-        run: |
-          bash .github/scripts/npm-publish-from-package.sh alpha
-
-      - name: publish preview release to npm org
-        if: ${{ !inputs.packnpm && github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'preview' }}
-        run: |
-          bash .github/scripts/npm-publish-from-package.sh beta
-
-      - name: publish rc npm packages to npmjs.org
-        if: ${{ !inputs.packnpm && github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'rc' }}
-        run: |
-          bash .github/scripts/npm-publish-from-package.sh rc
-
-      - name: publish stable npm packages to npmjs.org
-        if: ${{ !inputs.packnpm && github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'stable' }}
-        run: |
-          bash .github/scripts/npm-publish-from-package.sh
 
       - name: pack server bits
         if: ${{ contains(steps.version-change.outputs.CHANGED, '@microsoft/teamsfx-server') || (github.event_name == 'workflow_dispatch' && github.event.inputs.vsrelease == 'true' ) }}

@@ -16,7 +16,7 @@ pr: none
 
 parameters:
   # Tag of the GitHub Release holding the packed .tgz assets, produced by
-  # .github/workflows/pack-npm-packages.yml. Release assets are anonymous on this
+  # .github/workflows/cd.yml. Release assets are anonymous on this
   # public repo, so no credential is involved — the same source the vsix and
   # templates releases are consumed from today.
   # Empty on a tag-triggered run = derive the tag from Build.SourceBranchName.
@@ -116,11 +116,8 @@ extends:
       #   GitHub Release; this pipeline downloads those assets and hands the folder
       #   to EsrpRelease@12 (contentsource: Folder).
       #
-      # SAFETY LOCK: contenttype is deliberately Maven during onboarding
-      # validation. ESRP will authenticate and then reject the npm tarballs during
-      # content validation, proving the task configuration without publishing.
       - stage: npm_packages
-        displayName: Download packed npm packages
+        displayName: Publish npm packages through ESRP
         dependsOn: []
         condition: >-
           or(
@@ -198,17 +195,55 @@ extends:
                   $ErrorActionPreference = 'Stop'
                   $tgz = Get-ChildItem -Path '$(npmPackagesDir)' -Filter *.tgz -Recurse -File
                   if ($tgz.Count -eq 0) { throw "No .tgz files found under $(npmPackagesDir)." }
-                  Write-Host "Found $($tgz.Count) .tgz file(s) for ESRP folderlocation:"
-                  $tgz | ForEach-Object {
-                    Write-Host ("  {0}  ({1:N0} bytes)" -f $_.FullName.Replace('$(npmPackagesDir)', 'npm-packages'), $_.Length)
-                  }
-                displayName: Verify ESRP folder layout
 
-              # This run is expected to fail at ESRP content validation because
-              # .tgz npm packages are intentionally submitted as Maven content.
-              # Change contenttype to 'npm' only in the production-cutover PR.
+                  $names = @{}
+                  foreach ($archive in $tgz) {
+                    $raw = tar -xzf $archive.FullName -O package/package.json
+                    if ($LASTEXITCODE -ne 0) {
+                      throw "Unable to read package/package.json from $($archive.Name)."
+                    }
+
+                    $package = $raw | ConvertFrom-Json
+                    if (-not $package.name -or -not $package.version) {
+                      throw "$($archive.Name) is missing package name or version."
+                    }
+                    if ($package.private -eq $true) {
+                      throw "$($package.name)@$($package.version) is private and cannot be published."
+                    }
+                    if ($names.ContainsKey($package.name)) {
+                      throw "Duplicate package '$($package.name)' in the ESRP release folder."
+                    }
+                    $names[$package.name] = $true
+
+                    $tag = $package.publishConfig.tag
+                    if ($tag -notin @('alpha', 'beta', 'rc', 'latest')) {
+                      throw "$($package.name)@$($package.version) has unsupported publishConfig.tag '$tag'."
+                    }
+
+                    $isPrerelease = $package.version -match '-'
+                    if ($isPrerelease -and $tag -eq 'latest') {
+                      throw "$($package.name)@$($package.version) is a prerelease but targets latest."
+                    }
+                    if (-not $isPrerelease -and $tag -ne 'latest') {
+                      throw "$($package.name)@$($package.version) is stable but targets '$tag'."
+                    }
+
+                    foreach ($field in @('dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies')) {
+                      if (-not $package.$field) { continue }
+                      foreach ($dependency in $package.$field.PSObject.Properties) {
+                        if ($dependency.Value -is [string] -and $dependency.Value.StartsWith('workspace:')) {
+                          throw "$($package.name) still contains $field dependency '$($dependency.Name)' with '$($dependency.Value)'."
+                        }
+                      }
+                    }
+
+                    Write-Host ("  {0}@{1} -> {2} ({3:N0} bytes)" -f $package.name, $package.version, $tag, $archive.Length)
+                  }
+                  Write-Host "Validated $($tgz.Count) npm package(s) for ESRP."
+                displayName: Validate downloaded npm packages
+
               - task: EsrpRelease@12
-                displayName: Validate ESRP configuration (Maven dry run)
+                displayName: Publish npm packages through ESRP
                 inputs:
                   connectedservicename: 'ATK ESRP Connection'
                   # The service connection uses a federated credential to let the
@@ -218,7 +253,7 @@ extends:
                   signcertname: 'ATK-ESRP-CERT'
                   clientid: '62d1b680-312a-4484-9737-fc13f2f7e6f3'
                   intent: 'PackageDistribution'
-                  contenttype: 'Maven'
+                  contenttype: 'npm'
                   contentsource: 'Folder'
                   folderlocation: '$(npmPackagesDir)'
                   waitforreleasecompletion: true
