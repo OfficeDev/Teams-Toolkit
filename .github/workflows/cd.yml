@@ -218,22 +218,22 @@ jobs:
         run: |
           npm run setup
 
-      - name: release alpha npm packages to npmjs.org
+      - name: version alpha npm packages
         if: ${{ github.ref == 'refs/heads/dev' }}
         run: |
           npx lerna version prerelease --preid=alpha.$(git rev-parse --short HEAD) --exact --no-push --allow-branch dev --yes
 
-      - name: release preview packages to npmjs.org
+      - name: version preview npm packages
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'preview' }}
         run: |
           npx lerna version prerelease --preid=beta.$(date "+%Y%m%d%H") --exact --no-push --force-publish=ms-teams-vscode-extension --allow-branch ${GITHUB_REF#refs/*/} --yes
 
-      - name: version rc npm packages to npmjs.org
+      - name: version rc npm packages
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'rc' }}
         run: |
           npx lerna version prerelease --conventional-prerelease --preid=rc --no-changelog --allow-branch ${GITHUB_REF#refs/*/} --yes
 
-      - name: version stable npm packages to npmjs.org
+      - name: version stable npm packages
         if: ${{ github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/dev' && github.event.inputs.preid == 'stable' }}
         run: |
           npx lerna version --conventional-commits --conventional-graduate --no-changelog --allow-branch ${GITHUB_REF#refs/*/} --yes
