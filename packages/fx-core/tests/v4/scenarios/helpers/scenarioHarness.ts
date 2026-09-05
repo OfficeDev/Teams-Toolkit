@@ -68,6 +68,7 @@ export async function runV4Package(
   return {
     files: runtime.files,
     secrets: runtime.secretEnvironmentVariables.get("dev") ?? new Map(),
+    secretsByEnvironment: runtime.secretEnvironmentVariables,
     warnings: runtime.warnings,
     outcome: unwrapOutcome(result),
   };

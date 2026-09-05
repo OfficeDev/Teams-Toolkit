@@ -64,6 +64,7 @@ import { UninstallInputs } from "./inputs";
 import { inputOrSearchAPISpecNode } from "./scaffold/commonNodes";
 import {
   MCPForDAAddAuthTypeStaticOptions,
+  MCPForDAApiKeyNode,
   MCPForDAAuthCredentialNodes,
   validateMCPServerUrl,
 } from "./scaffold/vsc/teamsProjectTypeNode";
@@ -364,6 +365,49 @@ export function copilotPluginAddAPIQuestionNode(): IQTreeNode {
         data: apiOperationQuestion(false),
       },
     ],
+  };
+}
+
+export function openApiApiKeyNode(): IQTreeNode {
+  return {
+    condition: (inputs: Inputs) =>
+      inputs.platform === Platform.CLI &&
+      inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id &&
+      inputs.apiAuthData?.some((auth) => auth.authType === "apiKey") === true,
+    data: apiKeyValueQuestion(),
+  };
+}
+
+function apiKeyValueQuestion(): TextInputQuestion {
+  return {
+    type: "text",
+    name: QuestionNames.ApiSpecApiKey,
+    cliShortName: "k",
+    password: true,
+    title: getLocalizedString("core.addOpenApiActionQuestion.ApiKey.title"),
+    cliDescription: getLocalizedString("core.addOpenApiActionQuestion.ApiKey.title"),
+    forgetLastValue: true,
+    required: false,
+    validation: {
+      validFunc: (input: string): string | undefined => {
+        const normalizedInput = input.trim();
+        if (normalizedInput && (normalizedInput.length < 10 || normalizedInput.length > 512)) {
+          return getLocalizedString("core.createProjectQuestion.invalidApiKey.message");
+        }
+
+        return undefined;
+      },
+    },
+  };
+}
+
+function authConfigApiKeyNode(): IQTreeNode {
+  return {
+    condition: (inputs: Inputs) =>
+      inputs.platform === Platform.CLI &&
+      (inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.apiKey().id ||
+        inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.bearerToken().id),
+    data: apiKeyValueQuestion(),
   };
 }
 
@@ -701,6 +745,7 @@ export function addPluginQuestionNode(): IQTreeNode {
           );
         },
       },
+      openApiApiKeyNode(),
       // MCP server URL input (when action type is "mcp").
       // Mirrors the "create DA with MCP" subtree under TEAMSFX_MCP_FOR_DA_DT:
       // CLI always collects auth-type + credential follow-ups; VS Code does the
@@ -739,11 +784,10 @@ export function addPluginQuestionNode(): IQTreeNode {
             },
           },
           // Auth type selection: CLI always; VS Code only when DT is on.
-          // Credential follow-ups (client id/secret/scopes) are only added under
-          // DT-on, because the legacy CLI branch in `core.addPlugin` does not
-          // consume them (`persistMCPAuthCredentialEnvVars` is only called from
-          // the DT-on branch). Keeping them off under DT preserves the original
-          // CLI DT-off prompt set.
+          // Credential follow-ups are added under DT-on because only that branch
+          // persists them. V3 collects OAuth credentials plus the optional CLI
+          // API key; v4 collects only the optional CLI API key because its OAuth
+          // credentials remain provision-owned.
           {
             condition: (inputs: Inputs) =>
               inputs.platform !== Platform.VSCode ||
@@ -755,11 +799,11 @@ export function addPluginQuestionNode(): IQTreeNode {
               staticOptions: MCPForDAAddAuthTypeStaticOptions(),
               default: "oauth",
             },
-            children:
-              featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT) &&
-              !featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)
-                ? MCPForDAAuthCredentialNodes()
-                : [],
+            children: featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT)
+              ? featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)
+                ? [MCPForDAApiKeyNode()]
+                : MCPForDAAuthCredentialNodes()
+              : [],
           },
         ],
       },
@@ -952,6 +996,7 @@ export function addAuthActionQuestion(): IQTreeNode {
       },
       oauthParametersQuestion(),
       apiKeyParameterQuestion(),
+      authConfigApiKeyNode(),
       microsoftEntraParameterQuestion(),
     ],
   };

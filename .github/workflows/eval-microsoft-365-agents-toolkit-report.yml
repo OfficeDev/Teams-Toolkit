@@ -1,0 +1,109 @@
+name: Report Microsoft 365 Agents Toolkit Skill Evaluation
+
+on:
+  workflow_run:
+    workflows: ["Evaluate Microsoft 365 Agents Toolkit Skill"]
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: write
+    steps:
+      - id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_GITHUB_APP_ID }}
+          private-key: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Checkout trusted reporting scripts
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.workflow_run.pull_requests[0].base.sha || github.event.repository.default_branch }}
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Download raw evaluation results
+        uses: actions/download-artifact@v4
+        with:
+          name: skill-eval-raw
+          path: evals/results
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Compare with baseline
+        continue-on-error: true
+        run: node evals/results/generate-compare-json.js
+
+      - name: Generate comparison Markdown
+        if: always()
+        run: node evals/results/generate-compare-markdown.js
+
+      - name: Generate comparison dashboard
+        if: always()
+        run: node evals/results/generate-compare-dashboard.js
+
+      - name: Post comparison comment on PR
+        if: >-
+          always() &&
+          (github.event.workflow_run.event == 'pull_request' ||
+          github.event.workflow_run.event == 'pull_request_target')
+        env:
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: node evals/results/post-pr-comment.js
+
+      - name: Upload evaluation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-eval-results
+          path: |
+            ./evals/results/latest.json
+            ./evals/results/compare.json
+            ./evals/results/compare.md
+            ./evals/results/compare-dashboard.html
+          retention-days: 30
+
+      - name: Update baseline on PR branch
+        if: >-
+          always() &&
+          (github.event.workflow_run.event == 'pull_request' ||
+          github.event.workflow_run.event == 'pull_request_target') &&
+          github.event.workflow_run.pull_requests[0].head.repo.full_name == github.repository
+        env:
+          EXPECTED_HEAD_SHA: ${{ github.event.workflow_run.pull_requests[0].head.sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.pull_requests[0].head.ref }}
+        run: |
+          if [ ! -f evals/results/latest.json ]; then
+            echo "No latest evaluation result to commit."
+            exit 0
+          fi
+
+          git check-ref-format "refs/heads/$HEAD_BRANCH"
+          remote_head=$(git ls-remote origin "refs/heads/$HEAD_BRANCH" | cut -f1)
+          if [ "$remote_head" != "$EXPECTED_HEAD_SHA" ]; then
+            echo "The PR branch changed after this evaluation; skipping the stale baseline update."
+            exit 0
+          fi
+
+          git fetch origin "$HEAD_BRANCH"
+          git checkout -B "$HEAD_BRANCH" "origin/$HEAD_BRANCH"
+          cp evals/results/latest.json evals/results/baseline.json
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add evals/results/baseline.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "chore: update baseline from latest eval results (PR sync)"
+          git push origin "HEAD:refs/heads/$HEAD_BRANCH"

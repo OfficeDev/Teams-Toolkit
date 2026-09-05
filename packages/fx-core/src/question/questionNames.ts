@@ -163,6 +163,7 @@ export enum QuestionNames {
   MCPForDAAuthType = "mcp-da-auth-type",
   MCPForDAClientId = "mcp-da-client-id",
   MCPForDAClientSecret = "mcp-da-client-secret",
+  MCPForDAApiKey = "mcp-da-api-key",
   MCPForDAScopes = "mcp-da-scopes",
   MCPToolsFilePath = "mcp-tools-file-path",
 

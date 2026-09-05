@@ -9,7 +9,7 @@
   "requiresNetwork": false,
 
   "entry": {
-    "params": ["mcpServerUrl", "teamsManifestPath"],
+    "params": ["mcpServerUrl", "teamsManifestPath", "apiKey"],
     "comment": "CLI / a pre-filled URL skips the mcpServerUrl question (when-skip on mcpServerUrl == null). teamsManifestPath lets the product entry pass the selected Teams manifest instead of assuming appPackage/manifest.json. The DT-on draft captures NO static tool list (dynamic discovery at runtime), so unlike the shipped flow there is no `tools` entry param."
   },
 
@@ -19,7 +19,11 @@
     "properties": {
       "mcpServerUrl": { "type": "string", "format": "uri" },
       "teamsManifestPath": { "type": "string", "default": "appPackage/manifest.json" },
-      "authType": { "enum": ["none", "oauth", "entra-sso", "oauth-dynamic", "bearer-token"], "default": "none" }
+      "authType": {
+        "enum": ["none", "oauth", "entra-sso", "oauth-dynamic", "bearer-token"],
+        "default": "none"
+      },
+      "apiKey": { "type": "string" }
     },
     "additionalProperties": false
   },

@@ -3810,18 +3810,22 @@ describe("addAuthAction", async () => {
     vi.restoreAllMocks();
   });
 
-  it("happy path: successfully add auth action for api key without telemetry", async () => {
+  it.each([
+    ["SCN-ADD-OPENAPI-KEY-07", "api-key"],
+    ["SCN-ADD-OPENAPI-KEY-11", "bearer-token"],
+  ])("%s: passes a supplied %s auth-config secret for persistence", async (_acId, authType) => {
     const appName = await mockV3Project();
     const inputs: Inputs = {
-      platform: Platform.VSCode,
+      platform: Platform.CLI,
       [QuestionNames.Folder]: os.tmpdir(),
       [QuestionNames.PluginManifestFilePath]: "aiplugin.json",
       [QuestionNames.ApiSpecLocation]: "test-openapi.yaml",
       [QuestionNames.ApiOperation]: ["operation1"],
       [QuestionNames.AuthName]: "mockAuthName",
-      [QuestionNames.ApiAuth]: "api-key",
+      [QuestionNames.ApiAuth]: authType,
       [QuestionNames.ApiKeyIn]: "header",
       [QuestionNames.ApiKeyName]: "mockApiKeyName",
+      [QuestionNames.ApiSpecApiKey]: "supplied-secret",
       projectPath: path.join(os.tmpdir(), appName),
       ignoreLockByUT: true,
     };
@@ -3847,7 +3851,7 @@ describe("addAuthAction", async () => {
     vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({} as DeclarativeCopilotManifestSchema)
     );
-    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
+    const injectStub = vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
       defaultRegistrationIdEnvName: "test",
       registrationIdEnvName: "test",
     });
@@ -3860,6 +3864,17 @@ describe("addAuthAction", async () => {
     const core = new FxCore(toolsWithoutTelemetry);
     const result = await core.addAuthAction(inputs);
     assert.isTrue(result.isOk());
+    expect(injectStub).toHaveBeenCalledWith(
+      path.join(os.tmpdir(), appName),
+      "mockAuthName",
+      undefined,
+      "test-openapi.yaml",
+      true,
+      "ApiKeyPluginVault",
+      undefined,
+      undefined,
+      "supplied-secret"
+    );
   });
 
   it("happy path: successfully add auth action for oauth without refreshUrl", async () => {
@@ -4071,10 +4086,11 @@ describe("addAuthAction", async () => {
     assert.isTrue(result.isOk());
   });
 
-  it("happy path: successfully add auth action for bearer token", async () => {
+  it("SCN-ADD-OPENAPI-KEY-12: omits an absent bearer-token auth-config secret", async () => {
     const appName = await mockV3Project();
     const inputs: Inputs = {
-      platform: Platform.VSCode,
+      platform: Platform.CLI,
+      nonInteractive: true,
       [QuestionNames.Folder]: os.tmpdir(),
       [QuestionNames.PluginManifestFilePath]: "aiplugin.json",
       [QuestionNames.ApiSpecLocation]: "test-openapi.yaml",
@@ -4106,7 +4122,7 @@ describe("addAuthAction", async () => {
     vi.spyOn(copilotGptManifestUtils, "readCopilotGptManifestFile").mockResolvedValue(
       ok({} as DeclarativeCopilotManifestSchema)
     );
-    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
+    const injectStub = vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
       defaultRegistrationIdEnvName: "test",
       registrationIdEnvName: "test",
     });
@@ -4117,6 +4133,17 @@ describe("addAuthAction", async () => {
     const core = new FxCore(tools);
     const result = await core.addAuthAction(inputs);
     assert.isTrue(result.isOk());
+    expect(injectStub).toHaveBeenCalledWith(
+      path.join(os.tmpdir(), appName),
+      "mockAuthName",
+      undefined,
+      "test-openapi.yaml",
+      true,
+      "ApiKeyPluginVault",
+      undefined,
+      undefined,
+      undefined
+    );
   });
 
   it("happy path: should do nothing if auth action not added", async () => {

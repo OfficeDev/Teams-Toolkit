@@ -2,38 +2,54 @@ name: Evaluate Microsoft 365 Agents Toolkit Skill
 
 on:
   workflow_dispatch:
-  pull_request:
+  pull_request_target:
     paths:
-      - 'packages/vscode-extension/skills/microsoft-365-agents-toolkit/**'
-      - 'evals/microsoft-365-agents-toolkit/**'
-      - '.github/workflows/eval-microsoft-365-agents-toolkit.yml'
+      - "packages/vscode-extension/skills/microsoft-365-agents-toolkit/**"
+      - "evals/microsoft-365-agents-toolkit/**"
+      - ".github/workflows/eval-microsoft-365-agents-toolkit.yml"
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   evaluate:
     if: ${{ !endsWith(github.actor, '[bot]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    environment: skill-evaluation
     steps:
-      - id: generate-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ vars.APP_GITHUB_APP_ID }}
-          private-key: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
-
-      - uses: actions/checkout@v4
+      - name: Checkout trusted evaluation harness
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ steps.generate-token.outputs.token }}
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+          persist-credentials: false
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.base.sha || github.ref }}
+
+      - name: Checkout PR skill
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+          path: pr-source
+          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name || github.repository }}
+          sparse-checkout: packages/vscode-extension/skills/microsoft-365-agents-toolkit
+
+      - name: Overlay PR skill onto trusted harness
+        if: ${{ github.event_name == 'pull_request_target' }}
+        run: |
+          if find pr-source/packages/vscode-extension/skills/microsoft-365-agents-toolkit -type l -print -quit | grep -q .; then
+            echo "Symbolic links are not allowed in the evaluated skill."
+            exit 1
+          fi
+          rm -rf packages/vscode-extension/skills/microsoft-365-agents-toolkit
+          cp -R pr-source/packages/vscode-extension/skills/microsoft-365-agents-toolkit packages/vscode-extension/skills/
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
 
       - name: Install GitHub Copilot CLI
         run: |
@@ -57,70 +73,16 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
         run: waza run -o evals/results/latest.json
 
-      - name: Fetch baseline.json from PR target branch
-        if: always() && github.event_name == 'pull_request'
-        run: |
-          BASE_BRANCH="${{ github.event.pull_request.base.ref }}"
-          git fetch origin $BASE_BRANCH
-          git show origin/$BASE_BRANCH:evals/results/baseline.json > evals/results/baseline.json || echo "No baseline.json in base branch"
-
-      - name: Compare with baseline
+      - name: Record evaluation completion
         if: always()
-        run: |
-          if [ -f evals/results/baseline.json ] && [ -f evals/results/latest.json ]; then
-            node evals/results/generate-compare-json.js
-          else
-            echo "## Waza Comparison Report" > evals/results/compare.md
-            echo >> evals/results/compare.md
-            echo "Comparison skipped because baseline or latest result file was not found." >> evals/results/compare.md
-            echo >> evals/results/compare.md
-            echo "- baseline: evals/results/baseline.json" >> evals/results/compare.md
-            echo "- latest: evals/results/latest.json" >> evals/results/compare.md
-          fi
+        run: echo "Evaluation run $GITHUB_RUN_ID completed." > evals/results/evaluation-complete.txt
 
-      - name: Generate comparison Markdown
-        if: always()
-        run: node evals/results/generate-compare-markdown.js
-
-      - name: Generate comparison dashboard
-        if: always()
-        run: node evals/results/generate-compare-dashboard.js
-
-      - name: Post comparison comment on PR
-        if: always() && github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node evals/results/post-pr-comment.js
-
-      - name: Upload evaluation results
+      - name: Upload raw evaluation results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: skill-eval-results
+          name: skill-eval-raw
           path: |
             ./evals/results/latest.json
-            ./evals/results/compare.json
-            ./evals/results/compare-dashboard.html
+            ./evals/results/evaluation-complete.txt
           retention-days: 30
-
-      - name: Update baseline on PR branch
-        if: always() && github.event_name == 'pull_request'
-        env:
-          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
-        run: |
-          if [ -f evals/results/latest.json ]; then
-            BRANCH="${{ github.head_ref }}"
-            git fetch origin $BRANCH
-            git checkout $BRANCH
-            cp evals/results/latest.json evals/results/baseline.json
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add evals/results/baseline.json
-            if git diff --cached --quiet; then
-              echo "No changes to commit"
-              exit 0
-            fi
-            git commit -m "chore: update baseline from latest eval results (PR sync)"
-            git pull --rebase origin $BRANCH
-            git push origin HEAD:$BRANCH
-          fi

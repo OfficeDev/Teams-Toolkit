@@ -1472,7 +1472,7 @@ describe("addPlugin", async () => {
     }
   });
 
-  it("from API spec: add action success with bearer token auth and teamsapp.local.yaml exist", async () => {
+  it("SCN-ADD-OPENAPI-KEY-02: forwards a supplied API key to auth injection", async () => {
     const appName = await mockV3Project();
     const inputs: Inputs = {
       platform: Platform.VSCode,
@@ -1481,6 +1481,7 @@ describe("addPlugin", async () => {
       [QuestionNames.ApiSpecLocation]: "test.yaml",
       [QuestionNames.ApiOperation]: ["GET /user/{userId}"],
       [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+      [QuestionNames.ApiSpecApiKey]: "supplied-secret",
       projectPath: path.join(os.tmpdir(), appName),
     };
     const manifest = new TeamsAppManifest();
@@ -1528,7 +1529,7 @@ describe("addPlugin", async () => {
     const core = new FxCore(addPluginTools);
     vi.spyOn(openApiSpecHelper, "generateFromApiSpec").mockResolvedValue(ok({ warnings: [] }));
     vi.spyOn(ActionInjector, "injectCreateAPIKeyAction").mockResolvedValue();
-    vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
+    const injectAuthStub = vi.spyOn(openApiSpecHelper, "injectAuthAction").mockResolvedValue({
       defaultRegistrationIdEnvName: "test",
       registrationIdEnvName: "test2",
     });
@@ -1575,6 +1576,17 @@ describe("addPlugin", async () => {
       console.log(result.error);
     }
     assert.isTrue(result.isOk());
+    expect(injectAuthStub).toHaveBeenCalledWith(
+      inputs.projectPath,
+      "bearerAuth",
+      { type: "http", scheme: "bearer" },
+      expect.stringContaining("openapi_2.yaml"),
+      true,
+      undefined,
+      undefined,
+      undefined,
+      "supplied-secret"
+    );
     assert.isTrue(showMessageStub.mock.calls.length === 2);
     assert.isTrue(openFileStub.mock.calls.length === 1);
 
@@ -2867,6 +2879,7 @@ describe("addPlugin", async () => {
       [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
       [QuestionNames.MCPToolsFilePath]: "",
       [QuestionNames.MCPForDAAuthType]: "bearer-token",
+      [QuestionNames.MCPForDAApiKey]: "",
       projectPath,
     };
     const manifest = new TeamsAppManifest();
@@ -2922,7 +2935,8 @@ describe("addPlugin", async () => {
       "m365agents.yml",
       "examplecom",
       "MCP_DA_AUTH_ID_EXAMPLECOM",
-      "https://example.com/mcp"
+      "https://example.com/mcp",
+      undefined
     );
     assert.equal(writeEnvStub.mock.calls.length, 0);
     const pluginCall = writeJSONStub.mock.calls.find((call) =>

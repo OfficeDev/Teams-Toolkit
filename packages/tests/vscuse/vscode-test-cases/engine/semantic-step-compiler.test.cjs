@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 180 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 184 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 180 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 180);
+  assert.equal(first.value.files.length, 184);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 180);
+  assert.equal(generatedFiles.length, 184);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -3822,6 +3822,7 @@ test("VCB-111: the Teams Agent with Data bundles cover their launch matrix and s
   );
   assert.equal(customApi.ok, true, customApi.diagnostics?.[0]?.code);
   assert.deepEqual(customApi.value.map((entry) => entry.caseId).sort(), [
+    "feature-local-debug-custom-api-without-openai-key",
     "rag-custom-api-js-azure-openai-local-teams",
     "rag-custom-api-js-azure-openai-playground",
     "rag-custom-api-js-azure-openai-remote-teams",
@@ -5308,7 +5309,7 @@ test("VCB-145: exactly eight retained template plans use stable semantic post-la
     ["weather-agent.yml", 16],
     ["basic-custom-engine-agent.yml", 23],
     ["custom-copilot-rag-customize.yml", 27],
-    ["custom-copilot-rag-custom-api.yml", 15],
+    ["custom-copilot-rag-custom-api.yml", 16],
   ];
   const bundles = new Map();
   for (const [fileName, expectedCaseCount] of bundleDefinitions) {
@@ -7619,6 +7620,7 @@ test("VCB-169: Feature-derived cases use feature-prefixed descriptor filenames",
     "feature-da-no-action-bearer-auth-provision",
     "feature-da-no-action-entra-auth-remote-preview",
     "feature-da-no-action-oauth-auth-remote-preview",
+    "feature-da-no-action-pkce-oauth-auth-remote-preview",
   ];
   for (const expectedCaseId of expectedFeatureCaseIds) {
     assert.equal(
@@ -8788,14 +8790,43 @@ steps:
   assert.equal(plan.plan_metadata.tags.includes("gate:manual"), true);
 
   const descriptions = plan.steps.map((step) => step.description);
+  const workflowMutation = plan.steps.find((step) =>
+    step.step_id.startsWith("step_setWorkflowVersion_"),
+  );
+  assert.notEqual(workflowMutation, undefined);
   assert.equal(
-    descriptions.some((description) =>
-      description.includes(
-        "replace the top-level version in m365agents.yml with v1.9 and verify the written workflow",
-      ),
+    workflowMutation.parameters.sample.includes(
+      'target_action = "  - uses: teamsApp/shareToOthers"',
     ),
     true,
   );
+  assert.match(
+    workflowMutation.parameters.sample,
+    /if text\.count\(source_action\) != 2:/,
+  );
+  assert.match(
+    workflowMutation.parameters.sample,
+    /target_schema = source_schema\.replace\("v1\.12", os\.environ\["WORKFLOW_VERSION"\]\)/,
+  );
+  assert.match(
+    workflowMutation.parameters.sample,
+    /workflow schema directive was not written exactly once/,
+  );
+  assert.match(
+    workflowMutation.parameters.sample,
+    /scope: \$\{\{AGENT_SCOPE\}\}/,
+  );
+  assert.match(workflowMutation.parameters.sample, /scope: tenant/);
+  assert.match(
+    workflowMutation.parameters.sample,
+    /if any\(line\.strip\(\)\.startswith\("scope:"\)/,
+  );
+  assert.match(workflowMutation.parameters.sample, /shareLink: SHARE_LINK/);
+  assert.match(
+    workflowMutation.description,
+    /replace the top-level version in m365agents\.yml with v1\.9/,
+  );
+  assert.match(workflowMutation.description, /schema-valid legacy share shape/);
   const typedValues = plan.steps
     .filter((step) => step.tool === "type_text")
     .map((step) => step.parameters.text);
@@ -8860,12 +8891,81 @@ steps:
     (step) =>
       step.tool === "type_text" && step.parameters.text === shareFlow[0],
   );
+  const shareCommandSelection = plan.steps.slice(
+    shareCommandIndex + 1,
+    shareCommandIndex + 5,
+  );
+  assert.deepEqual(
+    shareCommandSelection.map((step) => step.tool),
+    ["", "key_press", "", "key_press"],
+  );
+  assert.match(
+    shareCommandSelection[0].description,
+    /Remove access to the shared app.*first.*Microsoft 365 Agents: Share.*second/,
+  );
+  assert.equal(shareCommandSelection[1].parameters.key, "down");
+  assert.match(
+    shareCommandSelection[2].description,
+    /Microsoft 365 Agents: Share.*highlighted/,
+  );
+  assert.equal(shareCommandSelection[3].parameters.key, "enter");
+  assert.match(
+    plan.steps[shareCommandIndex + 5].description,
+    /prompt titled Share the agent/,
+  );
+  const emailInputIndex = plan.steps.findIndex(
+    (step, index) =>
+      index > shareCommandIndex &&
+      step.tool === "type_text" &&
+      step.parameters.text === "${{env:M365_ACCOUNT_NAME}}",
+  );
+  const environmentSelection = plan.steps.slice(
+    emailInputIndex + 2,
+    emailInputIndex + 7,
+  );
+  assert.deepEqual(
+    environmentSelection.map((step) => step.tool),
+    ["", "", "type_text", "", "key_press"],
+  );
+  assert.match(environmentSelection[0].description, /Select an environment/);
+  assert.equal(environmentSelection[2].parameters.text, "dev");
+  assert.match(environmentSelection[3].description, /option dev/);
+  assert.equal(environmentSelection[4].parameters.key, "enter");
+  const clearNotificationsIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Clear All Notifications",
+  );
+  const showNotificationsIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Notifications: Show Notifications",
+  );
+  assert.equal(clearNotificationsIndex >= 0, true);
+  assert.equal(showNotificationsIndex > clearNotificationsIndex, true);
+  assert.equal(shareCommandIndex > showNotificationsIndex, true);
   const errorText =
     "Share feature only supports m365agents.yml version v1.10 or above, follow [the guide](https://github.com/OfficeDev/microsoft-365-agents-toolkit/wiki/Share-Declarative-Agents-with-Others#About-YAML-schema) to upgrade and proceed.";
   const errorIndex = plan.steps.findIndex((step) =>
     step.description.includes(errorText),
   );
-  assert.equal(shareCommandIndex >= 0 && errorIndex > shareCommandIndex, true);
+  assert.equal(errorIndex, emailInputIndex + 7);
+  assert.deepEqual(plan.steps[errorIndex].depends_on, [
+    environmentSelection[4].step_id,
+  ]);
+  assert.match(
+    plan.steps[errorIndex].step_id,
+    /^step_assertNotificationContains_assert_/,
+  );
+  assert.equal(
+    plan.steps[errorIndex].description,
+    `@assertion a visible Visual Studio Code notification contains the literal text ${errorText}. A notification with different text, including an in-progress notification, does not satisfy this assertion.`,
+  );
+  assert.deepEqual(plan.steps[errorIndex].tags, [
+    "component:notifications",
+    "action:assert-contains",
+    "step_retry_timeout: 60",
+  ]);
   assert.equal(
     plan.steps
       .slice(shareCommandIndex, errorIndex + 1)
@@ -9024,7 +9124,7 @@ test("VCB-164: repeated OpenAPI actions provision a personal-scope declarative a
   );
 });
 
-test("VCB-154: eighteen legacy plans are replaced, three are retired, and one remains", async () => {
+test("VCB-154: twenty-one legacy plans are replaced, four are retired, and one remains", async () => {
   const migrations = [
     {
       source: "feature-basic-tab-local-debug.yml",
@@ -9086,6 +9186,25 @@ test("VCB-154: eighteen legacy plans are replaced, three are retired, and one re
       caseId: "feature-da-no-action-oauth-auth-remote-preview",
       generated: "feature-da-no-action-oauth-auth-remote-preview.json",
       legacy: "Feature_DA_No_Action_Add_OAuth_Auth_Configurations.json",
+    },
+    {
+      source: "feature-da-no-action-add-action.yml",
+      caseId: "feature-da-no-action-pkce-oauth-auth-remote-preview",
+      generated: "feature-da-no-action-pkce-oauth-auth-remote-preview.json",
+      legacy: "Feature_DA_No_Action_Add_PKCE_OAuth_Auth_Configurations.json",
+    },
+    {
+      source: "feature-arm-json-multiple-templates.yml",
+      caseId: "feature-arm-json-multiple-templates",
+      generated: "feature-arm-json-multiple-templates.json",
+      legacy:
+        "Feature_Arm_Deoploy_Support_Json_Format_And_Multiple_Templates.json",
+    },
+    {
+      source: "custom-copilot-rag-custom-api.yml",
+      caseId: "feature-local-debug-custom-api-without-openai-key",
+      generated: "feature-local-debug-custom-api-without-openai-key.json",
+      legacy: "Feature_LocalDebug_Custom_API_without_OpenAI_Keys.json",
     },
     {
       source: "feature-da-regenerate-action.yml",
@@ -9205,6 +9324,10 @@ test("VCB-154: eighteen legacy plans are replaced, three are retired, and one re
       "Feature_DA_Advanced_Personal_Scope_Provision_with_Copilot_License.json",
       "only assertion is `AGENT_SCOPE=personal`",
     ],
+    [
+      "Feature_Prompt_Use_Run_From_Package.json",
+      "threshold and link are covered by the fx-core unit test",
+    ],
   ];
   const mapping = await fs.readFile(
     path.join(casesDirectory, "legacy-case-mapping.md"),
@@ -9217,7 +9340,7 @@ test("VCB-154: eighteen legacy plans are replaced, three are retired, and one re
   for (const [status, expectedCount] of [
     ["Partial", 0],
     ["Not Mapped", 1],
-    ["Retired", 3],
+    ["Retired", 4],
   ]) {
     assert.equal(
       mapping.match(new RegExp(`^\\|[^\\n]*\\|\\s*${status}\\s*\\|`, "gmu"))
@@ -9284,7 +9407,7 @@ test("VCB-142: every OpenAI case reuses Azure OpenAI without fake-key error cont
     );
   }
 
-  assert.equal(generatedOpenAICases.length, 46);
+  assert.equal(generatedOpenAICases.length, 47);
   for (const { caseId, plan } of generatedOpenAICases) {
     const typedValues = plan.steps
       .filter((step) => step.tool === "type_text")
@@ -9369,4 +9492,499 @@ test("VCB-142: every OpenAI case reuses Azure OpenAI without fake-key error cont
       }
     }
   }
+});
+
+test("VCB-181: PKCE OAuth provisions with only a protected client ID", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: feature-da-no-action-pkce-oauth-auth-remote-preview
+    scenarioId: VCB-181
+    workItemIds: [31541624]
+    steps: [scaffold, check, add-action, add-auth, check-auth, set-scope, login, provision, target, open, check-sign-in]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - { question: projectType, value: copilot-agent-type }
+        - { question: daTemplate, value: no-action }
+        - { question: workspaceFolder, value: default }
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { exists: true }
+  add-action:
+    type: addDaAction
+    with:
+      source: openapi
+      url: https://raw.githubusercontent.com/neil-yechenwei/uitest/6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_pkce.yaml
+      operations: all
+  add-auth:
+    type: addApiAuthConfiguration
+    with:
+      authType: oauth
+      authName: oAuth2AuthCode
+      authorizationUrl: https://login.microsoftonline.com/81ccb34d-48d6-48a2-82ca-04d530ee06b7/oauth2/v2.0/authorize
+      tokenUrl: https://login.microsoftonline.com/81ccb34d-48d6-48a2-82ca-04d530ee06b7/oauth2/v2.0/token
+      refreshUrl: ""
+      scope: "api://81ccb34d-48d6-48a2-82ca-04d530ee06b/repairs_read: Read repair records"
+      pkce: true
+  check-auth:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect: { contains: ["isPKCEEnabled: true"] }
+      - type: file
+        path: m365agents.local.yml
+        expect: { contains: ["isPKCEEnabled: true"] }
+  set-scope:
+    type: projectEnvironment
+    with:
+      variables: { AGENT_SCOPE: personal }
+  login:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  provision:
+    type: provision
+    with:
+      oauth:
+        clientId: "\${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"
+  target:
+    type: target
+    with:
+      profile: "Preview in Copilot (Chrome)"
+      profileSelection: second
+  open:
+    type: open
+    with: { kind: agent, destination: chat }
+  check-sign-in:
+    type: checks
+    with:
+      - type: chat
+        send: List all repairs
+        allowAction: true
+      - type: browser
+        expect: { role: button, namePrefix: Sign in }
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-181.yml");
+  assert.equal(
+    result.ok,
+    true,
+    `${result.diagnostics?.[0]?.code}: ${result.diagnostics?.[0]?.message}`,
+  );
+  const plan = result.value[0].plan;
+  assert.equal(plan.plan_metadata.description.workitem, "31541624");
+  const typedValues = plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(typedValues.includes("Yes"), true);
+  assert.equal(
+    typedValues.includes("${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"),
+    true,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes("OAuth registration client secret"),
+    ),
+    false,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes("uploads the client ID/Secret"),
+    ),
+    false,
+  );
+
+  const unrelatedAction = compileInlineSource(
+    sourceText.replace(
+      "6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_pkce.yaml",
+      "6c0c1cb66ce41fd4112a15ee9d996dde9ff233f7/Spec_add_auth_oauth_github.yaml",
+    ),
+    "vscuse-vcb-181-unrelated-action.yml",
+  );
+  assert.equal(unrelatedAction.ok, false);
+  assert.equal(
+    unrelatedAction.diagnostics[0].code,
+    "VCB_ADD_API_AUTH_INPUT_INVALID",
+  );
+
+  const extraClientSecret = compileInlineSource(
+    sourceText.replace(
+      '        clientId: "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"',
+      '        clientId: "${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"\n        clientSecret: "${{secret:EXISTING_GITHUB_OAUTH_CLIENT_SECRET}}"',
+    ),
+    "vscuse-vcb-181-client-secret.yml",
+  );
+  assert.equal(extraClientSecret.ok, false);
+  assert.equal(
+    extraClientSecret.diagnostics[0].code,
+    "VCB_PROVISION_INPUT_UNKNOWN",
+  );
+
+  const fixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  const migrated = fixture.value.find(
+    ({ caseId }) =>
+      caseId === "feature-da-no-action-pkce-oauth-auth-remote-preview",
+  );
+  assert.notEqual(migrated, undefined);
+  assert.equal(migrated.plan.plan_metadata.description.workitem, "31541624");
+});
+
+test("VCB-182: ARM JSON multiple templates use one immutable mutation", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: feature-arm-json-multiple-templates
+    scenarioId: VCB-182
+    workItemIds: [16835373]
+    steps: [scaffold, check, configure, check-fixtures, login-azure, login-m365, provision, check-output]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: non-sso-tab
+      answers:
+        - { question: projectType, value: teams-agent-and-app-type }
+        - { question: teamsAppType, value: teams-other-app-type }
+        - { question: teamsOtherAppType, value: non-sso-tab }
+        - { question: workspaceFolder, value: default }
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect: { contains: ["path: ./infra/azure.bicep"] }
+  configure:
+    type: configureArmJsonTemplates
+  check-fixtures:
+    type: checks
+    with:
+      - type: file
+        path: m365agents.yml
+        expect:
+          contains: ["path: ./infra/azure.json", "parameters: ./infra/azure.parameters.test.json", "deploymentName: test-json-format"]
+      - type: file
+        path: infra/azure.json
+        expect: { contains: ['"SQLRESOURCEID"'] }
+      - type: file
+        path: infra/azure.parameters.test.json
+        expect: { contains: ['"resourceBaseName"'] }
+  login-azure:
+    type: login
+    with:
+      type: azure
+      account: "\${{env:AZURE_ACCOUNT_NAME}}"
+      password: "\${{secret:AZURE_ACCOUNT_PASSWORD}}"
+  login-m365:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  provision:
+    type: provision
+    with:
+      environment: none
+      arm:
+        targetResourceGroupName: "+ New resource group"
+        newResourceGroupName: "\${{var:app_name}}-rg"
+        newResourceGroupLocation: "\${{env:RESOURCE_GROUP_REGION}}"
+  check-output:
+    type: checks
+    with:
+      - type: file
+        path: env/.env.dev
+        expect: { contains: ["SQLRESOURCEID="] }
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-182.yml");
+  assert.equal(
+    result.ok,
+    true,
+    `${result.diagnostics?.[0]?.code}: ${result.diagnostics?.[0]?.message}`,
+  );
+  const plan = result.value[0].plan;
+  assert.equal(plan.plan_metadata.description.workitem, "16835373");
+  assert.equal(
+    plan.steps.some((step) =>
+      step.description.includes("Select an environment"),
+    ),
+    false,
+  );
+  assert.equal(
+    plan.steps.some((step) =>
+      step.step_id.startsWith("step_configureArmJsonTemplates_"),
+    ),
+    true,
+  );
+  const assertions = readFileAssertions(plan);
+  for (const expectedPath of [
+    "m365agents.yml",
+    "infra/azure.json",
+    "infra/azure.parameters.test.json",
+    "env/.env.dev",
+  ]) {
+    assert.equal(
+      assertions.some(({ path }) => path === expectedPath),
+      true,
+      expectedPath,
+    );
+  }
+
+  const fixture = await compileFixture(
+    "feature-arm-json-multiple-templates.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  assert.equal(fixture.value.length, 1);
+  assert.equal(
+    fixture.value[0].plan.plan_metadata.description.workitem,
+    "16835373",
+  );
+
+  const authoredMutationInput = compileInlineSource(
+    sourceText.replace(
+      "    type: configureArmJsonTemplates",
+      "    type: configureArmJsonTemplates\n    with: { path: infra/azure.json }",
+    ),
+    "vscuse-vcb-182-authored-input.yml",
+  );
+  assert.equal(authoredMutationInput.ok, false);
+  assert.equal(
+    authoredMutationInput.diagnostics[0].code,
+    "VCB_ARM_JSON_TEMPLATES_INPUT_INVALID",
+  );
+});
+
+test("VCB-183: deferred OpenAI key is supplied by the local target", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: feature-local-debug-custom-api-without-openai-key
+    scenarioId: VCB-183
+    workItemIds: [31256782, 33502084]
+    steps: [scaffold, check, model, endpoint, python, login, target, open, chat]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: custom-copilot-rag-custom-api
+      answers:
+        - { question: projectType, value: teams-agent-and-app-type }
+        - { question: teamsAppType, value: custom-copilot-rag }
+        - { question: customCopilotRag, value: custom-copilot-rag-custom-api }
+        - question: apiSpecLocation
+          type: text
+          value: https://raw.githubusercontent.com/SLdragon/example-openapi-spec/main/real-no-auth.yaml
+        - { question: apiOperations, type: multiSelect, value: all }
+        - { question: llmService, value: llm-service-openai }
+        - { question: openAIKey, type: text, value: deferred }
+        - { question: language, value: python }
+        - { question: workspaceFolder, value: default }
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: src/config.py
+        expect: { contains: [OPENAI_API_KEY, "OPENAI_MODEL_NAME='gpt-3.5-turbo'"] }
+  model:
+    type: openAIModel
+    with: { path: src/config.py, current: gpt-3.5-turbo }
+  endpoint:
+    type: localEnvironment
+    with:
+      OPENAI_BASE_URL: "\${{env:AZURE_OPENAI_ENDPOINT}}/openai/v1"
+  python:
+    type: pythonEnvironment
+    with: { interpreter: "Python 3.12" }
+  login:
+    type: login
+    with:
+      type: m365
+      account: "\${{env:M365_ACCOUNT_NAME}}"
+      password: "\${{secret:M365_ACCOUNT_PASSWORD}}"
+  target:
+    type: target
+    with:
+      profile: "Debug in Teams (Chrome)"
+      profileSelection: first
+      runtimeInputs:
+        openAIKey: "\${{secret:AZURE_OPENAI_API_KEY}}"
+  open:
+    type: open
+    with: { kind: app, destination: chat }
+  chat:
+    type: checks
+    with:
+      - type: chat
+        send: List all repairs without auth
+        expect: { replied: true, notContains: ["error"] }
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-183.yml");
+  assert.equal(
+    result.ok,
+    true,
+    `${result.diagnostics?.[0]?.code}: ${result.diagnostics?.[0]?.message}`,
+  );
+  const plan = result.value[0].plan;
+  assert.equal(plan.plan_metadata.description.workitem, "31256782,33502084");
+  const deferredIndex = plan.steps.findIndex((step) =>
+    step.description.includes(
+      "active prompt titled OpenAI Key is visible and its text input is empty",
+    ),
+  );
+  const targetIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Debug: Select and Start Debugging",
+  );
+  const runtimeSecretIndex = plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "${{secret:AZURE_OPENAI_API_KEY}}",
+  );
+  const readyIndex = plan.steps.findIndex((step) =>
+    step.description.includes("Microsoft Teams app details page"),
+  );
+  assert.equal(deferredIndex >= 0, true);
+  assert.equal(targetIndex < runtimeSecretIndex, true);
+  assert.equal(runtimeSecretIndex < readyIndex, true);
+  assert.equal(JSON.stringify(plan).includes("fackedkey"), false);
+
+  const fixture = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  const migrated = fixture.value.find(
+    ({ caseId }) =>
+      caseId === "feature-local-debug-custom-api-without-openai-key",
+  );
+  assert.notEqual(migrated, undefined);
+  assert.equal(
+    migrated.plan.plan_metadata.description.workitem,
+    "31256782,33502084",
+  );
+
+  for (const [label, transformedSource] of [
+    [
+      "literal runtime key",
+      sourceText.replace(
+        'openAIKey: "${{secret:AZURE_OPENAI_API_KEY}}"',
+        'openAIKey: "literal-key"',
+      ),
+    ],
+    [
+      "wrong target profile",
+      sourceText.replace(
+        'profile: "Debug in Teams (Chrome)"',
+        'profile: "Debug in Microsoft 365 Agents Playground"',
+      ),
+    ],
+    [
+      "missing deferred scaffold state",
+      sourceText.replace(
+        "{ question: openAIKey, type: text, value: deferred }",
+        '{ question: openAIKey, type: text, value: "${{secret:AZURE_OPENAI_API_KEY}}" }',
+      ),
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      transformedSource,
+      `vscuse-vcb-183-${label.replaceAll(" ", "-")}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(
+      [
+        "VCB_TARGET_PROFILE_UNKNOWN",
+        "VCB_TARGET_RUNTIME_INPUT_INVALID",
+      ].includes(invalid.diagnostics[0].code),
+      true,
+      label,
+    );
+  }
+});
+
+test("VCB-184: migrated feature fixtures retain runtime prerequisites and waits", async () => {
+  const armFixture = await compileFixture(
+    "feature-arm-json-multiple-templates.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(armFixture.ok, true, armFixture.diagnostics?.[0]?.code);
+  assert.equal(
+    armFixture.value[0].plan.steps.some((step) =>
+      step.description.includes("Select an environment"),
+    ),
+    false,
+  );
+
+  const authFixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(authFixture.ok, true, authFixture.diagnostics?.[0]?.code);
+  const pkcePlan = authFixture.value.find(
+    ({ caseId }) =>
+      caseId === "feature-da-no-action-pkce-oauth-auth-remote-preview",
+  ).plan;
+  const typedValues = pkcePlan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  assert.equal(
+    typedValues.includes("${{env:EXISTING_GITHUB_OAUTH_CLIENT_ID}}"),
+    true,
+  );
+  assert.equal(
+    typedValues.includes("${{env:EXISTING_OAUTH_CLIENT_ID}}"),
+    false,
+  );
+
+  const customApiFixture = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(
+    customApiFixture.ok,
+    true,
+    customApiFixture.diagnostics?.[0]?.code,
+  );
+  const customApiPlan = customApiFixture.value.find(
+    ({ caseId }) =>
+      caseId === "feature-local-debug-custom-api-without-openai-key",
+  ).plan;
+  const deferredOpenAIKeyPrompt = customApiPlan.steps.find((step) =>
+    step.step_id.startsWith("step_deferredTextInput_assertQuestion_"),
+  );
+  assert.notEqual(deferredOpenAIKeyPrompt, undefined);
+  assert.equal(
+    deferredOpenAIKeyPrompt.tags.includes("step_retry_timeout: 180"),
+    true,
+  );
+  const scaffoldOpenAIKeyPrompt = customApiPlan.steps.find(
+    (step) =>
+      step.step_id.startsWith("step_emptyTextInput_assertQuestion_") &&
+      step.description.includes("OpenAI Key"),
+  );
+  assert.notEqual(scaffoldOpenAIKeyPrompt, undefined);
+  assert.equal(
+    scaffoldOpenAIKeyPrompt.tags.includes("step_retry_timeout: 30"),
+    true,
+  );
 });

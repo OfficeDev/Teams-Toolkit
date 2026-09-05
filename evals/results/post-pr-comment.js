@@ -34,6 +34,15 @@ function getRepoInfo() {
 }
 
 function getIssueNumber() {
+  const issueNumberFromEnvironment = process.env.PR_NUMBER;
+  if (issueNumberFromEnvironment) {
+    const issueNumber = Number(issueNumberFromEnvironment);
+    if (Number.isInteger(issueNumber) && issueNumber > 0) {
+      return issueNumber;
+    }
+    throw new Error("PR_NUMBER is invalid");
+  }
+
   const eventPath = process.env.GITHUB_EVENT_PATH;
   if (!eventPath || !fs.existsSync(eventPath)) {
     throw new Error("GITHUB_EVENT_PATH is missing or invalid");
