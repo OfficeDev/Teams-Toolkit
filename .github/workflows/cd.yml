@@ -219,9 +219,25 @@ jobs:
           npm run setup
 
       - name: version alpha npm packages
-        if: ${{ github.ref == 'refs/heads/dev' }}
+        if: ${{ github.event.inputs.preid == 'alpha' && (github.ref == 'refs/heads/dev' || github.event.inputs.SkipBranchCheck == 'true') }}
         run: |
-          npx lerna version prerelease --preid=alpha.$(git rev-parse --short HEAD) --exact --no-push --allow-branch dev --yes
+          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            PREID="alpha.$(git rev-parse --short HEAD)"
+            FORCE_PUBLISH=()
+          else
+            # Feature-branch alpha tests may contain only pipeline changes, so
+            # force-version the selected workspace slice. The run id keeps a
+            # rerun on the same commit from colliding with an immutable npm version.
+            PREID="alpha.$(git rev-parse --short HEAD).${GITHUB_RUN_ID}"
+            FORCE_PUBLISH=(--force-publish)
+          fi
+          npx lerna version prerelease \
+            --preid="$PREID" \
+            --exact \
+            --no-push \
+            --allow-branch "${GITHUB_REF#refs/*/}" \
+            "${FORCE_PUBLISH[@]}" \
+            --yes
 
       - name: version preview npm packages
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'preview' }}
@@ -465,8 +481,8 @@ jobs:
         env:
           PREID: ${{ github.event.inputs.preid }}
         run: |
-          # The dev branch is always the alpha lane; otherwise preid decides.
-          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+          # The dev branch and an explicit alpha test both use the alpha tag.
+          if [ "${{ github.ref }}" = "refs/heads/dev" ] || [ "$PREID" = "alpha" ]; then
             TAG=alpha
           elif [ "$PREID" = "preview" ]; then
             TAG=beta
