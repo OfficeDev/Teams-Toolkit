@@ -520,6 +520,10 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
           tag: npm-packages-${{ github.run_id }}
+          # New release tags otherwise default to the repository's default branch.
+          # Pin this tag to the exact commit whose workflow built the tarballs so
+          # AzDO evaluates the matching pipeline YAML from that same commit.
+          commit: ${{ github.sha }}
           artifacts: npm-packages/*.tgz
           artifactErrorsFailBuild: true
           allowUpdates: true
