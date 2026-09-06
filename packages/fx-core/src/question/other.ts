@@ -501,6 +501,54 @@ function authConfigApiKeyNode(): IQTreeNode {
   };
 }
 
+function authConfigOAuthCredentialNodes(): IQTreeNode[] {
+  const clientIdCondition = (inputs: Inputs): boolean =>
+    inputs.platform === Platform.CLI &&
+    (inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.oauth().id ||
+      inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.microsoftEntra().id);
+  const clientSecretCondition = (inputs: Inputs): boolean =>
+    clientIdCondition(inputs) &&
+    inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.oauth().id &&
+    inputs[QuestionNames.OauthPKCE] !== "true";
+
+  return [
+    {
+      condition: clientIdCondition,
+      data: {
+        type: "text",
+        name: QuestionNames.OauthClientId,
+        title: getLocalizedString("core.createProjectQuestion.OauthClientId"),
+        placeholder: getLocalizedString("core.createProjectQuestion.OauthClientId.placeholder"),
+        cliDescription: "OAuth client ID for the authentication configuration.",
+        forgetLastValue: true,
+        required: false,
+      },
+    },
+    {
+      condition: clientSecretCondition,
+      data: {
+        type: "text",
+        name: QuestionNames.OauthClientSecret,
+        password: true,
+        title: getLocalizedString("core.createProjectQuestion.OauthClientSecret"),
+        placeholder: getLocalizedString("core.createProjectQuestion.OauthClientSecret.placeholder"),
+        cliDescription: "OAuth client secret for the authentication configuration.",
+        forgetLastValue: true,
+        required: false,
+        validation: {
+          validFunc: (input: string): string | undefined => {
+            const normalizedInput = input.trim();
+            if (normalizedInput && (normalizedInput.length < 10 || normalizedInput.length > 512)) {
+              return getLocalizedString("core.createProjectQuestion.invalidApiKey.message");
+            }
+            return undefined;
+          },
+        },
+      },
+    },
+  ];
+}
+
 function selectTeamsAppPackageQuestion(): SingleFileQuestion {
   return {
     name: QuestionNames.TeamsAppPackageFilePath,
@@ -1085,6 +1133,7 @@ export function addAuthActionQuestion(): IQTreeNode {
       oauthParametersQuestion(),
       apiKeyParameterQuestion(),
       authConfigApiKeyNode(),
+      ...authConfigOAuthCredentialNodes(),
       microsoftEntraParameterQuestion(),
     ],
   };

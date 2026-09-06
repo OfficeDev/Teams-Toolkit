@@ -72,6 +72,21 @@ paths:
           description: Success
 `;
 
+const noAuthOpenApi = `openapi: 3.0.0
+info:
+  title: Auth Config E2E API
+  version: 1.0.0
+servers:
+  - url: https://auth-config-e2e.example.com/api
+paths:
+  /repairs:
+    get:
+      operationId: getRepairs
+      responses:
+        "200":
+          description: Success
+`;
+
 function runCli(args: string[], cwd: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [workspaceCliPath, ...args], {
@@ -166,6 +181,52 @@ async function addOpenApiAction(
   expect(`${result.stdout}\n${result.stderr}`).to.not.include(testSecret);
 }
 
+async function addOAuthAuthConfig(
+  projectPath: string,
+  pluginManifestPath: string,
+): Promise<void> {
+  const result = await runCli(
+    [
+      "add",
+      "auth-config",
+      "--plugin-manifest-path",
+      pluginManifestPath,
+      "--openapi-spec-location",
+      "apiSpecificationFile/openapi.yaml",
+      "--api-operation",
+      "getRepairs",
+      "--auth-name",
+      "repairOAuth",
+      "--api-auth",
+      "oauth",
+      "--oauth-authorization-url",
+      "https://identity.example.com/authorize",
+      "--oauth-token-url",
+      "https://identity.example.com/token",
+      "--oauth-scope",
+      "repairs.read: Read repairs",
+      "--oauth-pkce",
+      "false",
+      "--oauth-client-id",
+      "e2e-client-id",
+      "--oauth-client-secret",
+      testSecret,
+      "--folder",
+      projectPath,
+      "--interactive",
+      "false",
+      "--telemetry",
+      "false",
+    ],
+    projectPath,
+  );
+  expect(
+    result.success,
+    `add auth-config failed: ${result.stdout}\n${result.stderr}`,
+  ).to.be.true;
+  expect(`${result.stdout}\n${result.stderr}`).to.not.include(testSecret);
+}
+
 async function expectEnvironmentValue(
   projectPath: string,
   environmentName: "dev" | "local",
@@ -246,6 +307,56 @@ describe("Declarative agent add-action credentials", function () {
         "--openapi-auth-scopes",
         "repairs.read",
       ]);
+
+      const yamlContent = await fs.readFile(
+        path.join(projectPath, "m365agents.yml"),
+        "utf8",
+      );
+      expect(yamlContent).to.include("uses: oauth/register");
+      expect(yamlContent).to.include("clientId: ${{REPAIROAUTH_CLIENT_ID}}");
+      expect(yamlContent).to.include(
+        "clientSecret: ${{SECRET_REPAIROAUTH_CLIENT_SECRET}}",
+      );
+      expect(yamlContent).to.include("scope: ${{REPAIROAUTH_SCOPE}}");
+      expect(yamlContent).to.not.include(testSecret);
+      for (const environmentName of ["dev", "local"] as const) {
+        await expectEnvironmentValue(
+          projectPath,
+          environmentName,
+          "REPAIROAUTH_CLIENT_ID=e2e-client-id",
+          "SECRET_REPAIROAUTH_CLIENT_SECRET",
+        );
+        const regularContent = await fs.readFile(
+          path.join(projectPath, "env", `.env.${environmentName}`),
+          "utf8",
+        );
+        expect(regularContent).to.include("REPAIROAUTH_SCOPE=repairs.read");
+      }
+    } finally {
+      await cleanUpLocalProject(projectPath);
+    }
+  });
+
+  it("adds an OAuth auth configuration with environment-backed credentials", async function () {
+    const testFolder = getTestFolder();
+    const appName = getUniqueAppName();
+    const projectPath = path.join(testFolder, appName);
+
+    try {
+      await createDeclarativeAgent(testFolder, appName);
+      const openApiPath = path.join(projectPath, "openapi.yaml");
+      await fs.writeFile(openApiPath, noAuthOpenApi, "utf8");
+      await addOpenApiAction(projectPath, openApiPath, []);
+
+      const declarativeAgentManifest = await fs.readJson(
+        path.join(projectPath, "appPackage", "declarativeAgent.json"),
+      );
+      const pluginManifestPath = path.join(
+        projectPath,
+        "appPackage",
+        declarativeAgentManifest.actions[0].file,
+      );
+      await addOAuthAuthConfig(projectPath, pluginManifestPath);
 
       const yamlContent = await fs.readFile(
         path.join(projectPath, "m365agents.yml"),

@@ -157,6 +157,7 @@ import { pathUtils } from "../component/utils/pathUtils";
 import { settingsUtil } from "../component/utils/settingsUtil";
 import {
   FileNotFoundError,
+  InapplicableOpenApiAuthCredentialError,
   InputValidationError,
   InvalidProjectError,
   MissingRequiredInputError,
@@ -2927,10 +2928,15 @@ export class FxCore extends FxCoreOpenPluginPart {
         path.join(path.dirname(pluginManifestPath), apiSpecRelativePath)
       );
       const authType = inputs[QuestionNames.ApiAuth] as string;
+      const authCredentialSourceRes = this.resolveAuthConfigCredentialSource(authType, inputs);
+      if (authCredentialSourceRes.isErr()) {
+        return err(authCredentialSourceRes.error);
+      }
 
       let authParameters: AuthParameters = {
         apis: apiOperation,
       };
+      let oauthRegistrationScopes: string | undefined;
       if (authType === AddAuthActionAuthTypeOptions.oauth().id) {
         const oauthAuthorizationUrl = inputs[QuestionNames.OAuthAuthorizationUrl] as string;
         const oauthTokenUrl = inputs[QuestionNames.OAuthTokenUrl] as string;
@@ -2938,6 +2944,7 @@ export class FxCore extends FxCoreOpenPluginPart {
         const oauthScopes = inputs[QuestionNames.OAuthScope] as string;
         const enablePKCEStr = inputs[QuestionNames.OauthPKCE];
         const scopeArr = this.parseScope(oauthScopes);
+        oauthRegistrationScopes = Object.keys(scopeArr).join(" ");
 
         authParameters = {
           ...authParameters,
@@ -2997,7 +3004,13 @@ export class FxCore extends FxCoreOpenPluginPart {
         authTypeScheme,
         "enablePKCE" in authParameters ? authParameters.enablePKCE : undefined,
         undefined,
-        authTypeScheme === APIKeyAuthType ? inputs[QuestionNames.ApiSpecApiKey] : undefined
+        authTypeScheme === APIKeyAuthType ? inputs[QuestionNames.ApiSpecApiKey] : undefined,
+        authCredentialSourceRes.value,
+        authTypeScheme === OAuthAuthType || authTypeScheme === MicrosoftEntraAuthType
+          ? inputs[QuestionNames.OauthClientId]
+          : undefined,
+        authTypeScheme === OAuthAuthType ? inputs[QuestionNames.OauthClientSecret] : undefined,
+        authTypeScheme === OAuthAuthType ? oauthRegistrationScopes : undefined
       );
 
       if (addAuthActionRes?.registrationIdEnvName) {
@@ -3392,6 +3405,43 @@ export class FxCore extends FxCoreOpenPluginPart {
       }
     });
     return scopeArr;
+  }
+
+  private resolveAuthConfigCredentialSource(
+    authType: string,
+    inputs: Inputs
+  ): Result<AuthCredentialSource, FxError> {
+    const hasValue = (name: QuestionNames): boolean => {
+      const value = inputs[name];
+      return typeof value === "string" && value.trim().length > 0;
+    };
+    const hasInput = (name: QuestionNames): boolean => inputs[name] !== undefined;
+    const hasApiKey = hasValue(QuestionNames.ApiSpecApiKey);
+    const hasClientId = hasValue(QuestionNames.OauthClientId);
+    const hasClientSecret = hasValue(QuestionNames.OauthClientSecret);
+    const hasApiKeyInput = hasInput(QuestionNames.ApiSpecApiKey);
+    const hasClientIdInput = hasInput(QuestionNames.OauthClientId);
+    const hasClientSecretInput = hasInput(QuestionNames.OauthClientSecret);
+    const enablePKCE = inputs[QuestionNames.OauthPKCE] === "true";
+    const isApiKey = authType === AddAuthActionAuthTypeOptions.apiKey().id;
+    const isBearer = authType === AddAuthActionAuthTypeOptions.bearerToken().id;
+    const isOAuth = authType === AddAuthActionAuthTypeOptions.oauth().id;
+    const isMicrosoftEntra = authType === AddAuthActionAuthTypeOptions.microsoftEntra().id;
+
+    if (
+      ((isApiKey || isBearer) && (hasClientIdInput || hasClientSecretInput)) ||
+      ((isOAuth || isMicrosoftEntra) && hasApiKeyInput) ||
+      (isMicrosoftEntra && hasClientSecretInput) ||
+      (isOAuth && enablePKCE && hasClientSecretInput)
+    ) {
+      return err(new InapplicableOpenApiAuthCredentialError());
+    }
+
+    const hasCredential = hasApiKey || hasClientId || hasClientSecret;
+    if (inputs.authCredentialSource === "provision" && hasCredential) {
+      return err(new InapplicableOpenApiAuthCredentialError());
+    }
+    return ok(inputs.authCredentialSource ?? (hasCredential ? "environment" : "provision"));
   }
 
   async isDelcarativeAgentApp(inputs: Inputs): Promise<Result<any, FxError>> {

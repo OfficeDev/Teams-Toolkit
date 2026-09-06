@@ -85,7 +85,7 @@ describe("addAuthActionQuestion", () => {
     vi.restoreAllMocks();
   });
 
-  it("SCN-ADD-OPENAPI-KEY-06: offers an optional API key only in CLI auth-config", async () => {
+  it("SCN-ADD-AUTH-CONFIG-01: offers an optional API key only in CLI auth-config", async () => {
     const apiKeyNode = addAuthActionQuestion().children?.find(
       (child) => child.data.name === QuestionNames.ApiSpecApiKey
     );
@@ -119,7 +119,7 @@ describe("addAuthActionQuestion", () => {
     assert.isUndefined(validValidationResult);
   });
 
-  it("SCN-ADD-OPENAPI-KEY-10: offers an optional secret for CLI bearer-token auth-config", async () => {
+  it("SCN-ADD-AUTH-CONFIG-01: offers an optional secret for CLI bearer-token auth-config", async () => {
     const apiKeyNode = addAuthActionQuestion().children?.find(
       (child) => child.data.name === QuestionNames.ApiSpecApiKey
     );
@@ -137,6 +137,79 @@ describe("addAuthActionQuestion", () => {
         [QuestionNames.ApiAuth]: "bearer-token",
       })
     );
+  });
+
+  it("SCN-ADD-AUTH-CONFIG-02: offers optional OAuth credentials only in CLI auth-config", async () => {
+    const children = addAuthActionQuestion().children ?? [];
+    const clientIdNode = children.find((child) => child.data.name === QuestionNames.OauthClientId);
+    const clientSecretNode = children.find(
+      (child) => child.data.name === QuestionNames.OauthClientSecret
+    );
+
+    if (
+      !clientIdNode ||
+      clientIdNode.data.type !== "text" ||
+      typeof clientIdNode.condition !== "function"
+    ) {
+      assert.fail("OAuth client ID question is missing");
+    }
+    if (
+      !clientSecretNode ||
+      clientSecretNode.data.type !== "text" ||
+      typeof clientSecretNode.condition !== "function"
+    ) {
+      assert.fail("OAuth client secret question is missing");
+    }
+    assert.isFalse(clientIdNode.data.required);
+    assert.isFalse(clientSecretNode.data.required);
+    assert.isTrue(clientSecretNode.data.password);
+    assert.isTrue(
+      await clientIdNode.condition({
+        platform: Platform.CLI,
+        [QuestionNames.ApiAuth]: "oauth",
+      })
+    );
+    assert.isTrue(
+      await clientSecretNode.condition({
+        platform: Platform.CLI,
+        [QuestionNames.ApiAuth]: "oauth",
+        [QuestionNames.OauthPKCE]: "false",
+      })
+    );
+    assert.isFalse(
+      await clientSecretNode.condition({
+        platform: Platform.CLI,
+        [QuestionNames.ApiAuth]: "oauth",
+        [QuestionNames.OauthPKCE]: "true",
+      })
+    );
+    assert.isFalse(
+      await clientIdNode.condition({
+        platform: Platform.VSCode,
+        [QuestionNames.ApiAuth]: "oauth",
+      })
+    );
+  });
+
+  it("SCN-ADD-AUTH-CONFIG-03: offers only an optional client ID for Entra", async () => {
+    const children = addAuthActionQuestion().children ?? [];
+    const clientIdNode = children.find((child) => child.data.name === QuestionNames.OauthClientId);
+    const clientSecretNode = children.find(
+      (child) => child.data.name === QuestionNames.OauthClientSecret
+    );
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.ApiAuth]: "microsoft-entra",
+    };
+
+    if (!clientIdNode || typeof clientIdNode.condition !== "function") {
+      assert.fail("OAuth client ID question is missing");
+    }
+    if (!clientSecretNode || typeof clientSecretNode.condition !== "function") {
+      assert.fail("OAuth client secret question is missing");
+    }
+    assert.isTrue(await clientIdNode.condition(inputs));
+    assert.isFalse(await clientSecretNode.condition(inputs));
   });
 
   it("apiSpecFromPluginManifestQuestion", async () => {

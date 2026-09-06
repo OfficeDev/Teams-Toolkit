@@ -769,6 +769,58 @@ describe("injectAuthAction", async () => {
     expect(writeStub).toHaveBeenNthCalledWith(2, "/project", "local", expectedCredentials);
   });
 
+  it("SCN-ADD-OPENAPI-OAUTH-05: explicit environment source persists empty OAuth placeholders", async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(Utils, "isOAuthWithAuthCodeFlow").mockReturnValue(true);
+    const injectStub = vi.spyOn(ActionInjector, "injectCreateOAuthAction").mockResolvedValue({
+      defaultRegistrationIdEnvName: "REPAIR_AUTH_REGISTRATION_ID",
+      registrationIdEnvName: "REPAIR_AUTH_REGISTRATION_ID",
+      clientIdEnvName: "REPAIR_AUTH_CLIENT_ID",
+      clientSecretEnvName: "SECRET_REPAIR_AUTH_CLIENT_SECRET",
+      scopeEnvName: "REPAIR_AUTH_SCOPE",
+    });
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "local"]));
+    const writeStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+
+    await injectAuthAction(
+      "/project",
+      "repair-auth",
+      { type: "oauth2", flows: {} },
+      "/project/openapi.yaml",
+      true,
+      undefined,
+      false,
+      undefined,
+      undefined,
+      "environment",
+      undefined,
+      undefined,
+      "scope.read"
+    );
+
+    expect(injectStub).toHaveBeenCalledWith(
+      "m365agents.yml",
+      "repair-auth",
+      "./openapi.yaml",
+      true,
+      false,
+      false,
+      undefined,
+      {
+        clientId: "REPAIR_AUTH_CLIENT_ID",
+        clientSecret: "SECRET_REPAIR_AUTH_CLIENT_SECRET",
+        scope: "REPAIR_AUTH_SCOPE",
+      }
+    );
+    const expectedCredentials = {
+      REPAIR_AUTH_CLIENT_ID: "",
+      SECRET_REPAIR_AUTH_CLIENT_SECRET: "",
+      REPAIR_AUTH_SCOPE: "scope.read",
+    };
+    expect(writeStub).toHaveBeenNthCalledWith(1, "/project", "dev", expectedCredentials);
+    expect(writeStub).toHaveBeenNthCalledWith(2, "/project", "local", expectedCredentials);
+  });
+
   it("SCN-ADD-OPENAPI-OAUTH-04: PKCE omits the client-secret reference and placeholder", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     vi.spyOn(Utils, "isOAuthWithAuthCodeFlow").mockReturnValue(true);
