@@ -37,7 +37,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-09-06T02:07:15.086000"
+    "updated_at": "2026-09-06T02:17:45.859000"
   },
   "steps": [
     {
@@ -49,7 +49,7 @@
         "x": 951,
         "y": 130
       },
-      "description": "Click the language selection button (flag icon) in the top right corner of the VS Code welcome screen to open the language options.",
+      "description": "Click the close button in the top-right corner of the \"Welcome to VS Code\" sign-in overlay to dismiss it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -234,10 +234,10 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 976,
-        "y": 715
+        "x": 974,
+        "y": 572
       },
-      "description": "Click the \"Sign in\" action in the Microsoft 365 notification at the bottom right of Visual Studio Code to launch the Microsoft sign-in page.",
+      "description": "Click the \"Sign in\" action in the upper Microsoft 365 notification at the bottom right of Visual Studio Code, above the MCP configuration notification, to launch the Microsoft sign-in page.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
