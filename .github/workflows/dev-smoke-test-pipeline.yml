@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ vars.APP_GITHUB_APP_ID }}
           private-key: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
@@ -43,7 +43,7 @@ jobs:
 
       - name: Trigger CD pipeline
         id: trigger
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
@@ -87,7 +87,7 @@ jobs:
             console.log(`CD run ID: ${run.id}`);
 
       - name: Wait for CD pipeline to complete
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
@@ -120,14 +120,14 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ vars.APP_GITHUB_APP_ID }}
           private-key: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
 
       - name: Trigger Docker Build pipeline
         id: trigger
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
@@ -168,7 +168,7 @@ jobs:
             console.log(`Docker Build run ID: ${run.id}`);
 
       - name: Wait for Docker Build pipeline to complete
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
@@ -199,14 +199,14 @@ jobs:
     steps:
       - name: Generate GitHub App token
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ vars.APP_GITHUB_APP_ID }}
           private-key: ${{ secrets.APP_GITHUB_APP_PRIVATE_KEY }}
 
       - name: Checkout repo to read smoke test cases (fallback)
         if: inputs.test_plan == ''
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: dev
           sparse-checkout: packages/tests/vscuse/smoking-test-cases.json
@@ -227,7 +227,7 @@ jobs:
 
       - name: Trigger UI Test pipeline
         id: trigger
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |
@@ -270,7 +270,7 @@ jobs:
             core.setOutput('run_id', run.id.toString());
 
       - name: Wait for UI Test pipeline to complete
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
           github-token: ${{ steps.generate-token.outputs.token }}
           script: |

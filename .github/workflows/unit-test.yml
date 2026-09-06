@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Checkout-pr
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
@@ -26,7 +26,7 @@ jobs:
 
       - name: Checkout
         if: ${{ github.event_name != 'pull_request' }}
-        uses: actions/checkout@v2
+        uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
         with:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
@@ -55,7 +55,7 @@ jobs:
       - name: CodeCov report attempt 1
         id: codecov1
         continue-on-error: true
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238 # v4.6.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ env.CODECOV_FILES }}
@@ -72,7 +72,7 @@ jobs:
         id: codecov2
         if: steps.codecov1.outcome == 'failure'
         continue-on-error: true
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3.1.6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ env.CODECOV_FILES }}
@@ -89,7 +89,7 @@ jobs:
         id: codecov3
         if: steps.codecov2.outcome == 'failure'
         continue-on-error: true
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3.1.6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ env.CODECOV_FILES }}
@@ -106,7 +106,7 @@ jobs:
         id: codecov4
         if: steps.codecov3.outcome == 'failure'
         continue-on-error: true
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3.1.6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ env.CODECOV_FILES }}
@@ -122,7 +122,7 @@ jobs:
       - name: CodeCov report attempt 5
         id: codecov5
         if: steps.codecov4.outcome == 'failure'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3.1.6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ${{ env.CODECOV_FILES }}
@@ -134,7 +134,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup project
         uses: ./.github/actions/setup-project
