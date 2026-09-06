@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 20,
+    "total_steps": 19,
     "created_at": "2026-06-17T02:10:05.016638",
     "name": "Feature Check Copilot License Enabled",
     "description": {
@@ -26,7 +26,6 @@
       "step_436b1f61",
       "step_a0026de5",
       "step_fa6d6cb1",
-      "step_78a597ab",
       "step_47935ca7",
       "step_81e9c4a2",
       "step_b7f2d630",
@@ -200,32 +199,6 @@
       "tags": [],
       "screenshot": "step_fa6d6cb1",
       "created_at": "2026-06-17T02:24:33.865380",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_78a597ab",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 516,
-        "y": 447
-      },
-      "description": "Click the \"Check Copilot License\" button in the \"Set up your environment\" section of the Microsoft 365 Agents Toolkit welcome screen in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:516:447:16:5:2493f3ec6b936ad2",
-        "dhash:516:447:96:5:75622a1d99660000",
-        "dhash:516:447:0:10:24b0949090b17075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_78a597ab",
-      "created_at": "2026-06-17T02:28:51.067052",
       "plan_id": "plan_80b368dd"
     },
     {
