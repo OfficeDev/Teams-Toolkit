@@ -45,8 +45,8 @@ PKG_TABLE="$(pnpm -r list --depth -1 --json | ROOT_NAME="$ROOT_NAME" node -e '
 ')"
 
 if [ -z "$PKG_TABLE" ]; then
-  echo "No publishable packages found in the current workspace." >&2
-  exit 1
+  echo "No publishable packages found in the current workspace."
+  exit 0
 fi
 
 # ── Validate the whole set before packing anything ────────────────────────────
@@ -91,11 +91,20 @@ while IFS=$'\t' read -r NAME VERSION PKG_PATH; do
     exit 1
   fi
 
-  if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+  VIEW_ERROR="$(mktemp)"
+  if npm view "$NAME@$VERSION" version >/dev/null 2>"$VIEW_ERROR"; then
     echo "  skip $NAME@$VERSION (already on registry)"
     SKIPPED=$((SKIPPED + 1))
+    rm -f "$VIEW_ERROR"
     continue
   fi
+  if ! grep -qE 'E404|404 Not Found|No match found' "$VIEW_ERROR"; then
+    cat "$VIEW_ERROR" >&2
+    rm -f "$VIEW_ERROR"
+    echo "  FAIL unable to determine whether $NAME@$VERSION is already published." >&2
+    exit 1
+  fi
+  rm -f "$VIEW_ERROR"
 
   echo "  ok   $NAME@$VERSION -> $DIST_TAG"
   PACK_LIST="${PACK_LIST}${NAME}	${VERSION}	${PKG_PATH}

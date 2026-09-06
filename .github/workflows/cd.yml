@@ -49,10 +49,10 @@ on:
         type: boolean
         default: false
         description: "Skip triggering the VscUse ATK docker build after CD (e.g. when the caller builds its own image)."
-      packnpm:
+      publishnpm:
         type: boolean
         default: true
-        description: "Pack npm packages and route publishing to Azure DevOps ESRP. Disable only when running CD without an npm release."
+        description: "Publish npm packages through Azure DevOps ESRP. Disable only when running CD without an npm release."
 
 permissions:
   actions: write
@@ -457,10 +457,10 @@ jobs:
       # Produce the .tgz files that Azure DevOps will hand to ESRP Release, and
       # attach them to a GitHub Release so AzDO can download them anonymously.
       #
-      # `packnpm` defaults to true because ESRP is the only npm publishing path.
+      # `publishnpm` defaults to true because ESRP is the only npm publishing path.
       # Set it to false only for a CD run that intentionally skips npm release.
       - name: derive npm dist-tag
-        if: ${{ inputs.packnpm }}
+        if: ${{ inputs.publishnpm }}
         id: dist-tag
         env:
           PREID: ${{ github.event.inputs.preid }}
@@ -479,19 +479,26 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: pack npm packages
-        if: ${{ inputs.packnpm }}
+        if: ${{ inputs.publishnpm }}
+        id: pack-npm
         run: |
           bash .github/scripts/pack-npm-packages.sh \
             "$GITHUB_WORKSPACE/npm-packages" \
             "${{ steps.dist-tag.outputs.tag }}"
+          if compgen -G "$GITHUB_WORKSPACE/npm-packages/*.tgz" > /dev/null; then
+            echo "has-packages=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-packages=false" >> "$GITHUB_OUTPUT"
+            echo "No new npm packages to publish through ESRP."
+          fi
 
       - name: upload packed npm packages
-        if: ${{ inputs.packnpm }}
+        if: ${{ inputs.publishnpm && steps.pack-npm.outputs.has-packages == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: npm-packages
           path: npm-packages/*.tgz
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 7
 
       # Release assets are anonymously downloadable, which is how the AzDO
@@ -499,11 +506,14 @@ jobs:
       # every run pushes a real tag — reusing one would update the release
       # without triggering AzDO.
       - name: attach packed npm packages to a GitHub Release
-        if: ${{ inputs.packnpm }}
+        if: ${{ inputs.publishnpm && steps.pack-npm.outputs.has-packages == 'true' }}
         uses: ncipollo/release-action@v1.10.0
         with:
           token: ${{ steps.generate-token.outputs.token }}
           tag: npm-packages-${{ github.run_id }}
+          # Pin the handoff tag to the exact commit that built the tarballs so
+          # AzDO evaluates the matching esrp-publish.yml from that commit.
+          commit: ${{ github.sha }}
           artifacts: npm-packages/*.tgz
           artifactErrorsFailBuild: true
           allowUpdates: true
