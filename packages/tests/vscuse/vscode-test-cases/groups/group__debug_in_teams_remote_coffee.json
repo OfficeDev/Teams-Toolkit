@@ -247,7 +247,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion there's ${{var:app_name}}dev exist.",
+      "description": "@assertion there's \"CoffeeAgentdev\" exist.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
