@@ -41,7 +41,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-09-06T02:33:37.021000"
+    "updated_at": "2026-09-06T02:39:54.778000"
   },
   "steps": [
     {
@@ -275,9 +275,9 @@
       "parameters": {
         "button": "left",
         "x": 461,
-        "y": 80
+        "y": 54
       },
-      "description": "Click the second Command Palette result labeled \"Microsoft 365 Agents: Accounts\", below the similarly named Accounts View command.",
+      "description": "Click the first Command Palette result labeled \"Microsoft 365 Agents: Accounts\", above the unrelated \"Accounts: Manage Accounts\" command.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
