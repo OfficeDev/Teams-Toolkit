@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 16,
+    "total_steps": 20,
     "created_at": "2026-06-17T02:10:05.016638",
     "name": "Feature Check Copilot License Enabled",
     "description": {
@@ -28,6 +28,10 @@
       "step_fa6d6cb1",
       "step_78a597ab",
       "step_47935ca7",
+      "step_81e9c4a2",
+      "step_b7f2d630",
+      "step_5c14a9e8",
+      "step_d26f803b",
       "step_ed29b905",
       "step_b16aa4f5",
       "step_c51b1af7",
@@ -37,7 +41,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-09-06T02:17:45.859000"
+    "updated_at": "2026-09-06T02:22:45.882000"
   },
   "steps": [
     {
@@ -191,11 +195,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:512:431:16:5:d2d46667c4d328a0",
-        "dhash:512:431:96:5:0000a4595128d59a",
-        "dhash:512:431:0:10:24b0949490b17075"
-      ],
+      "preconditions": [],
       "postconditions": [],
       "tags": [],
       "screenshot": "step_fa6d6cb1",
@@ -231,13 +231,11 @@
     {
       "step_id": "step_47935ca7",
       "agent": "interaction",
-      "tool": "click",
+      "tool": "key_press",
       "parameters": {
-        "button": "left",
-        "x": 974,
-        "y": 572
+        "key": "f1"
       },
-      "description": "Click the \"Sign in\" action in the upper Microsoft 365 notification at the bottom right of Visual Studio Code, above the MCP configuration notification, to launch the Microsoft sign-in page.",
+      "description": "Press the F1 key to open the Visual Studio Code Command Palette instead of relying on the variable position of the Microsoft 365 sign-in notification.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -245,11 +243,95 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [
-        "delay:2"
-      ],
-      "screenshot": "step_47935ca7",
+      "tags": [],
+      "screenshot": "",
       "created_at": "2026-06-17T02:19:55.488096",
+      "plan_id": "plan_80b368dd"
+    },
+    {
+      "step_id": "step_81e9c4a2",
+      "agent": "interaction",
+      "tool": "type_text",
+      "parameters": {
+        "text": "Microsoft 365 Agents: Accounts"
+      },
+      "description": "Type \"Microsoft 365 Agents: Accounts\" into the Visual Studio Code Command Palette.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-09-06T02:22:45.882000",
+      "plan_id": "plan_80b368dd"
+    },
+    {
+      "step_id": "step_b7f2d630",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 423,
+        "y": 75
+      },
+      "description": "Click the second Command Palette result labeled \"Microsoft 365 Agents: Accounts\", below the similarly named Accounts View command.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-09-06T02:22:45.882000",
+      "plan_id": "plan_80b368dd"
+    },
+    {
+      "step_id": "step_5c14a9e8",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 379,
+        "y": 52
+      },
+      "description": "Click the \"Sign in to Microsoft 365\" option in the Microsoft 365 Agents account picker.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-09-06T02:22:45.882000",
+      "plan_id": "plan_80b368dd"
+    },
+    {
+      "step_id": "step_d26f803b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 762,
+        "y": 97
+      },
+      "description": "Click the \"Sign in\" button in the Microsoft 365 developer sandbox modal to launch the Microsoft sign-in page.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "",
+      "created_at": "2026-09-06T02:22:45.882000",
       "plan_id": "plan_80b368dd"
     },
     {
