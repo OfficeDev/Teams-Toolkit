@@ -2994,7 +2994,9 @@ export class FxCore extends FxCoreOpenPluginPart {
         apiSpecPath,
         true,
         authTypeScheme,
-        "enablePKCE" in authParameters ? authParameters.enablePKCE : undefined
+        "enablePKCE" in authParameters ? authParameters.enablePKCE : undefined,
+        undefined,
+        authTypeScheme === APIKeyAuthType ? inputs[QuestionNames.ApiSpecApiKey] : undefined
       );
 
       if (addAuthActionRes?.registrationIdEnvName) {
@@ -3309,7 +3311,8 @@ export class FxCore extends FxCoreOpenPluginPart {
     projectPath: string,
     apSpecPath: string,
     pluginManifestPath: string,
-    forceToAddNew = true
+    forceToAddNew = true,
+    apiKey?: string
   ): Promise<void> {
     if (authName && authScheme) {
       const authInjectRes = await openApiSpecHelper.injectAuthAction(
@@ -3317,7 +3320,11 @@ export class FxCore extends FxCoreOpenPluginPart {
         authName,
         authScheme,
         apSpecPath,
-        forceToAddNew
+        forceToAddNew,
+        undefined,
+        undefined,
+        undefined,
+        apiKey
       );
       if (
         authInjectRes?.defaultRegistrationIdEnvName &&

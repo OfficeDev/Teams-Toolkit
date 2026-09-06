@@ -31,6 +31,7 @@ const allowedStepTypes = new Set([
   "userEnvironment",
   "projectEnvironment",
   "removeWorkspaceFile",
+  "configureArmJsonTemplates",
   "workflowVersion",
   "configureTypeSpecAction",
   "addDaCapability",

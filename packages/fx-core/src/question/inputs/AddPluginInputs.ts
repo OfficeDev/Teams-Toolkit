@@ -23,6 +23,8 @@ export interface AddPluginInputs extends Inputs {
   "search-openapi-spec-query"?: string;
   /** @description Select OpenAPI Document */
   "select-openapi-spec"?: string;
+  /** @description API Key (optional) */
+  "api-key"?: string;
   /** @description MCP Server URL */
   "mcp-da-server-url"?: string;
   /** @description MCP Tools Definition File */
@@ -35,6 +37,8 @@ export interface AddPluginInputs extends Inputs {
   "mcp-da-client-secret"?: string;
   /** @description OAuth Scopes (optional) */
   "mcp-da-scopes"?: string;
+  /** @description API Key (optional) */
+  "mcp-da-api-key"?: string;
   /** @description Select Teams manifest.json File */
   "manifest-path"?: string;
 }

@@ -80,5 +80,12 @@ export const AddAuthActionOptions: CLICommandOption[] = [
     type: "string",
     description: "Name of the API key.",
   },
+  {
+    name: "api-key",
+    type: "string",
+    shortName: "k",
+    description: "API Key (optional)",
+    required: false,
+  },
 ];
 export const AddAuthActionArguments: CLICommandArgument[] = [];

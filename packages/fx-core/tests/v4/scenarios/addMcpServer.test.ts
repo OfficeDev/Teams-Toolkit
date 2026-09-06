@@ -37,6 +37,7 @@ const DA_MANIFEST_PATH = "appPackage/declarativeAgent.json";
 const YML_PATH = "m365agents.yml";
 const LOCAL_YML_PATH = "m365agents.local.yml";
 const ENV_PATH = "env/.env.dev";
+const LOCAL_ENV_PATH = "env/.env.local";
 const AUTH_REF = "${{MCP_DA_AUTH_ID_APIGITHUBC}}";
 const AUTH_ENV_VAR = "MCP_DA_AUTH_ID_APIGITHUBC";
 const BASE_YML = [
@@ -91,18 +92,33 @@ function apiKeyRegistration(yml: string): Record<string, unknown> {
 interface RunOptions {
   authType?: string;
   teamsManifestPath?: string;
+  apiKey?: string;
 }
 
 async function run(options: RunOptions = {}): Promise<{
   files: Map<string, Buffer>;
+  secrets: Map<string, string>;
+  secretsByEnvironment: Map<string, Map<string, string>>;
   outcome: Awaited<ReturnType<typeof unwrapOutcome>>;
 }> {
   const authType = options.authType ?? "none";
   const teamsManifestPath = options.teamsManifestPath ?? TEAMS_MANIFEST_PATH;
   return runV4Package(templatePackage, {
-    answers: { mcpServerUrl: MCP_SERVER_URL, teamsManifestPath, authType },
+    answers: {
+      mcpServerUrl: MCP_SERVER_URL,
+      teamsManifestPath,
+      authType,
+      ...(options.apiKey !== undefined ? { apiKey: options.apiKey } : {}),
+    },
     callerFloor: { appName: "Existing Agent", language: "common" },
-    existing: [TEAMS_MANIFEST_PATH, DA_MANIFEST_PATH, YML_PATH, LOCAL_YML_PATH, ENV_PATH],
+    existing: [
+      TEAMS_MANIFEST_PATH,
+      DA_MANIFEST_PATH,
+      YML_PATH,
+      LOCAL_YML_PATH,
+      ENV_PATH,
+      LOCAL_ENV_PATH,
+    ],
     seedFiles: {
       [TEAMS_MANIFEST_PATH]: JSON.stringify({
         copilotAgents: {
@@ -113,6 +129,7 @@ async function run(options: RunOptions = {}): Promise<{
       [YML_PATH]: BASE_YML,
       [LOCAL_YML_PATH]: BASE_YML,
       [ENV_PATH]: "TEAMSFX_ENV=dev\n",
+      [LOCAL_ENV_PATH]: "TEAMSFX_ENV=local\n",
     },
     targetPath: "/project",
   });
@@ -202,7 +219,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
   it("SCN-ADD-MCP-09: entry params skip the prefilled URL and selected manifest path", async () => {
     assert.isTrue(isRecord(descriptor));
     const entry = recordProperty(descriptor, "entry");
-    assert.deepStrictEqual(entry.params, ["mcpServerUrl", "teamsManifestPath"]);
+    assert.deepStrictEqual(entry.params, ["mcpServerUrl", "teamsManifestPath", "apiKey"]);
 
     const mcpServerUrlQuestion = questionItems(questions).find(
       (question) => question.name === "mcpServerUrl"
@@ -212,7 +229,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.strictEqual(condition.expr, "mcpServerUrl == null");
   });
 
-  it("SCN-ADD-MCP-13 and SCN-ADD-MCP-14: auth question accepts and describes bearer-token", () => {
+  it("SCN-ADD-MCP-13: auth question accepts and describes bearer-token", () => {
     const authTypeQuestion = questionItems(questions).find(
       (question) => question.name === "authType"
     );
@@ -222,6 +239,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     const bearerToken = staticOptions.find((option) => option.id === "bearer-token");
     assert.isDefined(bearerToken);
     assert.isNotEmpty(bearerToken?.detail);
+    assert.isUndefined(questionItems(questions).find((question) => question.name === "apiKey"));
   });
 
   it("SCN-ADD-MCP-10: static auth defers credentials to provision", async () => {
@@ -244,7 +262,10 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
   });
 
   it("SCN-ADD-MCP-15 and SCN-ADD-MCP-16: bearer-token uses API-key auth without OAuth data", async () => {
-    const { files, outcome } = await run({ authType: "bearer-token" });
+    const { files, outcome, secretsByEnvironment } = await run({
+      authType: "bearer-token",
+      apiKey: "the-bearer-token",
+    });
     const plugin = readJsonObject(files, PLUGIN_PATH);
     const runtime = runtimes(plugin)[0];
     assert.equal(plugin.namespace, deriveMCPNamespaceFromUrl(MCP_SERVER_URL));
@@ -258,14 +279,30 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
     assert.notInclude(yml, "apiSpecPath:");
     assert.notInclude(yml, "oauth/register");
     assert.notInclude(yml, "dcr/register");
-    assert.notInclude(yml, "primaryClientSecret:");
+    assert.include(yml, "primaryClientSecret: ${{SECRET_MCP_DA_API_KEY_APIGITHUBC}}");
+    assert.notInclude(yml, "the-bearer-token");
     assert.include(text(files, ENV_PATH), `${AUTH_ENV_VAR}=`);
+    assert.equal(
+      secretsByEnvironment.get("dev")?.get("SECRET_MCP_DA_API_KEY_APIGITHUBC"),
+      "the-bearer-token"
+    );
+    assert.equal(
+      secretsByEnvironment.get("local")?.get("SECRET_MCP_DA_API_KEY_APIGITHUBC"),
+      "the-bearer-token"
+    );
     assert.equal(mcpAuthScaffoldDeps.probeMCPServerAuth.mock.calls.length, 0);
     assert.equal(mcpAuthScaffoldDeps.resolveMCPOAuthMetadata.mock.calls.length, 0);
   });
 
+  it("omitted optional API key preserves provision-time collection", async () => {
+    const { files, secrets } = await run({ authType: "bearer-token" });
+
+    assert.notInclude(text(files, YML_PATH), "primaryClientSecret:");
+    assert.isFalse(secrets.has("SECRET_MCP_DA_API_KEY_APIGITHUBC"));
+  });
+
   it("SCN-ADD-MCP-17: bearer-token emits an API-key action equivalent to legacy", async () => {
-    const { files } = await run({ authType: "bearer-token" });
+    const { files } = await run({ authType: "bearer-token", apiKey: "the-bearer-token" });
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "atk-add-mcp-parity-"));
     const legacyYmlPath = path.join(tempDir, "m365agents.yml");
 
@@ -275,7 +312,8 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4, T3 InMemoryRuntime)", () => {
         legacyYmlPath,
         NAMESPACE,
         AUTH_ENV_VAR,
-        MCP_SERVER_URL
+        MCP_SERVER_URL,
+        "SECRET_MCP_DA_API_KEY_APIGITHUBC"
       );
 
       assert.deepEqual(

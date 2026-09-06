@@ -2,6 +2,67 @@
 > Note: This changelog only includes the changes for the stable versions of Microsoft 365 Agents Toolkit (evolved from Teams Toolkit). For the changelog of pre-released versions, please refer to the [Microsoft 365 Agents Toolkit Pre-release Changelog](https://github.com/OfficeDev/TeamsFx/blob/dev/packages/vscode-extension/PRERELEASE.md).
 
 
+## 6.16.0 - September 1, 2026
+
+### New Features
+
+#### Automatically detect authentication for imported Open Plugin MCP servers
+
+ATK now does a smarter job inferring authentication when you import an Open Plugin MCP server. Instead of assuming every HTTPS endpoint uses OAuth, it verifies whether the endpoint is a real MCP server, checks for authentication challenges during MCP initialization, and uses OAuth metadata discovery when available. This helps public MCP endpoints import as unauthenticated when appropriate, while authenticated servers are mapped to OAuth with a warning if metadata cannot be resolved automatically. If you prefer to control the result yourself, explicit auth settings in import flows or CLI arguments still take priority and skip discovery.
+
+#### Share declarative agents directly from the VS Code Command Palette
+
+The existing Share action is now available from the VS Code Command Palette for declarative agent projects. This makes it easier to discover and run sharing without navigating through other UI entry points in the extension. The command is shown only when it is relevant to the current project type, so it stays out of the way for other app experiences. In VS Code, you can open the Command Palette and run the Share command while working in a declarative agent project.
+
+### Enhancement
+
+#### Improve Windows broker sign-in behavior during authentication
+
+On Windows, brokered sign-in dialogs now open in front of the correct terminal or host window during authentication flows that use WAM. This improves the sign-in experience by making the dialog behave more like a modal window instead of sometimes appearing behind other apps. The change helps across common shells and hosts, including Terminal and VS Code-integrated terminals. As a result, signing in from CLI-based workflows should feel more reliable and less confusing.
+
+#### Cancel long-running Teams app operations more reliably
+
+ATK now supports cancellation across key Teams app packaging, validation, and publishing workflows through abort signals. This makes long-running operations more responsive when they are triggered from in-process clients or experiences that need user-driven cancellation. The update also adds a client-friendly validation path that returns validation results as data, which is especially useful for integrated tooling scenarios. Together, these changes make project operations easier to interrupt cleanly without waiting for full completion.
+
+#### Use the Builder API for all supported app types
+
+ATK now uses the Builder API consistently across all app types, helping align project creation and authoring experiences. This improves internal consistency and sets the foundation for more unified behavior across templates and app generation flows. From a user perspective, scaffolding and builder-based workflows should feel more predictable across different project types. It also simplifies future enhancements that rely on a common project creation path.
+
+#### Add typed, cancellable authoring APIs for in-process clients
+
+New typed authoring APIs are now available through `FxCoreClient` for adding plugins, skills, and auth actions without building untyped input dictionaries manually. These APIs support cancellation, propagate abort signals through question flows and MCP HTTP operations, and stop early when cancellation is requested before mutations begin. This makes it easier for integrated clients and tool authors to build on top of ATK in a safer and more structured way. Existing APIs remain unchanged, so current integrations continue to work while new consumers can adopt the typed surface incrementally.
+
+#### Enable Responsible AI validation for Builder API projects
+
+ATK can now enable Responsible AI validation for Builder API projects behind the `TEAMSFX_RAI_VALIDATION_ENABLED=true` environment flag. This allows teams to turn on additional validation behavior without changing their core project flow. It helps surface RAI-related checks in builder-based experiences as the capability continues to expand. If you are testing or adopting Builder API workflows, you can enable the environment variable to try this validation path.
+
+#### Improve model response format compatibility for Adaptive Card outputs
+
+Generated weather agent templates now normalize Adaptive Card responses so card content is passed as a JSON object instead of a JSON-encoded string. This improves compatibility across JavaScript, TypeScript, and Python templates and fixes rendering issues caused by inconsistent response formatting. The update also clarifies the expected response shape in generated comments and adds regression coverage for the normalization behavior. If you are using generated templates as a starting point, Adaptive Card responses should now work more reliably out of the box.
+
+#### Query authentication status by account type in the CLI
+
+The `atk auth list` command now supports an optional account type so you can check only Microsoft 365 or only Azure sign-in status. For example, `atk auth list m365` checks only Microsoft 365 and `atk auth list azure` checks only Azure, while `atk auth list` continues to show both as before. This is especially helpful in non-interactive or scripted environments where checking an unneeded provider could cause unrelated prompts or side effects. The command also provides provider-specific guidance when the requested account type is signed out.
+
+#### Update Teams app manifest support to schema v1.30
+
+ATK templates now target Teams app manifest schema v1.30. This update keeps generated manifests aligned with the latest supported stable schema while remaining backward-compatible with existing template usage, since the upstream change is additive. Template schema URLs and manifest version values have been updated accordingly across stable template sets. New projects created from current templates will use v1.30 automatically.
+
+### Bug Fix
+- Initialize the Teams Developer Portal region correctly after ROPC authentication for AppStudio scope requests, [PR #16533](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16533)
+- Require explicit operation selection when adding auth for plugins with multiple operations, [PR #16535](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16535)
+- Make collaborator details optional in `listCollaborator` results to preserve existing callers by default, [PR #16509](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16509)
+- Prevent path traversal in app package file references and package sources, [PR #16537](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16537)
+- Fix the dynamic feature flag so RAI validation can be enabled effectively, [PR #16598](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16598)
+- Restore the runtime for V4 non-SSO Tab apps generated from unbundled builds, [PR #16609](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16609)
+- Respect `inputs.env` when resolving share configuration for non-default environments, [PR #16610](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16610)
+- Restore authorization wiring in the Python basic custom engine agent template, [PR #16628](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16628)
+- Propagate `addKnowledge` capability mutation errors after warning instead of suppressing them, [PR #16630](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16630)
+- Disable Application Insights internal console warnings from leaking to CLI stderr, [PR #16632](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16632)
+- Update `m365agents.local.yml` alongside `m365agents.yml` when adding authenticated MCP actions, [PR #16652](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16652)
+- Update the authentication response mode handling, [PR #16666](https://github.com/OfficeDev/microsoft-365-agents-toolkit/pull/16666)
+
+
 ## 6.14.1 - August 11, 2026
 
 ### Bug Fix

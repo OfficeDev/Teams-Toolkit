@@ -121,6 +121,47 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
     assert.equal(legacyManifestPathStub.mock.calls.length, 0);
   });
 
+  it("SCN-ADD-MCP-14: forwards a bearer token from add action to the v4 template", async () => {
+    const projectPath = path.join(os.tmpdir(), "scenario-add-mcp-bearer-entry");
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      projectPath,
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "mcp-tools.json",
+      [QuestionNames.MCPForDAAuthType]: "bearer-token",
+      [QuestionNames.MCPForDAApiKey]: "the-bearer-token",
+      nonInteractive: true,
+      ignoreLockByUT: true,
+    };
+    const manifest = new TeamsAppManifest();
+    manifest.name = { short: "My MCP App", full: "My MCP App" };
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "declarativeAgent.json", id: "declarativeAgent" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.V4Enabled || flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    const scaffoldStub = vi
+      .spyOn(fxCoreDeclarativeAgentDeps, "scaffoldAddMcpServerFromV4")
+      .mockResolvedValue(ok(undefined));
+    vi.spyOn(fxCoreDeclarativeAgentDeps, "modifyProjectFrontDoor").mockImplementation(
+      async (frontDoorInputs, selectorPrefill, entryParams, dependencies) =>
+        dependencies.scaffoldV4(
+          frontDoorInputs,
+          { templateId: "add-mcp-server", engine: "v4", answers: selectorPrefill },
+          entryParams
+        )
+    );
+
+    const result = await new FxCore(tools).addPlugin(inputs);
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    assert.equal(scaffoldStub.mock.calls[0][0].apiKey, "the-bearer-token");
+  });
+
   it("rejects each incomplete resolved answer before scaffolding", async () => {
     const projectPath = path.join(os.tmpdir(), "scenario-add-mcp-invalid-answers");
     const completeInputs: Inputs = {
@@ -208,7 +249,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
     assert.equal(warned[0][1], "repair the oauth urls");
   });
 
-  it("SCN-ADD-MCP-12: v4 add questions collect auth type but defer credentials", () => {
+  it("SCN-ADD-MCP-12: v4 add questions include only the optional CLI API key", () => {
     vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       return flag === FeatureFlags.V4Enabled || flag === FeatureFlags.MCPForDADT;
     });
@@ -223,6 +264,9 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
 
     assert.isDefined(serverUrlNode);
     assert.isDefined(authTypeNode);
-    assert.lengthOf(authTypeNode?.children ?? [], 0);
+    assert.deepEqual(
+      authTypeNode?.children?.map((node) => node.data?.name),
+      [QuestionNames.MCPForDAApiKey]
+    );
   });
 });

@@ -75,6 +75,7 @@ export const mcpAuthInjectYmlAction: RegisteredStep = {
             : Boolean(stringParam(resolved, "entraClientId")?.trim()),
         clientSecret: Boolean(stringParam(resolved, "oauthClientSecret")?.trim()),
         scope: Boolean(stringParam(resolved, "oauthScopes")?.trim()),
+        apiKey: Boolean(stringParam(resolved, "apiKey")?.trim()),
       },
     });
   },
@@ -110,6 +111,7 @@ export const mcpAuthPersistCredentialEnv: RegisteredStep = {
       oauthClientSecret: stringParam(resolved, "oauthClientSecret"),
       oauthScopes: stringParam(resolved, "oauthScopes"),
       entraClientId: stringParam(resolved, "entraClientId"),
+      apiKey: stringParam(resolved, "apiKey"),
     });
   },
 };

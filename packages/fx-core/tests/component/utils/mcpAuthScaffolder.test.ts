@@ -194,15 +194,64 @@ describe("mcpAuthScaffolder", () => {
         ...baseArgs,
         authType: "bearer-token",
         endpoints: {},
+        persistCredentialEnvRefs: true,
+        serverName: "SERVER1",
+        apiKey: "the-api-key",
       });
       assert.deepEqual(result, {});
       expect(apiKeyStub).toHaveBeenCalledExactlyOnceWith(
         baseArgs.ymlPath,
         baseArgs.authName,
         baseArgs.registrationId,
-        baseArgs.mcpServerUrl
+        baseArgs.mcpServerUrl,
+        "SECRET_MCP_DA_API_KEY_SERVER1"
       );
       assert.isTrue(oauthStub.mock.calls.length === 0);
+    });
+
+    it("SCN-ADD-MCP-14: omits the API-key reference when no bearer token is supplied", async () => {
+      const apiKeyStub = vi
+        .spyOn(ActionInjector, "injectCreateAPIKeyActionForMCP")
+        .mockResolvedValue();
+
+      await injectMCPAuthActionToYml({
+        ...baseArgs,
+        authType: "bearer-token",
+        endpoints: {},
+        persistCredentialEnvRefs: true,
+        serverName: "SERVER1",
+      });
+
+      expect(apiKeyStub).toHaveBeenCalledExactlyOnceWith(
+        baseArgs.ymlPath,
+        baseArgs.authName,
+        baseArgs.registrationId,
+        baseArgs.mcpServerUrl,
+        undefined
+      );
+    });
+
+    it("omits the API-key reference for a whitespace-only bearer token", async () => {
+      const apiKeyStub = vi
+        .spyOn(ActionInjector, "injectCreateAPIKeyActionForMCP")
+        .mockResolvedValue();
+
+      await injectMCPAuthActionToYml({
+        ...baseArgs,
+        authType: "bearer-token",
+        endpoints: {},
+        persistCredentialEnvRefs: true,
+        serverName: "SERVER1",
+        apiKey: "   ",
+      });
+
+      expect(apiKeyStub).toHaveBeenCalledExactlyOnceWith(
+        baseArgs.ymlPath,
+        baseArgs.authName,
+        baseArgs.registrationId,
+        baseArgs.mcpServerUrl,
+        undefined
+      );
     });
 
     it("injects DCR action with placeholder when well-known url is missing", async () => {
@@ -428,6 +477,36 @@ describe("mcpAuthScaffolder", () => {
       assert.deepEqual(writeStub.mock.calls[0][2], {
         MCP_DA_OAUTH_CLIENT_ID_S1: "the-id",
       });
+    });
+
+    it("SCN-ADD-MCP-16: writes bearer token through a SECRET environment name", async () => {
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
+      const writeStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
+
+      await persistMCPAuthCredentialEnvVars({
+        projectPath: "/proj",
+        authType: "bearer-token",
+        serverName: "S1",
+        apiKey: "  the-api-key  ",
+      });
+
+      expect(writeStub).toHaveBeenCalledExactlyOnceWith("/proj", "dev", {
+        SECRET_MCP_DA_API_KEY_S1: "the-api-key",
+      });
+    });
+
+    it("SCN-ADD-MCP-14: does not persist an omitted bearer token", async () => {
+      const listStub = vi.spyOn(envUtil, "listEnv");
+      const writeStub = vi.spyOn(envUtil, "writeEnv");
+
+      await persistMCPAuthCredentialEnvVars({
+        projectPath: "/proj",
+        authType: "bearer-token",
+        serverName: "S1",
+      });
+
+      expect(listStub).not.toHaveBeenCalled();
+      expect(writeStub).not.toHaveBeenCalled();
     });
 
     it("defaults to dev env when listEnv returns empty", async () => {

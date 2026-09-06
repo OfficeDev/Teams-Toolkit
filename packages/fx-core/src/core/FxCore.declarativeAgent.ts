@@ -75,6 +75,7 @@ export interface ScaffoldAddMcpServerFromV4Options {
   appName: string;
   mcpServerUrl: string;
   authType: string;
+  apiKey?: string;
   resolvedPackage?: ResolvedV4ChannelPackage;
 }
 
@@ -95,14 +96,17 @@ async function scaffoldAddMcpServerFromV4(
     onActionError: templateDefaultOnActionError,
   };
   try {
+    const teamsManifestPath = targetRelativePath(options.projectPath, options.teamsManifestPath);
+    const answers: Record<string, string | string[]> = {
+      mcpServerUrl: options.mcpServerUrl,
+      teamsManifestPath,
+      authType: String(options.authType),
+      ...(options.apiKey === undefined ? {} : { apiKey: options.apiKey }),
+    };
     const source = await scaffoldDeclarativeFromV4Channel(
       context,
       { kind: "modify", templateId: options.templateId },
-      {
-        mcpServerUrl: options.mcpServerUrl,
-        teamsManifestPath: targetRelativePath(options.projectPath, options.teamsManifestPath),
-        authType: options.authType,
-      },
+      answers,
       { appName: options.appName, language: "common" },
       undefined,
       undefined,
@@ -421,7 +425,8 @@ export class FxCoreDeclarativeAgentPart {
     _projectPath: string,
     _apSpecPath: string,
     _pluginManifestPath: string,
-    _forceToAddNew?: boolean
+    _forceToAddNew?: boolean,
+    _apiKey?: string
   ): Promise<void> {
     throw new Error("Method not implemented.");
   }
@@ -509,6 +514,10 @@ export class FxCoreDeclarativeAgentPart {
       if (typeof authType === "string") {
         entryParams.authType = authType;
       }
+      const apiKey = inputs[QuestionNames.MCPForDAApiKey];
+      if (typeof apiKey === "string") {
+        entryParams.apiKey = apiKey;
+      }
       const appName = teamsManifest.name.short.replace("${{APP_NAME_SUFFIX}}", "");
 
       return await fxCoreDeclarativeAgentDeps.modifyProjectFrontDoor(
@@ -521,6 +530,7 @@ export class FxCoreDeclarativeAgentPart {
             const resolvedMcpServerUrl = answers.mcpServerUrl;
             const resolvedTeamsManifestPath = answers.teamsManifestPath;
             const resolvedAuthType = answers.authType;
+            const resolvedApiKey = answers.apiKey;
             if (
               typeof resolvedMcpServerUrl !== "string" ||
               typeof resolvedTeamsManifestPath !== "string" ||
@@ -542,6 +552,7 @@ export class FxCoreDeclarativeAgentPart {
               appName,
               mcpServerUrl: resolvedMcpServerUrl,
               authType: resolvedAuthType,
+              ...(typeof resolvedApiKey === "string" ? { apiKey: resolvedApiKey } : {}),
               resolvedPackage,
             });
           },
@@ -695,7 +706,9 @@ export class FxCoreDeclarativeAgentPart {
           authNameAndScheme.authScheme,
           inputs.projectPath,
           destinationApiSpecPath,
-          destinationPluginManifestPath
+          destinationPluginManifestPath,
+          undefined,
+          inputs[QuestionNames.ApiSpecApiKey]
         );
       }
     } else if (isGenerateFromMCP) {
@@ -826,6 +839,7 @@ export class FxCoreDeclarativeAgentPart {
                 persistCredentialEnvRefs: true,
                 serverName,
                 scopes: inputs[QuestionNames.MCPForDAScopes],
+                apiKey: inputs[QuestionNames.MCPForDAApiKey],
               };
               const injectResult = await injectMCPAuthActionToYml({ ...injectArgs, ymlPath });
               const localYmlPath = pathUtils.getYmlFilePath(inputs.projectPath, "local", true);
@@ -865,6 +879,7 @@ export class FxCoreDeclarativeAgentPart {
               clientId: inputs[QuestionNames.MCPForDAClientId],
               clientSecret: inputs[QuestionNames.MCPForDAClientSecret],
               scopes: inputs[QuestionNames.MCPForDAScopes],
+              apiKey: inputs[QuestionNames.MCPForDAApiKey],
             });
           } catch (error: any) {
             mcpWarnings.push({
