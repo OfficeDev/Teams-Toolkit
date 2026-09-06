@@ -40,7 +40,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-09-06T02:39:54.778000"
+    "updated_at": "2026-09-06T02:51:40.298000"
   },
   "steps": [
     {
@@ -216,7 +216,9 @@
       "depends_on": [],
       "preconditions": [],
       "postconditions": [],
-      "tags": [],
+      "tags": [
+        "delay:30"
+      ],
       "screenshot": "",
       "created_at": "2026-06-17T02:19:55.488096",
       "plan_id": "plan_80b368dd"
