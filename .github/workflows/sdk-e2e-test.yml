@@ -20,13 +20,13 @@ jobs:
       SDK_INTEGRATION_TEST_API_CERTPROVIDER: ${{ secrets.SDK_INTEGRATION_TEST_API_CERTPROVIDER }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
 
       - name: setup project
         uses: ./.github/actions/setup-project
 
       - name: setup python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@3542bca2639a428e1796aaa6a2ffef0c0f575566 # v3.1.4
 
       - name: install xq
         run: |
@@ -47,7 +47,7 @@ jobs:
       - name: get job id
         id: get-job-id
         if: ${{ always() }}
-        uses: ayachensiyuan/get-action-job-id@v1.5
+        uses: ayachensiyuan/get-action-job-id@209f0d92c5955407851afc2b173f3bf0481d4297 # v1.5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

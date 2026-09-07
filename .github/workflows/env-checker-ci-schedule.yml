@@ -28,21 +28,21 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
         with:
           fetch-depth: 0
 
       # Use node 22 to setup project
       - name: Setup Node.js
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@c6fd00ceb9747fb23ffdf72987450a2664414867 # v2.1.2
         with:
           node-version: 22
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
   
       # https://github.com/marketplace/actions/retry-step
       - name: Setup project with Retry
-        uses: nick-invision/retry@v2
+        uses: nick-invision/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
         with:
           timeout_minutes: 15
           max_attempts: 3
@@ -53,7 +53,7 @@ jobs:
             npm run setup --legacy-peer-deps
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@c6fd00ceb9747fb23ffdf72987450a2664414867 # v2.1.2
         with:
           node-version: ${{ matrix.node-version }}
     
@@ -94,21 +94,21 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
         with:
           fetch-depth: 0
 
       # Use node 22 to setup project
       - name: Setup Node.js
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@c6fd00ceb9747fb23ffdf72987450a2664414867 # v2.1.2
         with:
           node-version: 22
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       # https://github.com/marketplace/actions/retry-step
       - name: Setup project with Retry
-        uses: nick-invision/retry@v2
+        uses: nick-invision/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
         with:
           timeout_minutes: 15
           max_attempts: 3
@@ -119,7 +119,7 @@ jobs:
             npm run setup --legacy-peer-deps
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@c6fd00ceb9747fb23ffdf72987450a2664414867 # v2.1.2
         with:
           node-version: ${{ matrix.node-version }}
 
@@ -157,7 +157,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
         with:
           fetch-depth: 0
 
@@ -173,21 +173,21 @@ jobs:
 
       - name: Setup .NET SDK
         if: ${{ matrix.dotnet-version != 'none' }}
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: ${{ matrix.dotnet-version }}
 
       # Use node 22 to setup project
       - name: Setup Node.js
-        uses: actions/setup-node@v2.1.2
+        uses: actions/setup-node@c6fd00ceb9747fb23ffdf72987450a2664414867 # v2.1.2
         with:
           node-version: 22
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
   
       # https://github.com/marketplace/actions/retry-step
       - name: Setup project with Retry
-        uses: nick-invision/retry@v2
+        uses: nick-invision/retry@14672906e672a08bd6eeb15720e9ed3ce869cdd4 # v2.9.0
         with:
           timeout_minutes: 15
           max_attempts: 3

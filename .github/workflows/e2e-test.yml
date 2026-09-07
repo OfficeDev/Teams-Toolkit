@@ -71,9 +71,9 @@ jobs:
       AUTO_TEST_PLAN_ID: ${{ github.event.inputs.target-testplan-id }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
 
-      - uses: azure/login@v1
+      - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
         with:
           client-id: ${{secrets.DEVOPS_CLIENT_ID}}
           tenant-id: ${{secrets.DEVOPS_TENANT_ID}}
@@ -132,7 +132,7 @@ jobs:
   
       - name: Upload testplan to artifact
         if: ${{ github.event.inputs.target-testplan-name != '' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: testplan
           path: |
@@ -176,9 +176,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
 
-      - uses: azure/login@v1
+      - uses: azure/login@cb79c773a3cfa27f31f25eb3f677781210c9ce3d # v1.6.1
         with:
           client-id: ${{secrets.DEVOPS_CLIENT_ID}}
           tenant-id: ${{secrets.DEVOPS_TENANT_ID}}
@@ -194,13 +194,13 @@ jobs:
           echo "M365_ACCOUNT_NAME=${users[index]}" >> $GITHUB_ENV
 
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
         with:
           node-version: 22
 
       - name: Setup node for Retail project
         if: contains(matrix.cases, 'Retail')
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
         with:
           node-version: 18
 
@@ -218,7 +218,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Setup .net
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@55ec9447dda3d1cf6bd587150f3262f30ee10815 # v3.4.2
         with:
           dotnet-version: |
             8.0.x
@@ -226,11 +226,11 @@ jobs:
       # Python is not used in templates now
       - name: Setup Python
         if: contains(matrix.cases, 'samples')
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       - name: Setup project
         run: |
@@ -257,7 +257,7 @@ jobs:
 
       - name: Download samples(daily)
         if: (github.event_name == 'schedule'  || github.event_name == 'pull_request') && startsWith(matrix.cases, './samples/') && contains(matrix.cases, 'ProactiveMessage') == false
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           repository: OfficeDev/TeamsFx-Samples
           ref: dev
@@ -265,7 +265,7 @@ jobs:
 
       - name: Download samples(rc)
         if: github.event_name == 'workflow_dispatch' && startsWith(matrix.cases, './samples/') && contains(matrix.cases, 'ProactiveMessage') == false && contains(matrix.cases, 'SignatureOutlook') == false && contains(matrix.cases, 'ChefBot') == false
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           repository: OfficeDev/TeamsFx-Samples
           ref: ${{ github.event.inputs.sample-branch }}
@@ -273,7 +273,7 @@ jobs:
 
       - name: Download samples from another repo
         if: startsWith(matrix.cases, './samples/') && contains(matrix.cases, 'ProactiveMessage')
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           repository: OfficeDev/Microsoft-Teams-Samples
           ref: main
@@ -281,7 +281,7 @@ jobs:
       
       - name: Download samples from office repo
         if: startsWith(matrix.cases, './samples/') && contains(matrix.cases, 'SignatureOutlook')
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           repository: OfficeDev/Office-Add-in-samples
           ref: main
@@ -289,7 +289,7 @@ jobs:
 
       - name: Download samples from ai repo
         if: startsWith(matrix.cases, './samples/') && contains(matrix.cases, 'ChefBot')
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           repository: microsoft/teams-ai
           ref: main
@@ -317,7 +317,7 @@ jobs:
           echo "name=$name" >> $GITHUB_OUTPUT
 
       - name: Upload test report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ github.event_name != 'schedule' || success() || (failure() && github.run_attempt >= 5) }}
         with:
           name: test-result-${{ steps.get-report-name.outputs.name }}
@@ -326,7 +326,7 @@ jobs:
       
       - name: Download TestPlan
         if: ${{ always() && github.event.inputs.target-testplan-name != '' }}
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: testplan
           path: ./packages/tests
@@ -356,7 +356,7 @@ jobs:
       M365_ACCOUNT_COLLABORATOR: ${{ secrets.TEST_COLLABORATOR_USER_NAME_2 }}
     steps:
       - name: Checkout (dev)
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
 
       - name: setup project
         uses: ./.github/actions/setup-project
@@ -389,13 +389,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
 
       - name: Install Dateutils
         run: |
           sudo apt install dateutils
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           path: ~/artifacts
 
@@ -572,11 +572,11 @@ jobs:
     if: ${{github.event_name == 'workflow_dispatch' && github.event.inputs.get-coverage == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3.9.1
         with:
           node-version: 22
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
 
       - name: mv files
         working-directory: packages/tests
@@ -585,7 +585,7 @@ jobs:
           mv src/e2e/commonUtils.ts.back src/e2e/commonUtils.ts
           mv src/utils/commonUtils.ts.back src/utils/commonUtils.ts
 
-      - uses: jossef/action-set-json-field@v1
+      - uses: jossef/action-set-json-field@6e6d7e639f24b3955ef682815317b5613ac6ca12 # v1
         with:
             file: ./packages/fx-core/.nycrc
             field: excludeAfterRemap
@@ -639,7 +639,7 @@ jobs:
           zip -r out1.zip .nyc_output/
           zip -r out2.zip coverage/
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ always() }}
         with:
           name: coverage
@@ -650,7 +650,7 @@ jobs:
       - name: CodeCov report attempt
         if: ${{always()}}
         continue-on-error: true
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3.1.6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true

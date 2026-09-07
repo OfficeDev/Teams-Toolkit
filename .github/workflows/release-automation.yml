@@ -65,7 +65,7 @@ jobs:
     steps:
       - id: generate-token
         if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ env.APP_GITHUB_APP_ID }}
           private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
@@ -74,13 +74,13 @@ jobs:
             Microsoft-365-Agents-Toolkit-Release-Schedule
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           fetch-depth: 0
 
       - name: Checkout release schedule repo
         if: ${{ env.LOCAL_SCHEDULE_FILE == '' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           repository: ${{ env.SCHEDULE_REPO }}
           token: ${{ steps.generate-token.outputs.token || github.token }}
@@ -90,7 +90,7 @@ jobs:
           sparse-checkout-cone-mode: false
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.9.1
         with:
           python-version: '3.x'
 
@@ -127,7 +127,7 @@ jobs:
           echo "Found $RELEASES_COUNT pending release(s)"
 
       - name: Upload releases configuration
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: releases-config
           path: releases.json
@@ -149,7 +149,7 @@ jobs:
       vsrelease: ${{ steps.select.outputs.vsrelease }}
     steps:
       - name: Download releases configuration
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: releases-config
 
@@ -253,7 +253,7 @@ jobs:
     if: ${{ github.event_name != 'pull_request' && needs.parse-schedule.outputs.releases_count > 0 }}
     steps:
       - name: Download releases configuration
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: releases-config
 
@@ -298,19 +298,19 @@ jobs:
     steps:
       - id: generate-token
         if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ env.APP_GITHUB_APP_ID }}
           private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
 
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
           fetch-depth: 0
           token: ${{ steps.generate-token.outputs.token || github.token }}
 
       - name: Download releases configuration
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: releases-config
 
@@ -404,7 +404,7 @@ jobs:
       - name: Create PR to merge dev into existing release branch
         id: sync_pr
         if: ${{ steps.check_branch.outputs.exists == 'true' && env.DRY_RUN == 'false' && env.RERUN_CD_ONLY == 'false' && steps.config.outputs.is_prerelease == 'true' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
@@ -517,7 +517,7 @@ jobs:
       - id: generate-samples-token
         if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
         continue-on-error: true
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ env.APP_GITHUB_APP_ID }}
           private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
@@ -527,7 +527,7 @@ jobs:
 
       - name: Create PR in samples repo (merge dev into main)
         if: ${{ env.DRY_RUN == 'false' && env.RERUN_CD_ONLY == 'false' && steps.config.outputs.is_hotfix != 'true' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ steps.generate-samples-token.outputs.token || github.token }}
           script: |
@@ -610,7 +610,7 @@ jobs:
       - name: Bump versions and create PR for stable release
         id: version_bump_pr
         if: ${{ steps.create_branch.outputs.created == 'true' && steps.config.outputs.is_stable == 'true' && env.DRY_RUN == 'false' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const { execSync } = require('child_process');
@@ -670,7 +670,7 @@ jobs:
 
       - name: Create version bump PR
         if: ${{ steps.version_bump_pr.outputs.bump_branch != '' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
@@ -896,13 +896,13 @@ jobs:
     steps:
       - id: generate-token
         if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ env.APP_GITHUB_APP_ID }}
           private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
 
       - name: Trigger CD on dev with defaults
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
@@ -948,13 +948,13 @@ jobs:
     steps:
       - id: generate-token
         if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ env.APP_GITHUB_APP_ID }}
           private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
 
       - name: Trigger CD workflow
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
@@ -1015,14 +1015,14 @@ jobs:
     steps:
       - id: generate-token
         if: ${{ env.APP_GITHUB_APP_ID != '' && env.APP_GITHUB_APP_PRIVATE_KEY != '' }}
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ env.APP_GITHUB_APP_ID }}
           private-key: ${{ env.APP_GITHUB_APP_PRIVATE_KEY }}
 
       - name: Trigger CD on automation sync PR merge
         id: trigger
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ steps.generate-token.outputs.token || github.token }}
           script: |
@@ -1188,7 +1188,7 @@ jobs:
         uses: ./.github/actions/send-email-report
 
       - name: Post completion comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         env:
           PRODUCT: ${{ (needs.trigger-cd.result == 'success' && needs.trigger-cd.outputs.product) || needs.trigger-cd-on-pr-merge.outputs.product }}
           VERSION: ${{ (needs.trigger-cd.result == 'success' && needs.trigger-cd.outputs.version) || needs.trigger-cd-on-pr-merge.outputs.version }}

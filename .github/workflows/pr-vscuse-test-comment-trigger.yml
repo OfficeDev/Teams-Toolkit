@@ -42,7 +42,7 @@ jobs:
     steps:
       - name: Authorize commenter and extract hint
         id: authorize
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
           script: |
             const allowed = ['OWNER', 'MEMBER', 'COLLABORATOR'];
@@ -64,7 +64,7 @@ jobs:
 
       - name: React to triggering comment
         if: success()
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         with:
           script: |
             await github.rest.reactions.createForIssueComment({
@@ -76,7 +76,7 @@ jobs:
 
       - name: Post hidden hint marker comment
         if: steps.authorize.outputs.hint != ''
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         env:
           HINT:      ${{ steps.authorize.outputs.hint }}
           PR_NUMBER: ${{ steps.authorize.outputs.pr_number }}
@@ -105,7 +105,7 @@ jobs:
             });
 
       - name: Dispatch pr-vscuse-test.yml with the user's hint applied
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6.4.1
         env:
           PR_NUMBER: ${{ steps.authorize.outputs.pr_number }}
         with:
