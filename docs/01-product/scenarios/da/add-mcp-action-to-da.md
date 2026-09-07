@@ -178,6 +178,6 @@ scaffolding:
         mcpServerUrl: https://example.com/mcp
         authType: none
   reviewedFingerprints:
-    semantic: c5714b2772abccd0215a92d05daa43e92026fa93efe5f6247ed29d3e0d6f1bb9
+    semantic: a352df0fa4567dffd5f7e05dec750e59adf05b0e4b4efba8a69ae4f58aef1931
     presentation: b72403bc4e7cbf8ab6a2cf3fffcd32ef5851d04932af5f7005b7c771c8cf68f3
 ```
