@@ -9,7 +9,7 @@
       "precondition_retry_interval": 2,
       "step_retry_timeout": 0.0
     },
-    "total_steps": 16,
+    "total_steps": 8,
     "created_at": "2026-06-17T02:10:05.016638",
     "name": "Feature Check Copilot License Enabled",
     "description": {
@@ -20,24 +20,17 @@
     "generated_at": "2026-06-17T02:10:05.016638",
     "execution_order": [
       "step_3ca9f2b7",
+      "plan_dc951b3b",
       "step_eb544d52",
       "step_c3c0a40a",
       "step_f0d7ba3e",
       "step_436b1f61",
       "step_a0026de5",
-      "step_fa6d6cb1",
       "step_78a597ab",
-      "step_47935ca7",
-      "step_ed29b905",
-      "step_b16aa4f5",
-      "step_c51b1af7",
-      "step_b92621be",
-      "step_9a825c12",
-      "step_24db8255",
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-06-17T02:28:59.615382"
+    "updated_at": "2026-09-05T02:20:22.894000"
   },
   "steps": [
     {
@@ -49,7 +42,7 @@
         "x": 951,
         "y": 130
       },
-      "description": "Click the language selection button (flag icon) in the top right corner of the VS Code welcome screen to open the language options.",
+      "description": "Click the \"Close\" (X) button in the top-right corner of the VS Code welcome dialog to dismiss the sign-in prompt.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -177,32 +170,6 @@
       "plan_id": "plan_80b368dd"
     },
     {
-      "step_id": "step_fa6d6cb1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 512,
-        "y": 431
-      },
-      "description": "Click the \"Set up your environment\" option in the guided tutorial list under the \"Build a Declarative Agent\" section of the Microsoft 365 Agents Toolkit welcome screen in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:431:16:5:d2d46667c4d328a0",
-        "dhash:512:431:96:5:0000a4595128d59a",
-        "dhash:512:431:0:10:24b0949490b17075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_fa6d6cb1",
-      "created_at": "2026-06-17T02:24:33.865380",
-      "plan_id": "plan_80b368dd"
-    },
-    {
       "step_id": "step_78a597ab",
       "agent": "interaction",
       "tool": "click",
@@ -226,180 +193,6 @@
       "tags": [],
       "screenshot": "step_78a597ab",
       "created_at": "2026-06-17T02:28:51.067052",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_47935ca7",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 703,
-        "y": 100
-      },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the top of the Visual Studio Code interface to access a Microsoft 365 account.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:703:100:16:5:0000000000000000",
-        "dhash:703:100:96:5:00000042b2474971",
-        "dhash:703:100:0:10:9cb89590b0717d7f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_47935ca7",
-      "created_at": "2026-06-17T02:19:55.488096",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_ed29b905",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}}"
-      },
-      "description": "Type ${{env:M365_ACCOUNT_NAME_EnableCopilotAccess}}  into the 'Email, phone, or Skype' input field on the Microsoft account sign-in page.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b28f0d9c7e6dae4"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay:5"
-      ],
-      "screenshot": "step_ed29b905",
-      "created_at": "2026-06-17T02:19:55.493347",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_b16aa4f5",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 633,
-        "y": 486
-      },
-      "description": "Click the blue \"Next\" button on the Microsoft Sign in screen after entering the email address (test04@atktesting05.onmicrosoft.com) in the Chrome browser login flow.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:633:486:16:5:92aa29a3b24db200",
-        "dhash:633:486:96:5:000004b0300c0000",
-        "dhash:633:486:0:10:1b28f0cbc6e6dae4"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_b16aa4f5",
-      "created_at": "2026-06-17T02:19:55.497254",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_c51b1af7",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{secret:M365_ACCOUNT_PASSWORD_EnableCopilotAccess}}"
-      },
-      "description": "Type the password ${{secret:M365_ACCOUNT_PASSWORD_EnableCopilotAccess}}' into the 'Password' field on the Microsoft login page.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "delay:3"
-      ],
-      "screenshot": "step_c51b1af7",
-      "created_at": "2026-06-17T02:19:55.500253",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_b92621be",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press the \"Enter\" key to submit the password and proceed from the Microsoft login interface after entering credentials.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:384:0:20:1b08f0d9d1e6e6e4"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_b92621be",
-      "created_at": "2026-06-17T02:19:55.504235",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_9a825c12",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 254,
-        "y": 19
-      },
-      "description": "Click the 'X' button to close the page",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:254:19:16:5:01a1424249420221",
-        "dhash:254:19:96:5:9144640100000004",
-        "dhash:254:19:0:10:9391610169414141"
-      ],
-      "postconditions": [],
-      "tags": [
-        "delay:3"
-      ],
-      "screenshot": "step_9a825c12",
-      "created_at": "2026-06-17T02:19:55.509186",
-      "plan_id": "plan_80b368dd"
-    },
-    {
-      "step_id": "step_24db8255",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 540,
-        "y": 446
-      },
-      "description": "Click the \"Check Copilot License\" button in the \"Set up your environment\" section of the Microsoft 365 Agents Toolkit welcome interface within Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:540:446:16:5:e829abaaaa2bd42b",
-        "dhash:540:446:96:5:929a8572629400d2",
-        "dhash:540:446:0:10:23b89490b0717d7f"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_24db8255",
-      "created_at": "2026-06-17T02:19:55.512507",
       "plan_id": "plan_80b368dd"
     },
     {
