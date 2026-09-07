@@ -162,7 +162,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
     assert.equal(scaffoldStub.mock.calls[0][0].apiKey, "the-bearer-token");
   });
 
-  it("SCN-ADD-MCP-10: forwards static OAuth and Entra credentials to the v4 template", async () => {
+  it("forwards static OAuth and Entra credentials to the v4 template", async () => {
     const projectPath = path.join(os.tmpdir(), "scenario-add-mcp-oauth-entry");
     const inputs: Inputs = {
       platform: Platform.CLI,

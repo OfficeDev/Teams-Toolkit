@@ -3118,7 +3118,7 @@ describe("addPlugin", async () => {
       [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
       [QuestionNames.MCPToolsFilePath]: "",
       [QuestionNames.MCPForDAAuthType]: "bearer-token",
-      [QuestionNames.MCPForDAApiKey]: "",
+      [QuestionNames.MCPForDAApiKey]: "bearer-token-value",
       projectPath,
     };
     const manifest = new TeamsAppManifest();
@@ -3162,6 +3162,7 @@ describe("addPlugin", async () => {
     vi.spyOn(pathUtils, "getYmlFilePath").mockReturnValue("m365agents.yml");
     vi.spyOn(fs, "ensureFile").mockResolvedValue();
     const writeJSONStub = vi.spyOn(fs, "writeJSON").mockResolvedValue();
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
     const writeEnvStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
     const result = await new FxCore(addPluginTools).addPlugin(inputs);
@@ -3175,9 +3176,13 @@ describe("addPlugin", async () => {
       "examplecom",
       "MCP_DA_AUTH_ID_EXAMPLECOM",
       "https://example.com/mcp",
-      undefined
+      "SECRET_MCP_DA_API_KEY_EXAMPLECOM"
     );
-    assert.equal(writeEnvStub.mock.calls.length, 0);
+    assert.equal(writeEnvStub.mock.calls.length, 1);
+    assert.equal(writeEnvStub.mock.calls[0][1], "dev");
+    assert.deepEqual(writeEnvStub.mock.calls[0][2], {
+      SECRET_MCP_DA_API_KEY_EXAMPLECOM: "bearer-token-value",
+    });
     const pluginCall = writeJSONStub.mock.calls.find((call) =>
       String(call[0]).includes("ai-plugin")
     );
