@@ -1023,10 +1023,15 @@ function createSemanticStepCompiler() {
         question.secret === true &&
         !secretExpressionPattern.test(answer.value) &&
         !(
-          answer.question === "openAIKey" &&
           answer.value === "deferred" &&
-          definition.with.template === "custom-copilot-rag-custom-api" &&
-          answerState.llmService === "llm-service-openai"
+          [
+            "custom-copilot-rag-custom-api",
+            "custom-copilot-rag-azure-ai-search",
+          ].includes(definition.with.template) &&
+          ((answer.question === "openAIKey" &&
+            answerState.llmService === "llm-service-openai") ||
+            (answer.question === "azureOpenAIKey" &&
+              answerState.llmService === "llm-service-azure-openai"))
         )
       ) {
         return failure(
@@ -1120,7 +1125,7 @@ function createSemanticStepCompiler() {
         }
         error = append(
           output,
-          answer.question === "openAIKey" && answer.value === "deferred"
+          question.secret === true && answer.value === "deferred"
             ? render(state, "quick-input/empty-text.json.tpl", {
                 questionTitle,
               })
@@ -1139,12 +1144,16 @@ function createSemanticStepCompiler() {
       );
     }
     if (
-      answerState.openAIKey === "deferred" &&
-      answerState.language !== "python"
+      (answerState.openAIKey === "deferred" ||
+        answerState.azureOpenAIKey === "deferred") &&
+      (answerState.language !== "python" ||
+        (answerState.azureOpenAIKey === "deferred" &&
+          (Object.hasOwn(answerState, "azureOpenAIEndpoint") ||
+            Object.hasOwn(answerState, "azureOpenAIDeploymentName"))))
     ) {
       return failure(
         "VCB_DEFERRED_SECRET_INPUT_INVALID",
-        "The deferred OpenAI key is supported only by the Python Custom API template.",
+        "Deferred keys require a supported Python template and no skipped Azure connection answers.",
       );
     }
     // The last answer starts project creation, which reopens the workspace in a
@@ -1165,7 +1174,12 @@ function createSemanticStepCompiler() {
     state.language = answerState.language;
     state.apiSpecLocation = answerState.apiSpecLocation;
     state.apiOperations = answerState.apiOperations;
-    state.deferredOpenAIKey = answerState.openAIKey === "deferred";
+    state.deferredLLMKey =
+      answerState.openAIKey === "deferred"
+        ? "openAIKey"
+        : answerState.azureOpenAIKey === "deferred"
+          ? "azureOpenAIKey"
+          : undefined;
     return { ok: true, value: output };
   }
 
@@ -1471,7 +1485,9 @@ function createSemanticStepCompiler() {
     const dependencyLabel = pythonEnvironment.dependencyLabels[state.template];
     if (
       !isRecord(inputs) ||
-      !hasOnlyFields(inputs, new Set(["interpreter"])) ||
+      !hasOnlyFields(inputs, new Set(["interpreter", "readiness"])) ||
+      (inputs.readiness !== undefined &&
+        inputs.readiness !== "installedRequirements") ||
       typeof inputs.interpreter !== "string" ||
       inputs.interpreter.length === 0 ||
       dependencyLabel === undefined
@@ -1510,6 +1526,17 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
+    if (inputs.readiness === "installedRequirements") {
+      error = append(
+        output,
+        render(state, "checks/python-requirements.json.tpl", {
+          requirementsPath: dependencyLabel,
+        }),
+      );
+      if (error) return error;
+      state.completed.add("pythonEnvironment");
+      return { ok: true, value: output };
+    }
     // Creating the virtual environment and installing the requirements it
     // declares takes minutes, and the notification the Python extension raises
     // when it finishes is the only visible completion signal, so the
@@ -2859,6 +2886,34 @@ function createSemanticStepCompiler() {
     return { ok: true, value: output };
   }
 
+  function compileCloseDebugBrowser(state, definition) {
+    if (
+      !isRecord(definition.with) ||
+      Object.keys(definition.with).length !== 0 ||
+      state.template !== "default-bot" ||
+      state.profile !== targetAdapters["Debug in Teams (Chrome)"] ||
+      !state.completed.has("target") ||
+      !state.completed.has("chat-ready")
+    ) {
+      return failure(
+        "VCB_CLOSE_DEBUG_BROWSER_INPUT_INVALID",
+        "Closing the debug browser requires a ready local Chrome Simple Bot and no inputs.",
+      );
+    }
+    const output = [];
+    let error = append(
+      output,
+      render(state, "browser/teams/close-local-app-window.json.tpl", {}),
+    );
+    if (error) return error;
+    error = append(output, render(state, "debug/assert-stopped.json.tpl", {}));
+    if (error) return error;
+    state.profile = undefined;
+    state.completed.delete("target");
+    state.completed.delete("chat-ready");
+    return { ok: true, value: output };
+  }
+
   function compileTarget(state, definition) {
     const inputs = definition.with;
     if (
@@ -2904,20 +2959,59 @@ function createSemanticStepCompiler() {
       );
     }
     const runtimeInputs = inputs.runtimeInputs;
-    const requiresDeferredOpenAIKey = state.deferredOpenAIKey === true;
-    if (runtimeInputs !== undefined || requiresDeferredOpenAIKey) {
+    const runtimeQuestions =
+      state.deferredLLMKey === "azureOpenAIKey"
+        ? [
+            { name: "azureOpenAIKey", title: "Azure OpenAI Key", secret: true },
+            {
+              name: "azureOpenAIDeploymentName",
+              title: "Azure OpenAI Deployment Name",
+            },
+          ]
+        : state.deferredLLMKey === "openAIKey"
+          ? [{ name: "openAIKey", title: "OpenAI Key", secret: true }]
+          : [];
+    if (
+      runtimeQuestions.length > 0 &&
+      state.template === "custom-copilot-rag-azure-ai-search"
+    ) {
+      if (state.deferredLLMKey === "azureOpenAIKey") {
+        runtimeQuestions.push({
+          name: "azureOpenAIEmbeddingDeploymentName",
+          title: "Azure OpenAI Embedding Deployment Name",
+        });
+      }
+      runtimeQuestions.push({
+        name: "azureSearchKey",
+        title: "AZURE_SEARCH_KEY",
+        secret: true,
+      });
+    }
+    if (runtimeInputs !== undefined || runtimeQuestions.length > 0) {
       if (
-        !requiresDeferredOpenAIKey ||
-        state.template !== "custom-copilot-rag-custom-api" ||
+        runtimeQuestions.length === 0 ||
+        ![
+          "custom-copilot-rag-custom-api",
+          "custom-copilot-rag-azure-ai-search",
+        ].includes(state.template) ||
         state.language !== "python" ||
         profileTitle !== "Debug in Teams (Chrome)" ||
         !isRecord(runtimeInputs) ||
-        !hasOnlyFields(runtimeInputs, new Set(["openAIKey"])) ||
-        !secretExpressionPattern.test(runtimeInputs.openAIKey ?? "")
+        !hasOnlyFields(
+          runtimeInputs,
+          new Set(runtimeQuestions.map(({ name }) => name)),
+        ) ||
+        runtimeQuestions.some(
+          ({ name, secret }) =>
+            typeof runtimeInputs[name] !== "string" ||
+            !(
+              secret ? secretExpressionPattern : environmentExpressionPattern
+            ).test(runtimeInputs[name]),
+        )
       ) {
         return failure(
           "VCB_TARGET_RUNTIME_INPUT_INVALID",
-          "The target runtime input does not match a deferred Python Custom API OpenAI key.",
+          "The target runtime inputs must match the deferred Python template and LLM service.",
         );
       }
     }
@@ -2956,12 +3050,12 @@ function createSemanticStepCompiler() {
       }),
     );
     if (error) return error;
-    if (requiresDeferredOpenAIKey) {
+    for (const question of runtimeQuestions) {
       error = append(
         output,
         render(state, "quick-input/deferred-text.json.tpl", {
-          inputValue: runtimeInputs.openAIKey,
-          questionTitle: "OpenAI Key",
+          inputValue: runtimeInputs[question.name],
+          questionTitle: question.title,
         }),
       );
       if (error) return error;
@@ -3458,6 +3552,8 @@ function createSemanticStepCompiler() {
         return compileShare(state, definition);
       case "target":
         return compileTarget(state, definition);
+      case "closeDebugBrowser":
+        return compileCloseDebugBrowser(state, definition);
       case "open":
         return compileOpen(state, definition);
       case "checks":

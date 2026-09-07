@@ -1,22 +1,24 @@
 version: 1
 
 cases:
-  - id: feature-simple-bot-ts-publish-developer-portal
-    scenarioId: SCN-PUBLISH-DEVELOPER-PORTAL
-    workItemIds: [16727621]
+  - id: feature-local-debug-second-f5
+    scenarioId: SCN-CREATE-DEFAULT-BOT-03
+    workItemIds: [9795544]
     steps:
       [
-        scaffold-simple-bot-ts,
-        check-simple-bot-ts,
+        scaffold-simple-bot-js,
+        check-simple-bot-js,
         login-m365,
         f5-teams-local,
         open-app,
-        package-local-app,
-        publish-developer-portal,
+        close-debug-browser,
+        f5-teams-local,
+        open-app,
+        check-relaunched-chat,
       ]
 
 steps:
-  scaffold-simple-bot-ts:
+  scaffold-simple-bot-js:
     type: scaffold
     with:
       template: default-bot
@@ -28,29 +30,33 @@ steps:
         - question: teamsOtherAppType
           value: default-bot
         - question: language
-          value: typescript
+          value: javascript
         - question: workspaceFolder
           value: default
         - question: appName
           type: text
           value: "${{var:app_name:vscuse_app_#####}}"
 
-  check-simple-bot-ts:
+  check-simple-bot-js:
     type: checks
     with:
       - type: file
-        path: m365agents.yml
+        path: app.js
         expect:
-          contains: ["version: v1.11", "provision:", "deploy:"]
+          contains: [Default echo behavior]
       - type: file
-        path: app.ts
+        path: index.js
         expect:
           exists: true
-          contains: ["Default echo behavior"]
       - type: file
-        path: appPackage/manifest.json
+        path: .vscode/launch.json
         expect:
-          contains: ['"manifestVersion": "1.30"', '"composeExtensions": []']
+          contains:
+            [
+              '"name": "Debug in Teams (Chrome)"',
+              '"stopAll": true',
+              cascadeTerminateToConfigurations,
+            ]
 
   login-m365:
     type: login
@@ -62,7 +68,7 @@ steps:
   f5-teams-local:
     type: target
     with:
-      profile: "Debug in Teams (Chrome)"
+      profile: Debug in Teams (Chrome)
       profileSelection: first
 
   open-app:
@@ -71,10 +77,15 @@ steps:
       kind: app
       destination: chat
 
-  package-local-app:
-    type: packageApp
-    with:
-      environment: local
+  close-debug-browser:
+    type: closeDebugBrowser
+    with: {}
 
-  publish-developer-portal:
-    type: publishDeveloperPortal
+  check-relaunched-chat:
+    type: checks
+    with:
+      - type: chat
+        send: test
+        expect:
+          replied: true
+          contains: ["you said: test"]

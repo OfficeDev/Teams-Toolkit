@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 185 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 189 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 185 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 185);
+  assert.equal(first.value.files.length, 189);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 185);
+  assert.equal(generatedFiles.length, 189);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -3756,6 +3756,8 @@ test("VCB-111: the Teams Agent with Data bundles cover their launch matrix and s
   );
   assert.equal(search.ok, true, search.diagnostics?.[0]?.code);
   assert.deepEqual(search.value.map((entry) => entry.caseId).sort(), [
+    "feature-local-debug-ai-search-without-azure-openai-keys",
+    "feature-local-debug-ai-search-without-openai-keys",
     "rag-azure-ai-search-js-azure-openai-local-teams",
     "rag-azure-ai-search-js-azure-openai-playground",
     "rag-azure-ai-search-js-azure-openai-remote-teams",
@@ -3772,7 +3774,9 @@ test("VCB-111: the Teams Agent with Data bundles cover their launch matrix and s
     "rag-azure-ai-search-ts-openai-local-teams",
     "rag-azure-ai-search-ts-openai-remote-teams",
   ]);
-  for (const generated of search.value) {
+  for (const generated of search.value.filter((entry) =>
+    entry.caseId.startsWith("rag-azure-ai-search-"),
+  )) {
     const usesLocalEnvironment = generated.caseId.includes("-local-teams");
     const credentialNames = generated.plan.steps.flatMap((step) => {
       if (
@@ -3822,6 +3826,7 @@ test("VCB-111: the Teams Agent with Data bundles cover their launch matrix and s
   );
   assert.equal(customApi.ok, true, customApi.diagnostics?.[0]?.code);
   assert.deepEqual(customApi.value.map((entry) => entry.caseId).sort(), [
+    "feature-local-debug-custom-api-without-azure-openai-keys",
     "feature-local-debug-custom-api-without-openai-key",
     "rag-custom-api-js-azure-openai-local-teams",
     "rag-custom-api-js-azure-openai-playground",
@@ -4455,7 +4460,11 @@ test("VCB-156: retained Azure AI Search remote and Playground plans have exact s
     },
   ];
   const migrated = result.value
-    .filter((entry) => !entry.caseId.includes("-local-teams"))
+    .filter(
+      (entry) =>
+        entry.caseId.endsWith("-remote-teams") ||
+        entry.caseId.endsWith("-playground"),
+    )
     .sort((left, right) => left.caseId.localeCompare(right.caseId));
   assert.deepEqual(
     migrated.map(({ caseId, fileName }) => [caseId, fileName]),
@@ -4686,6 +4695,7 @@ test("VCB-114: Azure AI Search OpenAI cases use the compatible endpoint and mode
   assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
 
   const openAICases = [
+    "feature-local-debug-ai-search-without-openai-keys",
     "rag-azure-ai-search-ts-openai-local-teams",
     "rag-azure-ai-search-js-openai-local-teams",
     "rag-azure-ai-search-py-openai-local-teams",
@@ -5309,7 +5319,7 @@ test("VCB-145: exactly eight retained template plans use stable semantic post-la
     ["weather-agent.yml", 16],
     ["basic-custom-engine-agent.yml", 23],
     ["custom-copilot-rag-customize.yml", 27],
-    ["custom-copilot-rag-custom-api.yml", 16],
+    ["custom-copilot-rag-custom-api.yml", 17],
   ];
   const bundles = new Map();
   for (const [fileName, expectedCaseCount] of bundleDefinitions) {
@@ -9216,8 +9226,8 @@ test("VCB-154: twenty-one legacy plans are replaced, four are retired, and one r
     },
     {
       source: "feature-open-developer-portal-publish.yml",
-      caseId: "simple-bot-ts-publish-developer-portal",
-      generated: "default-bot--simple-bot-ts-publish-developer-portal.json",
+      caseId: "feature-simple-bot-ts-publish-developer-portal",
+      generated: "feature-simple-bot-ts-publish-developer-portal.json",
       legacy: "Featrue_Open_DeveloperPortal_Publish.json",
     },
     {
@@ -9408,7 +9418,7 @@ test("VCB-142: every OpenAI case reuses Azure OpenAI without fake-key error cont
     );
   }
 
-  assert.equal(generatedOpenAICases.length, 47);
+  assert.equal(generatedOpenAICases.length, 48);
   for (const { caseId, plan } of generatedOpenAICases) {
     const typedValues = plan.steps
       .filter((step) => step.tool === "type_text")
@@ -9986,6 +9996,678 @@ test("VCB-184: migrated feature fixtures retain runtime prerequisites and waits"
   assert.notEqual(scaffoldOpenAIKeyPrompt, undefined);
   assert.equal(
     scaffoldOpenAIKeyPrompt.tags.includes("step_retry_timeout: 30"),
+    true,
+  );
+});
+
+test("VCB-187: deferred Python credentials are bounded by template and service", () => {
+  for (const template of [
+    "custom-copilot-rag-custom-api",
+    "custom-copilot-rag-azure-ai-search",
+  ]) {
+    for (const service of ["openai", "azure-openai"]) {
+      const isSearch = template.endsWith("azure-ai-search");
+      const isAzure = service === "azure-openai";
+      const keyQuestion = isAzure ? "azureOpenAIKey" : "openAIKey";
+      const runtimeInputs = isAzure
+        ? {
+            azureOpenAIKey: "${{secret:AZURE_OPENAI_API_KEY}}",
+            azureOpenAIDeploymentName: "${{env:AZURE_OPENAI_MODEL}}",
+          }
+        : { openAIKey: "${{secret:AZURE_OPENAI_API_KEY}}" };
+      if (isSearch) {
+        if (isAzure) {
+          runtimeInputs.azureOpenAIEmbeddingDeploymentName =
+            "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}";
+        }
+        runtimeInputs.azureSearchKey = "${{secret:AZURE_SEARCH_KEY}}";
+      }
+      const source = {
+        version: 1,
+        cases: [
+          {
+            id: "feature-deferred",
+            scenarioId: "VCB-187",
+            workItemIds: [31256782, 33502084],
+            steps: ["scaffold", "check", "login", "target"],
+          },
+        ],
+        steps: {
+          scaffold: {
+            type: "scaffold",
+            with: {
+              template,
+              answers: [
+                { question: "llmService", value: `llm-service-${service}` },
+                { question: keyQuestion, type: "text", value: "deferred" },
+                { question: "language", value: "python" },
+                {
+                  question: "appName",
+                  type: "text",
+                  value: "${{var:app_name:vscuse_app_#####}}",
+                },
+              ],
+            },
+          },
+          check: {
+            type: "checks",
+            with: [
+              { type: "file", path: "src/config.py", expect: { exists: true } },
+            ],
+          },
+          login: {
+            type: "login",
+            with: {
+              type: "m365",
+              account: "${{env:M365_ACCOUNT_NAME}}",
+              password: "${{secret:M365_ACCOUNT_PASSWORD}}",
+            },
+          },
+          target: {
+            type: "target",
+            with: {
+              profile: "Debug in Teams (Chrome)",
+              profileSelection: "first",
+              runtimeInputs,
+            },
+          },
+        },
+      };
+      const compile = (input) =>
+        compileInlineSource(JSON.stringify(input), "vcb-187.yml");
+      const valid = compile(source);
+      assert.equal(
+        valid.ok,
+        true,
+        `${template}/${service}: ${valid.diagnostics?.[0]?.code}`,
+      );
+      const plan = valid.value[0].plan;
+      const runtimeSteps = plan.steps.filter((step) =>
+        step.step_id.startsWith("step_deferredTextInput_input_"),
+      );
+      const runtimeOrder = isAzure
+        ? ["azureOpenAIKey", "azureOpenAIDeploymentName"]
+        : ["openAIKey"];
+      if (isSearch) {
+        if (isAzure) {
+          runtimeOrder.push("azureOpenAIEmbeddingDeploymentName");
+        }
+        runtimeOrder.push("azureSearchKey");
+      }
+      assert.deepEqual(
+        runtimeSteps.map((step) => step.parameters.text),
+        runtimeOrder.map((name) => runtimeInputs[name]),
+      );
+      const profileIndex = plan.steps.findIndex(
+        (step) => step.parameters.text === "Debug in Teams (Chrome)",
+      );
+      assert.equal(plan.steps.indexOf(runtimeSteps[0]) > profileIndex, true);
+      assert.equal(
+        plan.steps.some(
+          (step) =>
+            step.step_id.startsWith("step_emptyTextInput_assertQuestion_") &&
+            step.description.includes(
+              isAzure ? "Azure OpenAI Key" : "OpenAI Key",
+            ),
+        ),
+        true,
+      );
+      for (const mutate of [
+        (input) => {
+          delete input.steps.target.with.runtimeInputs[keyQuestion];
+        },
+        (input) => {
+          input.steps.target.with.runtimeInputs[keyQuestion] = "literal-key";
+        },
+        (input) => {
+          input.steps.target.with.runtimeInputs.extra = "${{env:UNEXPECTED}}";
+        },
+        (input) => {
+          delete input.steps.target.with.runtimeInputs;
+        },
+        (input) => {
+          input.steps.target.with.profile =
+            "Debug in Microsoft 365 Agents Playground";
+        },
+        (input) => {
+          input.steps.scaffold.with.answers[2].value = "typescript";
+        },
+        (input) => {
+          input.steps.scaffold.with.template = "custom-copilot-basic";
+        },
+        (input) => {
+          input.steps.scaffold.with.answers[0].value = isAzure
+            ? "llm-service-openai"
+            : "llm-service-azure-openai";
+        },
+        (input) => {
+          input.steps.scaffold.with.answers[1].value =
+            "${{secret:AZURE_OPENAI_API_KEY}}";
+        },
+        ...(isAzure
+          ? [
+              (input) => {
+                input.steps.scaffold.with.answers.splice(2, 0, {
+                  question: "azureOpenAIEndpoint",
+                  type: "text",
+                  value: "${{env:AZURE_OPENAI_ENDPOINT}}",
+                });
+              },
+              (input) => {
+                input.steps.target.with.runtimeInputs.azureOpenAIEndpoint =
+                  "${{env:AZURE_OPENAI_ENDPOINT}}";
+              },
+            ]
+          : []),
+      ]) {
+        const invalidSource = structuredClone(source);
+        mutate(invalidSource);
+        assert.equal(
+          compile(invalidSource).ok,
+          false,
+          JSON.stringify(invalidSource),
+        );
+      }
+    }
+  }
+});
+
+test("VCB-187: three deferred feature recipes retain independent chat coverage", async () => {
+  for (const [sourceName, caseIds] of [
+    [
+      "custom-copilot-rag-custom-api.yml",
+      ["feature-local-debug-custom-api-without-azure-openai-keys"],
+    ],
+    [
+      "custom-copilot-rag-azure-ai-search.yml",
+      [
+        "feature-local-debug-ai-search-without-azure-openai-keys",
+        "feature-local-debug-ai-search-without-openai-keys",
+      ],
+    ],
+  ]) {
+    const result = await compileFixture(sourceName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+    for (const caseId of caseIds) {
+      const generated = result.value.find((entry) => entry.caseId === caseId);
+      assert.notEqual(generated, undefined, caseId);
+      assert.equal(generated.fileName, `${caseId}.json`);
+      assert.equal(
+        generated.plan.plan_metadata.description.workitem,
+        "31256782,33502084",
+      );
+      assert.equal(
+        generated.plan.steps.some((step) =>
+          step.step_id.startsWith("step_emptyTextInput_assertQuestion_"),
+        ),
+        true,
+      );
+      assert.equal(
+        generated.plan.steps.some((step) =>
+          step.step_id.startsWith("step_deferredTextInput_input_"),
+        ),
+        true,
+      );
+      assert.equal(
+        generated.plan.steps.some(
+          (step) =>
+            step.parameters.text ===
+            (sourceName.includes("custom-api")
+              ? "List all the repairs"
+              : "What is the Contoso Electronics PerksPlus program?"),
+        ),
+        true,
+      );
+      assert.equal(
+        JSON.stringify(generated.plan).includes("Incorrect API key provided"),
+        false,
+      );
+      const fileAssertions = generated.plan.steps.flatMap((step) => {
+        const encoded = step.parameters.sample?.match(
+          /ASSERTIONS_B64="([^"]+)"/,
+        );
+        return encoded
+          ? JSON.parse(Buffer.from(encoded[1], "base64").toString("utf8"))
+          : [];
+      });
+      assert.equal(
+        fileAssertions.some(
+          (check) => check.path === "src/app.py" && check.exists,
+        ),
+        true,
+        caseId,
+      );
+      assert.equal(
+        fileAssertions.some(
+          (check) =>
+            check.path === "src/bot.py" ||
+            check.path === "src/prompts/chat/config.json",
+        ),
+        false,
+        caseId,
+      );
+      assert.equal(
+        fileAssertions.some(
+          (check) =>
+            check.path === "m365agents.yml" &&
+            check.contains.includes("version: v1.12") &&
+            !check.contains.includes("teamsApp/extendToM365"),
+        ),
+        true,
+        caseId,
+      );
+      assert.equal(
+        fileAssertions.some(
+          (check) =>
+            check.path === "m365agents.local.yml" &&
+            check.contains.includes("file/createOrUpdateEnvironmentFile"),
+        ),
+        true,
+        caseId,
+      );
+      for (const prefix of [
+        "step_assertChatReplied_",
+        "step_assertChatNotContains_",
+      ]) {
+        assert.equal(
+          generated.plan.steps.some((step) => step.step_id.startsWith(prefix)),
+          true,
+          `${caseId}: ${prefix}`,
+        );
+      }
+      if (sourceName.includes("azure-ai-search")) {
+        const endpointIndex = generated.plan.steps.findIndex(
+          (step) =>
+            step.step_id.startsWith("step_setLocalEnvironmentVariable_") &&
+            step.parameters.sample.includes(
+              'VARIABLE_NAME="AZURE_SEARCH_ENDPOINT"',
+            ),
+        );
+        const targetIndex = generated.plan.steps.findIndex(
+          (step) => step.parameters.text === "Debug in Teams (Chrome)",
+        );
+        assert.equal(
+          endpointIndex >= 0 && endpointIndex < targetIndex,
+          true,
+          caseId,
+        );
+        assert.equal(
+          generated.plan.steps.some(
+            (step) =>
+              step.step_id.startsWith(
+                "step_deferredTextInput_assertQuestion_",
+              ) && step.description.includes("AZURE_SEARCH_ENDPOINT"),
+          ),
+          false,
+          caseId,
+        );
+      }
+    }
+  }
+});
+
+test("VCB-189: deferred Azure features configure inherited endpoints before launch", async () => {
+  for (const [sourceName, caseId] of [
+    [
+      "custom-copilot-rag-custom-api.yml",
+      "feature-local-debug-custom-api-without-azure-openai-keys",
+    ],
+    [
+      "custom-copilot-rag-azure-ai-search.yml",
+      "feature-local-debug-ai-search-without-azure-openai-keys",
+    ],
+  ]) {
+    const result = await compileFixture(sourceName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+    const plan = result.value.find((entry) => entry.caseId === caseId).plan;
+    const endpointIndex = plan.steps.findIndex(
+      (step) =>
+        step.step_id.startsWith("step_setLocalEnvironmentVariable_") &&
+        step.parameters.sample.includes(
+          'VARIABLE_NAME="AZURE_OPENAI_ENDPOINT"',
+        ),
+    );
+    const targetIndex = plan.steps.findIndex(
+      (step) => step.parameters.text === "Debug in Teams (Chrome)",
+    );
+    assert.equal(
+      endpointIndex >= 0 && endpointIndex < targetIndex,
+      true,
+      caseId,
+    );
+    assert.equal(
+      plan.steps.some(
+        (step) =>
+          step.step_id.startsWith("step_deferredTextInput_assertQuestion_") &&
+          step.description.includes("Azure OpenAI Endpoint"),
+      ),
+      false,
+      caseId,
+    );
+  }
+});
+
+test("VCB-188: deferred features verify installed Python requirements", async () => {
+  for (const sourceName of [
+    "custom-copilot-rag-custom-api.yml",
+    "custom-copilot-rag-azure-ai-search.yml",
+  ]) {
+    const result = await compileFixture(sourceName, (sourceText) => sourceText);
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+    for (const generated of result.value) {
+      const optedIn = [
+        "feature-local-debug-custom-api-without-azure-openai-keys",
+        "feature-local-debug-ai-search-without-azure-openai-keys",
+        "feature-local-debug-ai-search-without-openai-keys",
+      ].includes(generated.caseId);
+      const readinessSteps = generated.plan.steps.filter((step) =>
+        step.step_id.startsWith("step_verifyPythonRequirements_"),
+      );
+      assert.equal(readinessSteps.length, optedIn ? 1 : 0, generated.caseId);
+      if (optedIn) {
+        const step = readinessSteps[0];
+        assert.equal(step.agent, "code");
+        assert.equal(step.tags.includes("step_retry_timeout:300"), true);
+        assert.equal(step.parameters.sample.includes(".venv/bin/python"), true);
+        assert.equal(step.parameters.sample.includes("-m pip check"), true);
+        assert.equal(
+          generated.plan.steps.some((entry) =>
+            entry.description.includes(
+              "The following environment is selected:",
+            ),
+          ),
+          false,
+        );
+      }
+    }
+    const invalid = await compileFixture(sourceName, (sourceText) =>
+      sourceText.replace(
+        "readiness: installedRequirements",
+        "readiness: unsupported",
+      ),
+    );
+    assert.equal(invalid.ok, false);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_PYTHON_ENVIRONMENT_INPUT_INVALID",
+    );
+  }
+});
+
+test("VCB-191: local browser close requires readiness before a separate relaunch", async () => {
+  const addClose = (sourceText, definition = "with: {}") =>
+    sourceText
+      .replace(
+        "        scaffold-simple-bot-js,\n        check-simple-bot-js,\n        login-m365,\n        f5-teams-local,\n        open-app,\n        check-simple-bot-chat,",
+        "        scaffold-simple-bot-js,\n        check-simple-bot-js,\n        login-m365,\n        f5-teams-local,\n        open-app,\n        close-debug-browser,\n        f5-teams-local,\n        open-app,\n        check-simple-bot-chat,",
+      )
+      .replace(
+        "\nsteps:\n",
+        `\nsteps:\n  close-debug-browser:\n    type: closeDebugBrowser\n    ${definition}\n`,
+      );
+  const result = await compileFixture("default-bot.yml", addClose);
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const plan = result.value.find(
+    (entry) => entry.caseId === "simple-bot-js-local-teams",
+  ).plan;
+  const stoppedIndex = plan.steps.findIndex((step) =>
+    step.step_id.startsWith("step_assertDebugStopped_"),
+  );
+  const launches = plan.steps.flatMap((step, index) =>
+    step.parameters.text === "Debug in Teams (Chrome)" ? [index] : [],
+  );
+  assert.equal(launches.length, 2);
+  assert.equal(stoppedIndex > launches[0] && stoppedIndex < launches[1], true);
+  assert.equal(
+    plan.steps.some((step) =>
+      step.step_id.startsWith("step_closeLocalTeamsAppWindow_click_"),
+    ),
+    true,
+  );
+  for (const transform of [
+    (sourceText) => addClose(sourceText, "with: { unsupported: true }"),
+    (sourceText) => addClose(sourceText, ""),
+    (sourceText) =>
+      addClose(sourceText).replace(
+        'profile: "Debug in Teams (Chrome)"',
+        'profile: "Debug in Microsoft 365 Agents Playground"',
+      ),
+    (sourceText) =>
+      addClose(sourceText).replace(
+        "        open-app,\n        close-debug-browser,",
+        "        close-debug-browser,",
+      ),
+    (sourceText) =>
+      addClose(sourceText).replace(
+        "        close-debug-browser,\n        f5-teams-local,",
+        "        close-debug-browser,\n        close-debug-browser,\n        f5-teams-local,",
+      ),
+  ]) {
+    const invalid = await compileFixture("default-bot.yml", transform);
+    assert.equal(invalid.ok, false);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_CLOSE_DEBUG_BROWSER_INPUT_INVALID",
+    );
+  }
+  const openWithoutRelaunch = await compileFixture(
+    "default-bot.yml",
+    (sourceText) =>
+      addClose(sourceText).replace(
+        "        close-debug-browser,\n        f5-teams-local,\n        open-app,",
+        "        close-debug-browser,\n        open-app,",
+      ),
+  );
+  assert.equal(openWithoutRelaunch.ok, false);
+  assert.equal(
+    openWithoutRelaunch.diagnostics[0].code,
+    "VCB_OPEN_ADAPTER_UNKNOWN",
+  );
+  const unsupportedTemplate = await compileFixture(
+    "custom-copilot-rag-azure-ai-search.yml",
+    (sourceText) =>
+      sourceText
+        .replace(
+          "        open-app,",
+          "        open-app,\n        close-debug-browser,",
+        )
+        .replace(
+          "\nsteps:\n",
+          "\nsteps:\n  close-debug-browser:\n    type: closeDebugBrowser\n    with: {}\n",
+        ),
+  );
+  assert.equal(unsupportedTemplate.ok, false);
+  assert.equal(
+    unsupportedTemplate.diagnostics[0].code,
+    "VCB_CLOSE_DEBUG_BROWSER_INPUT_INVALID",
+  );
+});
+
+test("VCB-191: second-F5 feature retains JavaScript echo coverage and routing", async () => {
+  const result = await compileFixture(
+    "feature-local-debug-second-f5.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  assert.equal(result.value.length, 1);
+  const generated = result.value[0];
+  assert.equal(generated.fileName, "feature-local-debug-second-f5.json");
+  assert.equal(generated.plan.plan_metadata.description.workitem, "9795544");
+  const texts = generated.plan.steps.map((step) => step.parameters.text);
+  assert.equal(texts.includes("JavaScript"), true);
+  assert.equal(
+    texts.filter((text) => text === "Debug in Teams (Chrome)").length,
+    2,
+  );
+  assert.equal(texts.filter((text) => text === "test").length, 1);
+  assert.equal(
+    generated.plan.steps.some((step) =>
+      step.description.includes("you said: test"),
+    ),
+    true,
+  );
+});
+
+test("VCB-192: verified deferred Azure Search replaces its legacy plan", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-azure-ai-search.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const caseId = "feature-local-debug-ai-search-without-azure-openai-keys";
+  const legacy = "Feature_LocalDebug_AI_Search_without_AzureOpenAI_Keys.json";
+  const generated = result.value.find((entry) => entry.caseId === caseId);
+  assert.notEqual(generated, undefined);
+  assert.equal(generated.fileName, `${caseId}.json`);
+  assert.equal(
+    generated.plan.plan_metadata.description.workitem,
+    "31256782,33502084",
+  );
+  assert.deepEqual(
+    generated.plan.steps
+      .filter((step) =>
+        step.step_id.startsWith("step_deferredTextInput_input_"),
+      )
+      .map((step) => step.parameters.text),
+    [
+      "${{secret:AZURE_OPENAI_API_KEY}}",
+      "${{env:AZURE_OPENAI_MODEL}}",
+      "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}",
+      "${{secret:AZURE_SEARCH_KEY}}",
+    ],
+  );
+  for (const prefix of [
+    "step_emptyTextInput_assertQuestion_",
+    "step_assertChatReplied_",
+    "step_assertChatNotContains_",
+  ]) {
+    assert.equal(
+      generated.plan.steps.some((step) => step.step_id.startsWith(prefix)),
+      true,
+      prefix,
+    );
+  }
+  assert.equal(
+    fsSync.existsSync(path.join(casesDirectory, "..", "plans", legacy)),
+    false,
+  );
+  const mapping = await fs.readFile(
+    path.join(casesDirectory, "legacy-case-mapping.md"),
+    "utf8",
+  );
+  assert.equal(
+    mapping
+      .split("\n")
+      .some((line) => line.includes(legacy) && line.includes(`${caseId}.json`)),
+    true,
+  );
+});
+
+test("VCB-190: verified deferred Azure Custom API replaces its legacy plan", async () => {
+  const result = await compileFixture(
+    "custom-copilot-rag-custom-api.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  const caseId = "feature-local-debug-custom-api-without-azure-openai-keys";
+  const generated = result.value.find((entry) => entry.caseId === caseId);
+  assert.notEqual(generated, undefined);
+  assert.equal(generated.fileName, `${caseId}.json`);
+  assert.equal(
+    generated.plan.plan_metadata.description.workitem,
+    "31256782,33502084",
+  );
+  assert.deepEqual(
+    generated.plan.steps
+      .filter((step) =>
+        step.step_id.startsWith("step_deferredTextInput_input_"),
+      )
+      .map((step) => step.parameters.text),
+    ["${{secret:AZURE_OPENAI_API_KEY}}", "${{env:AZURE_OPENAI_MODEL}}"],
+  );
+  for (const prefix of [
+    "step_emptyTextInput_assertQuestion_",
+    "step_assertChatReplied_",
+    "step_assertChatNotContains_",
+  ]) {
+    assert.equal(
+      generated.plan.steps.some((step) => step.step_id.startsWith(prefix)),
+      true,
+      prefix,
+    );
+  }
+  assert.equal(
+    generated.plan.steps.some(
+      (step) => step.parameters.text === "List all the repairs",
+    ),
+    true,
+  );
+  assert.equal(
+    fsSync.existsSync(
+      path.join(
+        casesDirectory,
+        "..",
+        "plans",
+        "Feature_LocalDebug_Custom_API_without_AzureOpenAI_Keys.json",
+      ),
+    ),
+    false,
+  );
+  const mapping = await fs.readFile(
+    path.join(casesDirectory, "legacy-case-mapping.md"),
+    "utf8",
+  );
+  assert.equal(
+    mapping
+      .split("\n")
+      .some(
+        (line) =>
+          line.includes(
+            "Feature_LocalDebug_Custom_API_without_AzureOpenAI_Keys.json",
+          ) && line.includes(`${caseId}.json`),
+      ),
+    true,
+  );
+});
+
+test("VCB-186: Developer Portal publishing retains feature routing and submission coverage", async () => {
+  const result = await compileFixture(
+    "feature-open-developer-portal-publish.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  assert.equal(result.value.length, 1);
+  const generated = result.value[0];
+  assert.equal(
+    generated.caseId,
+    "feature-simple-bot-ts-publish-developer-portal",
+  );
+  assert.equal(generated.fileName, `${generated.caseId}.json`);
+  assert.equal(generated.plan.plan_metadata.description.workitem, "16727621");
+  for (const retiredName of [
+    "Feature_Open_DeveloperPortal_Publish.json",
+    "Featrue_Open_DeveloperPortal_Publish.json",
+    "default-bot--simple-bot-ts-publish-developer-portal.json",
+  ]) {
+    assert.equal(
+      fsSync.existsSync(path.join(casesDirectory, "..", "plans", retiredName)),
+      false,
+      retiredName,
+    );
+  }
+  const descriptions = generated.plan.steps.map((step) => step.description);
+  const packageIndex = descriptions.findIndex((description) =>
+    description.includes("App package successfully built at"),
+  );
+  const submitIndex = descriptions.findIndex((description) =>
+    description.includes("Status Submitted"),
+  );
+  assert.notEqual(packageIndex, -1);
+  assert.equal(submitIndex > packageIndex, true);
+  assert.equal(
+    generated.plan.steps.some((step) =>
+      step.description.includes("appPackage.local.zip"),
+    ),
     true,
   );
 });
