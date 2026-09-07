@@ -79,6 +79,31 @@ jobs:
       VS_RELEASE: ${{ github.event.inputs.vsrelease }}
       PRODUCTION: ${{ github.event.inputs.goproduct }}
     steps:
+      - name: Validate npm release lane
+        if: ${{ inputs.publishnpm }}
+        id: npm-lane
+        env:
+          RELEASE_PREID: ${{ inputs.preid }}
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/dev" ]; then
+            if [ "$RELEASE_PREID" != "alpha" ]; then
+              echo "::error::Only alpha releases are supported on dev."
+              exit 1
+            fi
+            TAG=alpha
+          else
+            case "$RELEASE_PREID" in
+              preview) TAG=beta ;;
+              rc) TAG=rc ;;
+              stable) TAG=latest ;;
+              *)
+                echo "::error::Non-dev releases require preview, rc, or stable."
+                exit 1
+                ;;
+            esac
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Validate CD branch
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.SkipBranchCheck != 'true' && github.ref != 'refs/heads/dev' && !startsWith(github.ref, 'refs/heads/release/') }}
         run: |
@@ -459,32 +484,13 @@ jobs:
       #
       # `publishnpm` defaults to true because ESRP is the only npm publishing path.
       # Set it to false only for a CD run that intentionally skips npm release.
-      - name: derive npm dist-tag
-        if: ${{ inputs.publishnpm }}
-        id: dist-tag
-        env:
-          PREID: ${{ github.event.inputs.preid }}
-        run: |
-          # The dev branch is always the alpha lane; otherwise preid decides.
-          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            TAG=alpha
-          elif [ "$PREID" = "preview" ]; then
-            TAG=beta
-          elif [ "$PREID" = "rc" ]; then
-            TAG=rc
-          else
-            TAG=latest
-          fi
-          echo "Dist-tag for this lane: $TAG"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-
       - name: pack npm packages
         if: ${{ inputs.publishnpm }}
         id: pack-npm
         run: |
           bash .github/scripts/pack-npm-packages.sh \
             "$GITHUB_WORKSPACE/npm-packages" \
-            "${{ steps.dist-tag.outputs.tag }}"
+            "${{ steps.npm-lane.outputs.tag }}"
           if compgen -G "$GITHUB_WORKSPACE/npm-packages/*.tgz" > /dev/null; then
             echo "has-packages=true" >> "$GITHUB_OUTPUT"
           else
@@ -502,25 +508,48 @@ jobs:
           retention-days: 7
 
       # Release assets are anonymously downloadable, which is how the AzDO
-      # pipeline fetches them without a credential. The tag is unique per run so
-      # every run pushes a real tag — reusing one would update the release
-      # without triggering AzDO.
+      # pipeline fetches them without a credential. A unique tag per attempt
+      # ensures retries emit a new tag event instead of updating an old release.
       - name: attach packed npm packages to a GitHub Release
         if: ${{ inputs.publishnpm && steps.pack-npm.outputs.has-packages == 'true' }}
         uses: ncipollo/release-action@v1.10.0
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          tag: npm-packages-${{ github.run_id }}
+          tag: npm-packages-${{ github.run_id }}-${{ github.run_attempt }}
           # Pin the handoff tag to the exact commit that built the tarballs so
           # AzDO evaluates the matching esrp-publish.yml from that commit.
           commit: ${{ github.sha }}
           artifacts: npm-packages/*.tgz
           artifactErrorsFailBuild: true
-          allowUpdates: true
+          allowUpdates: false
           prerelease: true
           body: |
-            Packed npm packages for the ESRP publish pipeline (dist-tag: `${{ steps.dist-tag.outputs.tag }}`).
+            Packed npm packages for the ESRP publish pipeline (dist-tag: `${{ steps.npm-lane.outputs.tag }}`).
             Produced by CD run ${{ github.run_id }} on `${{ github.ref_name }}`. Not a product release.
+
+      # Upload this last: a tag event can reach AzDO before release assets exist.
+      - name: Complete npm package handoff
+        if: ${{ inputs.publishnpm && steps.pack-npm.outputs.has-packages == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          RELEASE_TAG: npm-packages-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          node - <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+          const crypto = require("crypto");
+          const directory = path.join(process.env.GITHUB_WORKSPACE, "npm-packages");
+          const files = fs.readdirSync(directory).filter(name => name.endsWith(".tgz")).sort();
+          if (!files.length) throw new Error("No npm packages to hand off");
+          const packages = files.map(name => {
+            const bytes = fs.readFileSync(path.join(directory, name));
+            return { name, size: bytes.length, sha256: crypto.createHash("sha256").update(bytes).digest("hex") };
+          });
+          fs.writeFileSync(path.join(directory, "npm-release-manifest.json"),
+            JSON.stringify({ schemaVersion: 1, tag: process.env.RELEASE_TAG, packages }, null, 2));
+          NODE
+          gh release upload "$RELEASE_TAG" "$GITHUB_WORKSPACE/npm-packages/npm-release-manifest.json" \
+            --repo "$GITHUB_REPOSITORY"
 
       - name: pack server bits
         if: ${{ contains(steps.version-change.outputs.CHANGED, '@microsoft/teamsfx-server') || (github.event_name == 'workflow_dispatch' && github.event.inputs.vsrelease == 'true' ) }}

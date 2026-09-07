@@ -55,7 +55,7 @@ extends:
         displayName: Publish npm packages through ESRP
         condition: >-
           or(
-            ne('${{ parameters.githubReleaseTag }}', ''),
+            ${{ ne(parameters.githubReleaseTag, '') }},
             startsWith(variables['Build.SourceBranch'], 'refs/tags/npm-packages-')
           )
         jobs:
@@ -81,28 +81,65 @@ extends:
                     'User-Agent'           = 'atk-esrp-npm-publish'
                   }
 
-                  $tag = '${{ parameters.githubReleaseTag }}'
+                  $tag = $env:GITHUB_RELEASE_TAG
                   if (-not $tag) {
-                    # Tag-triggered run: Build.SourceBranch is refs/tags/<tag>, and
-                    # SourceBranchName is its last segment. Release tags here carry
-                    # no slashes, so the last segment is the whole tag.
-                    $tag = '$(Build.SourceBranchName)'
+                    # Read the triggering ref as data, not interpolated script.
+                    $tag = $env:BUILD_SOURCEBRANCH -replace '^refs/tags/', ''
                     Write-Host "No githubReleaseTag parameter; using triggering tag '$tag'."
                   }
-                  $relUrl = "https://api.github.com/repos/$(githubRepo)/releases/tags/$([uri]::EscapeDataString($tag))"
-                  Write-Host "GET $relUrl (anonymous)"
-                  $release = Invoke-RestMethod -Uri $relUrl -Headers $headers
-
-                  $assets = @($release.assets | Where-Object { $_.name -like '*.tgz' })
-                  Write-Host "Assets on release: $($release.assets.name -join ', ')"
-                  if ($assets.Count -eq 0) { throw "Release '$tag' has no .tgz assets." }
-
-                  New-Item -ItemType Directory -Force -Path '$(npmPackagesDir)' | Out-Null
-                  foreach ($a in $assets) {
-                    $dest = Join-Path '$(npmPackagesDir)' $a.name
-                    Write-Host "Downloading $($a.name) ($($a.size) bytes)"
-                    Invoke-WebRequest -Uri $a.browser_download_url -OutFile $dest -UseBasicParsing
+                  if ($tag -notmatch '^npm-packages-[0-9]+-[0-9]+$') {
+                    throw "Expected a release tag in the form npm-packages-<run-id>-<attempt>."
                   }
+                  $relUrl = "https://api.github.com/repos/$(githubRepo)/releases/tags/$([uri]::EscapeDataString($tag))"
+                  $deadline = [DateTime]::UtcNow.AddMinutes(10)
+                  $marker = @()
+                  do {
+                    $release = $null
+                    try {
+                      $release = Invoke-RestMethod -Uri $relUrl -Headers $headers -TimeoutSec 30
+                    } catch {
+                      if ($null -eq $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 404) { throw }
+                    }
+                    $marker = @($release.assets | Where-Object { $_.name -eq 'npm-release-manifest.json' })
+                    if ($marker.Count -eq 1) { break }
+                    if ([DateTime]::UtcNow -ge $deadline) {
+                      throw "Timed out waiting for the completed npm handoff manifest."
+                    }
+                    Write-Host "Waiting for GitHub to finish uploading the npm release."
+                    Start-Sleep -Seconds 15
+                  } while ($true)
+
+                  $manifest = Invoke-RestMethod -Uri $marker[0].browser_download_url -TimeoutSec 30
+                  if ($manifest.schemaVersion -ne 1 -or $manifest.tag -cne $tag -or @($manifest.packages).Count -eq 0) {
+                    throw "Invalid npm handoff manifest."
+                  }
+                  $assets = @($release.assets | Where-Object { $_.name -like '*.tgz' })
+                  if ($assets.Count -ne @($manifest.packages).Count) {
+                    throw "Release assets do not match the completed npm handoff."
+                  }
+
+                  New-Item -ItemType Directory -Path '$(npmPackagesDir)' -ErrorAction Stop | Out-Null
+                  $seen = @{}
+                  foreach ($entry in $manifest.packages) {
+                    if ($entry.name -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*\.tgz$' -or
+                        $entry.sha256 -notmatch '^[a-f0-9]{64}$' -or $entry.size -le 0 -or
+                        $seen.ContainsKey($entry.name)) {
+                      throw "Invalid or duplicate package entry in npm handoff manifest."
+                    }
+                    $seen[$entry.name] = $true
+                    $asset = @($assets | Where-Object { $_.name -ceq $entry.name })
+                    if ($asset.Count -ne 1 -or $asset[0].size -ne $entry.size) {
+                      throw "Missing or unexpected release asset: $($entry.name)."
+                    }
+                    $dest = Join-Path '$(npmPackagesDir)' $entry.name
+                    Invoke-WebRequest -Uri $asset[0].browser_download_url -OutFile $dest -TimeoutSec 120
+                    if ((Get-Item $dest).Length -ne $entry.size -or
+                        (Get-FileHash $dest -Algorithm SHA256).Hash -ine $entry.sha256) {
+                      throw "Downloaded package does not match manifest: $($entry.name)."
+                    }
+                  }
+                env:
+                  GITHUB_RELEASE_TAG: ${{ parameters.githubReleaseTag }}
                 displayName: Download .tgz release assets
 
               - pwsh: |

@@ -76,21 +76,6 @@ while IFS=$'\t' read -r NAME VERSION PKG_PATH; do
     exit 1
   fi
 
-  # `1.2.3-alpha.abc.0` is a prerelease; `1.2.3` is not.
-  VERSION_IS_PRERELEASE=false
-  case "$VERSION" in
-    *-*) VERSION_IS_PRERELEASE=true ;;
-  esac
-
-  if [ "$VERSION_IS_PRERELEASE" = true ] && [ "$IS_PRERELEASE_TAG" = false ]; then
-    echo "  FAIL $NAME@$VERSION is a prerelease but would be published to 'latest'." >&2
-    exit 1
-  fi
-  if [ "$VERSION_IS_PRERELEASE" = false ] && [ "$IS_PRERELEASE_TAG" = true ]; then
-    echo "  FAIL $NAME@$VERSION is stable but would be published to '$DIST_TAG', leaving 'latest' behind." >&2
-    exit 1
-  fi
-
   VIEW_ERROR="$(mktemp)"
   if npm view "$NAME@$VERSION" version >/dev/null 2>"$VIEW_ERROR"; then
     echo "  skip $NAME@$VERSION (already on registry)"
@@ -105,6 +90,22 @@ while IFS=$'\t' read -r NAME VERSION PKG_PATH; do
     exit 1
   fi
   rm -f "$VIEW_ERROR"
+
+  # Validate only unpublished versions; unchanged workspace members may be stable.
+  # `1.2.3-alpha.abc.0` is a prerelease; `1.2.3` is not.
+  VERSION_IS_PRERELEASE=false
+  case "$VERSION" in
+    *-*) VERSION_IS_PRERELEASE=true ;;
+  esac
+
+  if [ "$VERSION_IS_PRERELEASE" = true ] && [ "$IS_PRERELEASE_TAG" = false ]; then
+    echo "  FAIL $NAME@$VERSION is a prerelease but would be published to 'latest'." >&2
+    exit 1
+  fi
+  if [ "$VERSION_IS_PRERELEASE" = false ] && [ "$IS_PRERELEASE_TAG" = true ]; then
+    echo "  FAIL $NAME@$VERSION is stable but would be published to '$DIST_TAG', leaving 'latest' behind." >&2
+    exit 1
+  fi
 
   echo "  ok   $NAME@$VERSION -> $DIST_TAG"
   PACK_LIST="${PACK_LIST}${NAME}	${VERSION}	${PKG_PATH}
