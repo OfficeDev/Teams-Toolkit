@@ -185,7 +185,7 @@ test("VCB-34: semantic compiler does not read external template contracts", asyn
   }
 });
 
-test("VCB-34: default setup compiles the checked-in YAML sources into 184 plans", async (context) => {
+test("VCB-34: default setup compiles the checked-in YAML sources into 185 plans", async (context) => {
   const plansDirectory = await fs.mkdtemp(
     path.join(os.tmpdir(), "vscuse-generated-"),
   );
@@ -198,9 +198,9 @@ test("VCB-34: default setup compiles the checked-in YAML sources into 184 plans"
   });
 
   assert.equal(first.ok, true);
-  assert.equal(first.value.files.length, 184);
+  assert.equal(first.value.files.length, 185);
   const generatedFiles = first.value.files;
-  assert.equal(generatedFiles.length, 184);
+  assert.equal(generatedFiles.length, 185);
   assert.equal(
     generatedFiles.includes(
       "da-api-plugin-from-existing-api--da-api-plugin-from-existing-api-no-auth.json",
@@ -7615,6 +7615,7 @@ test("VCB-169: Feature-derived cases use feature-prefixed descriptor filenames",
     true,
   );
   const expectedFeatureCaseIds = [
+    "feature-da-add-mcp-server",
     "feature-da-two-openapi-actions-personal-provision",
     "feature-da-no-action-api-key-auth-provision",
     "feature-da-no-action-bearer-auth-provision",
@@ -9987,4 +9988,184 @@ test("VCB-184: migrated feature fixtures retain runtime prerequisites and waits"
     scaffoldOpenAIKeyPrompt.tags.includes("step_retry_timeout: 30"),
     true,
   );
+});
+
+test("VCB-185: MCP Add Action supports None and static OAuth in one generated case", async () => {
+  const sourceText = `version: 1
+cases:
+  - id: feature-da-add-mcp-server
+    scenarioId: SCN-DA-ADD-MCP-ACTION-TO-DA
+    workItemIds: [37636970]
+    steps: [scaffold, check, add-none, add-oauth, verify]
+steps:
+  scaffold:
+    type: scaffold
+    with:
+      template: da/no-action
+      answers:
+        - question: projectType
+          value: copilot-agent-type
+        - question: daTemplate
+          value: no-action
+        - question: workspaceFolder
+          value: default
+        - question: appName
+          type: text
+          value: "\${{var:app_name:vscuse_app_#####}}"
+  check:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { exists: true }
+  add-none:
+    type: addDaAction
+    with:
+      source: mcp
+      url: https://learn.microsoft.com/api/mcp
+      authType: none
+  add-oauth:
+    type: addDaAction
+    with:
+      source: mcp
+      url: https://api.githubcopilot.com/mcp/
+      authType: oauth
+      clientId: "\${{env:DA_MCP_OAUTH_CLIENTID}}"
+      clientSecret: "\${{secret:DA_MCP_OAUTH_CLIENT_SECRET}}"
+      scopes: read:user
+  verify:
+    type: checks
+    with:
+      - type: file
+        path: appPackage/declarativeAgent.json
+        expect: { contains: ['"id": "action_1"', '"id": "action_2"'] }
+`;
+  const result = compileInlineSource(sourceText, "vscuse-vcb-185.yml");
+  assert.equal(
+    result.ok,
+    true,
+    `${result.diagnostics?.[0]?.code}: ${result.diagnostics?.[0]?.message}`,
+  );
+  const generated = result.value[0];
+  assert.equal(generated.caseId, "feature-da-add-mcp-server");
+  assert.equal(generated.plan.plan_metadata.description.workitem, "37636970");
+  assert.equal(
+    generated.plan.plan_metadata.tags.some((tag) =>
+      tag.startsWith("feature_flag:TEAMSFX_MCP_FOR_DA_DT="),
+    ),
+    false,
+  );
+  const typedValues = generated.plan.steps
+    .filter((step) => step.tool === "type_text")
+    .map((step) => step.parameters.text);
+  const expectedSequence = [
+    "https://learn.microsoft.com/api/mcp",
+    "None",
+    "https://api.githubcopilot.com/mcp/",
+    "OAuth (with static registration)",
+    "${{env:DA_MCP_OAUTH_CLIENTID}}",
+    "${{secret:DA_MCP_OAUTH_CLIENT_SECRET}}",
+    "read:user",
+  ];
+  let previousIndex = -1;
+  for (const expectedValue of expectedSequence) {
+    const index = typedValues.indexOf(expectedValue, previousIndex + 1);
+    assert.notEqual(index, -1, expectedValue);
+    assert.equal(index > previousIndex, true, expectedValue);
+    previousIndex = index;
+  }
+  const addActionStart = generated.plan.steps.findIndex(
+    (step) =>
+      step.tool === "type_text" &&
+      step.parameters.text === "Microsoft 365 Agents: Add Action",
+  );
+  const addActionEnd = generated.plan.steps.findIndex(
+    (step) => step.tool === "type_text" && step.parameters.text === "read:user",
+  );
+  assert.notEqual(addActionStart, -1);
+  assert.equal(addActionEnd > addActionStart, true);
+  assert.equal(
+    generated.plan.steps
+      .slice(addActionStart, addActionEnd + 1)
+      .some((step) => step.tool === "click"),
+    false,
+  );
+
+  for (const [label, invalidSource] of [
+    [
+      "None extra field",
+      sourceText.replace(
+        "      authType: none",
+        "      authType: none\n      scopes: read:user",
+      ),
+    ],
+    [
+      "OAuth literal client ID",
+      sourceText.replace(
+        'clientId: "${{env:DA_MCP_OAUTH_CLIENTID}}"',
+        "clientId: literal-client-id",
+      ),
+    ],
+    [
+      "OAuth literal client secret",
+      sourceText.replace(
+        'clientSecret: "${{secret:DA_MCP_OAUTH_CLIENT_SECRET}}"',
+        "clientSecret: literal-client-secret",
+      ),
+    ],
+    [
+      "OAuth empty scopes",
+      sourceText.replace("scopes: read:user", 'scopes: ""'),
+    ],
+    [
+      "unsupported auth",
+      sourceText.replace("authType: none", "authType: entra-sso"),
+    ],
+  ]) {
+    const invalid = compileInlineSource(
+      invalidSource,
+      `vscuse-vcb-185-${label}.yml`,
+    );
+    assert.equal(invalid.ok, false, label);
+    assert.equal(
+      invalid.diagnostics[0].code,
+      "VCB_ADD_DA_ACTION_INPUT_INVALID",
+      label,
+    );
+  }
+
+  const fixture = await compileFixture(
+    "feature-da-no-action-add-action.yml",
+    (fixtureSource) => fixtureSource,
+  );
+  assert.equal(fixture.ok, true, fixture.diagnostics?.[0]?.code);
+  const migrated = fixture.value.find(
+    ({ caseId }) => caseId === "feature-da-add-mcp-server",
+  );
+  assert.notEqual(migrated, undefined);
+  assert.equal(migrated.plan.plan_metadata.description.workitem, "37636970");
+  assert.equal(
+    migrated.plan.plan_metadata.tags.some((tag) =>
+      tag.startsWith("feature_flag:TEAMSFX_MCP_FOR_DA_DT="),
+    ),
+    false,
+  );
+  const fileAssertions = readFileAssertions(migrated.plan);
+  for (const [path, expectedText] of [
+    ["appPackage/ai-plugin.json", '"type": "None"'],
+    ["appPackage/ai-plugin_1.json", '"type": "OAuthPluginVault"'],
+    ["appPackage/declarativeAgent.json", '"id": "action_1"'],
+    ["appPackage/declarativeAgent.json", '"id": "action_2"'],
+    ["m365agents.yml", "uses: oauth/register"],
+    ["env/.env.dev", "MCP_DA_OAUTH_CLIENT_ID_APIGITHUBC="],
+  ]) {
+    assert.equal(
+      fileAssertions.some(
+        (assertion) =>
+          assertion.path === path && assertion.contains?.includes(expectedText),
+      ),
+      true,
+      `${path}: ${expectedText}`,
+    );
+  }
 });

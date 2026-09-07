@@ -122,7 +122,7 @@ flowchart TD
 ## Validation notes
 
 - L1 entry coverage traces `core.addPlugin` through the v4 modify front door, and the real v4 package scenario covers generated output, auth wiring, prefilled URL/manifest inputs, and idempotency.
-- The existing `Feature_DA_Add_MCP_Server` vscuse plan records the older DT-off Add → Fetch Tools workflow and has not been relabeled as current dynamic coverage. A refreshed independently executable DT-on Add plan remains an L3 target; retain a separate DT-off handoff case while the flag exists.
+- The generated `feature-da-add-mcp-server` vscuse plan covers the default DT-on VS Code Add Action route by adding None and static OAuth MCP actions to one existing DA and checking both dynamic manifests and OAuth lifecycle wiring. A separate independently executable DT-off handoff case remains an L3 target while the flag exists.
 - CLI interactive/non-interactive Add and DCR value gating remain L2 validation targets. Existing CLI MCP E2E files exercise create, not `atk add action`, and their public no-auth server cannot validate real auth injection.
 - Dynamic modify acceptance criteria are in [`add-mcp-server.md`](../../../03-specs/scenarios/da/add-mcp-server.md).
 - DT-off static tool discovery remains covered by `SCN-DA-FETCH-MCP-TOOLS`; those tests retire only after the DT flag and fallback implementation are removed.
