@@ -25,9 +25,9 @@
       "step_f0d7ba3e",
       "step_436b1f61",
       "step_a0026de5",
-      "step_fa6d6cb1",
       "step_78a597ab",
       "step_47935ca7",
+      "step_6b12e8d4",
       "step_ed29b905",
       "step_b16aa4f5",
       "step_c51b1af7",
@@ -37,7 +37,7 @@
       "step_35bc35cf"
     ],
     "tags": [],
-    "updated_at": "2026-06-17T02:28:59.615382"
+    "updated_at": "2026-09-03T02:50:05.808000"
   },
   "steps": [
     {
@@ -49,7 +49,7 @@
         "x": 951,
         "y": 130
       },
-      "description": "Click the language selection button (flag icon) in the top right corner of the VS Code welcome screen to open the language options.",
+      "description": "Click the Close (X) button in the top-right corner of the VS Code welcome sign-in dialog to dismiss it.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -177,32 +177,6 @@
       "plan_id": "plan_80b368dd"
     },
     {
-      "step_id": "step_fa6d6cb1",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 512,
-        "y": 431
-      },
-      "description": "Click the \"Set up your environment\" option in the guided tutorial list under the \"Build a Declarative Agent\" section of the Microsoft 365 Agents Toolkit welcome screen in Visual Studio Code.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [],
-      "preconditions": [
-        "dhash:512:431:16:5:d2d46667c4d328a0",
-        "dhash:512:431:96:5:0000a4595128d59a",
-        "dhash:512:431:0:10:24b0949490b17075"
-      ],
-      "postconditions": [],
-      "tags": [],
-      "screenshot": "step_fa6d6cb1",
-      "created_at": "2026-06-17T02:24:33.865380",
-      "plan_id": "plan_80b368dd"
-    },
-    {
       "step_id": "step_78a597ab",
       "agent": "interaction",
       "tool": "click",
@@ -234,24 +208,46 @@
       "tool": "click",
       "parameters": {
         "button": "left",
-        "x": 703,
-        "y": 100
+        "x": 976,
+        "y": 457
       },
-      "description": "Click the \"Sign in\" button in the Microsoft 365 notification at the top of the Visual Studio Code interface to access a Microsoft 365 account.",
+      "description": "Click the \"Sign in\" button in the Microsoft 365 notification to open the Microsoft 365 developer sandbox prompt.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [],
+      "screenshot": "step_47935ca7",
+      "created_at": "2026-06-17T02:19:55.488096",
+      "plan_id": "plan_80b368dd"
+    },
+    {
+      "step_id": "step_6b12e8d4",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 762,
+        "y": 97
+      },
+      "description": "Click the \"Sign in\" button in the Microsoft 365 developer sandbox prompt to launch and activate the Microsoft authentication browser.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
       "preconditions": [
-        "dhash:703:100:16:5:0000000000000000",
-        "dhash:703:100:96:5:00000042b2474971",
-        "dhash:703:100:0:10:9cb89590b0717d7f"
+        "dhash:762:97:16:5:24b1a72ba9aba343",
+        "dhash:762:97:96:5:0008304b0f344900",
+        "dhash:762:97:0:10:9c68332223232421"
       ],
       "postconditions": [],
       "tags": [],
-      "screenshot": "step_47935ca7",
-      "created_at": "2026-06-17T02:19:55.488096",
+      "screenshot": "",
+      "created_at": "2026-09-03T02:50:05.808000",
       "plan_id": "plan_80b368dd"
     },
     {
