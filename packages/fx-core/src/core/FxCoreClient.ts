@@ -22,6 +22,31 @@ import { envUtil } from "../component/utils/envUtil";
 import { UserCancelError, assembleError } from "../error";
 import { AddAuthActionInputs, AddPluginInputs, AddSkillInputs, UninstallInputs } from "../question";
 import { FxCore } from "./FxCore";
+import {
+  WorkerInspectionResult,
+  WorkerMutationResult,
+  WorkerOperationOptions,
+  WorkerProjectOptions,
+  WorkerValidationResult,
+  addWorkerAgent,
+  inspectWorkerAgents,
+  removeWorkerAgent,
+  validateWorkerAgents,
+} from "./workerAgents";
+
+export type {
+  WorkerDiagnostic,
+  WorkerDiagnosticCode,
+  WorkerDiagnosticSeverity,
+  WorkerInspectionItem,
+  WorkerInspectionResult,
+  WorkerMutationResult,
+  WorkerOperationOptions,
+  WorkerProjectOptions,
+  WorkerReferenceInput,
+  WorkerReferenceType,
+  WorkerValidationResult,
+} from "./workerAgents";
 
 /** Execution controls shared by every first-class fx-core client operation. */
 export interface FxCoreExecutionOptions {
@@ -98,6 +123,22 @@ export type FxCoreAddAuthActionInputs = AddAuthActionInputs &
  * are successful domain outcomes from validate(), with valid set to false.
  */
 export interface IFxCoreClient {
+  addWorkerAgent(
+    options: WorkerOperationOptions,
+    context?: FxCoreExecutionOptions
+  ): Promise<Result<WorkerMutationResult, FxError>>;
+  removeWorkerAgent(
+    options: WorkerOperationOptions,
+    context?: FxCoreExecutionOptions
+  ): Promise<Result<WorkerMutationResult, FxError>>;
+  inspectWorkerAgents(
+    options: WorkerProjectOptions,
+    context?: FxCoreExecutionOptions
+  ): Promise<Result<WorkerInspectionResult, FxError>>;
+  validateWorkerAgents(
+    options: WorkerProjectOptions,
+    context?: FxCoreExecutionOptions
+  ): Promise<Result<WorkerValidationResult, FxError>>;
   addPlugin(
     inputs: FxCoreAddPluginInputs,
     options?: FxCoreExecutionOptions
@@ -142,6 +183,34 @@ export class FxCoreClient implements IFxCoreClient {
 
   public constructor(private readonly tools: Tools) {
     this.core = new FxCore(tools);
+  }
+
+  public async addWorkerAgent(
+    options: WorkerOperationOptions,
+    context?: FxCoreExecutionOptions
+  ): Promise<Result<WorkerMutationResult, FxError>> {
+    return addWorkerAgent(options, context);
+  }
+
+  public async removeWorkerAgent(
+    options: WorkerOperationOptions,
+    context?: FxCoreExecutionOptions
+  ): Promise<Result<WorkerMutationResult, FxError>> {
+    return removeWorkerAgent(options, context);
+  }
+
+  public async inspectWorkerAgents(
+    options: WorkerProjectOptions,
+    context?: FxCoreExecutionOptions
+  ): Promise<Result<WorkerInspectionResult, FxError>> {
+    return inspectWorkerAgents(options, context);
+  }
+
+  public async validateWorkerAgents(
+    options: WorkerProjectOptions,
+    context?: FxCoreExecutionOptions
+  ): Promise<Result<WorkerValidationResult, FxError>> {
+    return validateWorkerAgents(options, context);
   }
 
   public async addPlugin(

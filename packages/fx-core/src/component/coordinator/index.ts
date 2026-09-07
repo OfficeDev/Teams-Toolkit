@@ -21,6 +21,7 @@ import { glob } from "glob";
 import * as jsonschema from "jsonschema";
 import { camelCase, merge } from "lodash";
 import { EOL } from "os";
+import * as workerAgents from "../../core/workerAgents";
 import * as path from "path";
 import * as uuid from "uuid";
 import * as xml2js from "xml2js";
@@ -55,12 +56,14 @@ import { DriverContext } from "../driver/interface/commonArgs";
 import * as appStudio from "../driver/teamsApp/appStudio";
 import { Constants } from "../driver/teamsApp/constants";
 import { manifestUtils } from "../driver/teamsApp/utils/ManifestUtils";
+import { getResolvedManifest } from "../driver/teamsApp/utils/utils";
 import { Generator } from "../generator/generator";
 import { Generators } from "../generator/generatorProvider";
 import { ActionContext, ActionExecutionMW } from "../middleware/actionExecutionMW";
 import { provisionUtils } from "../provisionUtils";
 import { ResourceGroupInfo, resourceGroupHelper } from "../utils/ResourceGroupHelper";
 import { envUtil } from "../utils/envUtil";
+import { ManifestType } from "../utils/envFunctionUtils";
 import { metadataUtil } from "../utils/metadataUtil";
 import { pathUtils } from "../utils/pathUtils";
 import { settingsUtil } from "../utils/settingsUtil";
@@ -375,6 +378,22 @@ class Coordinator {
       return err(maybeProjectModel.error);
     }
     const projectModel = maybeProjectModel.value;
+
+    const workerValidationResult = await workerAgents.validateWorkerAgentGraph({
+      projectPath: ctx.projectPath,
+      allowMissingRoot: true,
+      validateOnlyIfWorkerAgentsConfigured: true,
+      signal: ctx.signal,
+      resolveAgentFile: async (authoredFile, manifestPath) =>
+        getResolvedManifest(authoredFile, manifestPath, ManifestType.TeamsManifest, ctx),
+    });
+    if (workerValidationResult.isErr()) {
+      return err(workerValidationResult.error);
+    }
+    const workerError = workerAgents.workerValidationError(workerValidationResult.value);
+    if (workerError) {
+      return err(workerError);
+    }
 
     const cycles = [
       // projectModel.registerApp,

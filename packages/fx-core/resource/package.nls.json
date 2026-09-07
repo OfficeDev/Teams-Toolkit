@@ -183,6 +183,8 @@
   "plugins.bot.triggers.timer-functions.detail": "A function running on Azure Functions can respond based on a specific schedule.",
   "plugins.bot.triggers.timer-functions.label": "Timer Trigger",
   "error.NoProjectOpenedError": "No project is currently open. Create a new project or open an existing one.",
+  "error.workerAgents.operation": "Worker agent operation failed (%s).",
+  "error.workerAgents.diagnostic": "Worker agent validation reported %s.",
   "error.UpgradeV3CanceledError": "Don't want to upgrade? Continue using old version of Microsoft 365 Agents Toolkit",
   "error.FailedToParseResourceIdError": "Unable to get '%s' from resource id: '%s'",
   "error.NoSubscriptionFound": "Unable to find a subscription.",
