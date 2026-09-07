@@ -1,0 +1,215 @@
+name: npm_esrp_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+
+# Fires automatically when cd.yml pushes an `npm-packages-*` tag alongside its
+# GitHub Release. AzDO receives the tag push over the GitHub service connection's
+# webhook, so no token or API call is needed on the GitHub side. Branches are
+# excluded so ordinary commits to dev never queue this definition.
+trigger:
+  branches:
+    exclude:
+      - '*'
+  tags:
+    include:
+      - 'npm-packages-*'
+
+pr: none
+
+parameters:
+  # Tag of the GitHub Release holding the packed .tgz assets, produced by
+  # .github/workflows/cd.yml. Release assets are anonymous on this
+  # public repo, so no credential is involved — the same source the vsix and
+  # templates releases are consumed from today.
+  # Empty on a tag-triggered run = derive the tag from Build.SourceBranchName.
+  # Empty on a manual run = skip the publish stage.
+  - name: githubReleaseTag
+    type: string
+    default: ''
+
+variables:
+  - name: githubRepo
+    value: 'OfficeDev/microsoft-365-agents-toolkit'
+  - name: npmPackagesDir
+    value: '$(Build.SourcesDirectory)/npm-packages'
+
+resources:
+  repositories:
+    - repository: 1ESPipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/1ESPipelineTemplates
+      ref: refs/tags/release
+
+extends:
+  template: v1/1ES.Official.PipelineTemplate.yml@1ESPipelineTemplates
+  parameters:
+    sdl:
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        os: windows
+        image: windows-latest
+      # No .config/tsaoptions.json exists in this repo yet.
+      tsa:
+        enabled: false
+
+    stages:
+      - stage: publish_npm
+        displayName: Publish npm packages through ESRP
+        condition: >-
+          or(
+            ${{ ne(parameters.githubReleaseTag, '') }},
+            startsWith(variables['Build.SourceBranch'], 'refs/tags/npm-packages-')
+          )
+        jobs:
+          - job: release
+            displayName: Publish npm packages
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              os: windows
+              image: windows-latest
+            templateContext:
+              type: releaseJob
+              isProduction: true
+            steps:
+              - checkout: none
+
+              # Release assets are public, so no credential is involved at all —
+              # the same source the vsix and templates releases are consumed from.
+              - pwsh: |
+                  $ErrorActionPreference = 'Stop'
+                  $headers = @{
+                    Accept                 = 'application/vnd.github+json'
+                    'X-GitHub-Api-Version' = '2022-11-28'
+                    'User-Agent'           = 'atk-esrp-npm-publish'
+                  }
+
+                  $tag = $env:GITHUB_RELEASE_TAG
+                  if (-not $tag) {
+                    # Read the triggering ref as data, not interpolated script.
+                    $tag = $env:BUILD_SOURCEBRANCH -replace '^refs/tags/', ''
+                    Write-Host "No githubReleaseTag parameter; using triggering tag '$tag'."
+                  }
+                  if ($tag -notmatch '^npm-packages-[0-9]+-[0-9]+$') {
+                    throw "Expected a release tag in the form npm-packages-<run-id>-<attempt>."
+                  }
+                  $relUrl = "https://api.github.com/repos/$(githubRepo)/releases/tags/$([uri]::EscapeDataString($tag))"
+                  $deadline = [DateTime]::UtcNow.AddMinutes(10)
+                  $marker = @()
+                  do {
+                    $release = $null
+                    try {
+                      $release = Invoke-RestMethod -Uri $relUrl -Headers $headers -TimeoutSec 30
+                    } catch {
+                      if ($null -eq $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 404) { throw }
+                    }
+                    $marker = @($release.assets | Where-Object { $_.name -eq 'npm-release-manifest.json' })
+                    if ($marker.Count -eq 1) { break }
+                    if ([DateTime]::UtcNow -ge $deadline) {
+                      throw "Timed out waiting for the completed npm handoff manifest."
+                    }
+                    Write-Host "Waiting for GitHub to finish uploading the npm release."
+                    Start-Sleep -Seconds 15
+                  } while ($true)
+
+                  $manifest = Invoke-RestMethod -Uri $marker[0].browser_download_url -TimeoutSec 30
+                  if ($manifest.schemaVersion -ne 1 -or $manifest.tag -cne $tag -or @($manifest.packages).Count -eq 0) {
+                    throw "Invalid npm handoff manifest."
+                  }
+                  $assets = @($release.assets | Where-Object { $_.name -like '*.tgz' })
+                  if ($assets.Count -ne @($manifest.packages).Count) {
+                    throw "Release assets do not match the completed npm handoff."
+                  }
+
+                  New-Item -ItemType Directory -Path '$(npmPackagesDir)' -ErrorAction Stop | Out-Null
+                  $seen = @{}
+                  foreach ($entry in $manifest.packages) {
+                    if ($entry.name -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*\.tgz$' -or
+                        $entry.sha256 -notmatch '^[a-f0-9]{64}$' -or $entry.size -le 0 -or
+                        $seen.ContainsKey($entry.name)) {
+                      throw "Invalid or duplicate package entry in npm handoff manifest."
+                    }
+                    $seen[$entry.name] = $true
+                    $asset = @($assets | Where-Object { $_.name -ceq $entry.name })
+                    if ($asset.Count -ne 1 -or $asset[0].size -ne $entry.size) {
+                      throw "Missing or unexpected release asset: $($entry.name)."
+                    }
+                    $dest = Join-Path '$(npmPackagesDir)' $entry.name
+                    Invoke-WebRequest -Uri $asset[0].browser_download_url -OutFile $dest -TimeoutSec 120
+                    if ((Get-Item $dest).Length -ne $entry.size -or
+                        (Get-FileHash $dest -Algorithm SHA256).Hash -ine $entry.sha256) {
+                      throw "Downloaded package does not match manifest: $($entry.name)."
+                    }
+                  }
+                env:
+                  GITHUB_RELEASE_TAG: ${{ parameters.githubReleaseTag }}
+                displayName: Download .tgz release assets
+
+              - pwsh: |
+                  $ErrorActionPreference = 'Stop'
+                  $tgz = Get-ChildItem -Path '$(npmPackagesDir)' -Filter *.tgz -Recurse -File
+                  if ($tgz.Count -eq 0) { throw "No .tgz files found under $(npmPackagesDir)." }
+
+                  $names = @{}
+                  foreach ($archive in $tgz) {
+                    $raw = tar -xzf $archive.FullName -O package/package.json
+                    if ($LASTEXITCODE -ne 0) {
+                      throw "Unable to read package/package.json from $($archive.Name)."
+                    }
+
+                    $package = $raw | ConvertFrom-Json
+                    if (-not $package.name -or -not $package.version) {
+                      throw "$($archive.Name) is missing package name or version."
+                    }
+                    if ($package.private -eq $true) {
+                      throw "$($package.name)@$($package.version) is private and cannot be published."
+                    }
+                    if ($names.ContainsKey($package.name)) {
+                      throw "Duplicate package '$($package.name)' in the ESRP release folder."
+                    }
+                    $names[$package.name] = $true
+
+                    $tag = $package.publishConfig.tag
+                    if ($tag -notin @('alpha', 'beta', 'rc', 'latest')) {
+                      throw "$($package.name)@$($package.version) has unsupported publishConfig.tag '$tag'."
+                    }
+
+                    $isPrerelease = $package.version -match '-'
+                    if ($isPrerelease -and $tag -eq 'latest') {
+                      throw "$($package.name)@$($package.version) is a prerelease but targets latest."
+                    }
+                    if (-not $isPrerelease -and $tag -ne 'latest') {
+                      throw "$($package.name)@$($package.version) is stable but targets '$tag'."
+                    }
+
+                    foreach ($field in @('dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies')) {
+                      if (-not $package.$field) { continue }
+                      foreach ($dependency in $package.$field.PSObject.Properties) {
+                        if ($dependency.Value -is [string] -and $dependency.Value.StartsWith('workspace:')) {
+                          throw "$($package.name) still contains $field dependency '$($dependency.Name)' with '$($dependency.Value)'."
+                        }
+                      }
+                    }
+
+                    Write-Host ("  {0}@{1} -> {2} ({3:N0} bytes)" -f $package.name, $package.version, $tag, $archive.Length)
+                  }
+                  Write-Host "Validated $($tgz.Count) npm package(s) for ESRP."
+                displayName: Validate downloaded npm packages
+
+              - task: EsrpRelease@12
+                displayName: Publish npm packages through ESRP
+                inputs:
+                  connectedservicename: 'ATK ESRP Connection'
+                  # The service connection uses a federated credential to let the
+                  # onboarded managed identity authenticate without stored secrets.
+                  usemanagedidentity: true
+                  keyvaultname: 'ATK-ESRP-KEY-VAULT'
+                  signcertname: 'ATK-ESRP-CERT'
+                  clientid: '62d1b680-312a-4484-9737-fc13f2f7e6f3'
+                  intent: 'PackageDistribution'
+                  contenttype: 'npm'
+                  contentsource: 'Folder'
+                  folderlocation: '$(npmPackagesDir)'
+                  waitforreleasecompletion: true
+                  owners: 'alicewan@microsoft.com'
+                  approvers: 'alicewan@microsoft.com'
+                  serviceendpointurl: 'https://api.esrp.microsoft.com'
+                  mainpublisher: 'ESRPRELPACMAN'
+                  domaintenantid: '975f013f-7f24-47e8-a7d3-abc4752bf346'

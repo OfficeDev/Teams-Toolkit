@@ -49,11 +49,14 @@ on:
         type: boolean
         default: false
         description: "Skip triggering the VscUse ATK docker build after CD (e.g. when the caller builds its own image)."
+      publishnpm:
+        type: boolean
+        default: true
+        description: "Publish npm packages through Azure DevOps ESRP. Disable only when running CD without an npm release."
 
 permissions:
   actions: write
   contents: write
-  id-token: write # Required for npm OIDC trusted publishing
 
 # Production CD runs (dev / release/*) use a unique group so concurrency is a no-op and
 # real releases / nightly are never cancelled or queued. Other refs (feature/PR branches
@@ -76,6 +79,31 @@ jobs:
       VS_RELEASE: ${{ github.event.inputs.vsrelease }}
       PRODUCTION: ${{ github.event.inputs.goproduct }}
     steps:
+      - name: Validate npm release lane
+        if: ${{ inputs.publishnpm }}
+        id: npm-lane
+        env:
+          RELEASE_PREID: ${{ inputs.preid }}
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/dev" ]; then
+            if [ "$RELEASE_PREID" != "alpha" ]; then
+              echo "::error::Only alpha releases are supported on dev."
+              exit 1
+            fi
+            TAG=alpha
+          else
+            case "$RELEASE_PREID" in
+              preview) TAG=beta ;;
+              rc) TAG=rc ;;
+              stable) TAG=latest ;;
+              *)
+                echo "::error::Non-dev releases require preview, rc, or stable."
+                exit 1
+                ;;
+            esac
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Validate CD branch
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.SkipBranchCheck != 'true' && github.ref != 'refs/heads/dev' && !startsWith(github.ref, 'refs/heads/release/') }}
         run: |
@@ -202,11 +230,6 @@ jobs:
           wine --version
           wine64 --version
 
-      # OIDC trusted publishing (no NPM token). Requires npm >= 11.5.1, newer
-      # than the npm bundled with Node 22, so upgrade the CLI here.
-      - name: Upgrade npm for OIDC trusted publishing
-        run: npm install -g npm@latest
-      
       - name: Setup git
         run: |
           git config --global user.name 'wh-alice'
@@ -220,22 +243,22 @@ jobs:
         run: |
           npm run setup
 
-      - name: release alpha npm packages to npmjs.org
+      - name: version alpha npm packages
         if: ${{ github.ref == 'refs/heads/dev' }}
         run: |
           npx lerna version prerelease --preid=alpha.$(git rev-parse --short HEAD) --exact --no-push --allow-branch dev --yes
 
-      - name: release preview packages to npmjs.org
+      - name: version preview npm packages
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'preview' }}
         run: |
           npx lerna version prerelease --preid=beta.$(date "+%Y%m%d%H") --exact --no-push --force-publish=ms-teams-vscode-extension --allow-branch ${GITHUB_REF#refs/*/} --yes
 
-      - name: version rc npm packages to npmjs.org
+      - name: version rc npm packages
         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'rc' }}
         run: |
           npx lerna version prerelease --conventional-prerelease --preid=rc --no-changelog --allow-branch ${GITHUB_REF#refs/*/} --yes
 
-      - name: version stable npm packages to npmjs.org
+      - name: version stable npm packages
         if: ${{ github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/dev' && github.event.inputs.preid == 'stable' }}
         run: |
           npx lerna version --conventional-commits --conventional-graduate --no-changelog --allow-branch ${GITHUB_REF#refs/*/} --yes
@@ -456,25 +479,77 @@ jobs:
           git add ./packages/cli/package.json ./packages/vscode-extension/package.json
           git commit -m "build: update ai key"
 
-      - name: publish alpha release to npm org
-        if: ${{ github.ref == 'refs/heads/dev'}}
+      # Produce the .tgz files that Azure DevOps will hand to ESRP Release, and
+      # attach them to a GitHub Release so AzDO can download them anonymously.
+      #
+      # `publishnpm` defaults to true because ESRP is the only npm publishing path.
+      # Set it to false only for a CD run that intentionally skips npm release.
+      - name: pack npm packages
+        if: ${{ inputs.publishnpm }}
+        id: pack-npm
         run: |
-          bash .github/scripts/npm-publish-from-package.sh alpha
+          bash .github/scripts/pack-npm-packages.sh \
+            "$GITHUB_WORKSPACE/npm-packages" \
+            "${{ steps.npm-lane.outputs.tag }}"
+          if compgen -G "$GITHUB_WORKSPACE/npm-packages/*.tgz" > /dev/null; then
+            echo "has-packages=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-packages=false" >> "$GITHUB_OUTPUT"
+            echo "No new npm packages to publish through ESRP."
+          fi
 
-      - name: publish preview release to npm org
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'preview' }}
-        run: |
-          bash .github/scripts/npm-publish-from-package.sh beta
+      - name: upload packed npm packages
+        if: ${{ inputs.publishnpm && steps.pack-npm.outputs.has-packages == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-packages
+          path: npm-packages/*.tgz
+          if-no-files-found: error
+          retention-days: 7
 
-      - name: publish rc npm packages to npmjs.org
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'rc' }}
-        run: |
-          bash .github/scripts/npm-publish-from-package.sh rc
+      # Release assets are anonymously downloadable, which is how the AzDO
+      # pipeline fetches them without a credential. A unique tag per attempt
+      # ensures retries emit a new tag event instead of updating an old release.
+      - name: attach packed npm packages to a GitHub Release
+        if: ${{ inputs.publishnpm && steps.pack-npm.outputs.has-packages == 'true' }}
+        uses: ncipollo/release-action@v1.10.0
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          tag: npm-packages-${{ github.run_id }}-${{ github.run_attempt }}
+          # Pin the handoff tag to the exact commit that built the tarballs so
+          # AzDO evaluates the matching esrp-publish.yml from that commit.
+          commit: ${{ github.sha }}
+          artifacts: npm-packages/*.tgz
+          artifactErrorsFailBuild: true
+          allowUpdates: false
+          prerelease: true
+          body: |
+            Packed npm packages for the ESRP publish pipeline (dist-tag: `${{ steps.npm-lane.outputs.tag }}`).
+            Produced by CD run ${{ github.run_id }} on `${{ github.ref_name }}`. Not a product release.
 
-      - name: publish stable npm packages to npmjs.org
-        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.preid == 'stable' }}
+      # Upload this last: a tag event can reach AzDO before release assets exist.
+      - name: Complete npm package handoff
+        if: ${{ inputs.publishnpm && steps.pack-npm.outputs.has-packages == 'true' }}
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+          RELEASE_TAG: npm-packages-${{ github.run_id }}-${{ github.run_attempt }}
         run: |
-          bash .github/scripts/npm-publish-from-package.sh
+          node - <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+          const crypto = require("crypto");
+          const directory = path.join(process.env.GITHUB_WORKSPACE, "npm-packages");
+          const files = fs.readdirSync(directory).filter(name => name.endsWith(".tgz")).sort();
+          if (!files.length) throw new Error("No npm packages to hand off");
+          const packages = files.map(name => {
+            const bytes = fs.readFileSync(path.join(directory, name));
+            return { name, size: bytes.length, sha256: crypto.createHash("sha256").update(bytes).digest("hex") };
+          });
+          fs.writeFileSync(path.join(directory, "npm-release-manifest.json"),
+            JSON.stringify({ schemaVersion: 1, tag: process.env.RELEASE_TAG, packages }, null, 2));
+          NODE
+          gh release upload "$RELEASE_TAG" "$GITHUB_WORKSPACE/npm-packages/npm-release-manifest.json" \
+            --repo "$GITHUB_REPOSITORY"
 
       - name: pack server bits
         if: ${{ contains(steps.version-change.outputs.CHANGED, '@microsoft/teamsfx-server') || (github.event_name == 'workflow_dispatch' && github.event.inputs.vsrelease == 'true' ) }}
