@@ -5,10 +5,6 @@
 
 /* global Office */
 
-Office.onReady(() => {
-  // If needed, Office.js is ready to be called.
-});
-
 /**
  * Shows a notification when the add-in command is executed.
  * @param event
@@ -31,5 +27,7 @@ function action(event: Office.AddinCommands.Event) {
   event.completed();
 }
 
-// Register the function with Office.
-Office.actions.associate("action", action);
+// Register the add-in commands with the Office host application.
+Office.onReady(async () => {
+  Office.actions.associate("action", action);
+});

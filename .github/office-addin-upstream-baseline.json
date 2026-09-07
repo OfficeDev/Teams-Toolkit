@@ -13,7 +13,7 @@
       "upstreamRepo": "OfficeDev/Office-Addin-TaskPane",
       "upstreamBranch": "release",
       "upstreamManifestVersion": "1.24",
-      "upstreamCommitSha": "c9b464671c69e7f214db1b07c06cc662e992b66d",
+      "upstreamCommitSha": "d1c0386a71f584056d7907724aebb25f6184550b",
       "upstreamDepHash": "3478f447fd4d7c33"
     },
     "office-addin-excel-customfunctions": {
