@@ -907,6 +907,61 @@ describe("injectAuthAction", async () => {
     });
   });
 
+  it("SCN-ADD-OPENAPI-OAUTH-03: propagates environment listing failures", async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(Utils, "isOAuthWithAuthCodeFlow").mockReturnValue(true);
+    vi.spyOn(ActionInjector, "injectCreateOAuthAction").mockResolvedValue({
+      clientIdEnvName: "REPAIR_AUTH_CLIENT_ID",
+      defaultRegistrationIdEnvName: "REPAIR_AUTH_REGISTRATION_ID",
+      registrationIdEnvName: "REPAIR_AUTH_REGISTRATION_ID",
+    });
+    const listError = new SystemError("test", "ListEnvironmentFailed", "", "");
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(err(listError));
+
+    await expect(
+      injectAuthAction(
+        "/project",
+        "repair-auth",
+        { type: "oauth2", flows: {} },
+        "/project/openapi.yaml",
+        true,
+        undefined,
+        false,
+        undefined,
+        undefined,
+        "environment"
+      )
+    ).rejects.toBe(listError);
+  });
+
+  it("SCN-ADD-OPENAPI-OAUTH-03: propagates environment write failures", async () => {
+    vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+    vi.spyOn(Utils, "isOAuthWithAuthCodeFlow").mockReturnValue(true);
+    vi.spyOn(ActionInjector, "injectCreateOAuthAction").mockResolvedValue({
+      clientIdEnvName: "REPAIR_AUTH_CLIENT_ID",
+      defaultRegistrationIdEnvName: "REPAIR_AUTH_REGISTRATION_ID",
+      registrationIdEnvName: "REPAIR_AUTH_REGISTRATION_ID",
+    });
+    vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev"]));
+    const writeError = new SystemError("test", "WriteEnvironmentFailed", "", "");
+    vi.spyOn(envUtil, "writeEnv").mockResolvedValue(err(writeError));
+
+    await expect(
+      injectAuthAction(
+        "/project",
+        "repair-auth",
+        { type: "oauth2", flows: {} },
+        "/project/openapi.yaml",
+        true,
+        undefined,
+        false,
+        undefined,
+        undefined,
+        "environment"
+      )
+    ).rejects.toBe(writeError);
+  });
+
   it("SCN-ADD-OPENAPI-KEY-15: explicit environment source persists an empty key placeholder", async () => {
     vi.spyOn(fs, "pathExists").mockResolvedValue(false);
     vi.spyOn(Utils, "isBearerTokenAuth").mockReturnValue(true);
