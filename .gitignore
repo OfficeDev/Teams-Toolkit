@@ -409,5 +409,3 @@ test-output-local/
 
 # Generated Component Governance reports
 results/component-governance-*.json
-
-e2e-output/
