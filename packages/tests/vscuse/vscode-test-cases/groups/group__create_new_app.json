@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 60,
       "precondition_retry_interval": 2
     },
-    "total_steps": 4,
+    "total_steps": 7,
     "created_at": "2026-05-18T10:07:14.916375",
     "name": "group: create_new_app",
     "description": {
@@ -18,7 +18,10 @@
     },
     "generated_at": "2026-05-18T10:07:14.916375",
     "execution_order": [
+      "step_welcome_dialog_visible_866dc22b",
       "step_497386dc",
+      "step_welcome_dialog_close_fallback_866dc22b",
+      "step_welcome_dialog_closed_866dc22b",
       "step_698f8521",
       "step_d2ab5bd4",
       "step_7ba2dfdf"
@@ -26,35 +29,93 @@
     "tags": [
       "group"
     ],
-    "updated_at": "2026-05-18T10:11:44.930181"
+    "updated_at": "2026-09-03T02:58:32.198000"
   },
   "steps": [
     {
-      "step_id": "step_497386dc",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 952,
-        "y": 128
-      },
-      "description": "Click the \"close\" (X) button in the top-right corner of the VS Code welcome sign-in dialog to dismiss the window.",
+      "step_id": "step_welcome_dialog_visible_866dc22b",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the startup \"Welcome to VS Code\" sign-in overlay is visible and its Close button is available.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [],
-      "preconditions": [
-        "dhash:952:128:16:5:255266345964665b",
-        "dhash:952:128:96:5:16100c10100c1404",
-        "dhash:952:128:0:10:2592eae0f08e8621"
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout:30"
       ],
+      "screenshot": null,
+      "created_at": "2026-09-03T02:26:15.587000",
+      "plan_id": "plan_r_0928_012254"
+    },
+    {
+      "step_id": "step_497386dc",
+      "agent": "interaction",
+      "tool": "key_press",
+      "parameters": {
+        "key": "esc"
+      },
+      "description": "Press Esc to dismiss the VS Code welcome sign-in dialog before opening the Microsoft 365 Agents Toolkit panel.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
       "postconditions": [],
       "tags": [
         "force_run:true"
       ],
       "screenshot": "step_497386dc",
       "created_at": "2026-05-18T10:07:14.930016",
+      "plan_id": "plan_r_0928_012254"
+    },
+    {
+      "step_id": "step_welcome_dialog_close_fallback_866dc22b",
+      "agent": "interaction",
+      "tool": "click",
+      "parameters": {
+        "button": "left",
+        "x": 953,
+        "y": 129
+      },
+      "description": "Click the Close (X) button as a fallback if the VS Code welcome sign-in dialog remains visible after pressing Esc.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "force_run:true"
+      ],
+      "screenshot": "",
+      "created_at": "2026-09-03T02:58:32.198000",
+      "plan_id": "plan_r_0928_012254"
+    },
+    {
+      "step_id": "step_welcome_dialog_closed_866dc22b",
+      "agent": "assertion",
+      "tool": "",
+      "parameters": {},
+      "description": "@assertion the startup \"Welcome to VS Code\" sign-in overlay is not visible.",
+      "content_refs": [],
+      "timeout": 30,
+      "retry_count": 0,
+      "continue_on_error": "false",
+      "depends_on": [],
+      "preconditions": [],
+      "postconditions": [],
+      "tags": [
+        "step_retry_timeout:30"
+      ],
+      "screenshot": null,
+      "created_at": "2026-09-03T02:58:32.198000",
       "plan_id": "plan_r_0928_012254"
     },
     {
