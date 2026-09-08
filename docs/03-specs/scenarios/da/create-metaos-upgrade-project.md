@@ -18,6 +18,7 @@ This is the vertical contract for the native v4 Declarative Agent with Office Ad
 | SCN-CREATE-METAOS-UPGRADE-05 | L1   | copied manifest and env are present or env is absent                                                                        | upgrade step finishes | manifest `id` and `env/.env.dev` `TEAMS_APP_ID` are set to the same generated UUID                                                              |
 | SCN-CREATE-METAOS-UPGRADE-06 | L1   | empty target                                                                                                                | scaffold              | `m365agents.yml` and `env/.env.dev` lifecycle baseline files are rendered, then the package runs only `metaos/upgrade-existing-project`         |
 | SCN-CREATE-METAOS-UPGRADE-07 | L1   | the target already contains `declarativeAgent.json` and the copied manifest already references the `declarativeAgentAlc` id | upgrade step runs     | the generated agent uses the collision-free filename `declarativeAgent1.json`, and the existing manifest reference is updated to that same file |
+| SCN-CREATE-METAOS-UPGRADE-08 | L1   | the copied manifest and package contain the existing project name                                                           | upgrade step runs     | manifest short/full names and the normalized `package.json` name use the user-entered app name                                                   |
 
 ## Composed operations
 
