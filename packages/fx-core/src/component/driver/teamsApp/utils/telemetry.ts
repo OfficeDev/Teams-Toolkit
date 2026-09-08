@@ -10,7 +10,6 @@ export enum TelemetryPropertyKey {
   customizedCopilotGptKeys = "customized-copilot-gpt-keys",
   validationErrors = "validation-errors",
   validationWarnings = "validation-warnings",
-  OverwriteIfAppAlreadyExists = "overwrite-if-app-already-exists",
   region = "region",
   pluginValidationErrors = "plugin-validation-errors",
   gptValidationErrors = "gpt-validation-errors",

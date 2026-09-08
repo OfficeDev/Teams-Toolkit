@@ -14,7 +14,7 @@ import {
 import axios from "axios";
 import { Service } from "typedi";
 import { GraphClient } from "../../client/graphClient";
-import { teamsDevPortalClient } from "../../client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../client/teamsDevPortalClientProvider";
 import { AppStudioScopes, MosServiceScope } from "../../common/constants";
 import { ErrorContextMW } from "../../common/globalVars";
 import {

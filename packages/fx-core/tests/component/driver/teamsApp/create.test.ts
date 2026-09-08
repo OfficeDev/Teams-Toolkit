@@ -1,20 +1,18 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { err, ok, TeamsAppManifest, UserError } from "@microsoft/teamsfx-api";
+import { err, UserError } from "@microsoft/teamsfx-api";
 import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import { v4 as uuid } from "uuid";
-import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import isUUID from "validator/lib/isUUID";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import { SovereignCloudEnvironment } from "../../../../src/common/accountUtils";
 import { FeatureFlagName } from "../../../../src/common/featureFlags";
-import { ExecutionResult } from "../../../../src/component/driver/interface/stepDriver";
 import { CreateTeamsAppDriver } from "../../../../src/component/driver/teamsApp/create";
-import { CreateAppPackageDriver } from "../../../../src/component/driver/teamsApp/createAppPackage";
 import { CreateTeamsAppArgs } from "../../../../src/component/driver/teamsApp/interfaces/CreateTeamsAppArgs";
 import { MockedLogProvider, MockedUserInteraction } from "../../../plugins/solution/util";
-import { Constants } from "./../../../../src/component/driver/teamsApp/constants";
 import { AppDefinition } from "./../../../../src/component/driver/teamsApp/interfaces/appdefinitions/appDefinition";
 import { MockedM365Provider } from "../../../core/utils";
 import { chai, expect, vi } from "vitest";
@@ -29,15 +27,22 @@ describe("teamsApp/create", async () => {
     projectPath: "./",
   };
 
+  const appId = uuid();
   const appDef: AppDefinition = {
+    appId,
     appName: "fake",
-    teamsAppId: uuid(),
+    teamsAppId: appId,
     userList: [],
     tenantId: uuid(),
   };
 
+  beforeEach(() => {
+    process.env[FeatureFlagName.NewDeveloperPortalApis] = "true";
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
     restoreEnv?.();
     restoreEnv = undefined;
   });
@@ -46,7 +51,7 @@ describe("teamsApp/create", async () => {
     restoreEnv = mockedEnv({
       [FeatureFlagName.SovereignCloudEnvironment]: SovereignCloudEnvironment.GCCH,
     });
-    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp");
+    const createAppSpy = vi.spyOn(teamsDevPortalClient, "createApp");
     const readFileStub = vi.spyOn(fs, "readFile");
 
     const args: CreateTeamsAppArgs = {
@@ -55,7 +60,7 @@ describe("teamsApp/create", async () => {
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    expect(importAppSpy).not.toHaveBeenCalled();
+    expect(createAppSpy).not.toHaveBeenCalled();
     expect(readFileStub).not.toHaveBeenCalled();
   });
 
@@ -63,7 +68,7 @@ describe("teamsApp/create", async () => {
     restoreEnv = mockedEnv({
       [FeatureFlagName.SovereignCloudEnvironment]: SovereignCloudEnvironment.DOD,
     });
-    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp");
+    const createAppSpy = vi.spyOn(teamsDevPortalClient, "createApp");
     const readFileStub = vi.spyOn(fs, "readFile");
 
     const args: CreateTeamsAppArgs = {
@@ -72,7 +77,7 @@ describe("teamsApp/create", async () => {
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    expect(importAppSpy).not.toHaveBeenCalled();
+    expect(createAppSpy).not.toHaveBeenCalled();
     expect(readFileStub).not.toHaveBeenCalled();
   });
 
@@ -88,40 +93,51 @@ describe("teamsApp/create", async () => {
   });
 
   it("happy path", async () => {
+    process.env[FeatureFlagName.NewDeveloperPortalApis] = "true";
     const args: CreateTeamsAppArgs = {
       name: appDef.appName!,
     };
 
-    const zipFileName =
-      "./tests/plugins/resource/appstudio/resources-multi-env/build/appPackage/appPackage.dev.zip";
-
-    const stubResult: ExecutionResult = {
-      summaries: [],
-      result: ok(new Map([["TEAMS_APP_PACKAGE_PATH", zipFileName]])),
-    };
-    vi.spyOn(CreateAppPackageDriver.prototype, "execute").mockResolvedValue(stubResult);
     vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
       throw new Error("404");
     });
-    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
-    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
-    vi.spyOn(fs, "readFile").mockImplementation(async () => {
-      const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
-      zip.addFile("color.png", Buffer.from(""));
-      zip.addFile("outlie.png", Buffer.from(""));
-
-      const archivedFile = zip.toBuffer();
-      return archivedFile;
-    });
+    const createAppSpy = vi.spyOn(teamsDevPortalClient, "createApp").mockResolvedValue(appDef);
+    const readFileSpy = vi.spyOn(fs, "readFile");
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
-    console.log(JSON.stringify(result));
     chai.assert.isTrue(result.isOk());
+    expect(createAppSpy).toHaveBeenCalledWith("fakeToken", appDef.appName);
+    expect(readFileSpy).not.toHaveBeenCalled();
+    if (result.isOk()) {
+      chai.assert.equal(result.value.get("TEAMS_APP_ID"), appId);
+    }
+  });
 
-    const executeResult = await teamsAppDriver.execute(args, mockedDriverContext);
-    chai.assert.isTrue(executeResult.result.isOk());
-    chai.assert.isTrue(executeResult.summaries.length > 0);
+  it("uses legacy app package import by default", async () => {
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
+    const args: CreateTeamsAppArgs = { name: appDef.appName! };
+    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    const createAppSpy = vi.spyOn(teamsDevPortalClient, "createApp");
+
+    const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
+
+    chai.assert.isTrue(result.isOk());
+    expect(importAppSpy).toHaveBeenCalledOnce();
+    expect(createAppSpy).not.toHaveBeenCalled();
+  });
+
+  it("generates a manifest app ID when the environment value is empty", async () => {
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
+    restoreEnv = mockedEnv({ TEAMS_APP_ID: "" });
+    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+
+    const result = (await teamsAppDriver.execute({ name: appDef.appName! }, mockedDriverContext))
+      .result;
+
+    chai.assert.isTrue(result.isOk());
+    const zip = new AdmZip(importAppSpy.mock.calls[0][1]);
+    const manifest = JSON.parse(zip.readAsText("manifest.json"));
+    chai.assert.isTrue(isUUID(manifest.id));
   });
 
   it("app exists", async () => {
@@ -129,12 +145,63 @@ describe("teamsApp/create", async () => {
       name: appDef.appName!,
     };
 
-    restoreEnv = mockedEnv({ TEAMS_APP_ID: uuid() });
+    restoreEnv = mockedEnv({ TEAMS_APP_ID: appId });
     vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue(appDef);
+    const createAppSpy = vi.spyOn(teamsDevPortalClient, "createApp");
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
-    console.log(JSON.stringify(result));
     chai.assert.isTrue(result.isOk());
+    expect(createAppSpy).not.toHaveBeenCalled();
+  });
+
+  it("preserves the manifest app ID when the Developer Portal resource ID differs", async () => {
+    const teamsAppId = uuid();
+    const resourceAppId = uuid();
+    restoreEnv = mockedEnv({ TEAMS_APP_ID: teamsAppId });
+    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue({
+      ...appDef,
+      teamsAppId,
+      appId: resourceAppId,
+    });
+
+    const result = (await teamsAppDriver.execute({ name: appDef.appName! }, mockedDriverContext))
+      .result;
+
+    chai.assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      chai.assert.equal(result.value.get("TEAMS_APP_ID"), teamsAppId);
+    }
+  });
+
+  it("does not create a replacement when existing app lookup fails", async () => {
+    const args: CreateTeamsAppArgs = {
+      name: appDef.appName!,
+    };
+
+    restoreEnv = mockedEnv({ TEAMS_APP_ID: appId });
+    vi.spyOn(teamsDevPortalClient, "getApp").mockRejectedValue(new Error("lookup failed"));
+    const createAppSpy = vi.spyOn(teamsDevPortalClient, "createApp");
+
+    const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
+
+    chai.assert.isTrue(result.isErr());
+    expect(createAppSpy).not.toHaveBeenCalled();
+  });
+
+  it("reuses the created app when provision is retried", async () => {
+    const args: CreateTeamsAppArgs = { name: appDef.appName! };
+    const createAppSpy = vi.spyOn(teamsDevPortalClient, "createApp").mockResolvedValue(appDef);
+    const getAppSpy = vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue(appDef);
+
+    const firstResult = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
+    chai.assert.isTrue(firstResult.isOk());
+
+    restoreEnv = mockedEnv({ TEAMS_APP_ID: appId });
+    const retryResult = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
+
+    chai.assert.isTrue(retryResult.isOk());
+    expect(createAppSpy).toHaveBeenCalledOnce();
+    expect(getAppSpy).toHaveBeenCalledWith("fakeToken", appId);
   });
 
   it("API failure", async () => {
@@ -144,10 +211,9 @@ describe("teamsApp/create", async () => {
     vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
       throw new Error("404");
     });
-    vi.spyOn(teamsDevPortalClient, "importApp").mockImplementation(() => {
+    vi.spyOn(teamsDevPortalClient, "createApp").mockImplementation(() => {
       throw new Error("409");
     });
-    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert.isTrue(result.isErr());
@@ -172,14 +238,7 @@ describe("teamsApp/create", async () => {
     vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
       throw new Error("404");
     });
-    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
-    vi.spyOn(fs, "readFile").mockImplementation(async () => {
-      const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
-      zip.addFile("color.png", Buffer.from(""));
-      zip.addFile("outline.png", Buffer.from(""));
-      return zip.toBuffer();
-    });
+    vi.spyOn(teamsDevPortalClient, "createApp").mockResolvedValue(appDef);
 
     const outputEnvVarNames = new Map<string, string>([
       ["teamsAppId", "MY_TEAMS_APP_ID"],
@@ -190,7 +249,7 @@ describe("teamsApp/create", async () => {
       .result;
     chai.assert.isTrue(result.isOk());
     if (result.isOk()) {
-      chai.assert.equal(result.value.get("MY_TEAMS_APP_ID"), appDef.teamsAppId);
+      chai.assert.equal(result.value.get("MY_TEAMS_APP_ID"), appDef.appId);
       chai.assert.equal(result.value.get("MY_TEAMS_APP_TENANT_ID"), appDef.tenantId);
       // The internal default name must not leak through when the author
       // configured a custom env var name.
@@ -206,14 +265,7 @@ describe("teamsApp/create", async () => {
     vi.spyOn(teamsDevPortalClient, "getApp").mockImplementation(() => {
       throw new Error("404");
     });
-    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
-    vi.spyOn(fs, "readFile").mockImplementation(async () => {
-      const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(new TeamsAppManifest())));
-      zip.addFile("color.png", Buffer.from(""));
-      zip.addFile("outline.png", Buffer.from(""));
-      return zip.toBuffer();
-    });
+    vi.spyOn(teamsDevPortalClient, "createApp").mockResolvedValue(appDef);
 
     const outputEnvVarNames = new Map<string, string>([["teamsAppId", "TEAMS_APP_ID"]]);
 
@@ -221,7 +273,7 @@ describe("teamsApp/create", async () => {
       .result;
     chai.assert.isTrue(result.isOk());
     if (result.isOk()) {
-      chai.assert.equal(result.value.get("TEAMS_APP_ID"), appDef.teamsAppId);
+      chai.assert.equal(result.value.get("TEAMS_APP_ID"), appDef.appId);
       chai.assert.equal(result.value.get("TEAMS_APP_TENANT_ID"), appDef.tenantId);
     }
   });

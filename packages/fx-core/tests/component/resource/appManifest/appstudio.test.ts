@@ -17,7 +17,7 @@ import fs from "fs-extra";
 import { RestoreFn } from "mocked-env";
 import Container from "typedi";
 import { chai, vi } from "vitest";
-import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import { createContext, setTools } from "../../../../src/common/globalVars";
 import { ExecutionResult } from "../../../../src/component/driver/interface/stepDriver";
 import {

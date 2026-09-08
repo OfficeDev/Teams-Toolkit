@@ -11,7 +11,7 @@ import {
   ok,
 } from "@microsoft/teamsfx-api";
 import { assert, describe, it, vi } from "vitest";
-import * as teamsDevPortalClientModule from "../../src/client/teamsDevPortalClient";
+import * as teamsDevPortalClientModule from "../../src/client/teamsDevPortalClientProvider";
 import { TOOLS, setTools } from "../../src/common/globalVars";
 import * as shareUtils from "../../src/component/driver/share/utils";
 import { AppUser } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/appUser";

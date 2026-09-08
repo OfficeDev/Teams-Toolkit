@@ -8,7 +8,7 @@ import mockedEnv from "mocked-env";
 import { v4 as uuid } from "uuid";
 import { chai, expect, vi } from "vitest";
 import { GraphClient } from "../../../../src/client/graphClient";
-import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import { SovereignCloudEnvironment } from "../../../../src/common/accountUtils";
 import { FeatureFlagName } from "../../../../src/common/featureFlags";
 import { AppStudioError } from "../../../../src/component/driver/teamsApp/errors";

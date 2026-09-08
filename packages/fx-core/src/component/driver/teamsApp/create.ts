@@ -17,7 +17,10 @@ import * as path from "path";
 import { Service } from "typedi";
 import { v4 } from "uuid";
 import isUUID from "validator/lib/isUUID";
-import { teamsDevPortalClient } from "../../../client/teamsDevPortalClient";
+import {
+  isUsingNewDeveloperPortalApis,
+  teamsDevPortalClient,
+} from "../../../client/teamsDevPortalClientProvider";
 import { isSovereignHigh } from "../../../common/accountUtils";
 import { AppStudioScopes } from "../../../common/constants";
 import { getLocalizedString } from "../../../common/localizeUtils";
@@ -119,43 +122,51 @@ export class CreateTeamsAppDriver implements StepDriver {
     const appStudioToken = appStudioTokenRes.value;
 
     let createdAppDefinition: AppDefinition;
-    const teamsAppId = state.teamsAppId;
-    if (teamsAppId) {
+    const appId = state.teamsAppId;
+    if (appId) {
       try {
-        createdAppDefinition = await teamsDevPortalClient.getApp(appStudioToken, teamsAppId);
+        createdAppDefinition = await teamsDevPortalClient.getApp(appStudioToken, appId);
         create = false;
-      } catch (error) {}
+      } catch (e: any) {
+        if (isUsingNewDeveloperPortalApis()) {
+          if (e instanceof UserError || e instanceof SystemError) {
+            return err(e);
+          }
+          return err(
+            AppStudioResultFactory.SystemError(
+              AppStudioError.TeamsAppCreateFailedError.name,
+              AppStudioError.TeamsAppCreateFailedError.message(e),
+              "https://aka.ms/teamsfx-actions/teamsapp-create"
+            )
+          );
+        }
+      }
     }
 
     if (create) {
-      const manifest = new TeamsAppManifest();
-      manifest.name.short = args.name;
-      if (teamsAppId) {
-        manifest.id = teamsAppId;
-      } else {
-        manifest.id = v4();
-      }
-
-      const zip = new AdmZip();
-      zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest, null, 4)));
-
-      const sourceTemplatesFolder = getTemplatesFolder();
-      const defaultColorPath = path.join(sourceTemplatesFolder, COLOR_TEMPLATE);
-      const defaultOutlinePath = path.join(sourceTemplatesFolder, OUTLINE_TEMPLATE);
-
-      const colorFile = await fs.readFile(defaultColorPath);
-      zip.addFile(DEFAULT_COLOR_PNG_FILENAME, colorFile);
-
-      const outlineFile = await fs.readFile(defaultOutlinePath);
-      zip.addFile(DEFAULT_OUTLINE_PNG_FILENAME, outlineFile);
-
-      const archivedFile = zip.toBuffer();
-
       try {
-        createdAppDefinition = await teamsDevPortalClient.importApp(
-          appStudioTokenRes.value,
-          archivedFile
-        );
+        if (isUsingNewDeveloperPortalApis()) {
+          createdAppDefinition = await teamsDevPortalClient.createApp(appStudioToken, args.name);
+        } else {
+          const manifest = new TeamsAppManifest();
+          manifest.name.short = args.name;
+          manifest.id = appId || v4();
+          const zip = new AdmZip();
+          zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest, null, 4)));
+          const sourceTemplatesFolder = getTemplatesFolder();
+          zip.addFile(
+            DEFAULT_COLOR_PNG_FILENAME,
+            await fs.readFile(path.join(sourceTemplatesFolder, COLOR_TEMPLATE))
+          );
+          zip.addFile(
+            DEFAULT_OUTLINE_PNG_FILENAME,
+            await fs.readFile(path.join(sourceTemplatesFolder, OUTLINE_TEMPLATE))
+          );
+          createdAppDefinition = await teamsDevPortalClient.importApp(
+            appStudioToken,
+            zip.toBuffer()
+          );
+        }
         const message = getLocalizedString(
           "plugins.appstudio.teamsAppCreatedNotice",
           createdAppDefinition.teamsAppId!
@@ -185,10 +196,10 @@ export class CreateTeamsAppDriver implements StepDriver {
       }
     } else {
       context.addSummary(
-        getLocalizedString("driver.teamsApp.summary.createTeamsAppAlreadyExists", teamsAppId)
+        getLocalizedString("driver.teamsApp.summary.createTeamsAppAlreadyExists", appId)
       );
       context.logProvider.verbose(
-        getLocalizedString("driver.teamsApp.summary.createTeamsAppAlreadyExists", teamsAppId)
+        getLocalizedString("driver.teamsApp.summary.createTeamsAppAlreadyExists", appId)
       );
       return ok(
         new Map([

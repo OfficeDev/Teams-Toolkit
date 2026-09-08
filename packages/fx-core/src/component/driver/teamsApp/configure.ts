@@ -7,7 +7,10 @@ import fs from "fs-extra";
 import { merge } from "lodash";
 import { Service } from "typedi";
 import isUUID from "validator/lib/isUUID";
-import { teamsDevPortalClient } from "../../../client/teamsDevPortalClient";
+import {
+  isUsingNewDeveloperPortalApis,
+  teamsDevPortalClient,
+} from "../../../client/teamsDevPortalClientProvider";
 import { AppStudioScopes } from "../../../common/constants";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import { FileNotFoundError, InvalidActionInputError } from "../../../error/common";
@@ -101,23 +104,25 @@ export class ConfigureTeamsAppDriver implements StepDriver {
 
     // Fail if Teams app not exists, as this action only update the Teams app, not create
     // See work item 17187087
-    const teamsAppId = manifest.value.id;
-    if (!isUUID(teamsAppId)) {
+    const appId = manifest.value.id;
+    if (!isUUID(appId)) {
       return err(
         AppStudioResultFactory.UserError(
           AppStudioError.InvalidTeamsAppIdError.name,
-          AppStudioError.InvalidTeamsAppIdError.message(teamsAppId),
+          AppStudioError.InvalidTeamsAppIdError.message(appId),
           "https://aka.ms/teamsfx-actions/teamsapp-update"
         )
       );
     }
+    let resolvedAppId = appId;
     try {
-      await teamsDevPortalClient.getApp(appStudioToken, teamsAppId);
+      const appDefinition = await teamsDevPortalClient.getApp(appStudioToken, appId);
+      resolvedAppId = appDefinition.appId ?? appId;
     } catch (error) {
       return err(
         AppStudioResultFactory.UserError(
           AppStudioError.TeamsAppNotExistsError.name,
-          AppStudioError.TeamsAppNotExistsError.message(teamsAppId),
+          AppStudioError.TeamsAppNotExistsError.message(appId),
           "https://aka.ms/teamsfx-actions/teamsapp-update"
         )
       );
@@ -126,11 +131,9 @@ export class ConfigureTeamsAppDriver implements StepDriver {
     try {
       let message = getLocalizedString("driver.teamsApp.progressBar.updateTeamsAppStepMessage");
 
-      const appDefinition = await teamsDevPortalClient.importApp(
-        appStudioToken,
-        archivedFile,
-        true
-      );
+      const appDefinition = isUsingNewDeveloperPortalApis()
+        ? await teamsDevPortalClient.updateApp(appStudioToken, resolvedAppId, archivedFile)
+        : await teamsDevPortalClient.importApp(appStudioToken, archivedFile, true);
       message = getLocalizedString(
         "plugins.appstudio.teamsAppUpdatedLog",
         appDefinition.teamsAppId!
@@ -147,7 +150,7 @@ export class ConfigureTeamsAppDriver implements StepDriver {
       return err(
         AppStudioResultFactory.SystemError(
           AppStudioError.TeamsAppUpdateFailedError.name,
-          AppStudioError.TeamsAppUpdateFailedError.message(teamsAppId, e),
+          AppStudioError.TeamsAppUpdateFailedError.message(appId, e),
           "https://aka.ms/teamsfx-actions/teamsapp-update"
         )
       );

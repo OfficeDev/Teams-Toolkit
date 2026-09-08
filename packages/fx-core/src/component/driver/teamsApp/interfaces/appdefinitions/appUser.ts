@@ -4,6 +4,7 @@
 export interface AppUser {
   tenantId: string;
   aadId: string;
+  role?: string;
   displayName: string;
   userPrincipalName: string;
   isAdministrator: boolean;

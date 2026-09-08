@@ -6,7 +6,7 @@ import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import { v4 as uuid } from "uuid";
-import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import { SovereignCloudEnvironment } from "../../../../src/common/accountUtils";
 import { FeatureFlagName } from "../../../../src/common/featureFlags";
 import { ConfigureTeamsAppDriver } from "../../../../src/component/driver/teamsApp/configure";
@@ -34,8 +34,13 @@ describe("teamsApp/update", async () => {
     userList: [],
   };
 
+  beforeEach(() => {
+    process.env[FeatureFlagName.NewDeveloperPortalApis] = "true";
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
     restoreEnv?.();
     restoreEnv = undefined;
   });
@@ -44,7 +49,7 @@ describe("teamsApp/update", async () => {
     restoreEnv = mockedEnv({
       [FeatureFlagName.SovereignCloudEnvironment]: SovereignCloudEnvironment.GCCH,
     });
-    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp");
+    const updateAppSpy = vi.spyOn(teamsDevPortalClient, "updateApp");
     const pathExistsStub = vi.spyOn(fs, "pathExists");
 
     const args: ConfigureTeamsAppArgs = {
@@ -53,7 +58,7 @@ describe("teamsApp/update", async () => {
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    expect(importAppSpy).not.toHaveBeenCalled();
+    expect(updateAppSpy).not.toHaveBeenCalled();
     expect(pathExistsStub).not.toHaveBeenCalled();
   });
 
@@ -61,7 +66,7 @@ describe("teamsApp/update", async () => {
     restoreEnv = mockedEnv({
       [FeatureFlagName.SovereignCloudEnvironment]: SovereignCloudEnvironment.DOD,
     });
-    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp");
+    const updateAppSpy = vi.spyOn(teamsDevPortalClient, "updateApp");
     const pathExistsStub = vi.spyOn(fs, "pathExists");
 
     const args: ConfigureTeamsAppArgs = {
@@ -70,7 +75,7 @@ describe("teamsApp/update", async () => {
 
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert(result.isOk());
-    expect(importAppSpy).not.toHaveBeenCalled();
+    expect(updateAppSpy).not.toHaveBeenCalled();
     expect(pathExistsStub).not.toHaveBeenCalled();
   });
 
@@ -91,7 +96,7 @@ describe("teamsApp/update", async () => {
       appPackagePath: "fakePath",
     };
 
-    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    vi.spyOn(teamsDevPortalClient, "updateApp").mockResolvedValue(appDef);
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
@@ -152,7 +157,7 @@ describe("teamsApp/update", async () => {
       appPackagePath: "fakePath",
     };
     vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue(appDef);
-    vi.spyOn(teamsDevPortalClient, "importApp").mockImplementation(() => {
+    vi.spyOn(teamsDevPortalClient, "updateApp").mockImplementation(() => {
       throw new Error("409");
     });
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
@@ -192,13 +197,19 @@ describe("teamsApp/update", async () => {
       appPackagePath: "fakePath",
     };
 
-    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
-    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue(appDef);
+    const appId = uuid();
+    const resourceAppId = uuid();
+    const updateAppSpy = vi.spyOn(teamsDevPortalClient, "updateApp").mockResolvedValue(appDef);
+    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue({
+      ...appDef,
+      appId: resourceAppId,
+      teamsAppId: appId,
+    });
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {
       const zip = new AdmZip();
       const manifest = new TeamsAppManifest();
-      manifest.id = uuid();
+      manifest.id = appId;
       manifest.staticTabs = [
         {
           entityId: "index",
@@ -225,6 +236,30 @@ describe("teamsApp/update", async () => {
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     console.log(JSON.stringify(result));
     chai.assert.isTrue(result.isOk());
+    expect(updateAppSpy).toHaveBeenCalledOnce();
+    expect(updateAppSpy.mock.calls[0][1]).toBe(resourceAppId);
+  });
+
+  it("uses legacy app package import by default", async () => {
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
+    const args: ConfigureTeamsAppArgs = { appPackagePath: "fakePath" };
+    const appId = uuid();
+    const zip = new AdmZip();
+    const manifest = new TeamsAppManifest();
+    manifest.id = appId;
+    zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));
+    const archivedFile = zip.toBuffer();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(archivedFile);
+    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue({ ...appDef, teamsAppId: appId });
+    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    const updateAppSpy = vi.spyOn(teamsDevPortalClient, "updateApp");
+
+    const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
+
+    chai.assert.isTrue(result.isOk());
+    expect(importAppSpy).toHaveBeenCalledWith("fakeToken", archivedFile, true);
+    expect(updateAppSpy).not.toHaveBeenCalled();
   });
 
   it("execute", async () => {
@@ -232,7 +267,7 @@ describe("teamsApp/update", async () => {
       appPackagePath: "fakePath",
     };
 
-    vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    vi.spyOn(teamsDevPortalClient, "updateApp").mockResolvedValue(appDef);
     vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue(appDef);
     vi.spyOn(fs, "pathExists").mockResolvedValue(true);
     vi.spyOn(fs, "readFile").mockImplementation(async () => {

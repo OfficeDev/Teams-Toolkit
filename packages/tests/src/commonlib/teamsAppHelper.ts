@@ -18,7 +18,7 @@ export class TeamsAppHelper {
 
   private constructor(access: string) {
     this.axios = axios.create({
-      baseURL: "https://dev.teams.microsoft.com/api/",
+      baseURL: "https://dev.teams.microsoft.com/v1.0/",
       headers: {
         authorization: `Bearer ${access}`,
         ConsistencyLevel: "eventual",
@@ -28,7 +28,7 @@ export class TeamsAppHelper {
   }
 
   public static async init(
-    provider: M365TokenProvider = MockM365TokenProvider
+    provider: M365TokenProvider = MockM365TokenProvider,
   ): Promise<TeamsAppHelper> {
     if (!TeamsAppHelper.instance) {
       const res = await provider.getAccessToken({
@@ -49,7 +49,7 @@ export class TeamsAppHelper {
     return new Promise<boolean>(async (resolve) => {
       for (let i = 0; i < retryTimes; ++i) {
         try {
-          await this.axios.delete(`appdefinitions/${id}`);
+          await this.axios.delete(`apps/${id}`);
           console.info(`[Success] delete the Teams app with id: ${id}`);
           return resolve(true);
         } catch {
@@ -75,7 +75,7 @@ export class TeamsAppHelper {
             const appDefinitionId = results[0].appDefinitions[0]?.id;
             if (publishedAppId && appDefinitionId) {
               await this.axios.delete(
-                `/publishing/${publishedAppId}/appdefinitions/${appDefinitionId}`
+                `/publishing/${publishedAppId}/appdefinitions/${appDefinitionId}`,
               );
               console.info(`[Success] stagged app ${id} has been cacelled.`);
               return resolve(true);
@@ -97,9 +97,9 @@ export class TeamsAppHelper {
     return new Promise<boolean>(async (resolve) => {
       for (let i = 0; i < retryTimes; ++i) {
         try {
-          await this.axios.delete(`botframework/${id}`);
+          await this.axios.delete(`botregistrations/${id}`);
           console.info(
-            `[Success] delete the Bot on bot framework with id: ${id}`
+            `[Success] delete the Bot on bot framework with id: ${id}`,
           );
           return resolve(true);
         } catch {

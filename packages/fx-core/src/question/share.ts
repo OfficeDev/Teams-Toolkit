@@ -8,7 +8,7 @@ import {
   OptionItem,
   SingleSelectQuestion,
 } from "@microsoft/teamsfx-api";
-import { teamsDevPortalClient } from "../client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../client/teamsDevPortalClientProvider";
 import { AppStudioScopes } from "../common/constants";
 import { TOOLS } from "../common/globalVars";
 import { getLocalizedString } from "../common/localizeUtils";

@@ -103,7 +103,9 @@ export async function deleteBot(botId: string) {
   const requester = await createRequester();
   for (let retries = 3; retries > 0; --retries) {
     try {
-      const response = await requester.delete(`/api/botframework/${botId}`);
+      const response = await requester.delete(
+        `/v1.0/botregistrations/${botId}`,
+      );
       if (response.status >= 200 && response.status < 300) {
         console.log("Successfully deleted bot");
         return;
@@ -118,7 +120,7 @@ export async function getBot(botId: string): Promise<any> {
   const requester = await createRequester();
   for (let retries = 3; retries > 0; --retries) {
     try {
-      const response = await requester.get(`/api/botframework/${botId}`);
+      const response = await requester.get(`/v1.0/botregistrations/${botId}`);
       if (response.status >= 200 && response.status < 300) {
         console.log("Successfully got bot");
         return response.data;
@@ -134,9 +136,7 @@ export async function deleteTeamsApp(teamsAppId: string) {
   const requester = await createRequester();
   for (let retries = 3; retries > 0; --retries) {
     try {
-      const response = await requester.delete(
-        `/api/appdefinitions/${teamsAppId}`,
-      );
+      const response = await requester.delete(`/v1.0/apps/${teamsAppId}`);
       if (response.status >= 200 && response.status < 300) {
         console.log("Successfully deleted Teams app");
         return;
@@ -151,10 +151,10 @@ export async function getTeamsApp(teamsAppId: string): Promise<any> {
   const requester = await createRequester();
   for (let retries = 3; retries > 0; --retries) {
     try {
-      const response = await requester.get(`/api/appdefinitions/${teamsAppId}`);
+      const response = await requester.get(`/v1.0/apps/${teamsAppId}`);
       if (response.status >= 200 && response.status < 300) {
         console.log("Successfully got Teams app");
-        return response.data;
+        return { ...response.data, teamsAppId: response.data.appId };
       }
     } catch (e) {
       console.log(`Failed to get Teams app, error: ${e}`);

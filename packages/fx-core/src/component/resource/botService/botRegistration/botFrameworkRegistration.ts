@@ -5,7 +5,7 @@
  * @author Qianhao Dong <qidon@microsoft.com>
  */
 import { FxError, LogProvider, M365TokenProvider, Result, err, ok } from "@microsoft/teamsfx-api";
-import { teamsDevPortalClient } from "../../../../client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../../client/teamsDevPortalClientProvider";
 import { AppStudioScopes } from "../../../../common/constants";
 import { IBotRegistration } from "../appStudio/interfaces/IBotRegistration";
 import { Utils } from "./utils";

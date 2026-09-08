@@ -42,13 +42,13 @@ export class AppStudioValidator {
     const response = await requester.get(`/api/publishing/${appId}`);
     if (response.data.error) {
       chai.assert.fail(
-        `Publish failed, code: ${response.data.error.code}, message: ${response.data.error.message}`
+        `Publish failed, code: ${response.data.error.code}, message: ${response.data.error.message}`,
       );
     }
   }
 
   public static async validateTeamsAppExist(
-    appStudioObject: IAppStudioObject
+    appStudioObject: IAppStudioObject,
   ): Promise<void> {
     chai.assert.exists(appStudioObject.teamsAppId);
     await this.getApp(appStudioObject.teamsAppId!);
@@ -63,12 +63,10 @@ export class AppStudioValidator {
       : undefined;
     chai.assert.isNotEmpty(appStudioToken);
     const requester = AppStudioValidator.createRequesterWithToken(
-      appStudioToken!
+      appStudioToken!,
     );
     try {
-      const response = await requester.delete(
-        `/api/appdefinitions/${teamsAppId}`
-      );
+      const response = await requester.delete(`/v1.0/apps/${teamsAppId}`);
       chai.assert.isTrue(response.status >= 200 && response.status < 300);
       return;
     } catch (e) {
@@ -82,7 +80,7 @@ export class AppStudioValidator {
    * @param teamsAppId Teams app id defined in manifest.json file
    */
   public static async cancelStagedAppInTeamsAppCatalog(
-    teamsAppId?: string
+    teamsAppId?: string,
   ): Promise<void> {
     if (!teamsAppId) {
       console.warn("teamsAppId is undefined, no need to cancel staged app.");
@@ -97,7 +95,7 @@ export class AppStudioValidator {
     chai.assert.isNotEmpty(appStudioToken);
 
     const requester = AppStudioValidator.createRequesterWithToken(
-      appStudioToken!
+      appStudioToken!,
     );
     try {
       const response = await requester.get(`/api/publishing/${teamsAppId}`);
@@ -107,41 +105,40 @@ export class AppStudioValidator {
         const appDefinitionId = results[0].appDefinitions[0]?.id;
         if (publishedAppId && appDefinitionId) {
           const response = await requester.delete(
-            `/api/publishing/${publishedAppId}/appdefinitions/${appDefinitionId}`
+            `/api/publishing/${publishedAppId}/appdefinitions/${appDefinitionId}`,
           );
           chai.assert.isTrue(response.status >= 200 && response.status < 300);
           console.log(`Stagged app ${teamsAppId} has been cacelled.`);
         } else {
           console.warn(
-            `Cannot cancel stagged app, published app id: ${publishedAppId} or app definition id: ${appDefinitionId} is undefined.`
+            `Cannot cancel stagged app, published app id: ${publishedAppId} or app definition id: ${appDefinitionId} is undefined.`,
           );
         }
       } else {
         console.warn(
-          `Cannot find stagged app ${teamsAppId} from Teams app catalog`
+          `Cannot find stagged app ${teamsAppId} from Teams app catalog`,
         );
       }
     } catch (e) {
       chai.assert.fail(
-        `Failed to cancel stagged app from Teams app catalog, error: ${e}`
+        `Failed to cancel stagged app from Teams app catalog, error: ${e}`,
       );
     }
   }
 
   private static createRequesterWithToken(
-    appStudioToken: string
+    appStudioToken: string,
   ): AxiosInstance {
     const instance = axios.create({
       baseURL: "https://dev.teams.microsoft.com",
     });
-    instance.defaults.headers.common[
-      "Authorization"
-    ] = `Bearer ${appStudioToken}`;
+    instance.defaults.headers.common["Authorization"] =
+      `Bearer ${appStudioToken}`;
     return instance;
   }
 
   public static async checkWetherAppExists(
-    teamsAppId: string
+    teamsAppId: string,
   ): Promise<boolean> {
     const appStudioTokenRes = await this.provider.getAccessToken({
       scopes: AppStudioScopes(),
@@ -155,9 +152,9 @@ export class AppStudioValidator {
     const requester =
       AppStudioValidator.createRequesterWithToken(appStudioToken);
     try {
-      const response = await requester.get(`/api/appdefinitions/${teamsAppId}`);
+      const response = await requester.get(`/v1.0/apps/${teamsAppId}`);
       const app = response.data;
-      return app && app.teamsAppId && app.teamsAppId === teamsAppId;
+      return app?.appId === teamsAppId;
     } catch (e) {
       return false;
     }
@@ -172,15 +169,13 @@ export class AppStudioValidator {
       : undefined;
     chai.assert.isNotEmpty(appStudioToken);
     const requester = AppStudioValidator.createRequesterWithToken(
-      appStudioToken!
+      appStudioToken!,
     );
     try {
-      const response = await requester.get(`/api/appdefinitions/${teamsAppId}`);
+      const response = await requester.get(`/v1.0/apps/${teamsAppId}`);
       chai.assert.isTrue(response && response.data);
       const app = response.data;
-      chai.assert.isTrue(
-        app && app.teamsAppId && app.teamsAppId === teamsAppId
-      );
+      chai.assert.equal(app?.appId, teamsAppId);
       return app;
     } catch (e) {
       chai.assert.fail(`Failed to get Teams App, error: ${e}`);
