@@ -39,6 +39,7 @@ const allowedStepTypes = new Set([
   "addApiAuthConfiguration",
   "regenerateDaAction",
   "packageApp",
+  "closeDebugBrowser",
   "publishDeveloperPortal",
   "share",
   "target",
