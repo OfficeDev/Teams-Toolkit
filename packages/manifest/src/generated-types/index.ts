@@ -7,6 +7,7 @@ import Ajv2020 from "ajv/dist/2020";
 import fs from "fs-extra";
 import fetch from "../fetchHelper";
 import path from "path";
+import { SchemaFetchError } from "../SchemaFetchError";
 import stripBom from "strip-bom";
 import * as DeclarativeAgentManifestV1D0 from "./copilot/declarative-agent/DeclarativeAgentManifestV1D0";
 import * as DeclarativeAgentManifestV1D2 from "./copilot/declarative-agent/DeclarativeAgentManifestV1D2";
@@ -474,11 +475,7 @@ export class AppManifestUtils {
       const cleanedText = text.replace(/\\a/g, "\\u0007").replace(/\\v/g, "\\u000b");
       result = JSON.parse(cleanedText) as JSONSchemaType<AppManifest>;
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        throw new Error(`Failed to get manifest at url ${schemaUrl} due to: ${e.message}`);
-      } else {
-        throw new Error(`Failed to get manifest at url ${schemaUrl} due to: unknown error`);
-      }
+      throw new SchemaFetchError(schemaUrl, e);
     }
     return result;
   }

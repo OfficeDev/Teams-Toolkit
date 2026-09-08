@@ -17,8 +17,10 @@ import {
 } from "./generated-types";
 import { TeamsAppManifest } from "./manifest";
 import { PluginManifestSchema } from "./pluginManifest";
+import { SchemaFetchError } from "./SchemaFetchError";
 
 export * from "./declarativeCopilotManifest";
+export * from "./SchemaFetchError";
 export * from "./generated-types";
 export * from "./manifest";
 export * from "./manifestTemplate";
@@ -147,11 +149,7 @@ export class ManifestUtil {
       const cleanedText = text.replace(/\\a/g, "\\x07");
       result = JSON.parse(cleanedText) as JSONSchemaType<T>;
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        throw new Error(`Failed to get manifest at url ${schemaUrl} due to: ${e.message}`);
-      } else {
-        throw new Error(`Failed to get manifest at url ${schemaUrl} due to: unknown error`);
-      }
+      throw new SchemaFetchError(schemaUrl, e);
     }
     return result;
   }

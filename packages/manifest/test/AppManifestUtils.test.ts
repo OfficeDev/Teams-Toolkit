@@ -3,6 +3,7 @@ import "mocha";
 import fs from "fs-extra";
 import sinon from "sinon";
 import { AppManifestUtils } from "../src";
+import { SchemaFetchError } from "../src";
 import * as fetchHelper from "../src/fetchHelper";
 
 describe("AppManifestUtils", async () => {
@@ -81,6 +82,41 @@ describe("AppManifestUtils", async () => {
       );
       assert.isTrue(fetchStub.calledOnce);
       assert.isTrue(mockResponse.text.calledOnce);
+    });
+    it("should throw SchemaFetchError preserving the cause when fetch fails", async () => {
+      sandbox.stub(fs, "pathExists").resolves(false);
+      const fetchError = new Error("Network error");
+      sandbox.stub(fetchHelper, "default").rejects(fetchError);
+
+      try {
+        await AppManifestUtils.fetchSchema("https://abc.schema.json");
+        assert.fail("Expected error not thrown");
+      } catch (error: unknown) {
+        assert.instanceOf(error, SchemaFetchError);
+        const schemaFetchError = error as SchemaFetchError;
+        assert.strictEqual(schemaFetchError.schemaUrl, "https://abc.schema.json");
+        assert.strictEqual(schemaFetchError.cause, fetchError);
+        assert.strictEqual(
+          schemaFetchError.message,
+          "Failed to get manifest at url https://abc.schema.json due to: Network error"
+        );
+      }
+    });
+    it("should throw SchemaFetchError with unknown-error message for non-Error cause", async () => {
+      sandbox.stub(fs, "pathExists").resolves(false);
+      sandbox.stub(fetchHelper, "default").callsFake(() => Promise.reject("string error"));
+
+      try {
+        await AppManifestUtils.fetchSchema("https://abc.schema.json");
+        assert.fail("Expected error not thrown");
+      } catch (error: unknown) {
+        assert.instanceOf(error, SchemaFetchError);
+        assert.strictEqual((error as SchemaFetchError).cause, "string error");
+        assert.strictEqual(
+          (error as SchemaFetchError).message,
+          "Failed to get manifest at url https://abc.schema.json due to: unknown error"
+        );
+      }
     });
   });
 
