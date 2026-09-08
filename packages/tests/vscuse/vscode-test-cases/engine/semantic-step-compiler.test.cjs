@@ -6767,7 +6767,7 @@ test("VCB-152: packageApp preserves the recorded local package flow and rejects 
   }
 });
 
-test("VCB-165: packageApp packages a configured TypeSpec action before provision", async () => {
+test("VCB-165 VCB-195: packageApp prepares a configured TypeSpec action before packaging and provision", async () => {
   const sourceText = `version: 1
 cases:
   - id: typespec-package
@@ -6815,7 +6815,26 @@ steps:
     true,
   );
   assert.equal(typedValues.includes("dev"), true);
-  assert.equal(typedValues.includes("npm run generate:env"), false);
+  const preparation = plan.steps.filter((step) =>
+    step.step_id.startsWith("step_generateTypeSpecEnvironment_"),
+  );
+  assert.equal(preparation.length, 7);
+  assert.equal(preparation[0].tool, "keyboard_shortcut");
+  assert.equal(preparation[1].agent, "assertion");
+  assert.equal(preparation[2].tool, "type_text");
+  assert.equal(
+    preparation[2].parameters.text,
+    "cd \"/home/vscode/AgentsToolkitProjects/${{var:app_name}}\" && npm run generate:env -- dev && printf '\\nVSCUSE_TYPESPEC_ENV_%s\\n' GENERATED",
+  );
+  assert.equal(preparation[3].parameters.key, "enter");
+  assert.equal(preparation[4].agent, "assertion");
+  assert.match(preparation[4].description, /VSCUSE_TYPESPEC_ENV_GENERATED/);
+  assert.equal(preparation[5].parameters.keys, "ctrl+`");
+  assert.equal(preparation[6].agent, "assertion");
+  const commandIndex = plan.steps.findIndex(
+    (step) => step.parameters.text === "Microsoft 365 Agents: Zip App Package",
+  );
+  assert.ok(plan.steps.indexOf(preparation[6]) < commandIndex);
   assert.equal(
     plan.steps.some((step) =>
       step.description.includes("App package successfully built at"),
@@ -6894,6 +6913,21 @@ steps:
   assert.notEqual(provisionIndex, -1);
   assert.equal(packageIndex < loginIndex, true);
   assert.equal(loginIndex < provisionIndex, true);
+  const preparationIndex = migratedSteps.findIndex((step) =>
+    step.description.includes("VSCUSE_TYPESPEC_ENV_GENERATED"),
+  );
+  assert.ok(preparationIndex >= 0 && preparationIndex < packageIndex);
+  const provisionOnly = fixture.value.find(
+    ({ caseId }) => caseId === "da-typespec-with-action-remote-preview",
+  );
+  assert.ok(provisionOnly);
+  assert.equal(
+    JSON.stringify(provisionOnly.plan).includes("generate:env"),
+    false,
+  );
+  const oauth = await compileFixture("da-typespec-oauth.yml", (text) => text);
+  assert.equal(oauth.ok, true, oauth.diagnostics?.[0]?.code);
+  assert.equal(JSON.stringify(oauth.value).includes("generate:env"), false);
 });
 
 test("VCB-166: no-action API-key configuration uses coordinate-free prompts before provision", async () => {

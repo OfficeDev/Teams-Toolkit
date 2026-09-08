@@ -89,6 +89,9 @@ steps:
             - "// @conversationStarter(#{"
             - "// op searchIssues is global.GitHubAPI.searchIssues;"
 
+  # ADO 33517192 step 3 requires generate:env before standalone packaging.
+  # The GitHub-issues package adapter emits this preparation; provisioning
+  # has not run yet and the product package command does not generate env.tsp.
   package-dev:
     type: packageApp
     with:

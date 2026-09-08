@@ -2633,6 +2633,16 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
+    if (
+      packagesTypeSpec &&
+      state.completed.has("configureTypeSpecAction:github-issues")
+    ) {
+      error = append(
+        output,
+        render(state, "workspace/generate-typespec-environment.json.tpl", {}),
+      );
+      if (error) return error;
+    }
     error = append(
       output,
       render(state, "command-palette/execute-command.json.tpl", {
