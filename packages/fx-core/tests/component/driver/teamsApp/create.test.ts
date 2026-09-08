@@ -5,7 +5,7 @@ import { err, UserError } from "@microsoft/teamsfx-api";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import { v4 as uuid } from "uuid";
-import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import { SovereignCloudEnvironment } from "../../../../src/common/accountUtils";
 import { FeatureFlagName } from "../../../../src/common/featureFlags";
 import { CreateTeamsAppDriver } from "../../../../src/component/driver/teamsApp/create";
@@ -34,8 +34,13 @@ describe("teamsApp/create", async () => {
     tenantId: uuid(),
   };
 
+  beforeEach(() => {
+    process.env[FeatureFlagName.NewDeveloperPortalApis] = "true";
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
     restoreEnv?.();
     restoreEnv = undefined;
   });
@@ -86,6 +91,7 @@ describe("teamsApp/create", async () => {
   });
 
   it("happy path", async () => {
+    process.env[FeatureFlagName.NewDeveloperPortalApis] = "true";
     const args: CreateTeamsAppArgs = {
       name: appDef.appName!,
     };
@@ -105,6 +111,19 @@ describe("teamsApp/create", async () => {
     }
   });
 
+  it("uses legacy app package import by default", async () => {
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
+    const args: CreateTeamsAppArgs = { name: appDef.appName! };
+    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    const createAppSpy = vi.spyOn(teamsDevPortalClient, "createApp");
+
+    const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
+
+    chai.assert.isTrue(result.isOk());
+    expect(importAppSpy).toHaveBeenCalledOnce();
+    expect(createAppSpy).not.toHaveBeenCalled();
+  });
+
   it("app exists", async () => {
     const args: CreateTeamsAppArgs = {
       name: appDef.appName!,
@@ -117,6 +136,25 @@ describe("teamsApp/create", async () => {
     const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
     chai.assert.isTrue(result.isOk());
     expect(createAppSpy).not.toHaveBeenCalled();
+  });
+
+  it("preserves the manifest app ID when the Developer Portal resource ID differs", async () => {
+    const teamsAppId = uuid();
+    const resourceAppId = uuid();
+    restoreEnv = mockedEnv({ TEAMS_APP_ID: teamsAppId });
+    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue({
+      ...appDef,
+      teamsAppId,
+      appId: resourceAppId,
+    });
+
+    const result = (await teamsAppDriver.execute({ name: appDef.appName! }, mockedDriverContext))
+      .result;
+
+    chai.assert.isTrue(result.isOk());
+    if (result.isOk()) {
+      chai.assert.equal(result.value.get("TEAMS_APP_ID"), teamsAppId);
+    }
   });
 
   it("does not create a replacement when existing app lookup fails", async () => {

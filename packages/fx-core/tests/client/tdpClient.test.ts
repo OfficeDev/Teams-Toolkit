@@ -5,8 +5,9 @@ import axios, { AxiosResponse } from "axios";
 import mockedEnv from "mocked-env";
 import { v4 as uuid } from "uuid";
 import { chai, vi } from "vitest";
-import { teamsDevPortalClient } from "../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../src/client/teamsDevPortalClientProvider";
 import { setTools } from "../../src/common/globalVars";
+import { FeatureFlagName } from "../../src/common/featureFlags";
 import { RetryHandler } from "../../src/common/retryHandler";
 import * as telemetry from "../../src/common/telemetry";
 import { SignInAudienceNotAllowedError } from "../../src/component/driver/aad/error/signInAudienceNotAllowedError";
@@ -107,11 +108,13 @@ describe("TeamsDevPortalClient Test", () => {
   };
   beforeEach(() => {
     RetryHandler.RETRIES = 1;
+    process.env[FeatureFlagName.NewDeveloperPortalApis] = "true";
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     RetryHandler.RETRIES = 6;
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
   });
 
   describe("setRegionEndpointByToken", () => {
@@ -2471,6 +2474,117 @@ describe("TeamsDevPortalClient Test", () => {
       } catch (error) {
         chai.assert.exists(error);
       }
+    });
+  });
+
+  describe("legacy Developer Portal APIs", () => {
+    beforeEach(() => {
+      delete process.env[FeatureFlagName.NewDeveloperPortalApis];
+    });
+
+    it("uses legacy app definition routes", async () => {
+      const requester = axios.create();
+      vi.spyOn(teamsDevPortalClient, "createRequesterWithToken").mockReturnValue(requester);
+      const getSpy = vi
+        .spyOn(requester, "get")
+        .mockResolvedValueOnce({ data: [appDef] })
+        .mockResolvedValueOnce({ data: appDef })
+        .mockResolvedValueOnce({ data: "base64-package" })
+        .mockResolvedValueOnce({ data: true });
+      const deleteSpy = vi.spyOn(requester, "delete").mockResolvedValue({ data: true });
+      teamsDevPortalClient.setRegionEndpoint("https://dev.teams.microsoft.com/amer");
+
+      await teamsDevPortalClient.listApps(token);
+      await teamsDevPortalClient.getApp(token, appDef.teamsAppId!);
+      await teamsDevPortalClient.getAppPackage(token, appDef.teamsAppId!);
+      await teamsDevPortalClient.checkExistsInTenant(token, appDef.teamsAppId!);
+      await teamsDevPortalClient.deleteApp(token, appDef.teamsAppId!);
+
+      expect(getSpy.mock.calls.map((call) => call[0])).toEqual([
+        "/api/appdefinitions",
+        `/api/appdefinitions/${appDef.teamsAppId}`,
+        `/api/appdefinitions/${appDef.teamsAppId}/manifest`,
+        `/api/appdefinitions/manifest/${appDef.teamsAppId}`,
+      ]);
+      expect(deleteSpy).toHaveBeenCalledWith(`/api/appdefinitions/${appDef.teamsAppId}`);
+    });
+
+    it("uses the legacy owner route", async () => {
+      const requester = axios.create();
+      vi.spyOn(teamsDevPortalClient, "createRequesterWithToken").mockReturnValue(requester);
+      const userToRemove: AppUser = {
+        tenantId: "tenant-id",
+        aadId: "user-id",
+        displayName: "User",
+        userPrincipalName: "user@example.com",
+        isAdministrator: true,
+      };
+      vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue({
+        ...appDef,
+        userList: [userToRemove],
+      });
+      const postSpy = vi.spyOn(requester, "post").mockResolvedValue({
+        data: { ...appDef, userList: [] },
+      });
+
+      await teamsDevPortalClient.removePermission(token, appDef.teamsAppId!, userToRemove);
+
+      expect(postSpy).toHaveBeenCalledWith(
+        `/api/appdefinitions/${appDef.teamsAppId}/owner`,
+        expect.objectContaining({ userList: [] })
+      );
+    });
+
+    it("uses legacy validation routes and payloads", async () => {
+      const requester = axios.create();
+      vi.spyOn(teamsDevPortalClient, "createRequesterWithToken").mockReturnValue(requester);
+      const postSpy = vi.spyOn(requester, "post").mockResolvedValue({ data: {} });
+      const getSpy = vi.spyOn(requester, "get").mockResolvedValue({
+        data: { appValidations: [] },
+      });
+
+      await teamsDevPortalClient.partnerCenterAppPackageValidation(token, Buffer.from("package"));
+      await teamsDevPortalClient.submitAppValidationRequest(token, appDef.teamsAppId!);
+      await teamsDevPortalClient.getAppValidationRequestList(token, appDef.teamsAppId!);
+      await teamsDevPortalClient.getAppValidationById(token, "validation-id");
+
+      expect(postSpy.mock.calls[0][0]).toBe(
+        "/api/appdefinitions/partnerCenterAppPackageValidation"
+      );
+      expect(postSpy.mock.calls[1]).toEqual([
+        "/api/v1.0/appvalidations/appdefinition/validate",
+        { AppEnvironmentId: null, appDefinitionId: appDef.teamsAppId },
+      ]);
+      expect(getSpy.mock.calls.map((call) => call[0])).toEqual([
+        `/api/v1.0/appvalidations/appdefinitions/${appDef.teamsAppId}`,
+        "/api/v1.0/appvalidations/validation-id",
+      ]);
+    });
+
+    it("uses legacy bot framework methods and routes", async () => {
+      const requester = axios.create();
+      vi.spyOn(teamsDevPortalClient, "createRequesterWithToken").mockReturnValue(requester);
+      const getSpy = vi.spyOn(requester, "get").mockResolvedValue({ status: 200, data: sampleBot });
+      const postSpy = vi
+        .spyOn(requester, "post")
+        .mockResolvedValue({ status: 200, data: sampleBot });
+      const deleteSpy = vi.spyOn(requester, "delete").mockResolvedValue({ status: 200 });
+
+      await teamsDevPortalClient.getBotRegistration(token, sampleBot.botId!);
+      await teamsDevPortalClient.listBots(token);
+      await teamsDevPortalClient.createBotRegistration(token, sampleBot, false);
+      await teamsDevPortalClient.updateBotRegistration(token, sampleBot);
+      await teamsDevPortalClient.deleteBot(token, sampleBot.botId!);
+
+      expect(getSpy.mock.calls.map((call) => call[0])).toEqual([
+        `/api/botframework/${sampleBot.botId}`,
+        "/api/botframework",
+      ]);
+      expect(postSpy.mock.calls.map((call) => call[0])).toEqual([
+        "/api/botframework",
+        `/api/botframework/${sampleBot.botId}`,
+      ]);
+      expect(deleteSpy).toHaveBeenCalledWith(`/api/botframework/${sampleBot.botId}`);
     });
   });
 });

@@ -22,7 +22,7 @@ import { merge } from "lodash";
 import { EOL } from "os";
 import * as path from "path";
 import { Service } from "typedi";
-import { teamsDevPortalClient } from "../../../client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../client/teamsDevPortalClientProvider";
 import { SovereignCloudEnvironment } from "../../../common/accountUtils";
 import { AppStudioScopes } from "../../../common/constants";
 import { FeatureFlagName } from "../../../common/featureFlags";

@@ -147,6 +147,20 @@ describe("Wrapped Axios Client Test", () => {
     expect(telemetryChecker).toHaveBeenCalledOnce();
   });
 
+  it("reports the region for a new Developer Portal endpoint", async () => {
+    const mockedRequest = {
+      method: "GET",
+      baseURL: "https://dev.teams.microsoft.com/cosmicprodamer",
+      url: "/v1.0/apps",
+      params: {},
+    } as any;
+    const telemetryChecker = vi.spyOn(mockTools.telemetryReporter, "sendTelemetryEvent");
+
+    WrappedAxiosClient.onRequest(mockedRequest);
+
+    expect(telemetryChecker.mock.calls[0][1]).toMatchObject({ region: "cosmicprodamer" });
+  });
+
   it("classifies the new create app route", () => {
     const apiName = WrappedAxiosClient.convertUrlToApiName(
       `${getResourceServiceEndpoint(ResourceServiceType.TDP)}/v1.0/apps`,
@@ -154,6 +168,24 @@ describe("Wrapped Axios Client Test", () => {
     );
 
     expect(apiName).toBe(APP_STUDIO_API_NAMES.CREATE_APP);
+  });
+
+  it.each([
+    ["/api/appdefinitions/v2/import", "POST", APP_STUDIO_API_NAMES.CREATE_APP],
+    ["/api/appdefinitions/app-id", "GET", APP_STUDIO_API_NAMES.GET_APP],
+    ["/api/appdefinitions/app-id", "DELETE", APP_STUDIO_API_NAMES.DELETE_APP],
+    ["/api/botframework", "POST", APP_STUDIO_API_NAMES.CREATE_BOT],
+    ["/v1.0/apps/app-id/apppackage", "PUT", APP_STUDIO_API_NAMES.UPDATE_APP],
+    ["/v1.0/apps/app-id", "GET", APP_STUDIO_API_NAMES.GET_APP],
+    ["/v1.0/botregistrations", "POST", APP_STUDIO_API_NAMES.CREATE_BOT],
+    ["/v1.0/appvalidation/apppackage/validate", "POST", APP_STUDIO_API_NAMES.VALIDATE_APP_PACKAGE],
+  ])("classifies Developer Portal route %s", (path, method, expectedApiName) => {
+    const apiName = WrappedAxiosClient.convertUrlToApiName(
+      `${getResourceServiceEndpoint(ResourceServiceType.TDP)}${path}`,
+      method
+    );
+
+    expect(apiName).toBe(expectedApiName);
   });
 
   it("Dependency API start telemetry", async () => {

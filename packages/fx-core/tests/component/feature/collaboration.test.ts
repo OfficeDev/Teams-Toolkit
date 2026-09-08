@@ -5,7 +5,7 @@ import { FxError } from "@microsoft/teamsfx-api";
 import axios from "axios";
 import { err, ok } from "neverthrow";
 import { GraphClient } from "../../../src/client/graphClient";
-import { teamsDevPortalClient } from "../../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../src/client/teamsDevPortalClientProvider";
 import { setTools } from "../../../src/common/globalVars";
 import { AadAppClient } from "../../../src/client/aadAppClient";
 import { AppUser } from "../../../src/component/driver/teamsApp/interfaces/appdefinitions/appUser";

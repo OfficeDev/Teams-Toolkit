@@ -15,7 +15,7 @@ import {
 import { AsyncAppValidationResultsResponse } from "../../../../src/component/driver/teamsApp/interfaces/AsyncAppValidationResultsResponse";
 import { ValidateWithTestCasesArgs } from "../../../../src/component/driver/teamsApp/interfaces/ValidateWithTestCasesArgs";
 import { teamsappMgr } from "../../../../src/component/driver/teamsApp/teamsappMgr";
-import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import { metadataUtil } from "../../../../src/component/utils/metadataUtil";
 import { ValidateWithTestCasesDriver } from "../../../../src/component/driver/teamsApp/validateTestCases";
 import { InvalidActionInputError, UserCancelError } from "../../../../src/error/common";

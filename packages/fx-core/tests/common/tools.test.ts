@@ -9,7 +9,7 @@ import * as path from "path";
 import { afterEach, beforeEach, chai, vi } from "vitest";
 import { pathUtils } from "../../src";
 import { GraphClient } from "../../src/client/graphClient";
-import { teamsDevPortalClient } from "../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../src/client/teamsDevPortalClientProvider";
 import { setTools } from "../../src/common/globalVars";
 import { getProjectMetadata } from "../../src/common/projectSettingsHelper";
 import * as projectTypeChecker from "../../src/common/projectTypeChecker";

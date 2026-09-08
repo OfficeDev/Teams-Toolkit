@@ -50,7 +50,7 @@ import * as path from "path";
 import "reflect-metadata";
 import { Container } from "typedi";
 import { pathToFileURL } from "url";
-import { teamsDevPortalClient } from "../client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../client/teamsDevPortalClientProvider";
 import { ApiKeyParameters, AuthParameters } from "../common/authInterface";
 import { throwIfAborted } from "../common/cancellation";
 import {

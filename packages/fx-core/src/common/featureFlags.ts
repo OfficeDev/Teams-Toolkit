@@ -45,6 +45,7 @@ export class FeatureFlagName {
   // Global switch for the v4 architecture (currently routes scaffold template
   // resolution through the v4 distribution channel).
   static readonly V4Enabled = "TEAMSFX_V4_ENABLED";
+  static readonly NewDeveloperPortalApis = "TEAMSFX_NEW_DP_APIS";
 }
 
 export interface FeatureFlag {
@@ -116,6 +117,10 @@ export class FeatureFlags {
   };
   static readonly V4Enabled = {
     name: FeatureFlagName.V4Enabled,
+    defaultValue: "false",
+  };
+  static readonly NewDeveloperPortalApis = {
+    name: FeatureFlagName.NewDeveloperPortalApis,
     defaultValue: "false",
   };
   static readonly MCPForDADT = {

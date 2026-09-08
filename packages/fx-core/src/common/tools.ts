@@ -12,7 +12,7 @@ import path from "path";
 import Container from "typedi";
 import { parseDocument } from "yaml";
 import { GraphClient } from "../client/graphClient";
-import { teamsDevPortalClient } from "../client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../client/teamsDevPortalClientProvider";
 import { DriverContext } from "../component/driver/interface/commonArgs";
 import { NpmBuildDriver } from "../component/driver/script/npmBuildDriver";
 import { TypeSpecCompileDriver } from "../component/driver/typeSpec/compile";

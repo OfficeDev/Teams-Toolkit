@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import * as util from "util";
-import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import * as localizeUtils from "../../../../src/common/localizeUtils";
 import { CreateOrUpdateBotFrameworkBotDriver } from "../../../../src/component/driver/botFramework/createOrUpdateBot";
 import { IBotRegistration } from "../../../../src/component/resource/botService/appStudio/interfaces/IBotRegistration";

@@ -6,7 +6,7 @@ import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import { v4 as uuid } from "uuid";
-import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClient";
+import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import { SovereignCloudEnvironment } from "../../../../src/common/accountUtils";
 import { FeatureFlagName } from "../../../../src/common/featureFlags";
 import { ConfigureTeamsAppDriver } from "../../../../src/component/driver/teamsApp/configure";
@@ -34,8 +34,13 @@ describe("teamsApp/update", async () => {
     userList: [],
   };
 
+  beforeEach(() => {
+    process.env[FeatureFlagName.NewDeveloperPortalApis] = "true";
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
     restoreEnv?.();
     restoreEnv = undefined;
   });
@@ -233,6 +238,28 @@ describe("teamsApp/update", async () => {
     chai.assert.isTrue(result.isOk());
     expect(updateAppSpy).toHaveBeenCalledOnce();
     expect(updateAppSpy.mock.calls[0][1]).toBe(resourceAppId);
+  });
+
+  it("uses legacy app package import by default", async () => {
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
+    const args: ConfigureTeamsAppArgs = { appPackagePath: "fakePath" };
+    const appId = uuid();
+    const zip = new AdmZip();
+    const manifest = new TeamsAppManifest();
+    manifest.id = appId;
+    zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest)));
+    const archivedFile = zip.toBuffer();
+    vi.spyOn(fs, "pathExists").mockResolvedValue(true);
+    vi.spyOn(fs, "readFile").mockResolvedValue(archivedFile);
+    vi.spyOn(teamsDevPortalClient, "getApp").mockResolvedValue({ ...appDef, teamsAppId: appId });
+    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+    const updateAppSpy = vi.spyOn(teamsDevPortalClient, "updateApp");
+
+    const result = (await teamsAppDriver.execute(args, mockedDriverContext)).result;
+
+    chai.assert.isTrue(result.isOk());
+    expect(importAppSpy).toHaveBeenCalledWith("fakeToken", archivedFile, true);
+    expect(updateAppSpy).not.toHaveBeenCalled();
   });
 
   it("execute", async () => {

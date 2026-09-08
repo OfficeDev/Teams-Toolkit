@@ -7,7 +7,10 @@ import fs from "fs-extra";
 import { merge } from "lodash";
 import { Service } from "typedi";
 import isUUID from "validator/lib/isUUID";
-import { teamsDevPortalClient } from "../../../client/teamsDevPortalClient";
+import {
+  isUsingNewDeveloperPortalApis,
+  teamsDevPortalClient,
+} from "../../../client/teamsDevPortalClientProvider";
 import { AppStudioScopes } from "../../../common/constants";
 import { getLocalizedString } from "../../../common/localizeUtils";
 import { FileNotFoundError, InvalidActionInputError } from "../../../error/common";
@@ -128,11 +131,9 @@ export class ConfigureTeamsAppDriver implements StepDriver {
     try {
       let message = getLocalizedString("driver.teamsApp.progressBar.updateTeamsAppStepMessage");
 
-      const appDefinition = await teamsDevPortalClient.updateApp(
-        appStudioToken,
-        resolvedAppId,
-        archivedFile
-      );
+      const appDefinition = isUsingNewDeveloperPortalApis()
+        ? await teamsDevPortalClient.updateApp(appStudioToken, resolvedAppId, archivedFile)
+        : await teamsDevPortalClient.importApp(appStudioToken, archivedFile, true);
       message = getLocalizedString(
         "plugins.appstudio.teamsAppUpdatedLog",
         appDefinition.teamsAppId!

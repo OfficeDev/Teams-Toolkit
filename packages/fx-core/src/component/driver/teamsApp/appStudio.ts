@@ -26,7 +26,10 @@ import { basename, extname } from "path";
 import { Container } from "typedi";
 import * as util from "util";
 import isUUID from "validator/lib/isUUID";
-import { teamsDevPortalClient } from "../../../client/teamsDevPortalClient";
+import {
+  isUsingNewDeveloperPortalApis,
+  teamsDevPortalClient,
+} from "../../../client/teamsDevPortalClientProvider";
 import { AppStudioScopes } from "../../../common/constants";
 import { getDefaultString, getLocalizedString } from "../../../common/localizeUtils";
 import { FileNotFoundError, UserCancelError } from "../../../error/common";
@@ -316,7 +319,11 @@ export async function getAppPackage(
 
     const appPackage: AppPackage = {};
 
-    const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+    const buffer = isUsingNewDeveloperPortalApis()
+      ? Buffer.isBuffer(data)
+        ? data
+        : Buffer.from(data)
+      : Buffer.from(data, "base64");
     const zip = new AdmZip(buffer);
     const zipEntries = zip.getEntries(); // an array of ZipEntry records
 
