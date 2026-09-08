@@ -7,7 +7,7 @@ Microsoft Teams SDK for .NET (C#) patterns — app initialization, activity hand
 ## rules
 
 1. Add the NuGet packages: `Microsoft.Teams.Apps`, `Microsoft.Teams.AI`, `Microsoft.Teams.AI.Models.OpenAI`, and `Microsoft.Teams.Plugins.AspNetCore`. The SDK targets **.NET 8+** and uses the modern minimal API pattern. [teams.net source: Libraries/]
-2. Initialize with ASP.NET Core dependency injection: `builder.AddTeams()` registers core Teams services, then `app.UseTeams()` returns the `App` instance for handler registration. When no ClientId is configured, pass `skipAuth: true` to disable auth validation: `builder.AddTeams(skipAuth: true)`. This replaces the TS `Application.create()` pattern. [teams.net source: HostApplicationBuilder.cs]
+2. Initialize with ASP.NET Core dependency injection: `builder.AddTeams()` registers core Teams services, then `app.UseTeams()` returns the `App` instance for handler registration. This replaces the TS `Application.create()` pattern. [teams.net source: HostApplicationBuilder.cs]
 3. Register activity handlers using fluent methods: `teams.OnMessage(async (context, ct) => { ... })`. Supports pattern matching: `teams.OnMessage(@"^hi$", async (context, ct) => { ... })`. Handlers are checked in registration order — first match wins. [teams.net source: App.cs]
 4. All handlers receive `IContext<TActivity>` and `CancellationToken`. Access the activity via `context.Activity`, the API client via `context.Api`, storage via `context.Storage`, and logger via `context.Log`. This replaces the TS `TurnContext` pattern. [teams.net source: Context.cs]
 5. Send messages with `await context.Send("text", ct)` or `await context.Reply("reply", ct)`. The `Send` method accepts strings, `ActivityParams`, or `AdaptiveCard` objects. For typing indicators, use `await context.Typing(cancellationToken: ct)`. [teams.net source: Context.cs]
@@ -29,7 +29,7 @@ using Microsoft.Teams.Apps.Extensions;
 using Microsoft.Teams.Plugins.AspNetCore.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.AddTeams(skipAuth: true);
+builder.AddTeams();
 
 var app = builder.Build();
 var teams = app.UseTeams();
@@ -53,7 +53,7 @@ using Microsoft.Teams.Apps.Extensions;
 using Microsoft.Teams.Plugins.AspNetCore.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.AddTeams(skipAuth: true);
+builder.AddTeams();
 
 var azureClient = new AzureOpenAIClient(
     new Uri(builder.Configuration["AzureOpenAIEndpoint"]!),
