@@ -10508,45 +10508,169 @@ test("VCB-191: second-F5 feature retains JavaScript echo coverage and routing", 
   );
 });
 
-test("VCB-192: verified deferred Azure Search replaces its legacy plan", async () => {
+test("VCB-193: same-profile browser relaunch reuses authentication", async () => {
   const result = await compileFixture(
-    "custom-copilot-rag-azure-ai-search.yml",
+    "feature-local-debug-second-f5.yml",
     (sourceText) => sourceText,
   );
   assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
-  const caseId = "feature-local-debug-ai-search-without-azure-openai-keys";
-  const legacy = "Feature_LocalDebug_AI_Search_without_AzureOpenAI_Keys.json";
-  const generated = result.value.find((entry) => entry.caseId === caseId);
-  assert.notEqual(generated, undefined);
-  assert.equal(generated.fileName, `${caseId}.json`);
-  assert.equal(
-    generated.plan.plan_metadata.description.workitem,
-    "31256782,33502084",
+  const steps = result.value[0].plan.steps;
+  const signIns = steps.filter((step) =>
+    step.step_id.startsWith("step_browserM365PasswordSignIn_assertPassword_"),
   );
-  assert.deepEqual(
-    generated.plan.steps
-      .filter((step) =>
-        step.step_id.startsWith("step_deferredTextInput_input_"),
-      )
-      .map((step) => step.parameters.text),
-    [
+  assert.equal(signIns.length, 1);
+  const stoppedIndex = steps.findIndex((step) =>
+    step.step_id.startsWith("step_assertDebugStopped_"),
+  );
+  assert.equal(steps.indexOf(signIns[0]) < stoppedIndex, true);
+  assert.equal(
+    steps
+      .slice(stoppedIndex + 1)
+      .some((step) =>
+        step.description.includes("Microsoft Teams app details page"),
+      ),
+    true,
+  );
+  assert.equal(
+    steps
+      .slice(stoppedIndex + 1)
+      .some((step) =>
+        step.step_id.startsWith("step_addAndOpenApp_assertReady_"),
+      ),
+    true,
+  );
+  const withoutClose = await compileFixture(
+    "feature-local-debug-second-f5.yml",
+    (sourceText) => sourceText.replace("        close-debug-browser,\n", ""),
+  );
+  assert.equal(withoutClose.ok, true, withoutClose.diagnostics?.[0]?.code);
+  assert.equal(
+    withoutClose.value[0].plan.steps.filter((step) =>
+      step.step_id.startsWith("step_browserM365PasswordSignIn_assertPassword_"),
+    ).length,
+    2,
+  );
+});
+
+for (const variant of [
+  {
+    name: "Azure OpenAI",
+    caseId: "feature-local-debug-ai-search-without-azure-openai-keys",
+    legacy: "Feature_LocalDebug_AI_Search_without_AzureOpenAI_Keys.json",
+    runtimeInputs: [
       "${{secret:AZURE_OPENAI_API_KEY}}",
       "${{env:AZURE_OPENAI_MODEL}}",
       "${{env:AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME}}",
       "${{secret:AZURE_SEARCH_KEY}}",
     ],
-  );
-  for (const prefix of [
-    "step_emptyTextInput_assertQuestion_",
-    "step_assertChatReplied_",
-    "step_assertChatNotContains_",
-  ]) {
-    assert.equal(
-      generated.plan.steps.some((step) => step.step_id.startsWith(prefix)),
-      true,
-      prefix,
+  },
+  {
+    name: "OpenAI",
+    caseId: "feature-local-debug-ai-search-without-openai-keys",
+    legacy: "Feature_LocalDebug_AI_Search_without_OpenAI_Keys.json",
+    runtimeInputs: [
+      "${{secret:AZURE_OPENAI_API_KEY}}",
+      "${{secret:AZURE_SEARCH_KEY}}",
+    ],
+  },
+]) {
+  test(`VCB-192: verified deferred ${variant.name} Search replaces its legacy plan`, async () => {
+    const result = await compileFixture(
+      "custom-copilot-rag-azure-ai-search.yml",
+      (sourceText) => sourceText,
     );
-  }
+    assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+    const { caseId, legacy } = variant;
+    const generated = result.value.find((entry) => entry.caseId === caseId);
+    assert.notEqual(generated, undefined);
+    assert.equal(generated.fileName, `${caseId}.json`);
+    assert.equal(
+      generated.plan.plan_metadata.description.workitem,
+      "31256782,33502084",
+    );
+    assert.deepEqual(
+      generated.plan.steps
+        .filter((step) =>
+          step.step_id.startsWith("step_deferredTextInput_input_"),
+        )
+        .map((step) => step.parameters.text),
+      variant.runtimeInputs,
+    );
+    for (const prefix of [
+      "step_emptyTextInput_assertQuestion_",
+      "step_assertChatReplied_",
+      "step_assertChatNotContains_",
+    ]) {
+      assert.equal(
+        generated.plan.steps.some((step) => step.step_id.startsWith(prefix)),
+        true,
+        prefix,
+      );
+    }
+    assert.equal(
+      fsSync.existsSync(path.join(casesDirectory, "..", "plans", legacy)),
+      false,
+    );
+    const mapping = await fs.readFile(
+      path.join(casesDirectory, "legacy-case-mapping.md"),
+      "utf8",
+    );
+    assert.equal(
+      mapping
+        .split("\n")
+        .some(
+          (line) =>
+            line.includes(legacy) &&
+            line.includes(`${caseId}.json`) &&
+            line.includes("| Full |"),
+        ),
+      true,
+    );
+  });
+}
+
+test("VCB-194: verified second-F5 replacement retires only its legacy", async () => {
+  const result = await compileFixture(
+    "feature-local-debug-second-f5.yml",
+    (sourceText) => sourceText,
+  );
+  assert.equal(result.ok, true, result.diagnostics?.[0]?.code);
+  assert.equal(result.value.length, 1);
+  const generated = result.value[0];
+  const legacy = "Feature_LocalDebug_Second_Press_F5_for_Bot.json";
+  assert.equal(generated.fileName, "feature-local-debug-second-f5.json");
+  assert.equal(generated.plan.plan_metadata.description.workitem, "9795544");
+  const steps = generated.plan.steps;
+  assert.equal(
+    steps.some((step) => step.parameters.text === "JavaScript"),
+    true,
+  );
+  const closeIndex = steps.findIndex((step) =>
+    step.step_id.startsWith("step_closeLocalTeamsAppWindow_click_"),
+  );
+  const stoppedIndex = steps.findIndex((step) =>
+    step.step_id.startsWith("step_assertDebugStopped_"),
+  );
+  const launches = steps.flatMap((step, index) =>
+    step.parameters.text === "Debug in Teams (Chrome)" ? [index] : [],
+  );
+  assert.equal(launches.length, 2);
+  assert.equal(
+    launches[0] < closeIndex &&
+      closeIndex < stoppedIndex &&
+      stoppedIndex < launches[1],
+    true,
+  );
+  assert.equal(
+    steps.slice(launches[1]).some((step) => step.parameters.text === "test"),
+    true,
+  );
+  assert.equal(
+    steps
+      .slice(launches[1])
+      .some((step) => step.description.includes("you said: test")),
+    true,
+  );
   assert.equal(
     fsSync.existsSync(path.join(casesDirectory, "..", "plans", legacy)),
     false,
@@ -10558,9 +10682,25 @@ test("VCB-192: verified deferred Azure Search replaces its legacy plan", async (
   assert.equal(
     mapping
       .split("\n")
-      .some((line) => line.includes(legacy) && line.includes(`${caseId}.json`)),
+      .some(
+        (line) =>
+          line.includes(legacy) &&
+          line.includes(generated.fileName) &&
+          line.includes("| Full |"),
+      ),
     true,
   );
+  for (const retained of [
+    "Feature_Simple_Bot_ts_Local_Debug_With_Different_Account.json",
+    "Feature_Check_Copilot_License_Enabled.json",
+    "Feature_Sign_In_No_Subscription.json",
+  ]) {
+    assert.equal(
+      fsSync.existsSync(path.join(casesDirectory, "..", "plans", retained)),
+      true,
+      retained,
+    );
+  }
 });
 
 test("VCB-190: verified deferred Azure Custom API replaces its legacy plan", async () => {

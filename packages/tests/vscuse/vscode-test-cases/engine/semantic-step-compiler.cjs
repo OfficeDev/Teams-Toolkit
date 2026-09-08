@@ -614,12 +614,6 @@ const teamsAppDetailsSubject =
 const copilotAgentSubject =
   "Microsoft 365 Copilot shows an agent's chat open in the main section with a visible message input";
 const targetAdapters = {
-  // Every Chrome launch configuration the templates ship omits `userDataDir`, so
-  // js-debug hands the session a profile of its own that carries no Microsoft 365
-  // session and the browser always has to sign in. Which page it opens on is
-  // decided by the launch URL: the Teams targets carry the toolkit's
-  // `${account-hint}`, which resolves to a `login_hint` and asks straight for the
-  // password of the account already signed in to Visual Studio Code.
   "Launch Remote in Teams (Chrome)": {
     appNameSuffix: "dev",
     browserAuthentication: {
@@ -2908,6 +2902,7 @@ function createSemanticStepCompiler() {
     if (error) return error;
     error = append(output, render(state, "debug/assert-stopped.json.tpl", {}));
     if (error) return error;
+    state.closedDebugProfile = state.profile;
     state.profile = undefined;
     state.completed.delete("target");
     state.completed.delete("chat-ready");
@@ -3060,7 +3055,10 @@ function createSemanticStepCompiler() {
       );
       if (error) return error;
     }
-    if (profile.browserAuthentication !== undefined) {
+    if (
+      profile.browserAuthentication !== undefined &&
+      state.closedDebugProfile !== profile
+    ) {
       const credentials = state.credentials.get(
         profile.browserAuthentication.credentials,
       );
@@ -3087,6 +3085,7 @@ function createSemanticStepCompiler() {
       error = append(output, render(state, "browser/zoom-out.json.tpl", {}));
       if (error) return error;
     }
+    state.closedDebugProfile = undefined;
     state.profile = profile;
     state.completed.add("target");
     return error ?? { ok: true, value: output };

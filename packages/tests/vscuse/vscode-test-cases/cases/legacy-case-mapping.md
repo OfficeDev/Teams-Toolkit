@@ -39,6 +39,24 @@ and VCB-156.
   source. Its all-zero UUID only satisfies package-time manifest substitution and must never be
   treated as a runtime OAuth configuration ID.
 
+## Verified Feature Retirement
+
+- OpenAI Search: clean atk07 replay `exec_20260907_163259` passed 126/126 steps,
+  with 0 errors and CLI exit 0. VCB-192 covers its independent deferred-key
+  path and retirement.
+- Second-F5: clean atk07 replay `exec_20260908_105124` passed 104/104 steps,
+  with 0 errors and CLI exit 0, including browser close, stopped-debug assertion,
+  relaunch, and `you said: test`. VCB-193's same-profile authentication reuse and
+  the clarified stopped-debug assertion are included with VCB-194's retirement.
+- Both runs used `ghcr.io/officedev/vscuse-atk-vscode:20260830`, revision
+  `7411a9010693b4c608c139d0fcce5694229ffc42`, digest
+  `sha256:88bf523f36d2292cc6e8ae9f5ba4cc4f6c7d6b47b3d1cf36158330fae0e06366`.
+  They used the approved npm/PyPI proxies and a local vscuse 0.2.67 CodeAgent
+  patch that executes authored scripts literally and checks execution results.
+  This is not validation of the current-dev VSIX or an unpatched CI runner.
+  Private logs and HTML reports remain under `.local/test-reports/` and are not
+  committed.
+
 ## Mapping
 
 | YAML source                                        | New case ID                                              | Generated plan                                                                                 | Legacy plan                                                                 | Status | Coverage note                                                                                                                                                                                                                                                                                                                    |
@@ -194,6 +212,8 @@ and VCB-156.
 | `custom-copilot-rag-custom-api.yml`                | `feature-local-debug-custom-api-without-openai-key`      | `feature-local-debug-custom-api-without-openai-key.json`                                       | `Feature_LocalDebug_Custom_API_without_OpenAI_Keys.json`                    | Full   | Python Custom API scaffold without an OpenAI key, generated config validation, compatible model and local endpoint, virtual environment creation, protected key entry at local Teams launch, and an error-free reply; see VCB-183.                                                                                               |
 | `custom-copilot-rag-custom-api.yml` | `feature-local-debug-custom-api-without-azure-openai-keys` | `feature-local-debug-custom-api-without-azure-openai-keys.json` | `Feature_LocalDebug_Custom_API_without_AzureOpenAI_Keys.json` | Full | Python Custom API scaffold with deferred Azure key, current artifacts and installed requirements, explicit endpoint, protected runtime key and deployment entry, and complete error-free Teams chat. Retired after clean atk07 replay; see VCB-187 through VCB-190. |
 | `custom-copilot-rag-azure-ai-search.yml` | `feature-local-debug-ai-search-without-azure-openai-keys` | `feature-local-debug-ai-search-without-azure-openai-keys.json` | `Feature_LocalDebug_AI_Search_without_AzureOpenAI_Keys.json` | Full | Python Search scaffold with deferred Azure key, current artifacts and installed requirements, explicit endpoints, protected key/deployment/embedding/Search-key runtime entry, and complete error-free Teams chat. Retired after clean atk07 replay (131/131); see VCB-187 through VCB-189 and VCB-192. |
+| `custom-copilot-rag-azure-ai-search.yml` | `feature-local-debug-ai-search-without-openai-keys` | `feature-local-debug-ai-search-without-openai-keys.json` | `Feature_LocalDebug_AI_Search_without_OpenAI_Keys.json` | Full | Python Search with deferred OpenAI key, installed requirements, Azure OpenAI-compatible v1 endpoint, protected runtime OpenAI/Search keys, and complete error-free Teams chat. Retired after independent clean atk07 replay (126/126); see VCB-187, VCB-188, and VCB-192. |
+| `feature-local-debug-second-f5.yml` | `feature-local-debug-second-f5` | `feature-local-debug-second-f5.json` | `Feature_LocalDebug_Second_Press_F5_for_Bot.json` | Full | Independent JavaScript Simple Bot, work item 9795544, first local Chrome launch, browser close, stopped-debug assertion, same-profile relaunch, and test echo. Retired with its relaunch repair after clean atk07 replay (104/104); see VCB-191, VCB-193, and VCB-194. |
 | `custom-copilot-rag-custom-api.yml`                | `rag-custom-api-ts-azure-openai-remote-teams`            | `custom-copilot-rag-custom-api--rag-custom-api-ts-azure-openai-remote-teams.json`              | `Teams_Agent_With_Data_Custom_API_Azure_OpenAI_ts_Remote_Debug.json`        | Full   | Custom API data source from an OpenAPI document, Azure OpenAI, TypeScript, provision, deploy, remote Teams launch, and the legacy repairs prompt with an error-free reply check.                                                                                                                                                 |
 | `custom-copilot-rag-custom-api.yml`                | `rag-custom-api-js-azure-openai-remote-teams`            | `custom-copilot-rag-custom-api--rag-custom-api-js-azure-openai-remote-teams.json`              | `Teams_Agent_With_Data_Custom_API_Azure_OpenAI_js_Remote_Debug.json`        | Full   | Custom API data source from an OpenAPI document, Azure OpenAI, JavaScript, provision, deploy, remote Teams launch, and the legacy repairs prompt with an error-free reply check.                                                                                                                                                 |
 | `custom-copilot-rag-custom-api.yml`                | `rag-custom-api-py-azure-openai-remote-teams`            | `custom-copilot-rag-custom-api--rag-custom-api-py-azure-openai-remote-teams.json`              | `Teams_Agent_With_Data_Custom_API_Azure_OpenAI_py_Remote_Debug.json`        | Full   | Custom API data source from an OpenAPI document, Azure OpenAI, Python, virtual environment creation, provision, deploy, remote Teams launch, and the legacy repairs prompt with an error-free reply check.                                                                                                                       |

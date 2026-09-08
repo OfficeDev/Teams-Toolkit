@@ -8,7 +8,7 @@
       "precondition_wait_timeout": 30,
       "precondition_retry_interval": 1
     },
-    "total_steps": 110,
+    "total_steps": 104,
     "name": "feature-local-debug-second-f5",
     "description": {
       "owner": "",
@@ -108,13 +108,7 @@
       "step_filterOption_filter_c60acbcdd_7_2",
       "step_filterOption_assertOption_c60acbcdd_7_2",
       "step_filterOption_confirm_c60acbcdd_7_2",
-      "step_browserM365PasswordSignIn_assertPassword_c60acbcdd_7_3",
-      "step_browserM365PasswordSignIn_focusPassword_c60acbcdd_7_3",
-      "step_browserM365PasswordSignIn_enterPassword_c60acbcdd_7_3",
-      "step_browserM365PasswordSignIn_submitPassword_c60acbcdd_7_3",
-      "step_browserM365PasswordSignIn_assertStaySignedIn_c60acbcdd_7_3",
-      "step_browserM365PasswordSignIn_confirmStaySignedIn_c60acbcdd_7_3",
-      "step_assertReady_assertReady_c60acbcdd_7_4",
+      "step_assertReady_assertReady_c60acbcdd_7_3",
       "step_addAndOpenApp_assertAdd_c60acbcdd_8_1",
       "step_addAndOpenApp_add_c60acbcdd_8_1",
       "step_addAndOpenApp_assertAdded_c60acbcdd_8_1",
@@ -2006,7 +2000,7 @@
       "agent": "assertion",
       "tool": "",
       "parameters": {},
-      "description": "@assertion Visual Studio Code is visible after the Teams Chrome window closed, and debugging has stopped: there is no active debug toolbar with Pause, Restart or Stop controls.",
+      "description": "@assertion Visual Studio Code is visible and the Teams Chrome window is no longer in front. The floating debug control strip, a grouped row of Pause/Continue, Step Over, Step Into, Step Out, Restart and Stop controls near the top of the editor, is absent. Judge only that grouped debug control strip; terminal output is historical and terminal task controls, editor layout icons and other isolated square icons are not debug controls.",
       "content_refs": [],
       "timeout": 30,
       "retry_count": 0,
@@ -2195,140 +2189,7 @@
       ]
     },
     {
-      "step_id": "step_browserM365PasswordSignIn_assertPassword_c60acbcdd_7_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Microsoft sign-in page in Chrome names ${{env:M365_ACCOUNT_NAME}} and asks for that account's password.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_filterOption_confirm_c60acbcdd_7_2"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser",
-        "step_retry_timeout: 300"
-      ]
-    },
-    {
-      "step_id": "step_browserM365PasswordSignIn_focusPassword_c60acbcdd_7_3",
-      "agent": "interaction",
-      "tool": "click",
-      "parameters": {
-        "button": "left",
-        "x": 400,
-        "y": 405
-      },
-      "description": "Click the password input on the Microsoft sign-in page to move focus out of the browser address bar.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365PasswordSignIn_assertPassword_c60acbcdd_7_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser"
-      ]
-    },
-    {
-      "step_id": "step_browserM365PasswordSignIn_enterPassword_c60acbcdd_7_3",
-      "agent": "interaction",
-      "tool": "type_text",
-      "parameters": {
-        "text": "${{secret:M365_ACCOUNT_PASSWORD}}"
-      },
-      "description": "Enter the registered Microsoft 365 password in the focused password input of the browser sign-in form.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365PasswordSignIn_focusPassword_c60acbcdd_7_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser"
-      ]
-    },
-    {
-      "step_id": "step_browserM365PasswordSignIn_submitPassword_c60acbcdd_7_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to submit the Microsoft 365 password.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365PasswordSignIn_enterPassword_c60acbcdd_7_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser"
-      ]
-    },
-    {
-      "step_id": "step_browserM365PasswordSignIn_assertStaySignedIn_c60acbcdd_7_3",
-      "agent": "assertion",
-      "tool": "",
-      "parameters": {},
-      "description": "@assertion the Microsoft Stay signed in question is visible with Yes focused.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365PasswordSignIn_submitPassword_c60acbcdd_7_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser",
-        "step_retry_timeout: 120"
-      ]
-    },
-    {
-      "step_id": "step_browserM365PasswordSignIn_confirmStaySignedIn_c60acbcdd_7_3",
-      "agent": "interaction",
-      "tool": "key_press",
-      "parameters": {
-        "key": "enter"
-      },
-      "description": "Press Enter to confirm staying signed in.",
-      "content_refs": [],
-      "timeout": 30,
-      "retry_count": 0,
-      "continue_on_error": "false",
-      "depends_on": [
-        "step_browserM365PasswordSignIn_assertStaySignedIn_c60acbcdd_7_3"
-      ],
-      "preconditions": [],
-      "postconditions": [],
-      "tags": [
-        "component:authentication",
-        "surface:browser",
-        "delay: 30"
-      ]
-    },
-    {
-      "step_id": "step_assertReady_assertReady_c60acbcdd_7_4",
+      "step_id": "step_assertReady_assertReady_c60acbcdd_7_3",
       "agent": "assertion",
       "tool": "",
       "parameters": {},
@@ -2338,7 +2199,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_browserM365PasswordSignIn_confirmStaySignedIn_c60acbcdd_7_3"
+        "step_filterOption_confirm_c60acbcdd_7_2"
       ],
       "preconditions": [],
       "postconditions": [],
@@ -2359,7 +2220,7 @@
       "retry_count": 0,
       "continue_on_error": "false",
       "depends_on": [
-        "step_assertReady_assertReady_c60acbcdd_7_4"
+        "step_assertReady_assertReady_c60acbcdd_7_3"
       ],
       "preconditions": [],
       "postconditions": [],
