@@ -150,7 +150,7 @@ export class CreateTeamsAppDriver implements StepDriver {
         } else {
           const manifest = new TeamsAppManifest();
           manifest.name.short = args.name;
-          manifest.id = appId ?? v4();
+          manifest.id = appId || v4();
           const zip = new AdmZip();
           zip.addFile(Constants.MANIFEST_FILE, Buffer.from(JSON.stringify(manifest, null, 4)));
           const sourceTemplatesFolder = getTemplatesFolder();

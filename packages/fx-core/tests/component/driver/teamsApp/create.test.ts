@@ -2,9 +2,11 @@
 // Licensed under the MIT license.
 
 import { err, UserError } from "@microsoft/teamsfx-api";
+import AdmZip from "adm-zip";
 import fs from "fs-extra";
 import mockedEnv from "mocked-env";
 import { v4 as uuid } from "uuid";
+import isUUID from "validator/lib/isUUID";
 import { teamsDevPortalClient } from "../../../../src/client/teamsDevPortalClientProvider";
 import { SovereignCloudEnvironment } from "../../../../src/common/accountUtils";
 import { FeatureFlagName } from "../../../../src/common/featureFlags";
@@ -122,6 +124,20 @@ describe("teamsApp/create", async () => {
     chai.assert.isTrue(result.isOk());
     expect(importAppSpy).toHaveBeenCalledOnce();
     expect(createAppSpy).not.toHaveBeenCalled();
+  });
+
+  it("generates a manifest app ID when the environment value is empty", async () => {
+    delete process.env[FeatureFlagName.NewDeveloperPortalApis];
+    restoreEnv = mockedEnv({ TEAMS_APP_ID: "" });
+    const importAppSpy = vi.spyOn(teamsDevPortalClient, "importApp").mockResolvedValue(appDef);
+
+    const result = (await teamsAppDriver.execute({ name: appDef.appName! }, mockedDriverContext))
+      .result;
+
+    chai.assert.isTrue(result.isOk());
+    const zip = new AdmZip(importAppSpy.mock.calls[0][1]);
+    const manifest = JSON.parse(zip.readAsText("manifest.json"));
+    chai.assert.isTrue(isUUID(manifest.id));
   });
 
   it("app exists", async () => {

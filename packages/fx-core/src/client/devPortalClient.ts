@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 import { hooks } from "@feathersjs/hooks";
-import { AxiosResponse } from "axios";
+import { AxiosInstance, AxiosResponse } from "axios";
 import FormData from "form-data";
 import { getResourceServiceEndpoint, ResourceServiceType } from "../common/constants";
 import { ErrorContextMW, TOOLS } from "../common/globalVars";
@@ -155,11 +155,18 @@ export class DevPortalClient extends TeamsDevPortalClient {
 
   @hooks([ErrorContextMW({ source: "Teams", component: "TeamsDevPortalClient" })])
   override async deleteApp(token: string, appId: string): Promise<boolean> {
-    if (!this.regionEndpoint) throw new Error("Failed to get region");
     try {
       const requester = this.createRequesterWithToken(token);
       TOOLS.logProvider.debug(`Sent API Request: DELETE ${this.getEndpoint()}/v1.0/apps/${appId}`);
-      const response = await RetryHandler.Retry(() => requester.delete(`/v1.0/apps/${appId}`));
+      let response;
+      try {
+        response = await RetryHandler.Retry(() => requester.delete(`/v1.0/apps/${appId}`));
+      } catch (error) {
+        if (error?.response?.status !== HttpStatusCode.NOTFOUND) throw error;
+        const resolvedAppId = await this.resolveLegacyAppId(token, appId);
+        if (resolvedAppId === appId) throw error;
+        response = await RetryHandler.Retry(() => requester.delete(`/v1.0/apps/${resolvedAppId}`));
+      }
       if (response?.status === 204) {
         return true;
       }
@@ -213,9 +220,21 @@ export class DevPortalClient extends TeamsDevPortalClient {
     TOOLS.logProvider?.info("Downloading app package for app " + appId);
     const requester = this.createRequesterWithToken(token);
     try {
-      const response = await RetryHandler.Retry(() =>
-        requester.get(`/v1.0/apps/${appId}/appPackage`, { responseType: "arraybuffer" })
-      );
+      let response;
+      try {
+        response = await RetryHandler.Retry(() =>
+          requester.get(`/v1.0/apps/${appId}/appPackage`, { responseType: "arraybuffer" })
+        );
+      } catch (error) {
+        if (error?.response?.status !== HttpStatusCode.NOTFOUND) throw error;
+        const resolvedAppId = await this.resolveLegacyAppId(token, appId);
+        if (resolvedAppId === appId) throw error;
+        response = await RetryHandler.Retry(() =>
+          requester.get(`/v1.0/apps/${resolvedAppId}/appPackage`, {
+            responseType: "arraybuffer",
+          })
+        );
+      }
       if (response?.data) {
         TOOLS.logProvider?.info("Download app package successfully");
         return response.data;
@@ -296,14 +315,16 @@ export class DevPortalClient extends TeamsDevPortalClient {
   ): Promise<AsyncAppValidationResponse> {
     try {
       const requester = this.createRequesterWithToken(token);
-      const response = await RetryHandler.Retry(() =>
-        requester.post("/v1.0/appvalidation/validate", {
-          appId,
-          appEnvironmentId: null,
-          testSuites: null,
-        })
-      );
-      return response?.data as AsyncAppValidationResponse;
+      let response;
+      try {
+        response = await this.submitAppValidation(requester, appId);
+      } catch (error) {
+        if (error?.response?.status !== HttpStatusCode.NOTFOUND) throw error;
+        const resolvedAppId = await this.resolveLegacyAppId(token, appId);
+        if (resolvedAppId === appId) throw error;
+        response = await this.submitAppValidation(requester, resolvedAppId);
+      }
+      return response.data;
     } catch (error) {
       throw this.wrapException(error, APP_STUDIO_API_NAMES.SUBMIT_APP_VALIDATION);
     }
@@ -316,36 +337,67 @@ export class DevPortalClient extends TeamsDevPortalClient {
   ): Promise<AsyncAppValidationDetailsResponse> {
     try {
       const requester = this.createRequesterWithToken(token);
-      const items: Record<string, any>[] = [];
-      let continuationToken: string | undefined;
-      do {
-        const response = await RetryHandler.Retry(() =>
-          requester.get(`/v1.0/appValidations/apps/${appId}`, {
-            params: { pageSize: 100 },
-            headers: continuationToken ? { "x-ms-continuation": continuationToken } : undefined,
-          })
-        );
-        const page = response?.data as PagedResponse<Record<string, any>> | undefined;
-        if (!page?.items) throw new Error("Cannot get app validation requests");
-        items.push(...page.items);
-        continuationToken =
-          page.continuationToken ??
-          (response?.headers?.["x-continuation-token"] as string | undefined);
-      } while (continuationToken);
-      return {
-        appValidations: items.map((item) => ({
-          id: item.appValidationId,
-          appId: item.appId,
-          appVersion: item.appVersion,
-          manifestVersion: item.manifestVersion,
-          status: item.status,
-          createdAt: item.submittedDate,
-          updatedAt: item.completedDate,
-        })),
-      };
+      try {
+        return await this.getAppValidationRequests(requester, appId);
+      } catch (error) {
+        if (error?.response?.status !== HttpStatusCode.NOTFOUND) throw error;
+        const resolvedAppId = await this.resolveLegacyAppId(token, appId);
+        if (resolvedAppId === appId) throw error;
+        return await this.getAppValidationRequests(requester, resolvedAppId);
+      }
     } catch (error) {
       throw this.wrapException(error, APP_STUDIO_API_NAMES.GET_APP_VALIDATION_REQUESTS);
     }
+  }
+
+  private async getAppValidationRequests(
+    requester: AxiosInstance,
+    appId: string
+  ): Promise<AsyncAppValidationDetailsResponse> {
+    const items: Record<string, any>[] = [];
+    let continuationToken: string | undefined;
+    do {
+      const response = await RetryHandler.Retry(() =>
+        requester.get(`/v1.0/appValidations/apps/${appId}`, {
+          params: { pageSize: 100 },
+          headers: continuationToken ? { "x-ms-continuation": continuationToken } : undefined,
+        })
+      );
+      const page = response?.data as PagedResponse<Record<string, any>> | undefined;
+      if (!page?.items) throw new Error("Cannot get app validation requests");
+      items.push(...page.items);
+      continuationToken =
+        page.continuationToken ??
+        (response?.headers?.["x-continuation-token"] as string | undefined);
+    } while (continuationToken);
+    return {
+      appValidations: items.map((item) => ({
+        id: item.appValidationId,
+        appId: item.appId,
+        appVersion: item.appVersion,
+        manifestVersion: item.manifestVersion,
+        status: item.status,
+        createdAt: item.submittedDate,
+        updatedAt: item.completedDate,
+      })),
+    };
+  }
+
+  private async submitAppValidation(
+    requester: AxiosInstance,
+    appId: string
+  ): Promise<AxiosResponse<AsyncAppValidationResponse>> {
+    const response = await RetryHandler.Retry(() =>
+      requester.post("/v1.0/appvalidation/validate", {
+        appId,
+        appEnvironmentId: null,
+        testSuites: null,
+      })
+    );
+    if (!response) {
+      throw new Error("App validation request returned no response.");
+    }
+    return response;
   }
 
   @hooks([ErrorContextMW({ source: "Teams", component: "TeamsDevPortalClient" })])
