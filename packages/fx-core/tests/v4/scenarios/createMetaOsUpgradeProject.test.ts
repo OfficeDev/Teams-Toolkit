@@ -37,6 +37,10 @@ function sourceManifest(withExistingDaReference = false): string {
   return JSON.stringify(
     {
       id: "source-id",
+      name: {
+        short: "Existing Add-in",
+        full: "Existing Add-in Full Name",
+      },
       ...(withExistingDaReference
         ? {
             copilotAgents: {
@@ -63,6 +67,7 @@ function sourceManifest(withExistingDaReference = false): string {
 function sourcePackageJson(): string {
   return JSON.stringify(
     {
+      name: "existing-add-in",
       devDependencies: {
         "office-addin-debugging": "5.0.0",
       },
@@ -179,5 +184,18 @@ describe("SCN-DA-CREATE-METAOS-UPGRADE-PROJECT (v4, T3 InMemoryRuntime)", () => 
     assert.deepEqual(manifest.copilotAgents, {
       declarativeAgents: [{ id: "declarativeAgentAlc", file: "declarativeAgent1.json" }],
     });
+  });
+
+  it("SCN-CREATE-METAOS-UPGRADE-08: applies the user-entered project name to manifest.json and package.json", async () => {
+    const { files } = await run();
+
+    const manifest = readJsonObject(files, "appPackage/manifest.json");
+    assert.deepEqual(manifest.name, {
+      short: "MetaOS Upgrade",
+      full: "Full name for MetaOS Upgrade",
+    });
+
+    const packageJson = readJsonObject(files, "package.json");
+    assert.strictEqual(packageJson.name, "metaosupgrade");
   });
 });

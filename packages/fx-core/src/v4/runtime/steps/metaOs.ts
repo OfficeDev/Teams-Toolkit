@@ -7,6 +7,7 @@ import * as fs from "fs-extra";
 import * as path from "path";
 import { Result, err, ok } from "neverthrow";
 import { RegisteredStep, StepContext, StepParams } from "../../pipeline/runScaffoldPipeline";
+import { safeProjectNameLowerCase } from "../whitelist";
 
 /** MetaOS post-render steps. */
 
@@ -204,7 +205,11 @@ interface CommandNames {
   powerpoint: string;
 }
 
-function updateManifestForDa(ctx: StepContext, daFilename: string): Result<CommandNames, FxError> {
+function updateManifestForDa(
+  ctx: StepContext,
+  daFilename: string,
+  appName: string
+): Result<CommandNames, FxError> {
   const manifestContents = readRequired(ctx, MANIFEST_PATH, "MetaOsManifestMissing");
   if (manifestContents.isErr()) {
     return err(manifestContents.error);
@@ -217,6 +222,7 @@ function updateManifestForDa(ctx: StepContext, daFilename: string): Result<Comma
   }
   manifest
     .setId(DEFAULT_MANIFEST_ID)
+    .setName(appName, `Full name for ${appName}`)
     .removeDeclarativeAgent(DEFAULT_DA_ID)
     .addDeclarativeAgent(DEFAULT_DA_ID, daFilename);
   if (!manifest.hasExtensions()) {
@@ -427,7 +433,7 @@ function appendCommandHandlers(
   return ok(undefined);
 }
 
-function upgradeOfficeAddinDebugging(ctx: StepContext): Result<void, FxError> {
+function updatePackageJson(ctx: StepContext, appName: string): Result<void, FxError> {
   const packageJson = readRequiredJsonObject(
     ctx,
     PACKAGE_JSON_PATH,
@@ -437,6 +443,7 @@ function upgradeOfficeAddinDebugging(ctx: StepContext): Result<void, FxError> {
   if (packageJson.isErr()) {
     return err(packageJson.error);
   }
+  packageJson.value.name = safeProjectNameLowerCase(appName);
   let devDependencies = nestedRecord(packageJson.value, "devDependencies");
   if (devDependencies === undefined) {
     devDependencies = {};
@@ -450,7 +457,7 @@ function upgradeOfficeAddinDebugging(ctx: StepContext): Result<void, FxError> {
 function extendToDeclarativeAgent(ctx: StepContext, appName: string): Result<void, FxError> {
   const daFilename = uniqueFileName(ctx, "declarativeAgent", ".json");
   const actionFilename = uniqueFileName(ctx, "alchemy-plugin", ".json");
-  const commandNames = updateManifestForDa(ctx, daFilename);
+  const commandNames = updateManifestForDa(ctx, daFilename, appName);
   if (commandNames.isErr()) {
     return err(commandNames.error);
   }
@@ -466,7 +473,7 @@ function extendToDeclarativeAgent(ctx: StepContext, appName: string): Result<voi
   if (appended.isErr()) {
     return err(appended.error);
   }
-  return upgradeOfficeAddinDebugging(ctx);
+  return updatePackageJson(ctx, appName);
 }
 
 /** Registered step for mirroring v3 MetaOSHelper.unifyProjectID. */
