@@ -179,8 +179,16 @@ describe("CLI Engine", () => {
       ]);
       assert.deepEqual(maskCommandArguments(["-s", "tiny"], command.options ?? []), ["-s", "***"]);
       assert.deepEqual(
-        maskSensitiveInputValues({ oauthClientSecret: "tiny", oauthClientId: "visible" }),
-        { oauthClientSecret: "***", oauthClientId: "visible" }
+        maskSensitiveInputValues({
+          oauthClientSecret: "tiny",
+          "openapi-auth-client-secret": "openapi-tiny",
+          oauthClientId: "visible",
+        }),
+        {
+          oauthClientSecret: "***",
+          "openapi-auth-client-secret": "***",
+          oauthClientId: "visible",
+        }
       );
     });
 

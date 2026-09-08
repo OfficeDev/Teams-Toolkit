@@ -155,10 +155,7 @@ export const questionVisitor: QuestionTreeVisitor = async function (
     // second priority: use default as value
     if (question.default) {
       const value = (await getCallFuncValue(inputs, question.default)) as
-        | string
-        | string[]
-        | OptionItem
-        | OptionItem[];
+        string | string[] | OptionItem | OptionItem[];
       if (value) {
         const validateRes = await validationUtils.validateInputs(question, value, inputs);
         if (validateRes) {
@@ -180,12 +177,8 @@ export const questionVisitor: QuestionTreeVisitor = async function (
   //no preset answer and interactive mode, call UI
   const title = (await getCallFuncValue(inputs, question.title)) as string;
   let defaultValue:
-    | string
-    | string[]
-    | (() => Promise<string>)
-    | (() => Promise<string[]>)
-    | boolean
-    | undefined = undefined;
+    string | string[] | (() => Promise<string>) | (() => Promise<string[]>) | boolean | undefined =
+    undefined;
   if (question.forgetLastValue !== true && question.value)
     defaultValue = question.value as string | string[];
   else {
@@ -399,6 +392,7 @@ export const questionVisitor: QuestionTreeVisitor = async function (
       default: defaultValue as boolean,
       step: step,
       totalSteps: totalSteps,
+      isBoolean: question.isBoolean,
     });
     return res;
   }

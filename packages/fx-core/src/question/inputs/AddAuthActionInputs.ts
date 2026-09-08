@@ -37,4 +37,8 @@ export interface AddAuthActionInputs extends Inputs {
   "api-key-name"?: string;
   /** @description API Key (optional) */
   "api-key"?: string;
+  /** @description Oauth registration client ID */
+  "oauth-client-id"?: string;
+  /** @description OAuth registration client secret */
+  "oauth-client-secret"?: string;
 }

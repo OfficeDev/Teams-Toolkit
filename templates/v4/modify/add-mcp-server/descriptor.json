@@ -9,7 +9,15 @@
   "requiresNetwork": false,
 
   "entry": {
-    "params": ["mcpServerUrl", "teamsManifestPath", "apiKey"],
+    "params": [
+      "mcpServerUrl",
+      "teamsManifestPath",
+      "apiKey",
+      "oauthClientId",
+      "oauthClientSecret",
+      "oauthScopes",
+      "entraClientId"
+    ],
     "comment": "CLI / a pre-filled URL skips the mcpServerUrl question (when-skip on mcpServerUrl == null). teamsManifestPath lets the product entry pass the selected Teams manifest instead of assuming appPackage/manifest.json. The DT-on draft captures NO static tool list (dynamic discovery at runtime), so unlike the shipped flow there is no `tools` entry param."
   },
 
@@ -23,13 +31,21 @@
         "enum": ["none", "oauth", "entra-sso", "oauth-dynamic", "bearer-token"],
         "default": "none"
       },
-      "apiKey": { "type": "string" }
+      "apiKey": { "type": "string" },
+      "oauthClientId": { "type": "string", "pattern": "\\S" },
+      "oauthClientSecret": { "type": "string", "pattern": "\\S" },
+      "oauthScopes": { "type": "string" },
+      "entraClientId": { "type": "string", "pattern": "\\S" }
     },
     "additionalProperties": false
   },
 
   "replaceMap": [
     { "var": "MCPForDAServerUrl", "from": "mcpServerUrl" },
+    { "var": "OAuthClientId", "from": "oauthClientId" },
+    { "var": "OAuthClientSecret", "from": "oauthClientSecret" },
+    { "var": "OAuthScopes", "from": "oauthScopes" },
+    { "var": "EntraClientId", "from": "entraClientId" },
     { "var": "IsNoAuth", "when": "authType == 'none'", "value": "true" },
     { "var": "IsBearerToken", "when": "authType == 'bearer-token'", "value": "true" },
     { "var": "MicrosoftEntra", "when": "authType == 'entra-sso'", "value": "true" },

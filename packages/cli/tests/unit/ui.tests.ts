@@ -397,6 +397,17 @@ describe("User Interaction Tests", function () {
       });
       expect(result.isErr());
     });
+    it("confirm: boolean false", async () => {
+      vi.spyOn(UI, "interactive", "get").mockReturnValue(true);
+      vi.spyOn(inquirerPrompts, "confirm").mockResolvedValue(false);
+      const config = {
+        name: "test",
+        title: "test",
+        isBoolean: true,
+      };
+      const result = await UI.confirm(config);
+      expect(result.isOk() ? result.value.result : result.error).to.equal(false);
+    });
   });
   describe("input", async () => {
     afterEach(() => {

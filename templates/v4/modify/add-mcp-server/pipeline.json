@@ -17,6 +17,10 @@
         "ymlPath": "m365agents.yml",
         "authType": "{{authType}}",
         "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "oauthClientId": "{{OAuthClientId}}",
+        "oauthClientSecret": "{{OAuthClientSecret}}",
+        "oauthScopes": "{{OAuthScopes}}",
+        "entraClientId": "{{EntraClientId}}",
         "apiKey": "{{#apiKey}}{{apiKey}}{{/apiKey}}",
         "optionalYmlPaths": ["m365agents.local.yml"]
       }
@@ -27,6 +31,10 @@
       "with": {
         "authType": "{{authType}}",
         "mcpServerUrl": "{{MCPForDAServerUrl}}",
+        "oauthClientId": "{{OAuthClientId}}",
+        "oauthClientSecret": "{{OAuthClientSecret}}",
+        "oauthScopes": "{{OAuthScopes}}",
+        "entraClientId": "{{EntraClientId}}",
         "apiKey": "{{#apiKey}}{{apiKey}}{{/apiKey}}"
       }
     }
