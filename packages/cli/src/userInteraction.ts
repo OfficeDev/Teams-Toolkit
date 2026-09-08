@@ -166,8 +166,9 @@ class CLIUserInteraction implements UserInteraction {
       config.transformer
     );
     if (result.isErr()) return err(result.error);
-    if (result.value) return ok({ type: "success", result: result.value });
-    else return err(new UserCancelError());
+    if (result.value || config.isBoolean) {
+      return ok({ type: "success", result: result.value });
+    } else return err(new UserCancelError());
   }
 
   async _confirm(

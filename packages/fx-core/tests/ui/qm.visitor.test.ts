@@ -1062,17 +1062,21 @@ describe("Question Model - Visitor Test", () => {
       assert.isTrue(res.isOk() && res.value.type === "success");
     });
     it("confirm", async () => {
-      vi.spyOn(tools.ui, "confirm").mockResolvedValue(ok({ type: "success", result: true }));
+      const confirmStub = vi
+        .spyOn(tools.ui, "confirm")
+        .mockResolvedValue(ok({ type: "success", result: true }));
       const question: ConfirmQuestion = {
         type: "confirm",
         name: "test",
         title: "test",
+        isBoolean: true,
       };
       const inputs: Inputs = {
         platform: Platform.VSCode,
       };
       const res = await questionVisitor(question, tools.ui, inputs);
       assert.isTrue(res.isOk() && res.value.type === "success");
+      expect(confirmStub).toHaveBeenCalledWith(expect.objectContaining({ isBoolean: true }));
     });
     it("onDidSelection for preset answer", async () => {
       const question: SingleSelectQuestion = {

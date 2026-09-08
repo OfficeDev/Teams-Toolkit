@@ -59,6 +59,7 @@ jobs:
               ref: sourceBranch,
               inputs: {
                 preid: 'alpha',
+                publishnpm: 'false',
                 skipmarkdowncheck: 'true',
                 SkipBranchCheck: 'true',
                 skipdockerbuild: 'true'

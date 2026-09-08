@@ -313,6 +313,22 @@ describe("envUtils", () => {
       assert.isTrue(decRes.isOk());
       assert.equal(decRes.value, decrypted);
     });
+    it("SCN-ADD-OPENAPI-KEY-15: writes empty secret placeholders only to user env", async () => {
+      vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok(".env.dev"));
+      vi.spyOn(fs, "pathExists").mockResolvedValue(false);
+      vi.spyOn(fs, "readFile").mockResolvedValue("" as any);
+      const writes = new Map<string, string>();
+      vi.spyOn(fs, "writeFile").mockImplementation(async (file, data) => {
+        writes.set(file.toString(), data.toString());
+      });
+      vi.spyOn(settingsUtil, "readSettings").mockResolvedValue(ok(mockSettings));
+
+      const res = await envUtil.writeEnv(".", "dev", { SECRET_API_KEY: "" });
+
+      assert.isTrue(res.isOk());
+      assert.notInclude(writes.get(".env.dev") ?? "", "SECRET_API_KEY");
+      assert.include(writes.get(".env.dev.user") ?? "", "SECRET_API_KEY=");
+    });
     it("no variables", async () => {
       vi.spyOn(pathUtils, "getEnvFilePath").mockResolvedValue(ok(".env.dev"));
       vi.spyOn(fs, "readFile").mockResolvedValue("" as any);

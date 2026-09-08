@@ -209,7 +209,7 @@ describe("mcpAuthScaffolder", () => {
       assert.isTrue(oauthStub.mock.calls.length === 0);
     });
 
-    it("SCN-ADD-MCP-14: omits the API-key reference when no bearer token is supplied", async () => {
+    it("SCN-ADD-MCP-19: injects the API-key reference when no bearer token is supplied", async () => {
       const apiKeyStub = vi
         .spyOn(ActionInjector, "injectCreateAPIKeyActionForMCP")
         .mockResolvedValue();
@@ -227,11 +227,11 @@ describe("mcpAuthScaffolder", () => {
         baseArgs.authName,
         baseArgs.registrationId,
         baseArgs.mcpServerUrl,
-        undefined
+        "SECRET_MCP_DA_API_KEY_SERVER1"
       );
     });
 
-    it("omits the API-key reference for a whitespace-only bearer token", async () => {
+    it("uses the API-key reference for a whitespace-only bearer token", async () => {
       const apiKeyStub = vi
         .spyOn(ActionInjector, "injectCreateAPIKeyActionForMCP")
         .mockResolvedValue();
@@ -250,7 +250,7 @@ describe("mcpAuthScaffolder", () => {
         baseArgs.authName,
         baseArgs.registrationId,
         baseArgs.mcpServerUrl,
-        undefined
+        "SECRET_MCP_DA_API_KEY_SERVER1"
       );
     });
 
@@ -432,14 +432,23 @@ describe("mcpAuthScaffolder", () => {
       assert.isTrue(listStub.mock.calls.length === 0);
     });
 
-    it("returns before listing envs when no credentials provided", async () => {
-      const listStub = vi.spyOn(envUtil, "listEnv");
+    it("SCN-ADD-MCP-18: writes empty OAuth placeholders in environment mode", async () => {
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "local"]));
+      const writeStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
       await persistMCPAuthCredentialEnvVars({
         projectPath: "/proj",
         authType: "oauth",
         serverName: "S1",
       });
-      assert.isTrue(listStub.mock.calls.length === 0);
+      expect(writeStub).toHaveBeenCalledTimes(2);
+      expect(writeStub).toHaveBeenNthCalledWith(1, "/proj", "dev", {
+        MCP_DA_OAUTH_CLIENT_ID_S1: "",
+        SECRET_MCP_DA_OAUTH_CLIENT_SECRET_S1: "",
+      });
+      expect(writeStub).toHaveBeenNthCalledWith(2, "/proj", "local", {
+        MCP_DA_OAUTH_CLIENT_ID_S1: "",
+        SECRET_MCP_DA_OAUTH_CLIENT_SECRET_S1: "",
+      });
     });
 
     it("writes client id, secret and scopes for oauth across all envs", async () => {
@@ -495,9 +504,9 @@ describe("mcpAuthScaffolder", () => {
       });
     });
 
-    it("SCN-ADD-MCP-14: does not persist an omitted bearer token", async () => {
-      const listStub = vi.spyOn(envUtil, "listEnv");
-      const writeStub = vi.spyOn(envUtil, "writeEnv");
+    it("SCN-ADD-MCP-19: persists an empty placeholder for an omitted bearer token", async () => {
+      vi.spyOn(envUtil, "listEnv").mockResolvedValue(ok(["dev", "local"]));
+      const writeStub = vi.spyOn(envUtil, "writeEnv").mockResolvedValue(ok(undefined));
 
       await persistMCPAuthCredentialEnvVars({
         projectPath: "/proj",
@@ -505,8 +514,12 @@ describe("mcpAuthScaffolder", () => {
         serverName: "S1",
       });
 
-      expect(listStub).not.toHaveBeenCalled();
-      expect(writeStub).not.toHaveBeenCalled();
+      expect(writeStub).toHaveBeenNthCalledWith(1, "/proj", "dev", {
+        SECRET_MCP_DA_API_KEY_S1: "",
+      });
+      expect(writeStub).toHaveBeenNthCalledWith(2, "/proj", "local", {
+        SECRET_MCP_DA_API_KEY_S1: "",
+      });
     });
 
     it("defaults to dev env when listEnv returns empty", async () => {
