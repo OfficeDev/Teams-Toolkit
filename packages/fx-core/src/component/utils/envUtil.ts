@@ -177,11 +177,12 @@ class EnvUtil {
     const secretEnv: DotenvOutput = {};
     for (const key of Object.keys(envs)) {
       let value = envs[key];
-      if (value && key.startsWith("SECRET_")) {
-        const res = cryptoProvider.encrypt(value);
-        if (res.isErr()) return err(res.error);
-        value = res.value;
-        // envs[key] = value;
+      if (key.startsWith("SECRET_")) {
+        if (value) {
+          const res = cryptoProvider.encrypt(value);
+          if (res.isErr()) return err(res.error);
+          value = res.value;
+        }
         secretEnv[key] = value;
       } else if (key === UpdateTeamsAppOutputNames.teamsAppUpdateTime) {
         // Corner case: Avoid TEAMS_APP_UPDATE_TIME to be committed and cause merge conflict

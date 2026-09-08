@@ -17,7 +17,11 @@ import { Bot } from "../../src/component/driver/teamsApp/interfaces/appdefinitio
 import { MessagingExtension } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/messagingExtension";
 import { StaticTab } from "../../src/component/driver/teamsApp/interfaces/appdefinitions/staticTab";
 import { TemplateNames } from "../../src/component/generator/templates/templateNames";
-import { ProgrammingLanguage, QuestionNames } from "../../src/question/constants";
+import {
+  AddAuthActionAuthTypeOptions,
+  ProgrammingLanguage,
+  QuestionNames,
+} from "../../src/question/constants";
 import { foundryAgentIdQuestion, foundryEndpointQuestion } from "../../src/question/create";
 import {
   apiSpecNode,
@@ -48,7 +52,12 @@ import {
 } from "../../src/question/scaffold/vsc/createRootNode";
 import { daProjectTypeNode } from "../../src/question/scaffold/vsc/daProjectTypeNode";
 import * as templateHelper from "../../src/component/generator/templateHelper";
-import { addPluginQuestionNode, openApiApiKeyNode } from "../../src/question/other";
+import {
+  addPluginQuestionNode,
+  openApiApiKeyNode,
+  openApiOAuthCredentialNodes,
+} from "../../src/question/other";
+import { AddPluginOptions } from "../../src/question/options/AddPluginOptions";
 import {
   getRootProjectTypeNode,
   getTdpProjectTypeNode,
@@ -429,7 +438,7 @@ describe("MCPForDAAuthCredentialNodes", () => {
     assert.equal((apiKeyNode.data as any).name, QuestionNames.MCPForDAApiKey);
   });
 
-  it("SCN-ADD-MCP-12: API key is optional and shown for bearer-token on CLI only", () => {
+  it("SCN-ADD-MCP-12: API key is required interactively for bearer-token on CLI and VS Code", async () => {
     const condition = apiKeyNode.condition as ConditionFunc;
     assert.isTrue(
       condition({
@@ -437,7 +446,7 @@ describe("MCPForDAAuthCredentialNodes", () => {
         [QuestionNames.MCPForDAAuthType]: "bearer-token",
       } as Inputs)
     );
-    assert.isFalse(
+    assert.isTrue(
       condition({
         platform: Platform.VSCode,
         [QuestionNames.MCPForDAAuthType]: "bearer-token",
@@ -450,11 +459,13 @@ describe("MCPForDAAuthCredentialNodes", () => {
       } as Inputs)
     );
     assert.isTrue((apiKeyNode.data as any).password);
-    assert.isFalse((apiKeyNode.data as any).required);
+    const validFunc = (apiKeyNode.data as any).validation.validFunc;
+    assert.isString(await validFunc(""));
+    assert.isUndefined(await validFunc("token"));
   });
 
   for (const v4Enabled of [false, true]) {
-    it(`SCN-ADD-MCP-12: composes the API-key question when v4 is ${v4Enabled ? "on" : "off"}`, () => {
+    it(`SCN-ADD-MCP-12: composes the same credential questions when v4 is ${v4Enabled ? "on" : "off"}`, () => {
       vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
         return flag === FeatureFlags.MCPForDADT || (flag === FeatureFlags.V4Enabled && v4Enabled);
       });
@@ -467,12 +478,12 @@ describe("MCPForDAAuthCredentialNodes", () => {
       );
       const credentialNames = authTypeNode?.children?.map((node) => (node.data as any).name);
 
-      assert.include(credentialNames, QuestionNames.MCPForDAApiKey);
-      if (v4Enabled) {
-        assert.notInclude(credentialNames, QuestionNames.MCPForDAClientSecret);
-      } else {
-        assert.include(credentialNames, QuestionNames.MCPForDAClientSecret);
-      }
+      assert.includeMembers(credentialNames ?? [], [
+        QuestionNames.MCPForDAClientId,
+        QuestionNames.MCPForDAClientSecret,
+        QuestionNames.MCPForDAScopes,
+        QuestionNames.MCPForDAApiKey,
+      ]);
     });
   }
 
@@ -590,6 +601,114 @@ describe("openApiApiKeyNode", () => {
     assert.equal((node.data as any).title, "API Key (optional)");
     assert.isTrue((node.data as any).password);
     assert.isFalse((node.data as any).required);
+  });
+
+  it("SCN-ADD-OPENAPI-KEY-13: hides the scalar API-key question for multiple registrations", () => {
+    const condition = openApiApiKeyNode().condition as ConditionFunc;
+
+    assert.isFalse(
+      condition({
+        platform: Platform.CLI,
+        [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+        apiAuthData: [
+          { serverUrl: "https://example.com", authName: "repairKey", authType: "apiKey" },
+          { serverUrl: "https://example.com", authName: "inventoryKey", authType: "apiKey" },
+        ],
+      } as Inputs)
+    );
+  });
+});
+
+describe("openApiOAuthCredentialNodes", () => {
+  it("SCN-ADD-OPENAPI-OAUTH-13: asks only for client ID when Microsoft Entra is selected", () => {
+    const nodes = openApiOAuthCredentialNodes();
+    const inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+      apiAuthData: [{ serverUrl: "https://example.com", authType: "oauth2" }],
+    } as Inputs;
+
+    assert.deepEqual(
+      nodes.map((node) => (node.data as any).name),
+      [
+        "openapi-auth-identity-provider",
+        "openapi-auth-client-id",
+        "openapi-auth-pkce",
+        "openapi-auth-client-secret",
+        "openapi-auth-scopes",
+      ]
+    );
+    assert.isTrue((nodes[0].condition as ConditionFunc)(inputs));
+    assert.equal((nodes[0].data as any).default, AddAuthActionAuthTypeOptions.oauth().id);
+    for (const node of nodes) {
+      assert.isFalse(
+        (node.condition as ConditionFunc)({ ...inputs, platform: Platform.VSCode } as Inputs)
+      );
+    }
+    for (const node of nodes.slice(2)) {
+      assert.isFalse((node.condition as ConditionFunc)(inputs));
+    }
+    const credentialInputs = {
+      ...inputs,
+      [QuestionNames.OpenApiAuthIdentityProvider]: AddAuthActionAuthTypeOptions.oauth().id,
+      [QuestionNames.OpenApiAuthClientId]: "client-id",
+    } as Inputs;
+    for (const node of nodes) {
+      assert.isTrue((node.condition as ConditionFunc)(credentialInputs));
+    }
+    assert.isTrue((nodes[2].data as any).isBoolean);
+    assert.isFalse((nodes[2].data as any).required);
+    assert.isTrue((nodes[3].data as any).password);
+    assert.isFalse(
+      (nodes[3].condition as ConditionFunc)({
+        ...credentialInputs,
+        [QuestionNames.OpenApiAuthPKCE]: true,
+      } as Inputs)
+    );
+    const entraInputs = {
+      ...inputs,
+      [QuestionNames.OpenApiAuthIdentityProvider]: AddAuthActionAuthTypeOptions.microsoftEntra().id,
+      [QuestionNames.OpenApiAuthClientId]: "entra-client-id",
+    } as Inputs;
+    assert.isTrue((nodes[0].condition as ConditionFunc)(entraInputs));
+    assert.isTrue((nodes[1].condition as ConditionFunc)(entraInputs));
+    for (const node of nodes.slice(2)) {
+      assert.isFalse((node.condition as ConditionFunc)(entraInputs));
+    }
+    assert.isFalse(
+      (nodes[0].condition as ConditionFunc)({
+        ...inputs,
+        apiAuthData: [
+          { serverUrl: "https://example.com", authType: "oauth2" },
+          { serverUrl: "https://other.example.com", authType: "oauth2" },
+        ],
+      } as Inputs)
+    );
+    const pkceOption = AddPluginOptions.find((option) => option.name === "openapi-auth-pkce");
+    assert.equal(pkceOption?.type, "boolean");
+    assert.notProperty(pkceOption, "default");
+    const providerOption = AddPluginOptions.find(
+      (option) => option.name === "openapi-auth-identity-provider"
+    );
+    assert.deepEqual(providerOption?.choices, ["oauth", "microsoft-entra"]);
+    assert.equal(providerOption?.default, "oauth");
+    assert.isFalse(providerOption?.required);
+  });
+
+  it("hides scalar credential questions for mixed auth registrations", () => {
+    const inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+      apiAuthData: [
+        { serverUrl: "https://example.com", authType: "apiKey" },
+        { serverUrl: "https://example.com", authType: "oauth2" },
+      ],
+    } as Inputs;
+
+    assert.isFalse((openApiApiKeyNode().condition as ConditionFunc)(inputs));
+    for (const node of openApiOAuthCredentialNodes()) {
+      assert.isFalse((node.condition as ConditionFunc)(inputs));
+    }
   });
 });
 

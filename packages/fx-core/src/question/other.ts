@@ -64,7 +64,6 @@ import { UninstallInputs } from "./inputs";
 import { inputOrSearchAPISpecNode } from "./scaffold/commonNodes";
 import {
   MCPForDAAddAuthTypeStaticOptions,
-  MCPForDAApiKeyNode,
   MCPForDAAuthCredentialNodes,
   validateMCPServerUrl,
 } from "./scaffold/vsc/teamsProjectTypeNode";
@@ -370,10 +369,15 @@ export function copilotPluginAddAPIQuestionNode(): IQTreeNode {
 
 export function openApiApiKeyNode(): IQTreeNode {
   return {
-    condition: (inputs: Inputs) =>
-      inputs.platform === Platform.CLI &&
-      inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id &&
-      inputs.apiAuthData?.some((auth) => auth.authType === "apiKey") === true,
+    condition: (inputs: Inputs) => {
+      const authRegistrations = inputs.apiAuthData ?? [];
+      return (
+        inputs.platform === Platform.CLI &&
+        inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id &&
+        authRegistrations.length === 1 &&
+        authRegistrations[0].authType === "apiKey"
+      );
+    },
     data: apiKeyValueQuestion(),
   };
 }
@@ -401,6 +405,92 @@ function apiKeyValueQuestion(): TextInputQuestion {
   };
 }
 
+export function openApiOAuthCredentialNodes(): IQTreeNode[] {
+  const condition = (inputs: Inputs): boolean => {
+    const authRegistrations = inputs.apiAuthData ?? [];
+    return (
+      inputs.platform === Platform.CLI &&
+      inputs[QuestionNames.ActionType] === ActionStartOptions.apiSpec().id &&
+      authRegistrations.length === 1 &&
+      authRegistrations[0].authType === "oauth2"
+    );
+  };
+  return [
+    {
+      condition,
+      data: {
+        type: "singleSelect",
+        name: QuestionNames.OpenApiAuthIdentityProvider,
+        title: getLocalizedString("core.addOpenApiActionQuestion.IdentityProvider.title"),
+        cliDescription: getLocalizedString(
+          "core.addOpenApiActionQuestion.IdentityProvider.description"
+        ),
+        staticOptions: [
+          AddAuthActionAuthTypeOptions.oauth(),
+          AddAuthActionAuthTypeOptions.microsoftEntra(),
+        ],
+        default: AddAuthActionAuthTypeOptions.oauth().id,
+        required: false,
+      },
+    },
+    {
+      condition,
+      data: {
+        type: "text",
+        name: QuestionNames.OpenApiAuthClientId,
+        title: getLocalizedString("core.addOpenApiActionQuestion.OAuthClientId.title"),
+        required: false,
+      },
+    },
+    {
+      condition: (inputs: Inputs) =>
+        condition(inputs) &&
+        typeof inputs[QuestionNames.OpenApiAuthClientId] === "string" &&
+        inputs[QuestionNames.OpenApiAuthClientId].trim().length > 0 &&
+        inputs[QuestionNames.OpenApiAuthIdentityProvider] !==
+          AddAuthActionAuthTypeOptions.microsoftEntra().id,
+      data: {
+        type: "confirm",
+        name: QuestionNames.OpenApiAuthPKCE,
+        title: getLocalizedString("core.addOpenApiActionQuestion.OAuthPKCE.title"),
+        isBoolean: true,
+        required: false,
+      },
+    },
+    {
+      condition: (inputs: Inputs) =>
+        condition(inputs) &&
+        typeof inputs[QuestionNames.OpenApiAuthClientId] === "string" &&
+        inputs[QuestionNames.OpenApiAuthClientId].trim().length > 0 &&
+        inputs[QuestionNames.OpenApiAuthIdentityProvider] !==
+          AddAuthActionAuthTypeOptions.microsoftEntra().id &&
+        inputs[QuestionNames.OpenApiAuthPKCE] !== true,
+      data: {
+        type: "text",
+        name: QuestionNames.OpenApiAuthClientSecret,
+        title: getLocalizedString("core.addOpenApiActionQuestion.OAuthClientSecret.title"),
+        password: true,
+        forgetLastValue: true,
+        required: false,
+      },
+    },
+    {
+      condition: (inputs: Inputs) =>
+        condition(inputs) &&
+        typeof inputs[QuestionNames.OpenApiAuthClientId] === "string" &&
+        inputs[QuestionNames.OpenApiAuthClientId].trim().length > 0 &&
+        inputs[QuestionNames.OpenApiAuthIdentityProvider] !==
+          AddAuthActionAuthTypeOptions.microsoftEntra().id,
+      data: {
+        type: "text",
+        name: QuestionNames.OpenApiAuthScopes,
+        title: getLocalizedString("core.addOpenApiActionQuestion.OAuthScopes.title"),
+        required: false,
+      },
+    },
+  ];
+}
+
 function authConfigApiKeyNode(): IQTreeNode {
   return {
     condition: (inputs: Inputs) =>
@@ -409,6 +499,54 @@ function authConfigApiKeyNode(): IQTreeNode {
         inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.bearerToken().id),
     data: apiKeyValueQuestion(),
   };
+}
+
+function authConfigOAuthCredentialNodes(): IQTreeNode[] {
+  const clientIdCondition = (inputs: Inputs): boolean =>
+    inputs.platform === Platform.CLI &&
+    (inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.oauth().id ||
+      inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.microsoftEntra().id);
+  const clientSecretCondition = (inputs: Inputs): boolean =>
+    clientIdCondition(inputs) &&
+    inputs[QuestionNames.ApiAuth] === AddAuthActionAuthTypeOptions.oauth().id &&
+    inputs[QuestionNames.OauthPKCE] !== "true";
+
+  return [
+    {
+      condition: clientIdCondition,
+      data: {
+        type: "text",
+        name: QuestionNames.OauthClientId,
+        title: getLocalizedString("core.createProjectQuestion.OauthClientId"),
+        placeholder: getLocalizedString("core.createProjectQuestion.OauthClientId.placeholder"),
+        cliDescription: "OAuth client ID for the authentication configuration.",
+        forgetLastValue: true,
+        required: false,
+      },
+    },
+    {
+      condition: clientSecretCondition,
+      data: {
+        type: "text",
+        name: QuestionNames.OauthClientSecret,
+        password: true,
+        title: getLocalizedString("core.createProjectQuestion.OauthClientSecret"),
+        placeholder: getLocalizedString("core.createProjectQuestion.OauthClientSecret.placeholder"),
+        cliDescription: "OAuth client secret for the authentication configuration.",
+        forgetLastValue: true,
+        required: false,
+        validation: {
+          validFunc: (input: string): string | undefined => {
+            const normalizedInput = input.trim();
+            if (normalizedInput && (normalizedInput.length < 10 || normalizedInput.length > 512)) {
+              return getLocalizedString("core.createProjectQuestion.invalidApiKey.message");
+            }
+            return undefined;
+          },
+        },
+      },
+    },
+  ];
 }
 
 function selectTeamsAppPackageQuestion(): SingleFileQuestion {
@@ -746,6 +884,7 @@ export function addPluginQuestionNode(): IQTreeNode {
         },
       },
       openApiApiKeyNode(),
+      ...openApiOAuthCredentialNodes(),
       // MCP server URL input (when action type is "mcp").
       // Mirrors the "create DA with MCP" subtree under TEAMSFX_MCP_FOR_DA_DT:
       // CLI always collects auth-type + credential follow-ups; VS Code does the
@@ -785,9 +924,8 @@ export function addPluginQuestionNode(): IQTreeNode {
           },
           // Auth type selection: CLI always; VS Code only when DT is on.
           // Credential follow-ups are added under DT-on because only that branch
-          // persists them. V3 collects OAuth credentials plus the optional CLI
-          // API key; v4 collects only the optional CLI API key because its OAuth
-          // credentials remain provision-owned.
+          // persists them. V3 and v4 collect the same static OAuth, Entra, and
+          // optional CLI bearer credentials.
           {
             condition: (inputs: Inputs) =>
               inputs.platform !== Platform.VSCode ||
@@ -800,9 +938,7 @@ export function addPluginQuestionNode(): IQTreeNode {
               default: "oauth",
             },
             children: featureFlagManager.getBooleanValue(FeatureFlags.MCPForDADT)
-              ? featureFlagManager.getBooleanValue(FeatureFlags.V4Enabled)
-                ? [MCPForDAApiKeyNode()]
-                : MCPForDAAuthCredentialNodes()
+              ? MCPForDAAuthCredentialNodes()
               : [],
           },
         ],
@@ -997,6 +1133,7 @@ export function addAuthActionQuestion(): IQTreeNode {
       oauthParametersQuestion(),
       apiKeyParameterQuestion(),
       authConfigApiKeyNode(),
+      ...authConfigOAuthCredentialNodes(),
       microsoftEntraParameterQuestion(),
     ],
   };

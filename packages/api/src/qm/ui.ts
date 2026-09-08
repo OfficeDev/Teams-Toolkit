@@ -76,6 +76,10 @@ export interface ConfirmConfig extends UIConfig<boolean> {
    * display text for option true or false
    */
   transformer?: (value: boolean) => string;
+  /**
+   * Whether false is an answer instead of cancellation.
+   */
+  isBoolean?: boolean;
 }
 
 /**

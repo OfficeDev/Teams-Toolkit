@@ -23,7 +23,7 @@ import { GraphClient } from "../../src/client/graphClient";
 import { setTools, TOOLS } from "../../src/common/globalVars";
 import { getLocalizedString } from "../../src/common/localizeUtils";
 import { environmentNameManager } from "../../src/core/environmentName";
-import { QuestionNames } from "../../src/question/constants";
+import { ActionStartOptions, QuestionNames } from "../../src/question/constants";
 import {
   addAuthActionQuestion,
   addSkillQuestionNode,
@@ -36,10 +36,85 @@ import {
   oauthScopeCustomQuestion,
   oauthScopeQuestion,
   oauthTokenUrlQuestion,
+  openApiApiKeyNode,
+  openApiOAuthCredentialNodes,
   selectDeclarativeAgentManifestQuestion,
   selectTargetEnvQuestion,
   setSensitivityLabelNode,
 } from "../../src/question/other";
+
+describe("OpenAPI action credential questions", () => {
+  const apiSpecInputs: Inputs = {
+    platform: Platform.CLI,
+    [QuestionNames.ActionType]: ActionStartOptions.apiSpec().id,
+    apiAuthData: [{ serverUrl: "https://example.com", authType: "oauth2" }],
+  };
+
+  it("shows the API key question only for one CLI API-key registration", async () => {
+    const condition = openApiApiKeyNode().condition;
+    if (typeof condition !== "function") {
+      assert.fail("API key condition is missing");
+    }
+
+    assert.isTrue(
+      await condition({
+        ...apiSpecInputs,
+        apiAuthData: [{ serverUrl: "https://example.com", authType: "apiKey" }],
+      })
+    );
+    assert.isFalse(await condition({ ...apiSpecInputs, platform: Platform.VSCode }));
+    assert.isFalse(await condition({ ...apiSpecInputs, apiAuthData: [] }));
+    assert.isFalse(await condition(apiSpecInputs));
+  });
+
+  it("shows OAuth follow-ups only for applicable CLI OAuth inputs", async () => {
+    const nodes = openApiOAuthCredentialNodes();
+    const identityProviderCondition = nodes[0].condition;
+    const pkceCondition = nodes[2].condition;
+    const clientSecretCondition = nodes[3].condition;
+    const scopesCondition = nodes[4].condition;
+    if (
+      typeof identityProviderCondition !== "function" ||
+      typeof pkceCondition !== "function" ||
+      typeof clientSecretCondition !== "function" ||
+      typeof scopesCondition !== "function"
+    ) {
+      assert.fail("OAuth credential condition is missing");
+    }
+
+    assert.isTrue(await identityProviderCondition(apiSpecInputs));
+    assert.isFalse(
+      await identityProviderCondition({ ...apiSpecInputs, platform: Platform.VSCode })
+    );
+    assert.isFalse(await identityProviderCondition({ ...apiSpecInputs, apiAuthData: [] }));
+
+    const confidentialInputs: Inputs = {
+      ...apiSpecInputs,
+      [QuestionNames.OpenApiAuthClientId]: "client-id",
+    };
+    assert.isTrue(await pkceCondition(confidentialInputs));
+    assert.isTrue(await clientSecretCondition(confidentialInputs));
+    assert.isTrue(await scopesCondition(confidentialInputs));
+    assert.isFalse(
+      await pkceCondition({
+        ...confidentialInputs,
+        [QuestionNames.OpenApiAuthIdentityProvider]: "microsoft-entra",
+      })
+    );
+    assert.isFalse(
+      await clientSecretCondition({
+        ...confidentialInputs,
+        [QuestionNames.OpenApiAuthPKCE]: true,
+      })
+    );
+    assert.isFalse(
+      await scopesCondition({
+        ...confidentialInputs,
+        [QuestionNames.OpenApiAuthClientId]: " ",
+      })
+    );
+  });
+});
 
 describe("env question", () => {
   it("should not show testtool env", async () => {
@@ -85,7 +160,7 @@ describe("addAuthActionQuestion", () => {
     vi.restoreAllMocks();
   });
 
-  it("SCN-ADD-OPENAPI-KEY-06: offers an optional API key only in CLI auth-config", async () => {
+  it("SCN-ADD-AUTH-CONFIG-01: offers an optional API key only in CLI auth-config", async () => {
     const apiKeyNode = addAuthActionQuestion().children?.find(
       (child) => child.data.name === QuestionNames.ApiSpecApiKey
     );
@@ -119,7 +194,7 @@ describe("addAuthActionQuestion", () => {
     assert.isUndefined(validValidationResult);
   });
 
-  it("SCN-ADD-OPENAPI-KEY-10: offers an optional secret for CLI bearer-token auth-config", async () => {
+  it("SCN-ADD-AUTH-CONFIG-01: offers an optional secret for CLI bearer-token auth-config", async () => {
     const apiKeyNode = addAuthActionQuestion().children?.find(
       (child) => child.data.name === QuestionNames.ApiSpecApiKey
     );
@@ -137,6 +212,79 @@ describe("addAuthActionQuestion", () => {
         [QuestionNames.ApiAuth]: "bearer-token",
       })
     );
+  });
+
+  it("SCN-ADD-AUTH-CONFIG-02: offers optional OAuth credentials only in CLI auth-config", async () => {
+    const children = addAuthActionQuestion().children ?? [];
+    const clientIdNode = children.find((child) => child.data.name === QuestionNames.OauthClientId);
+    const clientSecretNode = children.find(
+      (child) => child.data.name === QuestionNames.OauthClientSecret
+    );
+
+    if (
+      !clientIdNode ||
+      clientIdNode.data.type !== "text" ||
+      typeof clientIdNode.condition !== "function"
+    ) {
+      assert.fail("OAuth client ID question is missing");
+    }
+    if (
+      !clientSecretNode ||
+      clientSecretNode.data.type !== "text" ||
+      typeof clientSecretNode.condition !== "function"
+    ) {
+      assert.fail("OAuth client secret question is missing");
+    }
+    assert.isFalse(clientIdNode.data.required);
+    assert.isFalse(clientSecretNode.data.required);
+    assert.isTrue(clientSecretNode.data.password);
+    assert.isTrue(
+      await clientIdNode.condition({
+        platform: Platform.CLI,
+        [QuestionNames.ApiAuth]: "oauth",
+      })
+    );
+    assert.isTrue(
+      await clientSecretNode.condition({
+        platform: Platform.CLI,
+        [QuestionNames.ApiAuth]: "oauth",
+        [QuestionNames.OauthPKCE]: "false",
+      })
+    );
+    assert.isFalse(
+      await clientSecretNode.condition({
+        platform: Platform.CLI,
+        [QuestionNames.ApiAuth]: "oauth",
+        [QuestionNames.OauthPKCE]: "true",
+      })
+    );
+    assert.isFalse(
+      await clientIdNode.condition({
+        platform: Platform.VSCode,
+        [QuestionNames.ApiAuth]: "oauth",
+      })
+    );
+  });
+
+  it("SCN-ADD-AUTH-CONFIG-03: offers only an optional client ID for Entra", async () => {
+    const children = addAuthActionQuestion().children ?? [];
+    const clientIdNode = children.find((child) => child.data.name === QuestionNames.OauthClientId);
+    const clientSecretNode = children.find(
+      (child) => child.data.name === QuestionNames.OauthClientSecret
+    );
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      [QuestionNames.ApiAuth]: "microsoft-entra",
+    };
+
+    if (!clientIdNode || typeof clientIdNode.condition !== "function") {
+      assert.fail("OAuth client ID question is missing");
+    }
+    if (!clientSecretNode || typeof clientSecretNode.condition !== "function") {
+      assert.fail("OAuth client secret question is missing");
+    }
+    assert.isTrue(await clientIdNode.condition(inputs));
+    assert.isFalse(await clientSecretNode.condition(inputs));
   });
 
   it("apiSpecFromPluginManifestQuestion", async () => {

@@ -141,6 +141,45 @@ export class MultipleServerError extends UserError {
   }
 }
 
+export class AmbiguousOpenApiAuthCredentialError extends UserError {
+  constructor() {
+    const key = "error.common.AmbiguousOpenApiAuthCredentialError";
+    super({
+      name: "AmbiguousOpenApiAuthCredentialError",
+      message: getDefaultString(key),
+      displayMessage: getLocalizedString(key),
+      source: "coordinator",
+      categories: [ErrorCategory.Internal],
+    });
+  }
+}
+
+export class InapplicableOpenApiAuthCredentialError extends UserError {
+  constructor() {
+    const key = "error.common.InapplicableOpenApiAuthCredentialError";
+    super({
+      name: "InapplicableOpenApiAuthCredentialError",
+      message: getDefaultString(key),
+      displayMessage: getLocalizedString(key),
+      source: "coordinator",
+      categories: [ErrorCategory.Internal],
+    });
+  }
+}
+
+export class IncompleteOpenApiOAuthCredentialError extends UserError {
+  constructor() {
+    const key = "error.common.IncompleteOpenApiOAuthCredentialError";
+    super({
+      name: "IncompleteOpenApiOAuthCredentialError",
+      message: getDefaultString(key),
+      displayMessage: getLocalizedString(key),
+      source: "coordinator",
+      categories: [ErrorCategory.Internal],
+    });
+  }
+}
+
 export class InjectAPIKeyActionFailedError extends UserError {
   constructor() {
     super({

@@ -162,6 +162,67 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
     assert.equal(scaffoldStub.mock.calls[0][0].apiKey, "the-bearer-token");
   });
 
+  it("forwards static OAuth and Entra credentials to the v4 template", async () => {
+    const projectPath = path.join(os.tmpdir(), "scenario-add-mcp-oauth-entry");
+    const inputs: Inputs = {
+      platform: Platform.CLI,
+      projectPath,
+      [QuestionNames.ActionType]: ActionStartOptions.mcp().id,
+      [QuestionNames.MCPForDAServerUrl]: "https://example.com/mcp",
+      [QuestionNames.MCPToolsFilePath]: "mcp-tools.json",
+      [QuestionNames.MCPForDAAuthType]: "oauth",
+      [QuestionNames.MCPForDAClientId]: "oauth-client-id",
+      [QuestionNames.MCPForDAClientSecret]: "oauth-client-secret",
+      [QuestionNames.MCPForDAScopes]: "scope.one scope.two",
+      nonInteractive: true,
+      ignoreLockByUT: true,
+    };
+    const manifest = new TeamsAppManifest();
+    manifest.name = { short: "My MCP App", full: "My MCP App" };
+    manifest.copilotExtensions = {
+      declarativeCopilots: [{ file: "declarativeAgent.json", id: "declarativeAgent" }],
+    };
+
+    vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
+      return flag === FeatureFlags.V4Enabled || flag === FeatureFlags.MCPForDADT;
+    });
+    vi.spyOn(manifestUtils, "_readAppManifest").mockResolvedValue(ok(manifest));
+    const scaffoldStub = vi
+      .spyOn(fxCoreDeclarativeAgentDeps, "scaffoldAddMcpServerFromV4")
+      .mockResolvedValue(ok(undefined));
+    vi.spyOn(fxCoreDeclarativeAgentDeps, "modifyProjectFrontDoor").mockImplementation(
+      async (frontDoorInputs, selectorPrefill, entryParams, dependencies) =>
+        dependencies.scaffoldV4(
+          frontDoorInputs,
+          { templateId: "add-mcp-server", engine: "v4", answers: selectorPrefill },
+          entryParams
+        )
+    );
+
+    const result = await new FxCore(tools).addPlugin(inputs);
+
+    assert.isTrue(result.isOk(), result.isErr() ? result.error.message : "expected ok");
+    assert.deepInclude(scaffoldStub.mock.calls[0][0], {
+      oauthClientId: "oauth-client-id",
+      oauthClientSecret: "oauth-client-secret",
+      oauthScopes: "scope.one scope.two",
+    });
+
+    inputs[QuestionNames.MCPForDAAuthType] = "entra-sso";
+    inputs[QuestionNames.MCPForDAClientId] = "entra-client-id";
+    delete inputs[QuestionNames.MCPForDAClientSecret];
+    delete inputs[QuestionNames.MCPForDAScopes];
+
+    const entraResult = await new FxCore(tools).addPlugin(inputs);
+
+    assert.isTrue(
+      entraResult.isOk(),
+      entraResult.isErr() ? entraResult.error.message : "expected ok"
+    );
+    assert.equal(scaffoldStub.mock.calls[1][0].entraClientId, "entra-client-id");
+    assert.notProperty(scaffoldStub.mock.calls[1][0], "oauthClientId");
+  });
+
   it("rejects each incomplete resolved answer before scaffolding", async () => {
     const projectPath = path.join(os.tmpdir(), "scenario-add-mcp-invalid-answers");
     const completeInputs: Inputs = {
@@ -249,7 +310,7 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
     assert.equal(warned[0][1], "repair the oauth urls");
   });
 
-  it("SCN-ADD-MCP-12: v4 add questions include only the optional CLI API key", () => {
+  it("SCN-ADD-MCP-12: v4 add questions include static and bearer credentials", () => {
     vi.spyOn(featureFlagManager, "getBooleanValue").mockImplementation((flag) => {
       return flag === FeatureFlags.V4Enabled || flag === FeatureFlags.MCPForDADT;
     });
@@ -266,7 +327,12 @@ describe("SCN-DA-ADD-MCP-ACTION-TO-DA (v4 entry, T3)", () => {
     assert.isDefined(authTypeNode);
     assert.deepEqual(
       authTypeNode?.children?.map((node) => node.data?.name),
-      [QuestionNames.MCPForDAApiKey]
+      [
+        QuestionNames.MCPForDAClientId,
+        QuestionNames.MCPForDAClientSecret,
+        QuestionNames.MCPForDAScopes,
+        QuestionNames.MCPForDAApiKey,
+      ]
     );
   });
 });

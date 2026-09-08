@@ -54,6 +54,6 @@ function loadUiNode(fileName: string, platform: Platform): IQTreeNode {
   }
 
   const content = fs.readFileSync(jsonPath, "utf-8");
-  TOOLS?.logProvider?.info(`[Dynamic Template] Loaded ${fileName} from ${source}: ${jsonPath}`);
+  TOOLS?.logProvider?.debug(`[Dynamic Template] Loaded ${fileName} from ${source}: ${jsonPath}`);
   return constructNode(content, platform);
 }
